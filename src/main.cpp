@@ -41,9 +41,6 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 
 #include "FS.h"
 
-#define OTA_IP_PORT 8266
-#define HOSTNAME "Minitel"
-
 class MinitelShell : public Shell
 {
   public:
@@ -109,7 +106,7 @@ void setup()
     ArduinoOTA.setPort(8266);
 
     // Hostname
-    ArduinoOTA.setHostname("minitel");
+    ArduinoOTA.setHostname("esp-minitel");
 
     // No authentication by default
     // ArduinoOTA.setPassword((const char *)"123");

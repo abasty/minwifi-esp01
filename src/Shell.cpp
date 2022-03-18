@@ -29,6 +29,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 */
 
 #include <ESP8266WiFi.h>
+#include <strings.h>
 #include "Shell.h"
 
 Shell::Shell(Print *term, Print *bin)
