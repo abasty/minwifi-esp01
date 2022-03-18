@@ -34,6 +34,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #include <ArduinoOTA.h>
 #include <Print.h>
 #include <IPAddress.h>
+#include <strings.h>
 #include "Shell.h"
 #include "CncManager.h"
 #include "minitel.h"
@@ -90,8 +91,7 @@ void initMinitelShell(bool clear)
 void setup()
 {
     // Initialize serial
-    // Serial.begin(1200, SERIAL_7E1);
-    Serial.begin(115200, SERIAL_8E1);
+    Serial.begin(1200);
     Serial.flush();
     Serial.println("");
     Serial.println("");
