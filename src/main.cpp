@@ -151,7 +151,7 @@ void MinitelShell::connectServer()
         int port = cm.getServerPort();
         if (port != 0)
         {
-            _term->print("Connexion a ");
+            _term->print("Connecting to ");
             _term->print(addr.toString());
             _term->print(":");
             _term->println(port);
@@ -163,7 +163,7 @@ void MinitelShell::connectServer()
             }
             else
             {
-                Serial.println("ERROR");
+                _term->println("ERROR");
             }
         }
         else
@@ -301,6 +301,7 @@ void MinitelShell::runCommand()
             //     _term->printf("%02X", _command[i]);
             // }
             // _term->println();
+            // _term->println(_command);
         }
     }
 }
