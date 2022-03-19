@@ -43,13 +43,14 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 
 class MinitelShell : public Shell
 {
-  public:
+public:
     MinitelShell(Print *term = 0, Print *bin = 0) : Shell(term, bin) {}
 #define INPUT_SIZE 64
     char input0[INPUT_SIZE];
 
     void connectServer();
-  protected:
+
+protected:
     virtual void runCommand();
 };
 
@@ -179,17 +180,17 @@ void MinitelShell::connectServer()
 
 void MinitelShell::runCommand()
 {
-    if (_term)
-        _term->printf("\r\n");
+    //if (_term)
+    //    _term->println();
 
     if (strcasecmp(_command, "free") == 0)
     {
         if (_term)
         {
-            _term->printf("Heap:              %u bytes free.\r\n", ESP.getFreeHeap());
-            _term->printf("Flash Real Size:   %u bytes.\r\n", ESP.getFlashChipRealSize());
-            _term->printf("Scketch Size:      %u bytes.\r\n", ESP.getSketchSize());
-            _term->printf("Free Scketch Size: %u bytes.\r\n", ESP.getFreeSketchSpace());
+            _term->printf("Heap:             %u bytes free.\r\n", ESP.getFreeHeap());
+            _term->printf("Flash Real Size:  %u bytes.\r\n", ESP.getFlashChipRealSize());
+            _term->printf("Sketch Size:      %u bytes.\r\n", ESP.getSketchSize());
+            _term->printf("Free Sketch Size: %u bytes.\r\n", ESP.getFreeSketchSpace());
         }
     }
     else if (strcasecmp(_command, "cats") == 0)
@@ -211,15 +212,15 @@ void MinitelShell::runCommand()
     }
     else if (strcasecmp(_command, "config") == 0)
     {
-        input("Enter SSID: ", input0, INPUT_SIZE, [](Shell *self) {
+        input("Enter SSID: ", input0, INPUT_SIZE, [](Shell *self)
+              {
             cm.setSSID(((MinitelShell *)self)->input0);
             self->println("OK");
             self->input("Enter PASS: ", ((MinitelShell *)self)->input0, INPUT_SIZE, [](Shell *self) {
                 cm.setPassword(((MinitelShell *)self)->input0);
                 self->println("\r\nUse CONNECT to use this config.");
                 self->println("OK");
-            });
-        });
+            }); });
     }
     else if (strcasecmp(_command, "connect") == 0)
     {
@@ -258,15 +259,15 @@ void MinitelShell::runCommand()
     }
     else if (strcasecmp(_command, "configopt") == 0)
     {
-        input("Enter Server IP: ", input0, INPUT_SIZE, [](Shell *self) {
+        input("Enter Server IP: ", input0, INPUT_SIZE, [](Shell *self)
+              {
             cm.setServerIP(((MinitelShell *)self)->input0);
             self->println("OK");
             self->input("Enter Server Port: ", ((MinitelShell *)self)->input0, INPUT_SIZE, [](Shell *self) {
                 cm.setServerPort(((MinitelShell *)self)->input0);
                 self->println("\r\nUse 3615 to use this config.");
                 self->println("OK");
-            });
-        });
+            }); });
     }
     else if (strcasecmp(_command, "configopt save") == 0)
     {
@@ -293,7 +294,14 @@ void MinitelShell::runCommand()
     else
     {
         if (_term)
+        {
             _term->println("ERROR");
+            // for (int i = 0; i < strlen(_command); i++)
+            // {
+            //     _term->printf("%02X", _command[i]);
+            // }
+            // _term->println();
+        }
     }
 }
 

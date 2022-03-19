@@ -91,10 +91,10 @@ void Shell::runCommand()
     {
         if (_term)
         {
-            _term->printf("Heap:              %u bytes free.\n", ESP.getFreeHeap());
-            _term->printf("Flash Real Size:   %u bytes.\n", ESP.getFlashChipRealSize());
-            _term->printf("Scketch Size:      %u bytes.\n", ESP.getSketchSize());
-            _term->printf("Free Scketch Size: %u bytes.\n", ESP.getFreeSketchSpace());
+            _term->printf("Heap:             %u bytes free.\n", ESP.getFreeHeap());
+            _term->printf("Flash Real Size:  %u bytes.\n", ESP.getFlashChipRealSize());
+            _term->printf("Sketch Size:      %u bytes.\n", ESP.getSketchSize());
+            _term->printf("Free Sketch Size: %u bytes.\n", ESP.getFreeSketchSpace());
         }
     }
     else if (strcasecmp(_command, "cats") == 0)
@@ -119,10 +119,6 @@ void Shell::runCommand()
         if (_term)
         {
             _term->println("ERROR");
-            _term->printf("Heap:              %u bytes free.\n", ESP.getFreeHeap());
-            _term->printf("Flash Real Size:   %u bytes.\n", ESP.getFlashChipRealSize());
-            _term->printf("Scketch Size:      %u bytes.\n", ESP.getSketchSize());
-            _term->printf("Free Scketch Size: %u bytes.\n", ESP.getFreeSketchSpace());
         }
     }
 }
@@ -162,7 +158,7 @@ void Shell::_handleCommand()
     }
     else
     {
-        // an error occured: _endOfSeqP has been corrupted
+        // an error occurred: _endOfSeqP has been corrupted
     }
     // reset _command buffer
     _commandCurP = _command;
@@ -198,8 +194,11 @@ size_t Shell::handle(char *src, size_t s)
                 *_commandCurP++ = *copySeqP++;
             // reset EOS
             _endOfSeqCurP = _endOfSeqP;
-            // copy char
-            *_commandCurP++ = *_srcCurP++;
+            if (*_srcCurP >= ' ')
+            {
+                // copy char
+                *_commandCurP++ = *_srcCurP++;
+            }
             // if buffer full
             if (_commandCurP - _command >= COMMAND_MAX_SIZE)
                 _handleCommand();
