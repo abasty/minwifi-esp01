@@ -45,8 +45,8 @@ void MinitelShell::connectServer()
 
 void MinitelShell::runCommand()
 {
-    //if (_term)
-    //    _term->println();
+    // if (_term)
+    //     _term->println();
 
     if (strcasecmp(_command, "free") == 0)
     {
@@ -60,16 +60,11 @@ void MinitelShell::runCommand()
     }
     else if (strcasecmp(_command, "cats") == 0)
     {
-        if (_bin)
-            _bin->println("Hello from Cat-Labs\r\n");
         if (_term)
+        {
+            _term->println("Hello from Cat-Labs");
             _term->println("OK");
-    }
-    else if (strcasecmp(_command, "bin") == 0)
-    {
-        binaryMode();
-        if (_term)
-            _term->printf("CTRL-T CTRL-U to upload, terminate with %s\r", endOfBin);
+        }
     }
     else if (strcasecmp(_command, "reset") == 0)
     {

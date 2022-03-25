@@ -32,15 +32,14 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #include <strings.h>
 #include "Shell.h"
 
-Shell::Shell(Print *term, Print *bin)
+Shell::Shell(Print *term)
 {
-    setTermBin(term, bin);
+    setTerm(term);
 }
 
-void Shell::setTermBin(Print *term, Print *bin)
+void Shell::setTerm(Print *term)
 {
     _term = term;
-    _bin = bin;
     _clearCommand();
     _setEndOfSeq(endOfCommand);
 }
@@ -80,11 +79,6 @@ void Shell::_setEndOfSeq(const char *eosP)
     _endOfSeqLength = strlen(_endOfSeqP);
 }
 
-void Shell::binaryMode()
-{
-    _setEndOfSeq(endOfBin);
-}
-
 void Shell::runCommand()
 {
     if (strcasecmp(_command, "free") == 0)
@@ -99,16 +93,11 @@ void Shell::runCommand()
     }
     else if (strcasecmp(_command, "cats") == 0)
     {
-        if (_bin)
-            _bin->println("\nHello from Cat-Labs\r\n");
         if (_term)
+        {
+            _term->println("Hello from Cat-Labs");
             _term->println("OK");
-    }
-    else if (strcasecmp(_command, "bin") == 0)
-    {
-        _setEndOfSeq(endOfBin);
-        if (_term)
-            _term->printf("CTRL-T CTRL-U to upload, terminate with %s\r", endOfBin);
+        }
     }
     else if (strcasecmp(_command, "reset") == 0)
     {
@@ -134,13 +123,6 @@ void Shell::_handleCommand()
     {
         *_commandCurP = 0;
         runCommand();
-    }
-    // file mode
-    else if (_endOfSeqP == endOfBin)
-    {
-        size_t n = _commandCurP - _command;
-        if (_bin)
-            _bin->write(_command, n);
     }
     else if (_endOfSeqP == endOfInput)
     {

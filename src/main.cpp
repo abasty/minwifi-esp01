@@ -43,7 +43,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #include "FS.h"
 
 // serial and TCP shells.
-MinitelShell serialShell(&Serial, &Serial);
+MinitelShell serialShell(&Serial);
 MinitelShell tcpShell;
 
 // Command server and client (just zero or one client for now)
@@ -143,7 +143,7 @@ void loop()
         if (tcpShellClient)
             delete tcpShellClient;
         tcpShellClient = new WiFiClient(tcpShellServer->available());
-        tcpShell.setTermBin((Print *)tcpShellClient, &Serial);
+        tcpShell.setTerm((Print *)tcpShellClient);
         tcpShellClient->printf("Ready\n");
     }
 
