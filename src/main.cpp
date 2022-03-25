@@ -36,46 +36,34 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #include <IPAddress.h>
 #include <strings.h>
 #include "Shell.h"
+#include "MinitelShell.h"
 #include "CncManager.h"
 #include "minitel.h"
 
 #include "FS.h"
 
-class MinitelShell : public Shell
-{
-public:
-    MinitelShell(Print *term = 0, Print *bin = 0) : Shell(term, bin) {}
-#define INPUT_SIZE 64
-    char input0[INPUT_SIZE];
-
-    void connectServer();
-
-protected:
-    virtual void runCommand();
-};
-
 // serial and TCP shells.
-MinitelShell minitelShell(&Serial, &Serial);
-MinitelShell TCPShell;
+MinitelShell serialShell(&Serial, &Serial);
+MinitelShell tcpShell;
 
 // Command server and client (just zero or one client for now)
-WiFiServer *CommandTCPServer = 0;
-WiFiClient *CommandTCPClient = 0;
+WiFiServer *tcpShellServer = 0;
+WiFiClient *tcpShellClient = 0;
 
 // Connection manager
-ConnectionManager cm(&minitelShell);
+ConnectionManager cm(&serialShell);
 
-// Minitel TCP/IP server
-WiFiClient MinitelServer;
+// Minitel server TCP/IP connexion
+WiFiClient tcpMinitelConnexion;
 bool minitelMode;
 
-void initMinitelShell(bool clear)
+void initMinitel(bool clear)
 {
     // Empty Serial buffer
     while (Serial && Serial.available() > 0)
     {
         uint8_t buffer[32];
-        size_t n = Serial.readBytes(buffer, 32);
+        Serial.readBytes(buffer, 32);
     }
     Serial.flush();
     if (clear)
@@ -133,220 +121,56 @@ void setup()
     ArduinoOTA.begin();
 
     // Launch traces server
-    CommandTCPServer = new WiFiServer(COMMAND_IP_PORT);
-    CommandTCPServer->begin();
+    tcpShellServer = new WiFiServer(COMMAND_IP_PORT);
+    tcpShellServer->begin();
 
     Serial.setTimeout(0);
-    initMinitelShell(false);
+    initMinitel(false);
 
     // connect to Minitel server if any
-    minitelShell.connectServer();
-}
-
-void MinitelShell::connectServer()
-{
-    if (cm.isConnected())
-    {
-        IPAddress addr = cm.getServerIP();
-        int port = cm.getServerPort();
-        if (port != 0)
-        {
-            _term->print("Connecting to ");
-            _term->print(addr.toString());
-            _term->print(":");
-            _term->println(port);
-            MinitelServer.connect(addr, port);
-            if (MinitelServer.connected())
-            {
-                minitelMode = true;
-                MinitelServer.setNoDelay(true);
-            }
-            else
-            {
-                _term->println("ERROR");
-            }
-        }
-        else
-        {
-            _term->println("Use CONFIGOPT to configure server.");
-        }
-    }
-    else
-    {
-        if (_term)
-            _term->println("Please connect first.");
-    }
-}
-
-void MinitelShell::runCommand()
-{
-    //if (_term)
-    //    _term->println();
-
-    if (strcasecmp(_command, "free") == 0)
-    {
-        if (_term)
-        {
-            _term->printf("Heap:             %u bytes free.\r\n", ESP.getFreeHeap());
-            _term->printf("Flash Real Size:  %u bytes.\r\n", ESP.getFlashChipRealSize());
-            _term->printf("Sketch Size:      %u bytes.\r\n", ESP.getSketchSize());
-            _term->printf("Free Sketch Size: %u bytes.\r\n", ESP.getFreeSketchSpace());
-        }
-    }
-    else if (strcasecmp(_command, "cats") == 0)
-    {
-        if (_bin)
-            _bin->println("Hello from Cat-Labs\r\n");
-        if (_term)
-            _term->println("OK");
-    }
-    else if (strcasecmp(_command, "bin") == 0)
-    {
-        binaryMode();
-        if (_term)
-            _term->printf("CTRL-T CTRL-U to upload, terminate with %s\r", endOfBin);
-    }
-    else if (strcasecmp(_command, "reset") == 0)
-    {
-        ESP.restart();
-    }
-    else if (strcasecmp(_command, "config") == 0)
-    {
-        input("Enter SSID: ", input0, INPUT_SIZE, [](Shell *self)
-              {
-            cm.setSSID(((MinitelShell *)self)->input0);
-            self->println("OK");
-            self->input("Enter PASS: ", ((MinitelShell *)self)->input0, INPUT_SIZE, [](Shell *self) {
-                cm.setPassword(((MinitelShell *)self)->input0);
-                self->println("\r\nUse CONNECT to use this config.");
-                self->println("OK");
-            }); });
-    }
-    else if (strcasecmp(_command, "connect") == 0)
-    {
-        cm.connect();
-    }
-    else if (strcasecmp(_command, "config save") == 0)
-    {
-        bool OK = cm.save();
-        if (_term)
-        {
-            if (OK)
-                _term->println("OK");
-            else
-                _term->println("Saved failed.");
-        }
-    }
-    else if (strcasecmp(_command, "config load") == 0)
-    {
-        bool OK = cm.load();
-        if (_term)
-        {
-            if (OK)
-                _term->println("OK");
-            else
-                _term->println("Load failed.");
-        }
-    }
-    else if (strcasecmp(_command, "clear") == 0)
-    {
-        if (_term)
-            _term->println("\x0CReady.");
-    }
-    else if (strcasecmp(_command, "3615") == 0)
-    {
-        connectServer();
-    }
-    else if (strcasecmp(_command, "configopt") == 0)
-    {
-        input("Enter Server IP: ", input0, INPUT_SIZE, [](Shell *self)
-              {
-            cm.setServerIP(((MinitelShell *)self)->input0);
-            self->println("OK");
-            self->input("Enter Server Port: ", ((MinitelShell *)self)->input0, INPUT_SIZE, [](Shell *self) {
-                cm.setServerPort(((MinitelShell *)self)->input0);
-                self->println("\r\nUse 3615 to use this config.");
-                self->println("OK");
-            }); });
-    }
-    else if (strcasecmp(_command, "configopt save") == 0)
-    {
-        bool OK = cm.saveOpt();
-        if (_term)
-        {
-            if (OK)
-                _term->println("OK");
-            else
-                _term->println("Saved failed.");
-        }
-    }
-    else if (strcasecmp(_command, "configopt load") == 0)
-    {
-        bool OK = cm.loadOpt();
-        if (_term)
-        {
-            if (OK)
-                _term->println("OK");
-            else
-                _term->println("Load failed.");
-        }
-    }
-    else
-    {
-        if (_term)
-        {
-            _term->println("ERROR");
-            // for (int i = 0; i < strlen(_command); i++)
-            // {
-            //     _term->printf("%02X", _command[i]);
-            // }
-            // _term->println();
-            // _term->println(_command);
-        }
-    }
+    serialShell.connectServer();
 }
 
 void loop()
 {
     ArduinoOTA.handle();
 
-    // Handle Traces Client connection
-    if (CommandTCPServer->hasClient())
+    // Accept TCP shell connections
+    if (tcpShellServer->hasClient())
     {
         // Delete active connection if any and accept new one
         // TODO: It leaks when a new session is accepted and one is active, do not know why....
-        if (CommandTCPClient)
-            delete CommandTCPClient;
-        CommandTCPClient = new WiFiClient(CommandTCPServer->available());
-        TCPShell.setTermBin((Print *)CommandTCPClient, &Serial);
-        CommandTCPClient->printf("Ready\n");
+        if (tcpShellClient)
+            delete tcpShellClient;
+        tcpShellClient = new WiFiClient(tcpShellServer->available());
+        tcpShell.setTermBin((Print *)tcpShellClient, &Serial);
+        tcpShellClient->printf("Ready\n");
     }
 
     // Handle commands from WiFi Client
-    if (CommandTCPClient && CommandTCPClient->available() > 0)
+    if (tcpShellClient && tcpShellClient->available() > 0)
     {
         // read client data
         uint8_t buffer[32];
-        size_t n = CommandTCPClient->read(buffer, 32);
-        TCPShell.handle((char *)buffer, n);
+        size_t n = tcpShellClient->read(buffer, 32);
+        tcpShell.handle((char *)buffer, n);
     }
 
-    // Handle Minitel
-    // TODO: end of connection (switch back to command mode)
-    if (MinitelServer && MinitelServer.available() > 0)
+    // Forward Minitel server incoming data to serial output
+    if (tcpMinitelConnexion && tcpMinitelConnexion.available() > 0)
     {
         // transparently forward bytes to serial
         uint8_t buffer[128];
-        size_t n = MinitelServer.read(buffer, 128);
+        size_t n = tcpMinitelConnexion.read(buffer, 128);
         Serial.write(buffer, n);
     }
 
     // If disconnected
-    if (minitelMode && (!MinitelServer || !MinitelServer.connected()))
+    if (minitelMode && (!tcpMinitelConnexion || !tcpMinitelConnexion.connected()))
     {
         minitelMode = false;
-        MinitelServer.stop();
-        initMinitelShell(true);
+        tcpMinitelConnexion.stop();
+        initMinitel(true);
     }
 
     // Handle Serial input
@@ -354,21 +178,20 @@ void loop()
     {
         if (!minitelMode)
         {
-            // Command mode mode
+            // Command mode: Handle serial input with command shell
             uint8_t buffer[32];
             size_t n = Serial.readBytes(buffer, 32);
-            minitelShell.handle((char *)buffer, n);
+            serialShell.handle((char *)buffer, n);
         }
         else
         {
-            // Minitel mode
-            // forward serial entry to MinitelServer
+            // Minitel mode: Forward serial input to Minitel sever
             uint8_t key;
             size_t n = Serial.readBytes(&key, 1);
             if (n > 0)
             {
-                MinitelServer.setNoDelay(true); // This is just a flag to disable the nagle algo.
-                MinitelServer.write((char *)&key, 1);
+                tcpMinitelConnexion.setNoDelay(true); // Disable nagle's algo.
+                tcpMinitelConnexion.write((char *)&key, 1);
             }
         }
     }
