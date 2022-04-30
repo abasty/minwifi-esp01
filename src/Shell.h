@@ -39,7 +39,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 class Shell
 {
   public:
-    typedef std::function<void(Shell* self)> InputCallback;
+    typedef std::function<void()> InputCallback;
 
     Shell(Print *term = 0);
 

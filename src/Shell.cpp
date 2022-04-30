@@ -135,7 +135,7 @@ void Shell::_handleCommand()
 
         if (_endOfSeqCurP - _endOfSeqP == _endOfSeqLength)
         {
-            _inputCallback(this);
+            _inputCallback();
         }
     }
     else

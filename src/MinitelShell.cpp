@@ -72,15 +72,21 @@ void MinitelShell::runCommand()
     }
     else if (strcasecmp(_command, "config") == 0)
     {
-        input("Enter SSID: ", input0, INPUT_SIZE, [](Shell *self)
-              {
-            cm.setSSID(((MinitelShell *)self)->input0);
-            self->println("OK");
-            self->input("Enter PASS: ", ((MinitelShell *)self)->input0, INPUT_SIZE, [](Shell *self) {
-                cm.setPassword(((MinitelShell *)self)->input0);
-                self->println("\r\nUse CONNECT to use this config.");
-                self->println("OK");
-            }); });
+        input(
+            "Enter SSID: ", inputBuffer, INPUT_BUFFER_SIZE,
+            [&]()
+            {
+                cm.setSSID(inputBuffer);
+                println("OK");
+                input(
+                    "Enter PASS: ", inputBuffer, INPUT_BUFFER_SIZE,
+                    [&]()
+                    {
+                        cm.setPassword(inputBuffer);
+                        println("\r\nUse CONNECT to use this config.");
+                        println("OK");
+                    });
+            });
     }
     else if (strcasecmp(_command, "connect") == 0)
     {
@@ -119,15 +125,21 @@ void MinitelShell::runCommand()
     }
     else if (strcasecmp(_command, "configopt") == 0)
     {
-        input("Enter Server IP: ", input0, INPUT_SIZE, [](Shell *self)
-              {
-            cm.setServerIP(((MinitelShell *)self)->input0);
-            self->println("OK");
-            self->input("Enter Server Port: ", ((MinitelShell *)self)->input0, INPUT_SIZE, [](Shell *self) {
-                cm.setServerPort(((MinitelShell *)self)->input0);
-                self->println("\r\nUse 3615 to use this config.");
-                self->println("OK");
-            }); });
+        input(
+            "Enter Server IP: ", inputBuffer, INPUT_BUFFER_SIZE,
+            [&]()
+            {
+                cm.setServerIP(inputBuffer);
+                println("OK");
+                input(
+                    "Enter Server Port: ", inputBuffer, INPUT_BUFFER_SIZE,
+                    [&]()
+                    {
+                        cm.setServerPort(inputBuffer);
+                        println("\r\nUse 3615 to use this config.");
+                        println("OK");
+                    });
+            });
     }
     else if (strcasecmp(_command, "configopt save") == 0)
     {

@@ -3,16 +3,17 @@
 
 #include "Shell.h"
 
+#define INPUT_BUFFER_SIZE 64
+
 class MinitelShell : public Shell
 {
 public:
     MinitelShell(Print *term = 0) : Shell(term) {}
-#define INPUT_SIZE 64
-    char input0[INPUT_SIZE];
-
     void connectServer();
 
 protected:
+    char inputBuffer[INPUT_BUFFER_SIZE];
+
     virtual void runCommand();
 };
 
