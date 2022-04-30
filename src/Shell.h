@@ -3,28 +3,28 @@ Copyright (c) 2017, Alain Basty.
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
-Redistributions of source code must retain the above copyright notice, this list 
+Redistributions of source code must retain the above copyright notice, this list
 of conditions and the following disclaimer.
 
-Redistributions in binary form must reproduce the above copyright notice, this list 
-of conditions and the following disclaimer in the documentation and/or other 
+Redistributions in binary form must reproduce the above copyright notice, this list
+of conditions and the following disclaimer in the documentation and/or other
 materials provided with the distribution.
 
-Neither the name of Alain Basty nor the names of other contributors may be used 
-to endorse or promote products derived from this software without specific prior 
+Neither the name of Alain Basty nor the names of other contributors may be used
+to endorse or promote products derived from this software without specific prior
 written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY 
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
-OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
-SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED 
-TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
-BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -41,9 +41,9 @@ class Shell
   public:
     typedef std::function<void(Shell* self)> InputCallback;
 
-    Shell(Print *term = 0, Print *bin = 0);
+    Shell(Print *term = 0);
 
-    void setTermBin(Print *term = 0, Print *bin = 0);
+    void setTerm(Print *term = 0);
     size_t handle(char *src, size_t s);
 
     void print(const char *str);
@@ -76,18 +76,13 @@ class Shell
     #define COMMAND_MAX_SIZE 32
     #define COMMAND_EOS_MAX_LENGTH 4
     char endOfCommand[2] = { '\r', 0 };
-    char endOfBin[5] = { '~', '~', '~', '\r', 0 };
     char endOfInput[2] = { '\r', 0 };
 
     char _command[COMMAND_MAX_SIZE + COMMAND_EOS_MAX_LENGTH];
     Print *_term;
-    Print *_bin;
 
     // This function must be overloaded to implement a command interpreter
     virtual void runCommand() = 0;
-
-    // Utility functions
-    void binaryMode();
 };
 
 #endif // Shell_h
