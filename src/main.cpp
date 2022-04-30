@@ -40,7 +40,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #include "CncManager.h"
 #include "minitel.h"
 
-#include "FS.h"
+#include "LittleFS.h"
 
 // serial and TCP shells.
 MinitelShell serialShell(&Serial);
@@ -84,7 +84,7 @@ void setup()
     Serial.println("\x0CLoading and connecting.");
 
     // Initialize file system
-    SPIFFS.begin();
+    LittleFS.begin();
 
     // connect Wifi if configuration available
     cm.load();

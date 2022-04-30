@@ -29,7 +29,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 */
 
 #include "CncManager.h"
-#include "FS.h"
+#include "LittleFS.h"
 
 #define CNCMGR_SAVE_FILE "/etc/cncmgr.save"
 #define CNCMGR_SAVE_OPT_FILE "/etc/cncmgr_opt.save"
@@ -58,7 +58,7 @@ void ConnectionManager::setPassword(const char *pass)
 
 bool ConnectionManager::save()
 {
-    File file = SPIFFS.open(CNCMGR_SAVE_FILE, "w");
+    File file = LittleFS.open(CNCMGR_SAVE_FILE, "w");
     if (file)
     {
         file.printf("%s\n", _ssid.c_str());
@@ -74,7 +74,7 @@ bool ConnectionManager::save()
 
 bool ConnectionManager::load()
 {
-    File file = SPIFFS.open(CNCMGR_SAVE_FILE, "r");
+    File file = LittleFS.open(CNCMGR_SAVE_FILE, "r");
     if (file)
     {
         _ssid = file.readStringUntil('\n');
@@ -110,7 +110,7 @@ int ConnectionManager::getServerPort()
 
 bool ConnectionManager::saveOpt()
 {
-    File file = SPIFFS.open(CNCMGR_SAVE_OPT_FILE, "w");
+    File file = LittleFS.open(CNCMGR_SAVE_OPT_FILE, "w");
     if (file)
     {
         file.printf("%s\n", _serverIP.toString().c_str());
@@ -126,7 +126,7 @@ bool ConnectionManager::saveOpt()
 
 bool ConnectionManager::loadOpt()
 {
-    File file = SPIFFS.open(CNCMGR_SAVE_OPT_FILE, "r");
+    File file = LittleFS.open(CNCMGR_SAVE_OPT_FILE, "r");
     if (file)
     {
         String line;

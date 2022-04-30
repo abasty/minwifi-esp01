@@ -62,7 +62,7 @@ class Shell
 
     char *_inputP;
     char *_inputCurP;
-    size_t _inputSize;
+    ssize_t _inputSize;
     InputCallback _inputCallback;
 
     void _clearCommand();
