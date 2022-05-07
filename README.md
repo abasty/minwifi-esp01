@@ -1,5 +1,6 @@
 # Liens
 
+* <https://www.museeminitel.fr/>
 * <https://www.minitel.org/>
 * <http://pficheux.free.fr/xtel/>
 
@@ -39,3 +40,15 @@ Donc il suffit d'utiliser la lib WebSocket pour ESP8266 et le tour est joué.
 # Database de service minitel
 
 * À voir avec minitel.org ou cq94.
+
+# Pour l'article
+
+* pio dans vscode (menus)
+* sinon il faut avoir pio en ligne de commande : `source ~/.platformio/penv/bin/activate`
+
+```
+$ pio --list-targets
+$ pio device monitor
+$ pio run -e minwifi
+$ pio run -e minwifi -t clean
+```
