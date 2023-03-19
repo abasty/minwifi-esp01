@@ -122,6 +122,7 @@ void Shell::_handleCommand()
     if (_endOfSeqP == endOfCommand)
     {
         *_commandCurP = 0;
+        _term->println("");
         runCommand();
     }
     else if (_endOfSeqP == endOfInput)

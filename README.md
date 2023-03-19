@@ -23,7 +23,7 @@ Tresse : 0v
 9v : Vert
 OT : Blanc
 
-Sur le file 3 souples papa :
+Sur la DIN, 3 fils souples papa :
 
 TX : Marron
 RX : Rouge
