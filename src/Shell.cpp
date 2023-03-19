@@ -34,158 +34,142 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 
 Shell::Shell(Print *term)
 {
-    setTerm(term);
+  setTerm(term);
 }
 
 void Shell::setTerm(Print *term)
 {
-    _term = term;
-    _clearCommand();
-    _setEndOfSeq(endOfCommand);
+  _term = term;
+  _clearCommand();
+  _setEndOfSeq(endOfCommand);
 }
 
 void Shell::print(const char *str)
 {
-    if (_term)
-        _term->print(str);
+  if (_term) {
+    _term->print(str);
+  }
 }
 
 void Shell::println(const char *str)
 {
-    print(str);
-    print("\r\n");
+  print(str);
+  print("\r\n");
 }
 
 void Shell::input(const char *str, char *buf, size_t s, InputCallback fn)
 {
-    print(str);
-    _clearCommand();
-    _inputP = buf;
-    _inputCurP = _inputP;
-    _inputSize = s;
-    _inputCallback = fn;
-    _setEndOfSeq(endOfInput);
+  print(str);
+  _clearCommand();
+  _inputP = buf;
+  _inputCurP = _inputP;
+  _inputSize = s;
+  _inputCallback = fn;
+  _setEndOfSeq(endOfInput);
 }
 
 void Shell::_clearCommand()
 {
-    _commandCurP = _command;
+  _commandCurP = _command;
 }
 
 void Shell::_setEndOfSeq(const char *eosP)
 {
-    _endOfSeqP = eosP;
-    _endOfSeqCurP = _endOfSeqP;
-    _endOfSeqLength = strlen(_endOfSeqP);
+  _endOfSeqP = eosP;
+  _endOfSeqCurP = _endOfSeqP;
+  _endOfSeqLength = strlen(_endOfSeqP);
 }
 
 void Shell::runCommand()
 {
-    if (strcasecmp(_command, "free") == 0)
-    {
-        if (_term)
-        {
-            _term->printf("Heap:             %u bytes free.\n", ESP.getFreeHeap());
-            _term->printf("Flash Real Size:  %u bytes.\n", ESP.getFlashChipRealSize());
-            _term->printf("Sketch Size:      %u bytes.\n", ESP.getSketchSize());
-            _term->printf("Free Sketch Size: %u bytes.\n", ESP.getFreeSketchSpace());
-        }
+  if (strcasecmp(_command, "free") == 0) {
+    if (_term) {
+      _term->printf("Heap:             %u bytes free.\n", ESP.getFreeHeap());
+      _term->printf("Flash Real Size:  %u bytes.\n", ESP.getFlashChipRealSize());
+      _term->printf("Sketch Size:      %u bytes.\n", ESP.getSketchSize());
+      _term->printf("Free Sketch Size: %u bytes.\n", ESP.getFreeSketchSpace());
     }
-    else if (strcasecmp(_command, "cats") == 0)
-    {
-        if (_term)
-        {
-            _term->println("Hello from Cat-Labs");
-            _term->println("OK");
-        }
+  } else if (strcasecmp(_command, "cats") == 0) {
+    if (_term) {
+      _term->println("Hello from Cat-Labs");
+      _term->println("OK");
     }
-    else if (strcasecmp(_command, "reset") == 0)
-    {
-        ESP.restart();
+  } else if (strcasecmp(_command, "reset") == 0) {
+    ESP.restart();
+  } else {
+    if (_term) {
+      _term->println("ERROR");
     }
-    else
-    {
-        if (_term)
-        {
-            _term->println("ERROR");
-        }
-    }
+  }
 }
 
 void Shell::_handleCommand()
 {
-    // Nothing to do
-    if (_commandCurP == _command)
-        return;
+  // Nothing to do
+  if (_commandCurP == _command) {
+    return;
+  }
 
-    // line mode
-    if (_endOfSeqP == endOfCommand)
-    {
-        *_commandCurP = 0;
-        _term->println("");
-        runCommand();
+  // line mode
+  if (_endOfSeqP == endOfCommand) {
+    *_commandCurP = 0;
+    _term->println("");
+    runCommand();
+  } else if (_endOfSeqP == endOfInput) {
+    char *commandP = _command;
+
+    while (commandP < _commandCurP && _inputCurP - _inputP < _inputSize - 1) {
+      *_inputCurP++ = *commandP++;
     }
-    else if (_endOfSeqP == endOfInput)
-    {
-        char *commandP = _command;
 
-        while (commandP < _commandCurP && _inputCurP - _inputP < _inputSize - 1)
-            *_inputCurP++ = *commandP++;
+    *_inputCurP = 0;
 
-        *_inputCurP = 0;
-
-        if (_endOfSeqCurP - _endOfSeqP == _endOfSeqLength)
-        {
-            _inputCallback();
-        }
+    if (_endOfSeqCurP - _endOfSeqP == _endOfSeqLength) {
+      _inputCallback();
     }
-    else
-    {
-        // an error occurred: _endOfSeqP has been corrupted
-    }
-    // reset _command buffer
-    _commandCurP = _command;
+  } else {
+    // an error occurred: _endOfSeqP has been corrupted
+  }
+  // reset _command buffer
+  _commandCurP = _command;
 }
 
 size_t Shell::handle(char *src, size_t s)
 {
-    size_t i;
-    for (i = 0, _srcCurP = src; i < s; i++)
-    {
-        // if char is in the EOS
-        if (*_srcCurP == *_endOfSeqCurP)
-        {
-            _srcCurP++;
-            _endOfSeqCurP++;
-            // if EOS reached
-            if (_endOfSeqCurP - _endOfSeqP == _endOfSeqLength)
-            {
-                // handle _command
-                _handleCommand();
+  size_t i;
+  for (i = 0, _srcCurP = src; i < s; i++) {
+    // if char is in the EOS
+    if (*_srcCurP == *_endOfSeqCurP) {
+      _srcCurP++;
+      _endOfSeqCurP++;
+      // if EOS reached
+      if (_endOfSeqCurP - _endOfSeqP == _endOfSeqLength) {
+        // handle _command
+        _handleCommand();
 
-                // if EOS has not been reset by _handleCommand()
-                // then reset it to default endOfCommand sequence.
-                if (_endOfSeqCurP != _endOfSeqP)
-                    _setEndOfSeq(endOfCommand);
-            }
+        // if EOS has not been reset by _handleCommand()
+        // then reset it to default endOfCommand sequence.
+        if (_endOfSeqCurP != _endOfSeqP) {
+          _setEndOfSeq(endOfCommand);
         }
-        else
-        {
-            // the char is out of the EOS
-            // copy left EOS chars if any
-            for (const char *copySeqP = _endOfSeqP; copySeqP != _endOfSeqCurP;)
-                *_commandCurP++ = *copySeqP++;
-            // reset EOS
-            _endOfSeqCurP = _endOfSeqP;
-            if (*_srcCurP >= ' ')
-            {
-                // copy char
-                *_commandCurP++ = *_srcCurP++;
-            }
-            // if buffer full
-            if (_commandCurP - _command >= COMMAND_MAX_SIZE)
-                _handleCommand();
-        }
+      }
+    } else {
+      // the char is out of the EOS
+      // copy left EOS chars if any
+      for (const char *copySeqP = _endOfSeqP; copySeqP != _endOfSeqCurP;) {
+        *_commandCurP++ = *copySeqP++;
+      }
+      // reset EOS
+      _endOfSeqCurP = _endOfSeqP;
+      if (*_srcCurP >= ' ') {
+        // copy char
+        *_commandCurP++ = *_srcCurP++;
+      }
+      // if buffer full
+      if (_commandCurP - _command >= COMMAND_MAX_SIZE) {
+        _handleCommand();
+      }
     }
-    return s;
+  }
+  return s;
 }

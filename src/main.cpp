@@ -69,146 +69,138 @@ bool minitelMode;
 
 void initMinitel(bool clear)
 {
-    // Empty Serial buffer
-    while (Serial && Serial.available() > 0)
-    {
-        uint8_t buffer[32];
-        Serial.readBytes(buffer, 32);
-    }
-    Serial.flush();
-    if (clear)
-        Serial.print("\x0C");
-    Serial.print((char *)P_ACK_OFF_PRISE);
-    Serial.print((char *)P_LOCAL_ECHO_ON);
-    Serial.println("Ready.");
-    Serial.print((char *)CON);
+  // Empty Serial buffer
+  while (Serial && Serial.available() > 0) {
+    uint8_t buffer[32];
+    Serial.readBytes(buffer, 32);
+  }
+  Serial.flush();
+  if (clear) {
+    Serial.print("\x0C");
+  }
+  Serial.print((char *)P_ACK_OFF_PRISE);
+  Serial.print((char *)P_LOCAL_ECHO_ON);
+  Serial.println("Ready.");
+  Serial.print((char *)CON);
 }
 
 void setup()
 {
-    // Initialize Sonoff pins
-    pinMode(relayPin, OUTPUT);
-    digitalWrite(relayPin, HIGH);
+  // Initialize Sonoff pins
+  pinMode(relayPin, OUTPUT);
+  digitalWrite(relayPin, HIGH);
 
-    // Initialize serial
-    Serial.begin(1200, SERIAL_7E1);
-    Serial.flush();
-    Serial.println("");
-    Serial.println("");
-    Serial.println("\x0CLoading and connecting.");
+  // Initialize serial
+  Serial.begin(1200, SERIAL_7E1);
+  Serial.flush();
+  Serial.println("");
+  Serial.println("");
+  Serial.println("\x0CLoading and connecting.");
 
-    // Initialize file system
-    LittleFS.begin();
+  // Initialize file system
+  LittleFS.begin();
 
-    // connect Wifi if configuration available
-    cm.load();
-    cm.loadOpt();
-    cm.connect();
+  // connect Wifi if configuration available
+  cm.load();
+  cm.loadOpt();
+  cm.connect();
 
-    // Initialize OTA
-    ArduinoOTA.setPort(8266);
+  // Initialize OTA
+  ArduinoOTA.setPort(8266);
 
-    // Hostname
-    ArduinoOTA.setHostname("esp-minitel");
+  // Hostname
+  ArduinoOTA.setHostname("esp-minitel");
 
-    // No authentication by default
-    // ArduinoOTA.setPassword((const char *)"123");
+  // No authentication by default
+  // ArduinoOTA.setPassword((const char *)"123");
 
-    // TODO: Serial can be for another usage. So remove Serial at some time.
-    /*    ArduinoOTA.onStart([]() {
-        Serial.println("FOTA Start");
-    });
+  // TODO: Serial can be for another usage. So remove Serial at some time.
+  /*    ArduinoOTA.onStart([]() {
+      Serial.println("FOTA Start");
+  });
 
-    ArduinoOTA.onEnd([]() {
-        Serial.println("FOTA End");
-        Serial.println("RESET");
-    });
+  ArduinoOTA.onEnd([]() {
+      Serial.println("FOTA End");
+      Serial.println("RESET");
+  });
 
-    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        //Serial.printf("FOTA Progress: %u%%\r", (progress / (total / 100)));
-    });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+      //Serial.printf("FOTA Progress: %u%%\r", (progress / (total / 100)));
+  });
 
-    ArduinoOTA.onError([](ota_error_t error) {
-        Serial.printf("FOTA Error %u: ", error);
-    });*/
+  ArduinoOTA.onError([](ota_error_t error) {
+      Serial.printf("FOTA Error %u: ", error);
+  });*/
 
-    ArduinoOTA.begin();
+  ArduinoOTA.begin();
 
-    // Launch traces server
-    tcpShellServer = new WiFiServer(COMMAND_IP_PORT);
-    tcpShellServer->begin();
+  // Launch traces server
+  tcpShellServer = new WiFiServer(COMMAND_IP_PORT);
+  tcpShellServer->begin();
 
-    Serial.setTimeout(0);
-    initMinitel(false);
+  Serial.setTimeout(0);
+  initMinitel(false);
 
-    // connect to Minitel server if any
-    serialShell.connectServer();
+  // connect to Minitel server if any
+  serialShell.connectServer();
 }
 
 void loop()
 {
-    ArduinoOTA.handle();
+  ArduinoOTA.handle();
 
-    digitalWrite(ledPin, HIGH);
+  digitalWrite(ledPin, HIGH);
 
-   // Accept TCP shell connections
-    if (tcpShellServer->hasClient())
-    {
-        // Delete active connection if any and accept new one
-        // TODO: It leaks when a new session is accepted and one is active, do not know why....
-        if (tcpShellClient)
-            delete tcpShellClient;
-        tcpShellClient = new WiFiClient(tcpShellServer->available());
-        tcpShell.setTerm((Print *)tcpShellClient);
-        tcpShellClient->printf("Ready\n");
+  // Accept TCP shell connections
+  if (tcpShellServer->hasClient()) {
+    // Delete active connection if any and accept new one
+    // TODO: It leaks when a new session is accepted and one is active, do not know why....
+    if (tcpShellClient) {
+      delete tcpShellClient;
     }
+    tcpShellClient = new WiFiClient(tcpShellServer->available());
+    tcpShell.setTerm((Print *)tcpShellClient);
+    tcpShellClient->printf("Ready\n");
+  }
 
-    // Handle commands from WiFi Client
-    if (tcpShellClient && tcpShellClient->available() > 0)
-    {
-        // read client data
-        uint8_t buffer[32];
-        size_t n = tcpShellClient->read(buffer, 32);
-        tcpShell.handle((char *)buffer, n);
-    }
+  // Handle commands from WiFi Client
+  if (tcpShellClient && tcpShellClient->available() > 0) {
+    // read client data
+    uint8_t buffer[32];
+    size_t n = tcpShellClient->read(buffer, 32);
+    tcpShell.handle((char *)buffer, n);
+  }
 
-    // Forward Minitel server incoming data to serial output
-    if (tcpMinitelConnexion && tcpMinitelConnexion.available() > 0)
-    {
-        // transparently forward bytes to serial
-        uint8_t buffer[128];
-        size_t n = tcpMinitelConnexion.read(buffer, 128);
-        Serial.write(buffer, n);
-    }
+  // Forward Minitel server incoming data to serial output
+  if (tcpMinitelConnexion && tcpMinitelConnexion.available() > 0) {
+    // transparently forward bytes to serial
+    uint8_t buffer[128];
+    size_t n = tcpMinitelConnexion.read(buffer, 128);
+    Serial.write(buffer, n);
+  }
 
-    // If disconnected
-    if (minitelMode && (!tcpMinitelConnexion || !tcpMinitelConnexion.connected()))
-    {
-        minitelMode = false;
-        tcpMinitelConnexion.stop();
-        initMinitel(true);
-    }
+  // If disconnected
+  if (minitelMode && (!tcpMinitelConnexion || !tcpMinitelConnexion.connected())) {
+    minitelMode = false;
+    tcpMinitelConnexion.stop();
+    initMinitel(true);
+  }
 
-    // Handle Serial input
-    if (Serial && Serial.available() > 0)
-    {
-        if (!minitelMode)
-        {
-            // Command mode: Handle serial input with command shell
-            uint8_t buffer[32];
-            size_t n = Serial.readBytes(buffer, 32);
-            serialShell.handle((char *)buffer, n);
-        }
-        else
-        {
-            // Minitel mode: Forward serial input to Minitel sever
-            uint8_t key;
-            size_t n = Serial.readBytes(&key, 1);
-            if (n > 0)
-            {
-                tcpMinitelConnexion.setNoDelay(true); // Disable nagle's algo.
-                tcpMinitelConnexion.write((char *)&key, 1);
-            }
-        }
+  // Handle Serial input
+  if (Serial && Serial.available() > 0) {
+    if (!minitelMode) {
+      // Command mode: Handle serial input with command shell
+      uint8_t buffer[32];
+      size_t n = Serial.readBytes(buffer, 32);
+      serialShell.handle((char *)buffer, n);
+    } else {
+      // Minitel mode: Forward serial input to Minitel sever
+      uint8_t key;
+      size_t n = Serial.readBytes(&key, 1);
+      if (n > 0) {
+        tcpMinitelConnexion.setNoDelay(true); // Disable nagle's algo.
+        tcpMinitelConnexion.write((char *)&key, 1);
+      }
     }
+  }
 }
