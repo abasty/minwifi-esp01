@@ -42,6 +42,16 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 
 #include "LittleFS.h"
 
+
+
+// 0:	BUTTON
+// 13:	LED
+// 12:	RELAY
+// 14:	EXTRA GPIO
+
+int relayPin = 12;
+int ledPin = 13;
+
 // serial and TCP shells.
 MinitelShell serialShell(&Serial);
 MinitelShell tcpShell;
@@ -76,8 +86,12 @@ void initMinitel(bool clear)
 
 void setup()
 {
+    // Initialize Sonoff pins
+    pinMode(relayPin, OUTPUT);
+    digitalWrite(relayPin, HIGH);
+
     // Initialize serial
-    Serial.begin(1200);
+    Serial.begin(1200, SERIAL_7E1);
     Serial.flush();
     Serial.println("");
     Serial.println("");
@@ -135,7 +149,9 @@ void loop()
 {
     ArduinoOTA.handle();
 
-    // Accept TCP shell connections
+    digitalWrite(ledPin, HIGH);
+
+   // Accept TCP shell connections
     if (tcpShellServer->hasClient())
     {
         // Delete active connection if any and accept new one

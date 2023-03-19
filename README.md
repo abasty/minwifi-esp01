@@ -4,6 +4,31 @@
 * <https://www.minitel.org/>
 * <http://pficheux.free.fr/xtel/>
 
+# Prise péri informatique
+
+## Vue extérieur de derrière
+
+
+TX -     - RX
+    / | \
+ 9v   0v  PT
+
+
+Sur le fil DIN noir :
+
+TX : Bleu
+RX : Rouge
+Tresse : 0v
+
+9v : Vert
+OT : Blanc
+
+Sur le file 3 souples papa :
+
+TX : Marron
+RX : Rouge
+0v : Noir
+
 # TCP Minitel
 
 Lorsque une connexion WiFi existe avec un serveur, l'ESP passe en mode "Minitel" :
