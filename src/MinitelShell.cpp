@@ -1,4 +1,5 @@
 #include <ESP8266WiFi.h>
+#include <WebSocketsClient.h>
 #include <strings.h>
 
 #include "CncManager.h"
@@ -7,6 +8,47 @@
 extern ConnectionManager cm;
 extern WiFiClient tcpMinitelConnexion;
 extern bool minitelMode;
+extern WebSocketsClient webSocket;
+
+void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
+{
+  return;
+  switch(type) {
+  case WStype_DISCONNECTED:
+    Serial.printf("[WSc] Disconnected!\n");
+    // Do something when disconnected
+    break;
+  case WStype_CONNECTED: {
+    Serial.printf("[WSc] Connected to url: %s\n", payload);
+
+    // send message to server when Connected
+    // webSocket.sendTXT("Connected");
+  }
+  break;
+  case WStype_TEXT:
+    Serial.printf("[WSc] get text: %s\n", payload);
+
+    // send message to server
+    // webSocket.sendTXT("message here");
+    break;
+  case WStype_BIN:
+    Serial.printf("[WSc] get binary length: %u\n", length);
+    // hexdump(payload, length);
+
+    // send data to server
+    // webSocket.sendBIN(payload, length);
+    break;
+  case WStype_PING:
+    // pong will be send automatically
+    Serial.printf("[WSc] get ping\n");
+    break;
+  case WStype_PONG:
+    // answer to a ping we send
+    Serial.printf("[WSc] get pong\n");
+    break;
+  }
+
+}
 
 void MinitelShell::connectServer()
 {
@@ -94,6 +136,9 @@ void MinitelShell::runCommand()
     }
   } else if (strcasecmp(_command, "3615") == 0) {
     connectServer();
+  } else if (strcasecmp(_command, "3611") == 0) {
+    webSocket.begin("3611.re", 80, "/ws");
+    webSocket.onEvent(webSocketEvent);
   } else if (strcasecmp(_command, "configopt") == 0) {
     input(
       "Enter Server IP: ", inputBuffer, INPUT_BUFFER_SIZE,

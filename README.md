@@ -29,6 +29,12 @@ TX : Marron
 RX : Rouge
 0v : Noir
 
+# Style C
+
+```
+$ astyle --style=1tbs -s2 src/*
+```
+
 # TCP Minitel
 
 Lorsque une connexion WiFi existe avec un serveur, l'ESP passe en mode "Minitel" :

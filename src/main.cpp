@@ -34,6 +34,8 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #include <ArduinoOTA.h>
 #include <Print.h>
 #include <IPAddress.h>
+#include <WebSocketsClient.h>
+
 #include <strings.h>
 #include "Shell.h"
 #include "MinitelShell.h"
@@ -41,8 +43,6 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #include "minitel.h"
 
 #include "LittleFS.h"
-
-
 
 // 0:	BUTTON
 // 13:	LED
@@ -65,6 +65,8 @@ ConnectionManager cm(&serialShell);
 
 // Minitel server TCP/IP connexion
 WiFiClient tcpMinitelConnexion;
+WebSocketsClient webSocket;
+
 bool minitelMode;
 
 void initMinitel(bool clear)
@@ -177,6 +179,11 @@ void loop()
     uint8_t buffer[128];
     size_t n = tcpMinitelConnexion.read(buffer, 128);
     Serial.write(buffer, n);
+  }
+
+  // Handle Ws client
+  if (webSocket.isConnected()) {
+    webSocket.loop();
   }
 
   // If disconnected
