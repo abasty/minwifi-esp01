@@ -8,11 +8,12 @@
 extern ConnectionManager cm;
 extern WiFiClient tcpMinitelConnexion;
 extern bool minitelMode;
+
 extern WebSocketsClient webSocket;
+extern bool _3611;
 
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 {
-  return;
   switch(type) {
   case WStype_DISCONNECTED:
     Serial.printf("[WSc] Disconnected!\n");
@@ -26,7 +27,10 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
   }
   break;
   case WStype_TEXT:
-    Serial.printf("[WSc] get text: %s\n", payload);
+    if (length > 0 && payload) {
+      Serial.printf("%s", payload);
+    }
+    // Serial.printf("[WSc] get text: %u\n", length);
 
     // send message to server
     // webSocket.sendTXT("message here");
@@ -40,11 +44,11 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
     break;
   case WStype_PING:
     // pong will be send automatically
-    Serial.printf("[WSc] get ping\n");
+    // Serial.printf("[WSc] get ping\n");
     break;
   case WStype_PONG:
     // answer to a ping we send
-    Serial.printf("[WSc] get pong\n");
+    // Serial.printf("[WSc] get pong\n");
     break;
   }
 
@@ -139,6 +143,8 @@ void MinitelShell::runCommand()
   } else if (strcasecmp(_command, "3611") == 0) {
     webSocket.begin("3611.re", 80, "/ws");
     webSocket.onEvent(webSocketEvent);
+    _3611 = true;
+    _term->println("OK");
   } else if (strcasecmp(_command, "configopt") == 0) {
     input(
       "Enter Server IP: ", inputBuffer, INPUT_BUFFER_SIZE,

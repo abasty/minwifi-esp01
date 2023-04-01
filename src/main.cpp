@@ -66,6 +66,7 @@ ConnectionManager cm(&serialShell);
 // Minitel server TCP/IP connexion
 WiFiClient tcpMinitelConnexion;
 WebSocketsClient webSocket;
+bool _3611 = false;
 
 bool minitelMode;
 
@@ -93,7 +94,8 @@ void setup()
   digitalWrite(relayPin, HIGH);
 
   // Initialize serial
-  Serial.begin(1200, SERIAL_7E1);
+//  Serial.begin(1200, SERIAL_7E1);
+  Serial.begin(1200);
   Serial.flush();
   Serial.println("");
   Serial.println("");
@@ -117,7 +119,7 @@ void setup()
   // ArduinoOTA.setPassword((const char *)"123");
 
   // TODO: Serial can be for another usage. So remove Serial at some time.
-  /*    ArduinoOTA.onStart([]() {
+  ArduinoOTA.onStart([]() {
       Serial.println("FOTA Start");
   });
 
@@ -132,7 +134,7 @@ void setup()
 
   ArduinoOTA.onError([](ota_error_t error) {
       Serial.printf("FOTA Error %u: ", error);
-  });*/
+  });
 
   ArduinoOTA.begin();
 
@@ -182,7 +184,8 @@ void loop()
   }
 
   // Handle Ws client
-  if (webSocket.isConnected()) {
+  //if (webSocket.isConnected()) {
+  if (_3611) {
     webSocket.loop();
   }
 
