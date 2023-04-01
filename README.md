@@ -35,6 +35,19 @@ RX : Rouge
 $ astyle --style=1tbs -s2 src/*
 ```
 
+# OTA
+
+Procédure qui ne marche pas :
+
+* Flash par USB serial => SW reboot de l'ESP
+* Après le reboot => FOTA
+
+Il faut **absolument** faire un HW reset de l'ESP :
+
+* Flash par USB serial => SW reboot de l'ESP
+* Débrancher / Rebrancher l'ESP => HW reboot
+* FOTA fonctionne
+
 # TCP Minitel
 
 Lorsque une connexion WiFi existe avec un serveur, l'ESP passe en mode "Minitel" :
