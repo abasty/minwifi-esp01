@@ -16,42 +16,28 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 {
   switch(type) {
   case WStype_DISCONNECTED:
+#ifndef MINITEL
     Serial.printf("[WSc] Disconnected!\n");
-    // Do something when disconnected
+#endif
     break;
-  case WStype_CONNECTED: {
+  case WStype_CONNECTED:
+#ifndef MINITEL
     Serial.printf("[WSc] Connected to url: %s\n", payload);
-
-    // send message to server when Connected
-    // webSocket.sendTXT("Connected");
-  }
-  break;
+#endif
+    break;
   case WStype_TEXT:
     if (length > 0 && payload) {
       Serial.printf("%s", payload);
     }
-    // Serial.printf("[WSc] get text: %u\n", length);
-
-    // send message to server
-    // webSocket.sendTXT("message here");
-    break;
-  case WStype_BIN:
-    Serial.printf("[WSc] get binary length: %u\n", length);
-    // hexdump(payload, length);
-
-    // send data to server
-    // webSocket.sendBIN(payload, length);
     break;
   case WStype_PING:
-    // pong will be send automatically
-    // Serial.printf("[WSc] get ping\n");
+#ifndef MINITEL
+    Serial.printf("[WSc] get ping\n");
+#endif
     break;
-  case WStype_PONG:
-    // answer to a ping we send
-    // Serial.printf("[WSc] get pong\n");
+  default:
     break;
   }
-
 }
 
 void MinitelShell::connectServer()

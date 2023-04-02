@@ -94,8 +94,12 @@ void setup()
   digitalWrite(relayPin, HIGH);
 
   // Initialize serial
-//  Serial.begin(1200, SERIAL_7E1);
-  Serial.begin(1200);
+#ifdef MINITEL
+  Serial.begin(1200, SERIAL_7E1);
+#else
+  Serial.begin(115200);
+#endif
+
   Serial.flush();
   Serial.println("");
   Serial.println("");
@@ -112,12 +116,17 @@ void setup()
   // Initialize OTA
   ArduinoOTA.setPort(8266);
 
+#ifdef MINITEL
   // Hostname
   ArduinoOTA.setHostname("esp-minitel");
+#else
+  ArduinoOTA.setHostname("esp-minitel-dev");
+#endif
 
   // No authentication by default
   // ArduinoOTA.setPassword((const char *)"123");
 
+#ifndef MINITEL
   // TODO: Serial can be for another usage. So remove Serial at some time.
   ArduinoOTA.onStart([]() {
       Serial.println("FOTA Start");
@@ -135,6 +144,7 @@ void setup()
   ArduinoOTA.onError([](ota_error_t error) {
       Serial.printf("FOTA Error %u: ", error);
   });
+#endif
 
   ArduinoOTA.begin();
 
