@@ -39,41 +39,41 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 class ConnectionManager
 {
 public:
-  ConnectionManager(Shell *Shell);
+    ConnectionManager(Shell *Shell);
 
-  // Connection parameters get/set
-  void setSSID(const char* ssid);
-  const char* getSSID();
-  // Password is Write Only
-  void setPassword(const char* pass);
-  bool save();
-  bool load();
+    // Connection parameters get/set
+    void setSSID(const char* ssid);
+    const char* getSSID();
+    // Password is Write Only
+    void setPassword(const char* pass);
+    bool save();
+    bool load();
 
-  // Connection options get/set
-  void setServerIP(char* ip);
-  IPAddress getServerIP();
-  void setServerPort(char* port);
-  int getServerPort();
-  bool saveOpt();
-  bool loadOpt();
+    // Connection options get/set
+    void setServerIP(char* ip);
+    IPAddress getServerIP();
+    void setServerPort(char* port);
+    int getServerPort();
+    bool saveOpt();
+    bool loadOpt();
 
-  // Network connection
-  bool connect();
-  void disconnect();
-  bool isConnected();
+    // Network connection
+    bool connect();
+    void disconnect();
+    bool isConnected();
 
 private:
-  // Connection parameters
-  String _ssid;
-  String _secret;
-  // Connection options
-  IPAddress _serverIP;
-  int _serverPort;
-  // Shell for UI (print, input)
-  Shell *_shell;
+    // Connection parameters
+    String _ssid;
+    String _secret;
+    // Connection options
+    IPAddress _serverIP;
+    int _serverPort;
+    // Shell for UI (print, input)
+    Shell *_shell;
 
-  // Network wait loop w/ UI on _shell
-  void _waitForWiFi(const char* message);
+    // Network wait loop w/ UI on _shell
+    void _waitForWiFi(const char* message);
 };
 
 #endif // CncManager_h

@@ -39,50 +39,50 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 class Shell
 {
 public:
-  typedef std::function<void()> InputCallback;
+    typedef std::function<void()> InputCallback;
 
-  Shell(Print *term = 0);
+    Shell(Print *term = 0);
 
-  void setTerm(Print *term = 0);
-  size_t handle(char *src, size_t s);
+    void setTerm(Print *term = 0);
+    size_t handle(char *src, size_t s);
 
-  void print(const char *str);
-  void println(const char *str);
-  void input(const char *str, char *buf, size_t n, InputCallback fn);
+    void print(const char *str);
+    void println(const char *str);
+    void input(const char *str, char *buf, size_t n, InputCallback fn);
 
-  // TODO using Print::write
+    // TODO using Print::write
 
 private:
-  char *_srcCurP;
-  char *_commandCurP;
+    char *_srcCurP;
+    char *_commandCurP;
 
-  const char *_endOfSeqP;
-  const char *_endOfSeqCurP;
-  uint8_t _endOfSeqLength;
+    const char *_endOfSeqP;
+    const char *_endOfSeqCurP;
+    uint8_t _endOfSeqLength;
 
-  char *_inputP;
-  char *_inputCurP;
-  ssize_t _inputSize;
-  InputCallback _inputCallback;
+    char *_inputP;
+    char *_inputCurP;
+    ssize_t _inputSize;
+    InputCallback _inputCallback;
 
-  void _clearCommand();
-  void _handleCommand();
-  void _setEndOfSeq(const char *eosP);
+    void _clearCommand();
+    void _handleCommand();
+    void _setEndOfSeq(const char *eosP);
 
 protected:
-  // If one wants \r\n as line ending: add \r before \n *and*
-  // *and* *and*, increase COMMAND_EOS_MAX_LENGTH by one
-  // For \r, just replace \n with \r
+    // If one wants \r\n as line ending: add \r before \n *and*
+    // *and* *and*, increase COMMAND_EOS_MAX_LENGTH by one
+    // For \r, just replace \n with \r
 #define COMMAND_MAX_SIZE 32
 #define COMMAND_EOS_MAX_LENGTH 4
-  char endOfCommand[2] = { '\r', 0 };
-  char endOfInput[2] = { '\r', 0 };
+    char endOfCommand[2] = { '\r', 0 };
+    char endOfInput[2] = { '\r', 0 };
 
-  char _command[COMMAND_MAX_SIZE + COMMAND_EOS_MAX_LENGTH];
-  Print *_term;
+    char _command[COMMAND_MAX_SIZE + COMMAND_EOS_MAX_LENGTH];
+    Print *_term;
 
-  // This function must be overloaded to implement a command interpreter
-  virtual void runCommand() = 0;
+    // This function must be overloaded to implement a command interpreter
+    virtual void runCommand() = 0;
 };
 
 #endif // Shell_h

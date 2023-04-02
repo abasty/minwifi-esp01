@@ -32,7 +32,7 @@ RX : Rouge
 # Style C
 
 ```
-$ astyle --style=1tbs -s2 src/*
+$ astyle --style=1tbs -s4 src/*
 ```
 
 # OTA

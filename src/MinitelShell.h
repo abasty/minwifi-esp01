@@ -8,13 +8,13 @@
 class MinitelShell : public Shell
 {
 public:
-  MinitelShell(Print *term = 0) : Shell(term) {}
-  void connectServer();
+    MinitelShell(Print *term = 0) : Shell(term) {}
+    void connectServer();
 
 protected:
-  char inputBuffer[INPUT_BUFFER_SIZE];
+    char inputBuffer[INPUT_BUFFER_SIZE];
 
-  virtual void runCommand();
+    virtual void runCommand();
 };
 
 #endif // MinitelShell_h
