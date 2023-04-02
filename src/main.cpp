@@ -37,6 +37,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #include <WebSocketsClient.h>
 
 #include <strings.h>
+#include "Terminal.h"
 #include "Shell.h"
 #include "MinitelShell.h"
 #include "CncManager.h"
@@ -52,16 +53,20 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 int relayPin = 12;
 int ledPin = 13;
 
-// serial and TCP shells.
-MinitelShell serialShell(&Serial);
-MinitelShell tcpShell;
+// wifi server
+WiFiServer *wifiServer = 0;
 
-// Command server and client (just zero or one client for now)
-WiFiServer *tcpShellServer = 0;
-WiFiClient *tcpShellClient = 0;
+// serial shell, terminal and client
+Terminal *serialTerminal = new TerminalVT100(&Serial);
+MinitelShell *serialShell = new MinitelShell(serialTerminal);
+
+// wifi shell, terminal and client
+WiFiClient *wifiClient = 0;
+Shell *wifiShell = 0;
+Terminal *wifiTerminal = 0;
 
 // Connection manager
-ConnectionManager cm(&serialShell);
+ConnectionManager cm(serialShell);
 
 // Minitel server TCP/IP connexion
 WiFiClient tcpMinitelConnexion;
@@ -79,12 +84,14 @@ void initMinitel(bool clear)
     }
     Serial.flush();
     if (clear) {
-        Serial.print("\x0C");
+        serialTerminal->clear();
     }
+#ifdef MINITEL
     Serial.print((char *)P_ACK_OFF_PRISE);
     Serial.print((char *)P_LOCAL_ECHO_ON);
-    Serial.println("Ready.");
     Serial.print((char *)CON);
+#endif
+    Serial.println("Ready.");
 }
 
 void setup()
@@ -103,7 +110,8 @@ void setup()
     Serial.flush();
     Serial.println("");
     Serial.println("");
-    Serial.println("\x0CLoading and connecting.");
+    serialTerminal->clear();
+    Serial.println("Loading and connecting.");
 
     // Initialize file system
     LittleFS.begin();
@@ -149,14 +157,14 @@ void setup()
     ArduinoOTA.begin();
 
     // Launch traces server
-    tcpShellServer = new WiFiServer(COMMAND_IP_PORT);
-    tcpShellServer->begin();
+    wifiServer = new WiFiServer(COMMAND_IP_PORT);
+    wifiServer->begin();
 
     Serial.setTimeout(0);
     initMinitel(false);
 
     // connect to Minitel server if any
-    serialShell.connectServer();
+    serialShell->connectServer();
 }
 
 void loop()
@@ -166,23 +174,31 @@ void loop()
     digitalWrite(ledPin, HIGH);
 
     // Accept TCP shell connections
-    if (tcpShellServer->hasClient()) {
+    if (wifiServer->hasClient()) {
         // Delete active connection if any and accept new one
         // TODO: It leaks when a new session is accepted and one is active, do not know why....
-        if (tcpShellClient) {
-            delete tcpShellClient;
+        if (wifiClient) {
+            delete wifiClient;
         }
-        tcpShellClient = new WiFiClient(tcpShellServer->available());
-        tcpShell.setTerm((Print *)tcpShellClient);
-        tcpShellClient->printf("Ready\n");
+        if (wifiShell) {
+            delete wifiShell;
+        }
+        if (wifiTerminal) {
+            delete wifiTerminal;
+        }
+        wifiClient = new WiFiClient(wifiServer->available());
+        wifiTerminal = new TerminalVT100(wifiClient);
+        wifiShell = new MinitelShell(wifiTerminal);
+
+        wifiTerminal->printf("Ready\n");
     }
 
     // Handle commands from WiFi Client
-    if (tcpShellClient && tcpShellClient->available() > 0) {
+    if (wifiClient && wifiClient->available() > 0) {
         // read client data
         uint8_t buffer[32];
-        size_t n = tcpShellClient->read(buffer, 32);
-        tcpShell.handle((char *)buffer, n);
+        size_t n = wifiClient->read(buffer, 32);
+        wifiShell->handle((char *)buffer, n);
     }
 
     // Forward Minitel server incoming data to serial output
@@ -212,7 +228,7 @@ void loop()
             // Command mode: Handle serial input with command shell
             uint8_t buffer[32];
             size_t n = Serial.readBytes(buffer, 32);
-            serialShell.handle((char *)buffer, n);
+            serialShell->handle((char *)buffer, n);
         } else {
             // Minitel mode: Forward serial input to Minitel sever
             uint8_t key;

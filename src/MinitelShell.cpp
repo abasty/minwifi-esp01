@@ -2,6 +2,7 @@
 #include <WebSocketsClient.h>
 #include <strings.h>
 
+#include "Terminal.h"
 #include "CncManager.h"
 #include "MinitelShell.h"
 
@@ -122,7 +123,8 @@ void MinitelShell::runCommand()
         }
     } else if (strcasecmp(_command, "clear") == 0) {
         if (_term) {
-            _term->println("\x0CReady.");
+            _term->clear();
+            _term->println("Ready.");
         }
     } else if (strcasecmp(_command, "3615") == 0) {
         connectServer();
@@ -174,4 +176,5 @@ void MinitelShell::runCommand()
             // _term->println(_command);
         }
     }
+    _term->print("$ ");
 }

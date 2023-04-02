@@ -32,12 +32,12 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #include <strings.h>
 #include "Shell.h"
 
-Shell::Shell(Print *term)
+Shell::Shell(Terminal *term)
 {
     setTerm(term);
 }
 
-void Shell::setTerm(Print *term)
+void Shell::setTerm(Terminal *term)
 {
     _term = term;
     _clearCommand();
