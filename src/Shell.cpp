@@ -105,15 +105,9 @@ void Shell::runCommand()
 
 void Shell::_handleCommand()
 {
-    // Nothing to do
-    if (_commandCurP == _command) {
-        return;
-    }
-
     // line mode
     if (_endOfSeqP == endOfCommand) {
         *_commandCurP = 0;
-        _term->println("");
         runCommand();
     } else if (_endOfSeqP == endOfInput) {
         char *commandP = _command;
@@ -140,6 +134,7 @@ size_t Shell::handle(char *src, size_t s)
     for (i = 0, _srcCurP = src; i < s; i++) {
         // if char is in the EOS
         if (*_srcCurP == *_endOfSeqCurP) {
+
             _srcCurP++;
             _endOfSeqCurP++;
             // if EOS reached

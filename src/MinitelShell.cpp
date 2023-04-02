@@ -70,8 +70,7 @@ void MinitelShell::connectServer()
 
 void MinitelShell::runCommand()
 {
-    // if (_term)
-    //     _term->println();
+    _term->newLineIfNeeded();
 
     if (strcasecmp(_command, "free") == 0) {
         if (_term) {
@@ -124,7 +123,6 @@ void MinitelShell::runCommand()
     } else if (strcasecmp(_command, "clear") == 0) {
         if (_term) {
             _term->clear();
-            _term->println("Ready.");
         }
     } else if (strcasecmp(_command, "3615") == 0) {
         connectServer();
@@ -147,6 +145,7 @@ void MinitelShell::runCommand()
                 println("OK");
             });
         });
+        return;
     } else if (strcasecmp(_command, "configopt save") == 0) {
         bool OK = cm.saveOpt();
         if (_term) {
@@ -166,15 +165,7 @@ void MinitelShell::runCommand()
             }
         }
     } else {
-        if (_term) {
-            _term->println("ERROR");
-            // for (int i = 0; i < strlen(_command); i++)
-            // {
-            //     _term->printf("%02X", _command[i]);
-            // }
-            // _term->println();
-            // _term->println(_command);
-        }
+        _term->println("ERROR");
     }
-    _term->print("$ ");
+    _term->prompt();
 }

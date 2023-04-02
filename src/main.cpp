@@ -57,7 +57,11 @@ int ledPin = 13;
 WiFiServer *wifiServer = 0;
 
 // serial shell, terminal and client
+#ifdef MINITEL
+Terminal *serialTerminal = new TerminalMinitel(&Serial);
+#else
 Terminal *serialTerminal = new TerminalVT100(&Serial);
+#endif
 MinitelShell *serialShell = new MinitelShell(serialTerminal);
 
 // wifi shell, terminal and client
@@ -91,7 +95,6 @@ void initMinitel(bool clear)
     Serial.print((char *)P_LOCAL_ECHO_ON);
     Serial.print((char *)CON);
 #endif
-    Serial.println("Ready.");
 }
 
 void setup()
@@ -165,6 +168,7 @@ void setup()
 
     // connect to Minitel server if any
     serialShell->connectServer();
+    serialTerminal->prompt();
 }
 
 void loop()
@@ -190,7 +194,7 @@ void loop()
         wifiTerminal = new TerminalVT100(wifiClient);
         wifiShell = new MinitelShell(wifiTerminal);
 
-        wifiTerminal->printf("Ready\n");
+        wifiTerminal->prompt();
     }
 
     // Handle commands from WiFi Client

@@ -48,6 +48,10 @@ public:
         return _out->write(buffer, size);
     }
 
+    virtual void newLineIfNeeded() {};
+    virtual void prompt() {
+        _out->print("minOS> ");
+    };
     virtual void clear() {};
     virtual void home() {};
     virtual void gotoXY(int x, int y) {};
@@ -72,6 +76,9 @@ class TerminalMinitel : public Terminal
 public:
     TerminalMinitel(Print *out = 0) : Terminal(out) {}
 
+    virtual void newLineIfNeeded() {
+        _out->println();
+    }
     virtual void clear() {
         _out->print("\x0C");
     }
