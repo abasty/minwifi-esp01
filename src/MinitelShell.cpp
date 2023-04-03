@@ -127,7 +127,13 @@ void MinitelShell::runCommand()
             _term->clear();
         }
     } else if (strcasecmp(_command, "3615") == 0) {
-        connectServer();
+#ifdef MINITEL
+        _term->print((char *)P_LOCAL_ECHO_OFF);
+#endif
+        webSocket.begin("3615co.de", 80, "/ws");
+        webSocket.onEvent(webSocketEvent);
+        _3611 = true;
+        return;
     } else if (strcasecmp(_command, "3611") == 0) {
 #ifdef MINITEL
         _term->print((char *)P_LOCAL_ECHO_OFF);
