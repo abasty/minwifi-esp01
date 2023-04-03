@@ -220,15 +220,15 @@ void loop()
     }
 
     // If disconnected
-    if (minitelMode && (!tcpMinitelConnexion || !tcpMinitelConnexion.connected())) {
-        minitelMode = false;
-        tcpMinitelConnexion.stop();
-        initMinitel(true);
-    }
+    // if (minitelMode && (!tcpMinitelConnexion || !tcpMinitelConnexion.connected())) {
+    //     minitelMode = false;
+    //     tcpMinitelConnexion.stop();
+    //     initMinitel(true);
+    // }
 
     // Handle Serial input
     if (Serial && Serial.available() > 0) {
-        if (!minitelMode) {
+        if (!_3611) {
             // Command mode: Handle serial input with command shell
             uint8_t buffer[32];
             size_t n = Serial.readBytes(buffer, 32);
@@ -238,8 +238,9 @@ void loop()
             uint8_t key;
             size_t n = Serial.readBytes(&key, 1);
             if (n > 0) {
-                tcpMinitelConnexion.setNoDelay(true); // Disable nagle's algo.
-                tcpMinitelConnexion.write((char *)&key, 1);
+                // tcpMinitelConnexion.setNoDelay(true); // Disable nagle's algo.
+                // tcpMinitelConnexion.write((char *)&key, 1);
+                webSocket.sendTXT(key);
             }
         }
     }

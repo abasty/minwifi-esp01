@@ -2,6 +2,7 @@
 #include <WebSocketsClient.h>
 #include <strings.h>
 
+#include "minitel.h"
 #include "Terminal.h"
 #include "CncManager.h"
 #include "MinitelShell.h"
@@ -22,6 +23,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 #endif
         break;
     case WStype_CONNECTED:
+        minitelMode = true;
 #ifndef MINITEL
         Serial.printf("[WSc] Connected to url: %s\n", payload);
 #endif
@@ -127,10 +129,13 @@ void MinitelShell::runCommand()
     } else if (strcasecmp(_command, "3615") == 0) {
         connectServer();
     } else if (strcasecmp(_command, "3611") == 0) {
+#ifdef MINITEL
+        _term->print((char *)P_LOCAL_ECHO_OFF);
+#endif
         webSocket.begin("3611.re", 80, "/ws");
         webSocket.onEvent(webSocketEvent);
         _3611 = true;
-        _term->println("OK");
+        return;
     } else if (strcasecmp(_command, "configopt") == 0) {
         input(
             "Enter Server IP: ", inputBuffer, INPUT_BUFFER_SIZE,
