@@ -31,9 +31,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #ifndef CncManager_h
 #define CncManager_h
 
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <WiFiUdp.h>
+#include <IPAddress.h>
 #include "Shell.h"
 
 class ConnectionManager

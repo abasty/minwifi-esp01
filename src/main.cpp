@@ -29,14 +29,9 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 */
 
 #include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#include <Print.h>
-#include <IPAddress.h>
 #include <WebSocketsClient.h>
 
-#include <strings.h>
 #include "Terminal.h"
 #include "Shell.h"
 #include "MinitelShell.h"

@@ -28,8 +28,10 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <LittleFS.h>
+#include <ESP8266WiFi.h>
+
 #include "CncManager.h"
-#include "LittleFS.h"
 
 #define CNCMGR_SAVE_FILE "/etc/cncmgr.save"
 #define CNCMGR_SAVE_OPT_FILE "/etc/cncmgr_opt.save"
