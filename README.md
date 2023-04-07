@@ -3,10 +3,10 @@
 * <https://www.museeminitel.fr/>
 * <https://www.minitel.org/>
 * <http://pficheux.free.fr/xtel/>
+* <https://www.tindie.com/products/iodeo/minitel-esp32-dev-board/>
+* <https://forum.museeminitel.fr/t/minitel-esp32-carte-peri-informatique-wifi-ble/711/42>
 
 # Prise péri informatique
-
-## Vue extérieur de derrière
 
 
 TX -     - RX
@@ -91,7 +91,7 @@ Donc il suffit d'utiliser la lib WebSocket pour ESP8266 et le tour est joué.
 * sinon il faut avoir pio en ligne de commande : `source ~/.platformio/penv/bin/activate`
 
 ```
-$ pio --list-targets
+$ pio run --list-targets
 $ pio device monitor
 $ pio run -e minwifi
 $ pio run -e minwifi -t clean
