@@ -64,9 +64,7 @@ void MinitelShell::connectServer()
             _term->println("Use CONFIGOPT to configure server.");
         }
     } else {
-        if (_term) {
-            _term->println("Please connect first.");
-        }
+        _term->println("Please connect first.");
     }
 }
 
@@ -75,17 +73,13 @@ void MinitelShell::runCommand()
     _term->newLineIfNeeded();
 
     if (strcasecmp(_command, "free") == 0) {
-        if (_term) {
-            _term->printf("Heap:             %u bytes free.\r\n", ESP.getFreeHeap());
-            _term->printf("Flash Real Size:  %u bytes.\r\n", ESP.getFlashChipRealSize());
-            _term->printf("Sketch Size:      %u bytes.\r\n", ESP.getSketchSize());
-            _term->printf("Free Sketch Size: %u bytes.\r\n", ESP.getFreeSketchSpace());
-        }
+        _term->printf("Heap:             %u bytes free.\r\n", ESP.getFreeHeap());
+        _term->printf("Flash Real Size:  %u bytes.\r\n", ESP.getFlashChipRealSize());
+        _term->printf("Sketch Size:      %u bytes.\r\n", ESP.getSketchSize());
+        _term->printf("Free Sketch Size: %u bytes.\r\n", ESP.getFreeSketchSpace());
     } else if (strcasecmp(_command, "cats") == 0) {
-        if (_term) {
-            _term->println("Hello from Cat-Labs");
-            _term->println("OK");
-        }
+        _term->println("Hello from Cat-Labs");
+        _term->println("OK");
     } else if (strcasecmp(_command, "reset") == 0) {
         ESP.restart();
     } else if (strcasecmp(_command, "config") == 0) {
@@ -106,26 +100,20 @@ void MinitelShell::runCommand()
         cm.connect();
     } else if (strcasecmp(_command, "config save") == 0) {
         bool OK = cm.save();
-        if (_term) {
-            if (OK) {
-                _term->println("OK");
-            } else {
-                _term->println("Saved failed.");
-            }
+        if (OK) {
+            _term->println("OK");
+        } else {
+            _term->println("Saved failed.");
         }
     } else if (strcasecmp(_command, "config load") == 0) {
         bool OK = cm.load();
-        if (_term) {
-            if (OK) {
-                _term->println("OK");
-            } else {
-                _term->println("Load failed.");
-            }
+        if (OK) {
+            _term->println("OK");
+        } else {
+            _term->println("Load failed.");
         }
     } else if (strcasecmp(_command, "clear") == 0) {
-        if (_term) {
-            _term->clear();
-        }
+        _term->clear();
     } else if (strcasecmp(_command, "3615") == 0) {
 #ifdef MINITEL
         _term->print((char *)P_LOCAL_ECHO_OFF);
@@ -159,24 +147,22 @@ void MinitelShell::runCommand()
         return;
     } else if (strcasecmp(_command, "configopt save") == 0) {
         bool OK = cm.saveOpt();
-        if (_term) {
-            if (OK) {
-                _term->println("OK");
-            } else {
-                _term->println("Saved failed.");
-            }
+        if (OK) {
+            _term->println("OK");
+        } else {
+            _term->println("Saved failed.");
         }
     } else if (strcasecmp(_command, "configopt load") == 0) {
         bool OK = cm.loadOpt();
-        if (_term) {
-            if (OK) {
-                _term->println("OK");
-            } else {
-                _term->println("Load failed.");
-            }
+        if (OK) {
+            _term->println("OK");
+        } else {
+            _term->println("Load failed.");
         }
     } else {
-        _term->println("ERROR");
+        if (_command && *_command) {
+            _term->println("ERROR");
+        }
     }
     _term->prompt();
 }

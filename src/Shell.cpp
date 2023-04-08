@@ -47,9 +47,7 @@ void Shell::setTerm(Terminal *term)
 
 void Shell::print(const char *str)
 {
-    if (_term) {
-        _term->print(str);
-    }
+    _term->print(str);
 }
 
 void Shell::println(const char *str)
@@ -79,29 +77,6 @@ void Shell::_setEndOfSeq(const char *eosP)
     _endOfSeqP = eosP;
     _endOfSeqCurP = _endOfSeqP;
     _endOfSeqLength = strlen(_endOfSeqP);
-}
-
-void Shell::runCommand()
-{
-    if (strcasecmp(_command, "free") == 0) {
-        if (_term) {
-            _term->printf("Heap:             %u bytes free.\n", ESP.getFreeHeap());
-            _term->printf("Flash Real Size:  %u bytes.\n", ESP.getFlashChipRealSize());
-            _term->printf("Sketch Size:      %u bytes.\n", ESP.getSketchSize());
-            _term->printf("Free Sketch Size: %u bytes.\n", ESP.getFreeSketchSpace());
-        }
-    } else if (strcasecmp(_command, "cats") == 0) {
-        if (_term) {
-            _term->println("Hello from Cat-Labs");
-            _term->println("OK");
-        }
-    } else if (strcasecmp(_command, "reset") == 0) {
-        ESP.restart();
-    } else {
-        if (_term) {
-            _term->println("ERROR");
-        }
-    }
 }
 
 void Shell::_handleCommand()
