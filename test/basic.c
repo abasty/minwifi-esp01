@@ -2,20 +2,33 @@
 #include <stdio.h>
 
 const uint8_t KEYWORD_MAX_LENGHT = 16;
-const char *keywords = "FREeCATsCLEAr";
+const char *keywords = "FREeCATsCLEArRESEtCONFIgCONNECt";
+
+const int KEYWORD_FREE = 0;
+const int KEYWORD_CATS = 1;
+const int KEYWORD_CLEAR = 2;
+const int KEYWORD_RESET = 3;
+const int KEYWORD_CONFIG = 4;
+const int KEYWORD_CONNECT = 5;
 
 int getKeywordIndex(const char *keywords, char *word)
 {
-    char searchedWord[KEYWORD_MAX_LENGHT];
+    char searchedWord[KEYWORD_MAX_LENGHT + 1];
 
     char *current = searchedWord;
-    while (*word)
+    int n = KEYWORD_MAX_LENGHT;
+    while (*word && n > 0)
     {
         *current++ = *word >= 'a' && *word <= 'z' ? *word - 32 : *word;
         word++;
+        n--;
     }
     *current-- = 0;
     *current += 32;
+
+    if (n == 0 && *word) {
+        return -1;
+    }
 
     int index = 0;
     while (*keywords != 0)
@@ -42,6 +55,9 @@ int getKeywordIndex(const char *keywords, char *word)
     }
     return -1;
 }
+
+// TODO: pase a string, split to spaces, and give pointer to words, then
+// tokenerize : interger, string, keyword
 
 int main()
 {
