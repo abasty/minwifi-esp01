@@ -2,17 +2,9 @@
 #include <string.h>
 #include <stdio.h>
 
-#define KEYWORD_END_TAG (0b10000000)
-#define TOKEN_KEYWORD ((uint8_t) 0b10000000)
-#define TOKEN_INTEGER ((uint8_t) 0b10000001)
-#define TOKEN_STRING  ((uint8_t) 0b10000010)
+#include "basic.h"
 
-#include "keywords.c"
-
-typedef struct {
-    char *read_ptr;
-    char *write_ptr;
-} t_line;
+#include "keywords.inc"
 
 int char_is_sep(char test_char)
 {
@@ -109,50 +101,4 @@ int tokenize(t_line *line)
         }
     }
     return 0;
-}
-
-#define KEYWORD_MAX_LENGHT ((uint8_t) 16)
-void keyword_print_all(const char *keyword_char)
-{
-    char keyword[KEYWORD_MAX_LENGHT + 1];
-
-    char *current_keyword_char = keyword;
-    uint8_t index = 0;
-    while (*keyword_char)
-    {
-        *current_keyword_char++ = *keyword_char & ~KEYWORD_END_TAG;
-        if ((*keyword_char & KEYWORD_END_TAG) != 0)
-        {
-            *current_keyword_char = 0;
-            current_keyword_char = keyword;
-            printf("%d: %s\n", index, keyword);
-            index++;
-        }
-        keyword_char++;
-    }
-}
-
-int main()
-{
-    keyword_print_all(keywords);
-
-    const char *test_input = "config      reset     free clear cats";
-    char command[256];
-    strcpy(command, test_input);
-
-    t_line line = {
-        .read_ptr = command,
-        .write_ptr = command,
-    };
-
-    printf("\n%s\n", test_input);
-    int err = tokenize(&line);
-    if (err)
-    {
-        printf("Syntax error.\n");
-    }
-    else
-    {
-        printf("OK, len: %zd\n", line.write_ptr - command);
-    }
 }
