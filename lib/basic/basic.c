@@ -43,8 +43,7 @@ int tokenize_keyword(t_line *line, const char *keyword_char)
         {
             if ((c & KEYWORD_END_TAG) != 0)
             {
-                *line->write_ptr++ = TOKEN_KEYWORD;
-                *line->write_ptr++ = index;
+                *line->write_ptr++ = index | TOKEN_KEYWORD;
                 return 0;
             }
             word_char++;
@@ -92,7 +91,6 @@ int tokenize(t_line *line)
             {
                 return -1;
             }
-            printf("keyword: %d\n", *(line->write_ptr - 1));
         }
         else
         {

@@ -48,6 +48,12 @@ int main()
     }
     else
     {
-        printf("OK, len: %zd\n", line.write_ptr - command);
+        uint8_t len = line.write_ptr - command;
+        for (uint8_t i = 0; i < len; i++)
+        {
+            char c = command[i] & ~TOKEN_KEYWORD;
+            printf("%u ", c);
+        }
+        printf("\nOK, len: %u\n", len);
     }
 }
