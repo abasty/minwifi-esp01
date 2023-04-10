@@ -8,11 +8,11 @@
 
 # Prise péri informatique
 
-
+```
 TX -     - RX
     / | \
  9v   0v  PT
-
+```
 
 Sur le fil DIN noir :
 
