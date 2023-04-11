@@ -17,23 +17,28 @@ int char_of_keyword(char test_char)
     return (test_char >= 'A' && test_char <= 'Z') || (test_char >= 'a' && test_char <= 'z')  || (test_char >= '0' && test_char <= '9') || (test_char == '_');
 }
 
+int char_is_digit(char test_char)
+{
+    return test_char >= '0' && test_char <= '9';
+}
+
 // TODO: pase a string, split to spaces, and give pointer to words, then
 // tokenize : interger, string, keyword
 // Ou plutôt un truc qui fait "nextToken, nextTokenAsString"
 
-int tokenize_keyword(t_line *line, const char *keyword_char)
+int tokenize_keyword(t_tokenizer_state *state, const char *keyword_char)
 {
-    char *word = line->read_ptr;
+    char *word = state->read_ptr;
     char *word_char = word;
 
     // Search end of keyword and transform to uppercase
-    char c = *line->read_ptr;
+    char c = *state->read_ptr;
     while (char_of_keyword(c))
     {
-        *line->read_ptr++ = c >= 'a' && c <= 'z' ? c - 32 : c;
-        c = *line->read_ptr;
+        *state->read_ptr++ = c >= 'a' && c <= 'z' ? c - 32 : c;
+        c = *state->read_ptr;
     }
-    *(line->read_ptr - 1) |= KEYWORD_END_TAG;
+    *(state->read_ptr - 1) |= KEYWORD_END_TAG;
 
     uint8_t index = 0;
     while (*keyword_char != 0)
@@ -43,7 +48,7 @@ int tokenize_keyword(t_line *line, const char *keyword_char)
         {
             if ((c & KEYWORD_END_TAG) != 0)
             {
-                *line->write_ptr++ = index | TOKEN_KEYWORD;
+                *state->write_ptr++ = index | TOKEN_KEYWORD;
                 return 0;
             }
             word_char++;
@@ -62,19 +67,41 @@ int tokenize_keyword(t_line *line, const char *keyword_char)
         }
     }
     return -1;
-
 }
 
-int tokenize(t_line *line)
+int tokenize_integer(t_tokenizer_state *state)
 {
-    char current_char;
+    uint16_t value = 0;
 
-    while (current_char = *line->read_ptr)
+    char c = *state->read_ptr;
+    while (char_is_digit(c))
+    {
+        if (value > 6553)
+        {
+            return -1;
+        }
+        value = value * 10 + c - '0';
+        c = *++state->read_ptr;
+    }
+    *state->write_ptr++ = TOKEN_INTEGER;
+    *state->write_ptr++ = value & 0xFF;
+    *state->write_ptr++ = value >> 8;
+    return 0;
+}
+
+int tokenize(t_tokenizer_state *state, char *line_str)
+{
+    state->start = line_str;
+    state->read_ptr = line_str;
+    state->write_ptr = line_str;
+
+    char current_char;
+    while (current_char = *state->read_ptr)
     {
         // first char => type
         if (current_char == ' ')
         {
-            line->read_ptr++;
+            state->read_ptr++;
         }
         else if (current_char == '"')
         {
@@ -83,11 +110,15 @@ int tokenize(t_line *line)
         else if (current_char >= '0' && current_char <= '9')
         {
             // integer
+            if (tokenize_integer(state) != 0)
+            {
+                return -1;
+            }
         }
         else if ((current_char >= 'A' && current_char <= 'Z') || (current_char >= 'a' && current_char <= 'z'))
         {
             // keyword
-            if (tokenize_keyword(line, keywords) != 0)
+            if (tokenize_keyword(state, keywords) != 0)
             {
                 return -1;
             }

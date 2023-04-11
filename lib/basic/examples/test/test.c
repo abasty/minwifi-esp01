@@ -31,28 +31,39 @@ int main()
 {
     keyword_print_all(keywords);
 
-    const char *test_input = "config      reset     free clear cats";
+    const char *test_input = "config  65535    reset  3615   free 0 clear 2024 cats";
     char command[256];
     strcpy(command, test_input);
 
-    t_line line = {
-        .read_ptr = command,
-        .write_ptr = command,
-    };
+    t_tokenizer_state line;
 
-    printf("\n%s\n", test_input);
-    int err = tokenize(&line);
+    printf("\n%s\n\n", test_input);
+    int err = tokenize(&line, command);
     if (err)
     {
         printf("Syntax error.\n");
     }
     else
     {
-        uint8_t len = line.write_ptr - command;
+        uint8_t len = line.write_ptr - line.start;
         for (uint8_t i = 0; i < len; i++)
         {
-            char c = command[i] & ~TOKEN_KEYWORD;
-            printf("%u ", c);
+            char c = line.start[i];
+            if (c & TOKEN_KEYWORD)
+            {
+                c &= ~TOKEN_KEYWORD;
+                printf("[keyword id: %u]\n", c);
+            }
+            else if (c == TOKEN_INTEGER)
+            {
+                uint16_t value = line.start[i + 1] + (line.start[i + 2] << 8);
+                printf("[uint: %u]\n", value);
+                i += 2;
+            }
+            else
+            {
+                printf("%u\n", c);
+            }
         }
         printf("\nOK, len: %u\n", len);
     }
