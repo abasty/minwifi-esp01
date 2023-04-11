@@ -45,26 +45,24 @@ int main()
     }
     else
     {
-        uint8_t len = line.write_ptr - line.start;
-        for (uint8_t i = 0; i < len; i++)
+        uint8_t token;
+        while ((token = token_get_next(&line)))
         {
-            char c = line.start[i];
-            if (c & TOKEN_KEYWORD)
+            if (token & TOKEN_KEYWORD)
             {
-                c &= ~TOKEN_KEYWORD;
-                printf("[keyword id: %u]\n", c);
+                token &= ~TOKEN_KEYWORD;
+                printf("[keyword id: %u]\n", token);
             }
-            else if (c == TOKEN_INTEGER)
+            else if (token == TOKEN_INTEGER)
             {
-                uint16_t value = line.start[i + 1] + (line.start[i + 2] << 8);
+                uint16_t value = token_integer_get_value(&line);
                 printf("[uint: %u]\n", value);
-                i += 2;
             }
             else
             {
-                printf("%u\n", c);
+                printf("%u\n", token);
             }
         }
-        printf("\nOK, len: %u\n", len);
+        printf("\nOK, len: %zu\n", line.write_ptr - line.start);
     }
 }
