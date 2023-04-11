@@ -78,8 +78,13 @@ void MinitelShell::runCommand()
     t_tokenizer_state state;
     tokenize(&state, _command);
     uint8_t token1 = token_get_next(&state);
+    uint16_t value = 0;
+    if (token1 == TOKEN_INTEGER)
+    {
+        value = token_integer_get_value(&state);
+        _term->printf("value: %u\n", value);
+    }
     uint8_t token2 = token_get_next(&state);
-
     if (token1 == TOKEN_KEYWORD_FREE) {
         _term->printf("Heap:             %u bytes free.\r\n", ESP.getFreeHeap());
         _term->printf("Flash Real Size:  %u bytes.\r\n", ESP.getFlashChipRealSize());
@@ -87,7 +92,6 @@ void MinitelShell::runCommand()
         _term->printf("Free Sketch Size: %u bytes.\r\n", ESP.getFreeSketchSpace());
     } else if (token1 == TOKEN_KEYWORD_CATS) {
         _term->println("Hello from Cat-Labs");
-        _term->println("OK");
     } else if (token1 == TOKEN_KEYWORD_RESET) {
         ESP.restart();
     } else if (token1 == TOKEN_KEYWORD_CONNECT) {
@@ -151,27 +155,22 @@ void MinitelShell::runCommand()
         } else {
             _term->println("Load failed.");
         }
-    } else if (token1 == TOKEN_INTEGER) {
-        uint16_t value = token_integer_get_value(&state);
-        _term->printf("value: %u\n", value);
-        if (value == 3615)
-        {
+    } else if (token1 == TOKEN_INTEGER && value == 3615) {
 #ifdef MINITEL
-            _term->print((char *)P_LOCAL_ECHO_OFF);
+        _term->print((char *)P_LOCAL_ECHO_OFF);
 #endif
-            webSocket.begin("3615co.de", 80, "/ws");
-            webSocket.onEvent(webSocketEvent);
-            _3611 = true;
-            return;
-        } else if (value == 3611) {
+        webSocket.begin("3615co.de", 80, "/ws");
+        webSocket.onEvent(webSocketEvent);
+        _3611 = true;
+        return;
+    } else if (token1 == TOKEN_INTEGER && value == 3611) {
 #ifdef MINITEL
-            _term->print((char *)P_LOCAL_ECHO_OFF);
+        _term->print((char *)P_LOCAL_ECHO_OFF);
 #endif
-            webSocket.begin("3611.re", 80, "/ws");
-            webSocket.onEvent(webSocketEvent);
-            _3611 = true;
-            return;
-        }
+        webSocket.begin("3611.re", 80, "/ws");
+        webSocket.onEvent(webSocketEvent);
+        _3611 = true;
+        return;
     } else {
         if (_command && *_command) {
             _term->println("ERROR");
