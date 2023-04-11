@@ -2,6 +2,9 @@
 #include <WebSocketsClient.h>
 #include <strings.h>
 
+#include "basic.h"
+#include "keywords.h"
+
 #include "minitel.h"
 #include "Terminal.h"
 #include "CncManager.h"
@@ -13,55 +16,6 @@ extern bool minitelMode;
 
 extern WebSocketsClient webSocket;
 extern bool _3611;
-
-const uint8_t KEYWORD_MAX_LENGHT = 16;
-const char *keywords = "FREeCATsCLEArRESEtCONFIgCONNECt";
-
-const int KEYWORD_FREE = 0;
-const int KEYWORD_CATS = 1;
-const int KEYWORD_CLEAR = 2;
-const int KEYWORD_RESET = 3;
-const int KEYWORD_CONFIG = 4;
-const int KEYWORD_CONNECT = 5;
-
-int getKeywordIndex(const char *keywords, char *word)
-{
-    char searchedWord[KEYWORD_MAX_LENGHT];
-
-    char *current = searchedWord;
-    while (*word)
-    {
-        *current++ = *word >= 'a' && *word <= 'z' ? *word - 32 : *word;
-        word++;
-    }
-    *current-- = 0;
-    *current += 32;
-
-    int index = 0;
-    while (*keywords != 0)
-    {
-        current = searchedWord;
-        while (*current == *keywords)
-        {
-            if (*current >= 'a' && *current <= 'z')
-            {
-                return index;
-            }
-            current++;
-            keywords++;
-        }
-        index++;
-        while (*keywords && (*keywords <= 'a' || *keywords >= 'z'))
-        {
-            keywords++;
-        }
-        if (*keywords)
-        {
-            keywords++;
-        }
-    }
-    return -1;
-}
 
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 {
@@ -121,19 +75,24 @@ void MinitelShell::runCommand()
 {
     _term->newLineIfNeeded();
 
-    int token = getKeywordIndex(keywords, _command);
+    t_tokenizer_state state;
+    tokenize(&state, _command);
+    uint8_t token1 = token_get_next(&state);
+    uint8_t token2 = token_get_next(&state);
 
-    if (token == KEYWORD_FREE) {
+    if (token1 == TOKEN_KEYWORD_FREE) {
         _term->printf("Heap:             %u bytes free.\r\n", ESP.getFreeHeap());
         _term->printf("Flash Real Size:  %u bytes.\r\n", ESP.getFlashChipRealSize());
         _term->printf("Sketch Size:      %u bytes.\r\n", ESP.getSketchSize());
         _term->printf("Free Sketch Size: %u bytes.\r\n", ESP.getFreeSketchSpace());
-    } else if (token == KEYWORD_CATS) {
+    } else if (token1 == TOKEN_KEYWORD_CATS) {
         _term->println("Hello from Cat-Labs");
         _term->println("OK");
-    } else if (token == KEYWORD_RESET) {
+    } else if (token1 == TOKEN_KEYWORD_RESET) {
         ESP.restart();
-    } else if (token == KEYWORD_CONFIG) {
+    } else if (token1 == TOKEN_KEYWORD_CONNECT) {
+        cm.connect();
+    } else if (token1 == TOKEN_KEYWORD_CONFIG && token2 == 0) {
         input(
             "Enter SSID: ", inputBuffer, INPUT_BUFFER_SIZE,
         [&]() {
@@ -147,41 +106,23 @@ void MinitelShell::runCommand()
                 println("OK");
             });
         });
-    } else if (token == KEYWORD_CONNECT) {
-        cm.connect();
-    } else if (strcasecmp(_command, "config save") == 0) {
+    } else if (token1 == TOKEN_KEYWORD_CONFIG && token2 == TOKEN_KEYWORD_SAVE) {
         bool OK = cm.save();
         if (OK) {
             _term->println("OK");
         } else {
             _term->println("Saved failed.");
         }
-    } else if (strcasecmp(_command, "config load") == 0) {
+    } else if (token1 == TOKEN_KEYWORD_CONFIG && token2 == TOKEN_KEYWORD_LOAD) {
         bool OK = cm.load();
         if (OK) {
             _term->println("OK");
         } else {
             _term->println("Load failed.");
         }
-    } else if (token == KEYWORD_CLEAR) {
+    } else if (token1 == TOKEN_KEYWORD_CLEAR) {
         _term->clear();
-    } else if (strcasecmp(_command, "3615") == 0) {
-#ifdef MINITEL
-        _term->print((char *)P_LOCAL_ECHO_OFF);
-#endif
-        webSocket.begin("3615co.de", 80, "/ws");
-        webSocket.onEvent(webSocketEvent);
-        _3611 = true;
-        return;
-    } else if (strcasecmp(_command, "3611") == 0) {
-#ifdef MINITEL
-        _term->print((char *)P_LOCAL_ECHO_OFF);
-#endif
-        webSocket.begin("3611.re", 80, "/ws");
-        webSocket.onEvent(webSocketEvent);
-        _3611 = true;
-        return;
-    } else if (strcasecmp(_command, "configopt") == 0) {
+    } else if (token1 == TOKEN_KEYWORD_CONFIGOPT && token2 == 0) {
         input(
             "Enter Server IP: ", inputBuffer, INPUT_BUFFER_SIZE,
         [&]() {
@@ -196,19 +137,40 @@ void MinitelShell::runCommand()
             });
         });
         return;
-    } else if (strcasecmp(_command, "configopt save") == 0) {
+    } else if (token1 == TOKEN_KEYWORD_CONFIGOPT && token2 == TOKEN_KEYWORD_SAVE) {
         bool OK = cm.saveOpt();
         if (OK) {
             _term->println("OK");
         } else {
             _term->println("Saved failed.");
         }
-    } else if (strcasecmp(_command, "configopt load") == 0) {
+    } else if (token1 == TOKEN_KEYWORD_CONFIGOPT && token2 == TOKEN_KEYWORD_LOAD) {
         bool OK = cm.loadOpt();
         if (OK) {
             _term->println("OK");
         } else {
             _term->println("Load failed.");
+        }
+    } else if (token1 == TOKEN_INTEGER) {
+        uint16_t value = token_integer_get_value(&state);
+        _term->printf("value: %u\n", value);
+        if (value == 3615)
+        {
+#ifdef MINITEL
+            _term->print((char *)P_LOCAL_ECHO_OFF);
+#endif
+            webSocket.begin("3615co.de", 80, "/ws");
+            webSocket.onEvent(webSocketEvent);
+            _3611 = true;
+            return;
+        } else if (value == 3611) {
+#ifdef MINITEL
+            _term->print((char *)P_LOCAL_ECHO_OFF);
+#endif
+            webSocket.begin("3611.re", 80, "/ws");
+            webSocket.onEvent(webSocketEvent);
+            _3611 = true;
+            return;
         }
     } else {
         if (_command && *_command) {

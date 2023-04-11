@@ -15,6 +15,9 @@ reset
 config
 connect
 clear
+load
+save
+configopt
 EOF
 
 sort -o ${KEYWORDS_FILE}{,}
@@ -29,7 +32,7 @@ index=0
 while IFS= read -r keyword; do
     u_key=${keyword^^}
     echo ${u_key} >/dev/tty
-    echo "#define TOKEN_KEYWORD_${u_key} ((uint8_t) (${index}))" >>${KEYWORDS_H}
+    echo "#define TOKEN_KEYWORD_${u_key} ((uint8_t) (${index} | 0b10000000))" >>${KEYWORDS_H}
     ((index++))
 done < ${KEYWORDS_FILE}
 

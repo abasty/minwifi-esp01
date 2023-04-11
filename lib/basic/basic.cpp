@@ -28,7 +28,7 @@ int char_is_digit(char test_char)
 
 int tokenize_keyword(t_tokenizer_state *state, const char *keyword_char)
 {
-    char *word = state->read_ptr;
+    char *word = (char *) (state->read_ptr);
     char *word_char = word;
 
     // Search end of keyword and transform to uppercase
@@ -91,34 +91,34 @@ int tokenize_integer(t_tokenizer_state *state)
 
 int tokenize(t_tokenizer_state *state, char *line_str)
 {
-    state->start = line_str;
-    state->read_ptr = line_str;
-    state->write_ptr = line_str;
+    state->start = (uint8_t*) line_str;
+    state->read_ptr = state->start;
+    state->write_ptr = state->start;
 
-    char current_char;
-    while (current_char = *state->read_ptr)
+    uint8_t c;
+    while ((c = *state->read_ptr))
     {
         // first char => type
-        if (current_char == ' ')
+        if (c == ' ')
         {
             state->read_ptr++;
         }
-        else if (current_char == '"')
+        else if (c == '"')
         {
             // string
         }
-        else if (current_char >= '0' && current_char <= '9')
+        else if (c >= '0' && c <= '9')
         {
             // integer
-            if (tokenize_integer(state) != 0)
+            if (tokenize_integer(state) == -1)
             {
                 return -1;
             }
         }
-        else if ((current_char >= 'A' && current_char <= 'Z') || (current_char >= 'a' && current_char <= 'z'))
+        else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
         {
             // keyword
-            if (tokenize_keyword(state, keywords) != 0)
+            if (tokenize_keyword(state, keywords) == -1)
             {
                 return -1;
             }
@@ -129,5 +129,21 @@ int tokenize(t_tokenizer_state *state, char *line_str)
             return -1;
         }
     }
+    state->read_ptr = state->start;
+    *state->write_ptr = 0;
     return 0;
+}
+
+uint8_t token_get_next(t_tokenizer_state *state)
+{
+    return *state->read_ptr != 0 ? *state->read_ptr++ : 0;
+}
+
+uint16_t token_integer_get_value(t_tokenizer_state *state)
+{
+    uint16_t value = *state->read_ptr;
+    state->read_ptr++;
+    value += *state->read_ptr << 8;
+    state->read_ptr++;
+    return value;
 }
