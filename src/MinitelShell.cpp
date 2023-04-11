@@ -46,31 +46,6 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
     }
 }
 
-void MinitelShell::connectServer()
-{
-    if (cm.isConnected()) {
-        IPAddress addr = cm.getServerIP();
-        int port = cm.getServerPort();
-        if (port != 0) {
-            _term->print("Connecting to ");
-            _term->print(addr.toString());
-            _term->print(":");
-            _term->println(port);
-            tcpMinitelConnexion.connect(addr, port);
-            if (tcpMinitelConnexion.connected()) {
-                minitelMode = true;
-                tcpMinitelConnexion.setNoDelay(true);
-            } else {
-                _term->println("ERROR");
-            }
-        } else {
-            _term->println("Use CONFIGOPT to configure server.");
-        }
-    } else {
-        _term->println("Please connect first.");
-    }
-}
-
 void MinitelShell::runCommand()
 {
     _term->newLineIfNeeded();
@@ -126,35 +101,6 @@ void MinitelShell::runCommand()
         }
     } else if (token1 == TOKEN_KEYWORD_CLEAR) {
         _term->clear();
-    } else if (token1 == TOKEN_KEYWORD_CONFIGOPT && token2 == 0) {
-        input(
-            "Enter Server IP: ", inputBuffer, INPUT_BUFFER_SIZE,
-        [&]() {
-            cm.setServerIP(inputBuffer);
-            println("OK");
-            input(
-                "Enter Server Port: ", inputBuffer, INPUT_BUFFER_SIZE,
-            [&]() {
-                cm.setServerPort(inputBuffer);
-                println("\r\nUse 3615 to use this config.");
-                println("OK");
-            });
-        });
-        return;
-    } else if (token1 == TOKEN_KEYWORD_CONFIGOPT && token2 == TOKEN_KEYWORD_SAVE) {
-        bool OK = cm.saveOpt();
-        if (OK) {
-            _term->println("OK");
-        } else {
-            _term->println("Saved failed.");
-        }
-    } else if (token1 == TOKEN_KEYWORD_CONFIGOPT && token2 == TOKEN_KEYWORD_LOAD) {
-        bool OK = cm.loadOpt();
-        if (OK) {
-            _term->println("OK");
-        } else {
-            _term->println("Load failed.");
-        }
     } else if (token1 == TOKEN_INTEGER && value == 3615) {
 #ifdef MINITEL
         _term->print((char *)P_LOCAL_ECHO_OFF);

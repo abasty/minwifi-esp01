@@ -11,7 +11,6 @@ class MinitelShell : public Shell
 {
 public:
     MinitelShell(Terminal *term) : Shell(term) {}
-    void connectServer();
 
 protected:
     char inputBuffer[INPUT_BUFFER_SIZE];

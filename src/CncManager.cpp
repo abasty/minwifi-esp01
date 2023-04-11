@@ -84,55 +84,6 @@ bool ConnectionManager::load()
     }
 }
 
-void ConnectionManager::setServerIP(char *ip)
-{
-    _serverIP.fromString(ip);
-}
-
-IPAddress ConnectionManager::getServerIP()
-{
-    return _serverIP;
-}
-
-void ConnectionManager::setServerPort(char* port)
-{
-    _serverPort = String(port).toInt();
-}
-
-int ConnectionManager::getServerPort()
-{
-    return _serverPort;
-}
-
-bool ConnectionManager::saveOpt()
-{
-    File file = LittleFS.open(CNCMGR_SAVE_OPT_FILE, "w");
-    if (file) {
-        file.printf("%s\n", _serverIP.toString().c_str());
-        file.printf("%s\n", String(_serverPort).c_str());
-        file.close();
-        return true;
-    } else {
-        return false;
-    }
-}
-
-bool ConnectionManager::loadOpt()
-{
-    File file = LittleFS.open(CNCMGR_SAVE_OPT_FILE, "r");
-    if (file) {
-        String line;
-        line = file.readStringUntil('\n');
-        _serverIP.fromString(line);
-        line = file.readStringUntil('\n');
-        _serverPort = line.toInt();
-        file.close();
-        return true;
-    } else {
-        return false;
-    }
-}
-
 bool ConnectionManager::isConnected()
 {
     return WiFi.isConnected();

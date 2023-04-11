@@ -47,14 +47,6 @@ public:
     bool save();
     bool load();
 
-    // Connection options get/set
-    void setServerIP(char* ip);
-    IPAddress getServerIP();
-    void setServerPort(char* port);
-    int getServerPort();
-    bool saveOpt();
-    bool loadOpt();
-
     // Network connection
     bool connect();
     void disconnect();
@@ -64,9 +56,6 @@ private:
     // Connection parameters
     String _ssid;
     String _secret;
-    // Connection options
-    IPAddress _serverIP;
-    int _serverPort;
     // Shell for UI (print, input)
     Shell *_shell;
 

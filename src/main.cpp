@@ -116,7 +116,6 @@ void setup()
 
     // connect Wifi if configuration available
     cm.load();
-    cm.loadOpt();
     cm.connect();
 
     // Initialize OTA
@@ -162,7 +161,6 @@ void setup()
     initMinitel(false);
 
     // connect to Minitel server if any
-    serialShell->connectServer();
     serialTerminal->prompt();
 }
 
