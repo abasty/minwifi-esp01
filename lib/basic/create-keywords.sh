@@ -18,6 +18,8 @@ clear
 load
 save
 configopt
+tcp
+ws
 EOF
 
 sort -o ${KEYWORDS_FILE}{,}

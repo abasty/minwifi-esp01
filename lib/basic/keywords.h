@@ -8,3 +8,5 @@
 #define TOKEN_KEYWORD_LOAD ((uint8_t) (6 | 0b10000000))
 #define TOKEN_KEYWORD_RESET ((uint8_t) (7 | 0b10000000))
 #define TOKEN_KEYWORD_SAVE ((uint8_t) (8 | 0b10000000))
+#define TOKEN_KEYWORD_TCP ((uint8_t) (9 | 0b10000000))
+#define TOKEN_KEYWORD_WS ((uint8_t) (10 | 0b10000000))

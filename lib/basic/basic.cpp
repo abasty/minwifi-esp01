@@ -14,7 +14,7 @@ int char_is_sep(char test_char)
 int char_of_keyword(char test_char)
 {
     // TODO: test other implementation for size
-    return (test_char >= 'A' && test_char <= 'Z') || (test_char >= 'a' && test_char <= 'z')  || (test_char >= '0' && test_char <= '9') || (test_char == '_');
+    return (test_char >= 'A' && test_char <= 'Z') || (test_char >= 'a' && test_char <= 'z') || (test_char >= '0' && test_char <= '9') || (test_char == '_');
 }
 
 int char_is_digit(char test_char)
@@ -22,13 +22,9 @@ int char_is_digit(char test_char)
     return test_char >= '0' && test_char <= '9';
 }
 
-// TODO: pase a string, split to spaces, and give pointer to words, then
-// tokenize : interger, string, keyword
-// Ou plutôt un truc qui fait "nextToken, nextTokenAsString"
-
 int tokenize_keyword(t_tokenizer_state *state, const char *keyword_char)
 {
-    char *word = (char *) (state->read_ptr);
+    char *word = (char *)(state->read_ptr);
     char *word_char = word;
 
     // Search end of keyword and transform to uppercase
@@ -89,9 +85,27 @@ int tokenize_integer(t_tokenizer_state *state)
     return 0;
 }
 
+int tokenize_string(t_tokenizer_state *state)
+{
+    *state->write_ptr++ = TOKEN_STRING;
+    char c = *++state->read_ptr;
+    while (c != 0 && c != '"')
+    {
+        *state->write_ptr++ = c;
+        c = *++state->read_ptr;
+    }
+    if (c == 0)
+    {
+        return -1;
+    }
+    *state->write_ptr++ = 0;
+    state->read_ptr++;
+    return 0;
+}
+
 int tokenize(t_tokenizer_state *state, char *line_str)
 {
-    state->start = (uint8_t*) line_str;
+    state->start = (uint8_t *)line_str;
     state->read_ptr = state->start;
     state->write_ptr = state->start;
 
@@ -106,6 +120,10 @@ int tokenize(t_tokenizer_state *state, char *line_str)
         else if (c == '"')
         {
             // string
+            if (tokenize_string(state) == -1)
+            {
+                return -1;
+            }
         }
         else if (c >= '0' && c <= '9')
         {
@@ -144,6 +162,17 @@ uint16_t token_integer_get_value(t_tokenizer_state *state)
     uint16_t value = *state->read_ptr;
     state->read_ptr++;
     value += *state->read_ptr << 8;
+    state->read_ptr++;
+    return value;
+}
+
+char *token_string_get_value(t_tokenizer_state *state)
+{
+    char *value = (char *)(state->read_ptr);
+    while (*state->read_ptr)
+    {
+        state->read_ptr++;
+    }
     state->read_ptr++;
     return value;
 }

@@ -31,7 +31,7 @@ int main()
 {
     keyword_print_all(keywords);
 
-    const char *test_input = "config  65535    reset  3615   free 0 clear 2024 cats";
+    const char *test_input = "connect ws \"3615co.de/ws\" 80";
     char command[256];
     strcpy(command, test_input);
 
@@ -57,6 +57,11 @@ int main()
             {
                 uint16_t value = token_integer_get_value(&line);
                 printf("[uint: %u]\n", value);
+            }
+            else if (token == TOKEN_STRING)
+            {
+                char *value = token_string_get_value(&line);
+                printf("[string: %s]\n", value);
             }
             else
             {
