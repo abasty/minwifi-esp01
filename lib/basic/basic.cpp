@@ -76,10 +76,27 @@ int tokenize_integer(t_tokenizer_state *state)
         {
             return -1;
         }
-        value = value * 10 + c - '0';
+        value *= 10;
+        c -= '0';
+        if (value == 65530 && c > 5)
+        {
+            return -1;
+        }
+        value += c;
         c = *++state->read_ptr;
     }
-    *state->write_ptr++ = TOKEN_INTEGER;
+    if (value < 16)
+    {
+        *state->write_ptr++ = TOKEN_INTEGER_4 + value;
+        return 0;
+    }
+    if (value < 256)
+    {
+        *state->write_ptr++ = TOKEN_INTEGER_8;
+        *state->write_ptr++ = value;
+        return 0;
+    }
+    *state->write_ptr++ = TOKEN_INTEGER_16;
     *state->write_ptr++ = value & 0xFF;
     *state->write_ptr++ = value >> 8;
     return 0;
@@ -159,8 +176,16 @@ uint8_t token_get_next(t_tokenizer_state *state)
 
 uint16_t token_integer_get_value(t_tokenizer_state *state)
 {
-    uint16_t value = *state->read_ptr;
-    state->read_ptr++;
+    uint8_t token = *(state->read_ptr - 1);
+    if ((token & TOKEN_INTEGER_BITS_MASK) == TOKEN_INTEGER_4)
+    {
+        return token & 0b00001111;
+    }
+    uint16_t value = *state->read_ptr++;
+    if ((token & TOKEN_INTEGER_BITS_MASK) == TOKEN_INTEGER_8)
+    {
+        return value;
+    }
     value += *state->read_ptr << 8;
     state->read_ptr++;
     return value;

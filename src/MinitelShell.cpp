@@ -54,7 +54,7 @@ void MinitelShell::runCommand()
     tokenize(&state, _command);
     uint8_t token1 = token_get_next(&state);
     uint16_t value = 0;
-    if (token1 == TOKEN_INTEGER)
+    if ((token1 & TOKEN_INTEGER_TYPE_MASK) == TOKEN_INTEGER)
     {
         value = token_integer_get_value(&state);
         _term->printf("value: %u\n", value);

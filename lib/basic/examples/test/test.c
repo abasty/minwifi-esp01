@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "basic.h"
+#include "keywords.h"
 
 extern char *keywords;
 
@@ -25,19 +26,27 @@ void keyword_print_all(const char *keyword_char)
         }
         keyword_char++;
     }
+    printf("\n");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-    keyword_print_all(keywords);
-
-    const char *test_input = "connect ws \"3615co.de/ws\" 80";
+    const char *test_input = "0 9 15 16 255 256 65535 connect ws \"3615co.de/ws\" 80";
     char command[256];
-    strcpy(command, test_input);
+
+    if (argc >= 2)
+    {
+        strncpy(command, argv[1], 255);
+        command[255] = 0;
+    }
+    else
+    {
+        strcpy(command, test_input);
+    }
 
     t_tokenizer_state line;
 
-    printf("\n%s\n\n", test_input);
+    printf("\n%s\n", command);
     int err = tokenize(&line, command);
     if (err)
     {
@@ -48,12 +57,16 @@ int main()
         uint8_t token;
         while ((token = token_get_next(&line)))
         {
-            if (token & TOKEN_KEYWORD)
+            if ((token & TOKEN_KEYWORD) != 0)
             {
+                if (token == TOKEN_KEYWORD_HELP)
+                {
+                    keyword_print_all(keywords);
+                }
                 token &= ~TOKEN_KEYWORD;
                 printf("[keyword id: %u]\n", token);
             }
-            else if (token == TOKEN_INTEGER)
+            else if ((token & TOKEN_INTEGER_TYPE_MASK) == TOKEN_INTEGER)
             {
                 uint16_t value = token_integer_get_value(&line);
                 printf("[uint: %u]\n", value);

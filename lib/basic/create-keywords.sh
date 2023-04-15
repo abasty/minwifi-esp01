@@ -20,6 +20,7 @@ save
 configopt
 tcp
 ws
+help
 EOF
 
 sort -o ${KEYWORDS_FILE}{,}

@@ -3,10 +3,18 @@
 
 #include <stdint.h>
 
-#define KEYWORD_END_TAG (0b10000000)
-#define TOKEN_KEYWORD ((uint8_t) 0b10000000)
-#define TOKEN_INTEGER ((uint8_t) 0b00000001)
-#define TOKEN_STRING  ((uint8_t) 0b00000010)
+#define TOKEN_KEYWORD           ((uint8_t) 0b10000000)
+#define KEYWORD_END_TAG         TOKEN_KEYWORD
+
+#define TOKEN_INTEGER_TYPE_MASK ((uint8_t) 0b11000000)
+#define TOKEN_INTEGER_BITS_MASK ((uint8_t) 0b01110000)
+#define TOKEN_INTEGER           ((uint8_t) 0b01000000)
+#define TOKEN_INTEGER_4         ((uint8_t) 0b01000000)
+#define TOKEN_INTEGER_8         ((uint8_t) 0b01100000)
+#define TOKEN_INTEGER_16        ((uint8_t) 0b01010000)
+
+#define TOKEN_STRING            ((uint8_t) 0b00100000)
+
 
 typedef struct {
     uint8_t *start;
