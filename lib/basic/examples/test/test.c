@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "basic.h"
+#include "token.h"
 #include "keywords.h"
 
 extern char *keywords;

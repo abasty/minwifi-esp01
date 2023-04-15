@@ -2,7 +2,7 @@
 #include <WebSocketsClient.h>
 #include <strings.h>
 
-#include "basic.h"
+#include "token.h"
 #include "keywords.h"
 
 #include "minitel.h"
