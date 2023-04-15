@@ -5,6 +5,7 @@
 * <http://pficheux.free.fr/xtel/>
 * <https://www.tindie.com/products/iodeo/minitel-esp32-dev-board/>
 * <https://forum.museeminitel.fr/t/minitel-esp32-carte-peri-informatique-wifi-ble/711/42>
+* Basic ZX81 : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/appxc.html>
 
 # Prise péri informatique
 
