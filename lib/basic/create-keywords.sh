@@ -39,7 +39,7 @@ while IFS= read -r keyword; do
     ((index++))
 done < ${KEYWORDS_FILE}
 
-echo -n "const char *keywords = \"" >${KEYWORDS_C}
+echo "const char *keywords =" >${KEYWORDS_C}
 index=0
 while IFS= read -r keyword; do
     u_key=${keyword^^}
@@ -47,8 +47,9 @@ while IFS= read -r keyword; do
     u_key_but_last="${u_key%${u_key_last}}"
     u_key_last_code=$(ord ${u_key_last})
     ((e_key_last_code=${u_key_last_code}+128))
-    echo -n "${u_key_but_last}" >>${KEYWORDS_C}
-    printf '""\\x%x""' ${e_key_last_code} >>${KEYWORDS_C}
+    echo -n "    \"${u_key_but_last}" >>${KEYWORDS_C}
+    printf '""\\x%x"' ${e_key_last_code} >>${KEYWORDS_C}
+    echo >>${KEYWORDS_C}
     ((index++))
 done < ${KEYWORDS_FILE}
-echo "\";" >>${KEYWORDS_C}
+echo ";" >>${KEYWORDS_C}
