@@ -17,7 +17,7 @@
 
 
 typedef struct {
-    uint8_t *start;
+    uint16_t line_no;
     uint8_t *read_ptr;
     uint8_t *write_ptr;
 } t_tokenizer_state;

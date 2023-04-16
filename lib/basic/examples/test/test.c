@@ -31,7 +31,7 @@ void keyword_print_all(const char *keyword_char)
 
 int main(int argc, char *argv[])
 {
-    const char *test_input = "0 9 15 16 255 256 65535 connect ws \"3615co.de/ws\" 80";
+    const char *test_input = "10 connect ws \"3615co.de/ws\" 80";
     char command[256];
 
     if (argc >= 2)
@@ -54,6 +54,8 @@ int main(int argc, char *argv[])
     }
     else
     {
+        printf("line no: %u, len: %zu\n\n", line.line_no, line.write_ptr - line.read_ptr);
+
         uint8_t token;
         while ((token = token_get_next(&line)))
         {
@@ -81,6 +83,5 @@ int main(int argc, char *argv[])
                 printf("%u\n", token);
             }
         }
-        printf("\nOK, len: %zu\n", line.write_ptr - line.start);
     }
 }

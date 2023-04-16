@@ -1,12 +1,14 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "token.h"
 #include "berror.h"
 #include "keywords.inc"
 
 #define TOKENS_MAX_LINE_SIZE (256)
+uint8_t tokenized_input[TOKENS_MAX_LINE_SIZE];
 
 int8_t char_is_sep(char test_char)
 {
@@ -122,13 +124,14 @@ int8_t tokenize_string(t_tokenizer_state *state)
     return 0;
 }
 
-int8_t tokenize(t_tokenizer_state *state, char *line_str)
+int8_t tokenize(t_tokenizer_state *state, char *input)
 {
-    state->start = (uint8_t *)line_str;
-    state->read_ptr = state->start;
-    state->write_ptr = state->start;
+    state->read_ptr = (uint8_t*) input;
+    state->write_ptr = tokenized_input;
+    state->line_no = 0;
 
     uint8_t c;
+    uint8_t token_count = 0;
     int8_t err = 0;
 
     while ((c = *state->read_ptr))
@@ -148,6 +151,15 @@ int8_t tokenize(t_tokenizer_state *state, char *line_str)
         {
             // integer
             err = tokenize_integer(state);
+            if (err == 0 && token_count == 0)
+            {
+                uint8_t *read_ptr = state->read_ptr;
+                state->read_ptr = tokenized_input;
+                token_get_next(state);
+                state->line_no = token_integer_get_value(state);
+                state->read_ptr = read_ptr;
+                state->write_ptr = tokenized_input;
+            }
         }
         else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
         {
@@ -163,8 +175,9 @@ int8_t tokenize(t_tokenizer_state *state, char *line_str)
         {
             return err;
         }
+        token_count++;
     }
-    state->read_ptr = state->start;
+    state->read_ptr = tokenized_input;
     *state->write_ptr = 0;
     return 0;
 }
