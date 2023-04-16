@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define TOKEN_KEYWORD           ((uint8_t) 0b10000000)
 #define KEYWORD_END_TAG         TOKEN_KEYWORD
 
@@ -15,7 +19,6 @@
 
 #define TOKEN_STRING            ((uint8_t) 0b00100000)
 
-
 typedef struct {
     uint16_t line_no;
     uint8_t *read_ptr;
@@ -26,5 +29,9 @@ int8_t tokenize(t_tokenizer_state *state, char *line);
 uint8_t token_get_next(t_tokenizer_state *state);
 uint16_t token_integer_get_value(t_tokenizer_state *state);
 char* token_string_get_value(t_tokenizer_state *state);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __TOKEN_H__

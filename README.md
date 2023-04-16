@@ -102,6 +102,10 @@ $ pio run -e minwifi -t clean
 
 ## Tokens
 
+## Expressions
+
+Il serait malin de les analyser et de les stocker en RPN (bof pour LIST).
+
 ## Variables
 
 ### Déclaration et réservation mémoire
@@ -139,3 +143,8 @@ coup ça peut être un `uint32_t`, comme pour les symboles.
 
 Les lignes de prog et les variables sont sauvegardées. Un parcours GRD suffit
 pour sérialiser.
+
+
+## Mémoire
+
+* C++: 459400, C: 459368 (32 octets)
