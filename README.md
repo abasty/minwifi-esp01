@@ -102,6 +102,10 @@ $ pio run -e minwifi -t clean
 
 ## Tokens
 
+## Valeurs
+
+* réels : Utiliser IEEE_754 : <https://fr.wikipedia.org/wiki/IEEE_754>
+
 ## Expressions
 
 Il serait malin de les analyser et de les stocker en RPN (bof pour LIST).
