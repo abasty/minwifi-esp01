@@ -3,26 +3,28 @@
 #include <stdio.h>
 
 #include "token.h"
-
+#include "berror.h"
 #include "keywords.inc"
 
-int char_is_sep(char test_char)
+#define TOKENS_MAX_LINE_SIZE (256)
+
+int8_t char_is_sep(char test_char)
 {
     return test_char <= ' ' || test_char == ':' || test_char == ';' || test_char == ',' || test_char == '"';
 }
 
-int char_of_keyword(char test_char)
+int8_t char_of_keyword(char test_char)
 {
     // TODO: test other implementation for size
     return (test_char >= 'A' && test_char <= 'Z') || (test_char >= 'a' && test_char <= 'z') || (test_char >= '0' && test_char <= '9') || (test_char == '_');
 }
 
-int char_is_digit(char test_char)
+int8_t char_is_digit(char test_char)
 {
     return test_char >= '0' && test_char <= '9';
 }
 
-int tokenize_keyword(t_tokenizer_state *state, const char *keyword_char)
+int8_t tokenize_keyword(t_tokenizer_state *state, const char *keyword_char)
 {
     char *word = (char *)(state->read_ptr);
     char *word_char = word;
@@ -62,10 +64,10 @@ int tokenize_keyword(t_tokenizer_state *state, const char *keyword_char)
             word_char = word;
         }
     }
-    return -1;
+    return BERROR_SYNTAX;
 }
 
-int tokenize_integer(t_tokenizer_state *state)
+int8_t tokenize_integer(t_tokenizer_state *state)
 {
     uint16_t value = 0;
 
@@ -74,13 +76,13 @@ int tokenize_integer(t_tokenizer_state *state)
     {
         if (value > 6553)
         {
-            return -1;
+            return BERROR_SYNTAX;
         }
         value *= 10;
         c -= '0';
         if (value == 65530 && c > 5)
         {
-            return -1;
+            return BERROR_SYNTAX;
         }
         value += c;
         c = *++state->read_ptr;
@@ -102,7 +104,7 @@ int tokenize_integer(t_tokenizer_state *state)
     return 0;
 }
 
-int tokenize_string(t_tokenizer_state *state)
+int8_t tokenize_string(t_tokenizer_state *state)
 {
     *state->write_ptr++ = TOKEN_STRING;
     char c = *++state->read_ptr;
@@ -113,55 +115,53 @@ int tokenize_string(t_tokenizer_state *state)
     }
     if (c == 0)
     {
-        return -1;
+        return BERROR_SYNTAX;
     }
     *state->write_ptr++ = 0;
     state->read_ptr++;
     return 0;
 }
 
-int tokenize(t_tokenizer_state *state, char *line_str)
+int8_t tokenize(t_tokenizer_state *state, char *line_str)
 {
     state->start = (uint8_t *)line_str;
     state->read_ptr = state->start;
     state->write_ptr = state->start;
 
     uint8_t c;
+    int8_t err = 0;
+
     while ((c = *state->read_ptr))
     {
         // first char => type
         if (c == ' ')
         {
             state->read_ptr++;
+            continue;
         }
-        else if (c == '"')
+        if (c == '"')
         {
             // string
-            if (tokenize_string(state) == -1)
-            {
-                return -1;
-            }
+            err = tokenize_string(state);
         }
         else if (c >= '0' && c <= '9')
         {
             // integer
-            if (tokenize_integer(state) == -1)
-            {
-                return -1;
-            }
+            err = tokenize_integer(state);
         }
         else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
         {
             // keyword
-            if (tokenize_keyword(state, keywords) == -1)
-            {
-                return -1;
-            }
+            err = tokenize_keyword(state, keywords);
         }
         else
         {
             // syntax error
-            return -1;
+            err = BERROR_SYNTAX;
+        }
+        if (err < 0)
+        {
+            return err;
         }
     }
     state->read_ptr = state->start;
