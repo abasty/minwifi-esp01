@@ -97,3 +97,45 @@ $ pio device monitor
 $ pio run -e minwifi
 $ pio run -e minwifi -t clean
 ```
+
+# Basic ZX81 like
+
+## Tokens
+
+## Variables
+
+### Déclaration et réservation mémoire
+
+* Symbole
+
+- log(36, 2^31) = 5.99621851
+
+Donc on peut convenir qu'un symbole est composé au max de 5 lettres/chiffres. Un
+`$` est accepté à la fin pour signifier "string". Ces 5 caractères forment les 31
+bits de poids faible d'un `uint32_t`. La présence du `$` est signalé par le bit
+32 à 1.
+
+Les symboles sont stockés dans un arbre binaire, indexé par la valeur du
+symbole.
+
+* Valeur
+
+Pour les chaines de caractères, la valeur associée au symbole est un
+pointeur. Pour les valeurs nombre (integer, float), c'est la valeur en forme
+token (le token + la valeur tokenisée).
+
+* Tableaux
+
+Stocker les dimensions et le pointeur, vers la zone mémoire allouée avec calloc.
+4  dimensions max ?.
+
+
+## Ligne de prog
+
+Les lignes sont stockées dans un arbre binaire indexé par le n0 de ligne. Du
+coup ça peut être un `uint32_t`, comme pour les symboles.
+
+## Sauvegarde
+
+Les lignes de prog et les variables sont sauvegardées. Un parcours GRD suffit
+pour sérialiser.
