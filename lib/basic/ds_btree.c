@@ -116,7 +116,7 @@ static inline ds_btree_item_t *ds_btree_node_alloc(ds_btree_t *btree)
 
 static inline void *ds_btree_object_of(ds_btree_t *btree, ds_btree_item_t *node)
 {
-    return btree->_offset_in_object == -1 ? ((ds_btree_ext_item_t *)node)->object : DS_OBJECT_OF(btree, node);
+    return btree->_offset_in_object == ((size_t) -1) ? ((ds_btree_ext_item_t *)node)->object : DS_OBJECT_OF(btree, node);
 }
 
 static inline int ds_btree_cmp_object_to(ds_btree_t *btree, ds_btree_item_t *node)

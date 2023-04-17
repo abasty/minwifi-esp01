@@ -6,6 +6,7 @@ const char *keywords =
     "CONNEC""\xd4"
     "FRE""\xc5"
     "HEL""\xd0"
+    "LIS""\xd4"
     "LOA""\xc4"
     "RESE""\xd4"
     "SAV""\xc5"

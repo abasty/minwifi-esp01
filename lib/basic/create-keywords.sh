@@ -21,6 +21,7 @@ configopt
 tcp
 ws
 help
+list
 EOF
 
 sort -o ${KEYWORDS_FILE}{,}

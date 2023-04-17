@@ -26,9 +26,33 @@
 #ifndef __BMEMORY_H__
 #define __BMEMORY_H__
 
+#include "ds_btree.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct {
+    ds_btree_item_t item;
+    uint16_t line_no;
+    uint16_t len;
+    uint8_t *line;
+} prog_t;
+
+typedef struct {
+    ds_btree_item_t item;
+    uint32_t symbol;
+    uint8_t token;
+    union {
+        uint32_t number;
+        char *string;
+    };
+} var_t;
+
+
+int bmem_init();
+void bmem_prog_free(prog_t *prog);
+prog_t *bmem_prog_new(uint16_t line_no, uint8_t *line, uint16_t len);
 
 #ifdef __cplusplus
 }

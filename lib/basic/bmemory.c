@@ -24,22 +24,70 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "ds_btree.h"
 #include "bmemory.h"
 
-typedef struct {
-    // btree item
-    uint16_t line_no;
-    uint8_t *line;
-} prog_line_t;
+ds_btree_t progs;
+ds_btree_t vars;
 
-typedef struct {
-    // btree item
-    uint32_t symbol;
-    uint8_t token;
-    union {
-        uint32_t number;
-        char *string;
-    };
-} var_t;
+int bmem_prog_cmp(void *_prog1, void *_prog2)
+{
+    prog_t *prog1 = (prog_t *)_prog1;
+    prog_t *prog2 = (prog_t *)_prog2;
+    return prog1->line_no - prog2->line_no;
+}
+
+int bmem_vars_cmp(void *_var1, void *_var2)
+{
+    var_t *var1 = (var_t *)_var1;
+    var_t *var2 = (var_t *)_var2;
+    return var1->symbol - var2->symbol;
+}
+
+int bmem_init()
+{
+    ds_btree_init(&progs, offsetof(prog_t, item), bmem_prog_cmp);
+    ds_btree_init(&vars, offsetof(var_t, item), bmem_vars_cmp);
+    return 0;
+}
+
+void bmem_prog_free(prog_t *prog)
+{
+    ds_btree_remove_object(&progs, prog);
+    free(prog->line);
+    free(prog);
+}
+
+prog_t *bmem_prog_new(uint16_t line_no, uint8_t *line, uint16_t len)
+{
+    prog_t *prog = (prog_t *)malloc(sizeof(prog_t));
+    if (prog == 0)
+    {
+        return 0;
+    }
+    prog->line = (uint8_t *)malloc(len + 1);
+    if (prog->line == 0)
+    {
+        return 0;
+    }
+
+    memcpy(prog->line, line, len + 1);
+    prog->len = len;
+    prog->line_no = line_no;
+
+    prog_t *exist = (prog_t *)ds_btree_insert(&progs, prog);
+    if (exist == prog)
+    {
+        return prog;
+    }
+
+    free(exist->line);
+    exist->line = prog->line;
+    exist->len = prog->len;
+    free(prog);
+
+    return exist;
+}

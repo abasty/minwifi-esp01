@@ -27,6 +27,7 @@
 #include <ESP8266WiFi.h>
 #include <ArduinoOTA.h>
 #include <WebSocketsClient.h>
+#include <LittleFS.h>
 
 #include "Terminal.h"
 #include "Shell.h"
@@ -34,7 +35,7 @@
 #include "CncManager.h"
 #include "minitel.h"
 
-#include "LittleFS.h"
+#include "bmemory.h"
 
 // 0:	BUTTON
 // 13:	LED
@@ -155,6 +156,8 @@ void setup()
 
     Serial.setTimeout(0);
     initMinitel(false);
+
+    bmem_init();
 
     // connect to Minitel server if any
     serialTerminal->prompt();

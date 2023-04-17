@@ -1,5 +1,5 @@
-test : test.c ../../token.h ../../token.c ../../keywords.h ../../keywords.inc
-	g++ -Wall -g -O0 -o test test.c ../../token.c -I ../..
+test : test.c ../../token.h ../../token.c ../../bmemory.c ../../keywords.h ../../keywords.inc ../../ds_btree.c
+	g++ -Wall -g -O0  -I ../.. -o test test.c ../../token.c ../../bmemory.c ../../ds_btree.c
 
 clean:
 	rm -f *.o

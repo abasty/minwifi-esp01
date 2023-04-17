@@ -26,8 +26,6 @@
 #ifndef __DS_BTREE_EXT_H__
 #define __DS_BTREE_EXT_H__
 
-#include <stddef.h>
-
 #include "ds_btree.h"
 
 #ifdef __cplusplus

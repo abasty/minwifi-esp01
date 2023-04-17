@@ -1,9 +1,12 @@
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "token.h"
 #include "keywords.h"
+#include "bmemory.h"
 
 extern char *keywords;
 
@@ -29,59 +32,85 @@ void keyword_print_all(const char *keyword_char)
     printf("\n");
 }
 
+extern ds_btree_t progs;
+extern ds_btree_t vars;
+
+void prog_list()
+{
+    printf("Program: %zd line(s).\n", progs.count);
+    printf("Variables: %zd symbols(s).\n", vars.count);
+}
+
 int main(int argc, char *argv[])
 {
-    const char *test_input = "10 connect ws \"3615co.de/ws\" 80";
-    char command[256];
-
-    if (argc >= 2)
-    {
-        strncpy(command, argv[1], 255);
-        command[255] = 0;
-    }
-    else
-    {
-        strcpy(command, test_input);
-    }
-
+    bool cont = true;
     t_tokenizer_state line;
 
-    printf("\n%s\n", command);
-    int err = tokenize(&line, command);
-    if (err)
-    {
-        printf("Syntax error.\n");
-    }
-    else
-    {
-        printf("line no: %u, len: %zu\n\n", line.line_no, line.write_ptr - line.read_ptr);
+    bmem_init();
 
-        uint8_t token;
-        while ((token = token_get_next(&line)))
+    while (cont)
+    {
+        size_t size = 0;
+        char *command = 0;
+        ssize_t len = getline(&command, &size, stdin);
+
+        if (len == 1)
         {
-            if ((token & TOKEN_KEYWORD) != 0)
+            break;
+        }
+
+        if (len > 0)
+        {
+            command[len - 1] = 0;
+        }
+
+        int err = tokenize(&line, command);
+        if (err)
+        {
+            printf("Syntax error.\n");
+        }
+        else
+        {
+            if (line.line_no != 0)
             {
-                if (token == TOKEN_KEYWORD_HELP)
-                {
-                    keyword_print_all(keywords);
-                }
-                token &= ~TOKEN_KEYWORD;
-                printf("[keyword id: %u]\n", token);
-            }
-            else if ((token & TOKEN_INTEGER_TYPE_MASK) == TOKEN_INTEGER)
-            {
-                uint16_t value = token_integer_get_value(&line);
-                printf("[uint: %u]\n", value);
-            }
-            else if (token == TOKEN_STRING)
-            {
-                char *value = token_string_get_value(&line);
-                printf("[string: %s]\n", value);
+                printf("line no: %u, len: %zu\n\n", line.line_no, line.write_ptr - line.read_ptr);
+                bmem_prog_new(line.line_no, line.read_ptr, line.write_ptr - line.read_ptr);
             }
             else
             {
-                printf("%u\n", token);
+                uint8_t token;
+                while ((token = token_get_next(&line)))
+                {
+                    if ((token & TOKEN_KEYWORD) != 0)
+                    {
+                        if (token == TOKEN_KEYWORD_HELP)
+                        {
+                            keyword_print_all(keywords);
+                        }
+                        else if (token == TOKEN_KEYWORD_LIST)
+                        {
+                            prog_list();
+                        }
+                        token &= ~TOKEN_KEYWORD;
+                        printf("[keyword id: %u]\n", token);
+                    }
+                    else if ((token & TOKEN_INTEGER_TYPE_MASK) == TOKEN_INTEGER)
+                    {
+                        uint16_t value = token_integer_get_value(&line);
+                        printf("[uint: %u]\n", value);
+                    }
+                    else if (token == TOKEN_STRING)
+                    {
+                        char *value = token_string_get_value(&line);
+                        printf("[string: %s]\n", value);
+                    }
+                    else
+                    {
+                        printf("%u\n", token);
+                    }
+                }
             }
         }
+        free(command);
     }
 }
