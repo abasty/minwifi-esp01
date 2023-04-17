@@ -23,4 +23,23 @@
  * SOFTWARE.
  */
 
+#include <stdint.h>
+
+#include "ds_btree.h"
 #include "bmemory.h"
+
+typedef struct {
+    // btree item
+    uint16_t line_no;
+    uint8_t *line;
+} prog_line_t;
+
+typedef struct {
+    // btree item
+    uint32_t symbol;
+    uint8_t token;
+    union {
+        uint32_t number;
+        char *string;
+    };
+} var_t;

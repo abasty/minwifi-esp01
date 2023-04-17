@@ -105,6 +105,8 @@ $ pio run -e minwifi -t clean
 ## Valeurs
 
 * réels : Utiliser IEEE_754 : <https://fr.wikipedia.org/wiki/IEEE_754>
+* integers : 4, 8, 16 bits
+* string
 
 ## Expressions
 
