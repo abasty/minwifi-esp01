@@ -79,15 +79,20 @@ prog_t *bmem_prog_new(uint16_t line_no, uint8_t *line, uint16_t len)
     prog->line_no = line_no;
 
     prog_t *exist = (prog_t *)ds_btree_insert(&progs, prog);
-    if (exist == prog)
+    if (exist != prog)
     {
-        return prog;
+        free(exist->line);
+        exist->line = prog->line;
+        exist->len = prog->len;
+        free(prog);
+        prog = exist;
     }
 
-    free(exist->line);
-    exist->line = prog->line;
-    exist->len = prog->len;
-    free(prog);
+    if (prog->len == 0)
+    {
+        bmem_prog_free(prog);
+        return 0;
+    }
 
-    return exist;
+    return prog;
 }
