@@ -8,8 +8,11 @@ const char *keywords =
     "HEL""\xd0"
     "LIS""\xd4"
     "LOA""\xc4"
+    "OF""\xc6"
+    "O""\xce"
     "RESE""\xd4"
     "SAV""\xc5"
     "TC""\xd0"
+    "WIF""\xc9"
     "W""\xd3"
 ;

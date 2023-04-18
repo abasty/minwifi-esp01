@@ -22,6 +22,9 @@ tcp
 ws
 help
 list
+wifi
+on
+off
 EOF
 
 sort -o ${KEYWORDS_FILE}{,}
