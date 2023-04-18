@@ -51,6 +51,9 @@ typedef struct {
 } t_tokenizer_state;
 
 int8_t tokenize(t_tokenizer_state *state, char *line);
+char *untokenize(uint8_t *input);
+
+uint8_t token_peek_next(t_tokenizer_state *state);
 uint8_t token_get_next(t_tokenizer_state *state);
 uint16_t token_integer_get_value(t_tokenizer_state *state);
 char* token_string_get_value(t_tokenizer_state *state);

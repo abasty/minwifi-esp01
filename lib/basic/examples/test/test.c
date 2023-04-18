@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "ds_common.h"
+#include "ds_btree.h"
+
 #include "token.h"
 #include "keywords.h"
 #include "bmemory.h"
@@ -35,10 +38,24 @@ void keyword_print_all(const char *keyword_char)
 extern ds_btree_t progs;
 extern ds_btree_t vars;
 
+#define progof(_ds, _item) ((prog_t *)DS_OBJECT_OF(_ds, _item))
+
+void btree_node_print(ds_btree_t *btree, ds_btree_item_t *node)
+{
+    if (node)
+    {
+        btree_node_print(btree, node->left);
+        printf("%u", progof(btree, node)->line_no);
+        printf("%s\n", untokenize(progof(btree, node)->line));
+        btree_node_print(btree, node->right);
+    }
+}
+
 void prog_list()
 {
     printf("Program: %zd line(s).\n", progs.count);
     printf("Variables: %zd symbols(s).\n", vars.count);
+    btree_node_print(&progs, progs.root);
 }
 
 int main(int argc, char *argv[])
@@ -73,7 +90,7 @@ int main(int argc, char *argv[])
         {
             if (line.line_no != 0)
             {
-                printf("line no: %u, len: %zu\n\n", line.line_no, line.write_ptr - line.read_ptr);
+                // printf("line no: %u, len: %zu\n", line.line_no, line.write_ptr - line.read_ptr);
                 bmem_prog_new(line.line_no, line.read_ptr, line.write_ptr - line.read_ptr);
             }
             else
