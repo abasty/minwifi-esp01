@@ -2,5 +2,10 @@
     "cSpell.enableFiletypes": [
         "!c",
         "!cpp"
-    ]
+    ],
+    "files.associations": {
+        "token.h": "c",
+        "berror.h": "c",
+        "*.inc": "c"
+    }
 }

@@ -23,30 +23,43 @@
  * SOFTWARE.
  */
 
-#ifndef minitel_h
-#define minitel_h
+#ifndef __TOKEN_H__
+#define __TOKEN_H__
 
-// Cuseur ON
-#define CON "\x11"
+#include <stdint.h>
 
-// Protocole
-#define PRO1 "\x1B\x39"
-#define PRO2 "\x1B\x3A"
-#define PRO3 "\x1B\x3B"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define P_OFF "\x60"
-#define P_ON "\x61"
-#define P_NON_RETOUR_ACQUITEMENT "\x64"
+#define TOKEN_KEYWORD           ((uint8_t) 0b10000000)
+#define KEYWORD_END_TAG         TOKEN_KEYWORD
 
-#define P_CLAVIER_TX "\x51"
-#define P_MODEM_RX "\x5A"
-#define P_PRISE_TX "\x53"
+#define TOKEN_INTEGER_TYPE_MASK ((uint8_t) 0b11000000)
+#define TOKEN_INTEGER_BITS_MASK ((uint8_t) 0b01110000)
+#define TOKEN_INTEGER           ((uint8_t) 0b01000000)
+#define TOKEN_INTEGER_4         ((uint8_t) 0b01000000)
+#define TOKEN_INTEGER_8         ((uint8_t) 0b01100000)
+#define TOKEN_INTEGER_16        ((uint8_t) 0b01010000)
 
-// Non retour d'acquitement sur prise
-#define P_ACK_OFF_PRISE PRO2 P_NON_RETOUR_ACQUITEMENT P_PRISE_TX
+#define TOKEN_STRING            ((uint8_t) 0b00100000)
 
-// Echo ON en mode local
-#define P_LOCAL_ECHO_ON PRO3 P_ON P_MODEM_RX P_CLAVIER_TX
-#define P_LOCAL_ECHO_OFF PRO3 P_OFF P_MODEM_RX P_CLAVIER_TX
+typedef struct {
+    uint16_t line_no;
+    uint8_t *read_ptr;
+    uint8_t *write_ptr;
+} t_tokenizer_state;
 
-#endif // minitel_h
+int8_t tokenize(t_tokenizer_state *state, char *line);
+char *untokenize(uint8_t *input);
+
+uint8_t token_peek_next(t_tokenizer_state *state);
+uint8_t token_get_next(t_tokenizer_state *state);
+uint16_t token_integer_get_value(t_tokenizer_state *state);
+char* token_string_get_value(t_tokenizer_state *state);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // __TOKEN_H__

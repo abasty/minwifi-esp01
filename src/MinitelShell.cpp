@@ -1,6 +1,34 @@
+/*
+ * Copyright © 2023 Alain Basty
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include <ESP8266WiFi.h>
 #include <WebSocketsClient.h>
 #include <strings.h>
+
+#include "token.h"
+#include "keywords.h"
 
 #include "minitel.h"
 #include "Terminal.h"
@@ -43,52 +71,32 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
     }
 }
 
-void MinitelShell::connectServer()
-{
-    if (cm.isConnected()) {
-        IPAddress addr = cm.getServerIP();
-        int port = cm.getServerPort();
-        if (port != 0) {
-            _term->print("Connecting to ");
-            _term->print(addr.toString());
-            _term->print(":");
-            _term->println(port);
-            tcpMinitelConnexion.connect(addr, port);
-            if (tcpMinitelConnexion.connected()) {
-                minitelMode = true;
-                tcpMinitelConnexion.setNoDelay(true);
-            } else {
-                _term->println("ERROR");
-            }
-        } else {
-            _term->println("Use CONFIGOPT to configure server.");
-        }
-    } else {
-        if (_term) {
-            _term->println("Please connect first.");
-        }
-    }
-}
-
 void MinitelShell::runCommand()
 {
     _term->newLineIfNeeded();
 
-    if (strcasecmp(_command, "free") == 0) {
-        if (_term) {
-            _term->printf("Heap:             %u bytes free.\r\n", ESP.getFreeHeap());
-            _term->printf("Flash Real Size:  %u bytes.\r\n", ESP.getFlashChipRealSize());
-            _term->printf("Sketch Size:      %u bytes.\r\n", ESP.getSketchSize());
-            _term->printf("Free Sketch Size: %u bytes.\r\n", ESP.getFreeSketchSpace());
-        }
-    } else if (strcasecmp(_command, "cats") == 0) {
-        if (_term) {
-            _term->println("Hello from Cat-Labs");
-            _term->println("OK");
-        }
-    } else if (strcasecmp(_command, "reset") == 0) {
+    t_tokenizer_state state;
+    tokenize(&state, _command);
+    uint8_t token1 = token_get_next(&state);
+    uint16_t value = 0;
+    if ((token1 & TOKEN_INTEGER_TYPE_MASK) == TOKEN_INTEGER)
+    {
+        value = token_integer_get_value(&state);
+        _term->printf("value: %u\n", value);
+    }
+    uint8_t token2 = token_get_next(&state);
+    if (token1 == TOKEN_KEYWORD_FREE) {
+        _term->printf("Heap:             %u bytes free.\r\n", ESP.getFreeHeap());
+        _term->printf("Flash Real Size:  %u bytes.\r\n", ESP.getFlashChipRealSize());
+        _term->printf("Sketch Size:      %u bytes.\r\n", ESP.getSketchSize());
+        _term->printf("Free Sketch Size: %u bytes.\r\n", ESP.getFreeSketchSpace());
+    } else if (token1 == TOKEN_KEYWORD_CATS) {
+        _term->println("Hello from Cat-Labs");
+    } else if (token1 == TOKEN_KEYWORD_RESET) {
         ESP.restart();
-    } else if (strcasecmp(_command, "config") == 0) {
+    } else if (token1 == TOKEN_KEYWORD_CONNECT) {
+        cm.connect();
+    } else if (token1 == TOKEN_KEYWORD_CONFIG && token2 == 0) {
         input(
             "Enter SSID: ", inputBuffer, INPUT_BUFFER_SIZE,
         [&]() {
@@ -102,31 +110,23 @@ void MinitelShell::runCommand()
                 println("OK");
             });
         });
-    } else if (strcasecmp(_command, "connect") == 0) {
-        cm.connect();
-    } else if (strcasecmp(_command, "config save") == 0) {
+    } else if (token1 == TOKEN_KEYWORD_CONFIG && token2 == TOKEN_KEYWORD_SAVE) {
         bool OK = cm.save();
-        if (_term) {
-            if (OK) {
-                _term->println("OK");
-            } else {
-                _term->println("Saved failed.");
-            }
+        if (OK) {
+            _term->println("OK");
+        } else {
+            _term->println("Saved failed.");
         }
-    } else if (strcasecmp(_command, "config load") == 0) {
+    } else if (token1 == TOKEN_KEYWORD_CONFIG && token2 == TOKEN_KEYWORD_LOAD) {
         bool OK = cm.load();
-        if (_term) {
-            if (OK) {
-                _term->println("OK");
-            } else {
-                _term->println("Load failed.");
-            }
+        if (OK) {
+            _term->println("OK");
+        } else {
+            _term->println("Load failed.");
         }
-    } else if (strcasecmp(_command, "clear") == 0) {
-        if (_term) {
-            _term->clear();
-        }
-    } else if (strcasecmp(_command, "3615") == 0) {
+    } else if (token1 == TOKEN_KEYWORD_CLEAR) {
+        _term->clear();
+    } else if (token1 == TOKEN_INTEGER && value == 3615) {
 #ifdef MINITEL
         _term->print((char *)P_LOCAL_ECHO_OFF);
 #endif
@@ -134,7 +134,7 @@ void MinitelShell::runCommand()
         webSocket.onEvent(webSocketEvent);
         _3611 = true;
         return;
-    } else if (strcasecmp(_command, "3611") == 0) {
+    } else if (token1 == TOKEN_INTEGER && value == 3611) {
 #ifdef MINITEL
         _term->print((char *)P_LOCAL_ECHO_OFF);
 #endif
@@ -142,41 +142,10 @@ void MinitelShell::runCommand()
         webSocket.onEvent(webSocketEvent);
         _3611 = true;
         return;
-    } else if (strcasecmp(_command, "configopt") == 0) {
-        input(
-            "Enter Server IP: ", inputBuffer, INPUT_BUFFER_SIZE,
-        [&]() {
-            cm.setServerIP(inputBuffer);
-            println("OK");
-            input(
-                "Enter Server Port: ", inputBuffer, INPUT_BUFFER_SIZE,
-            [&]() {
-                cm.setServerPort(inputBuffer);
-                println("\r\nUse 3615 to use this config.");
-                println("OK");
-            });
-        });
-        return;
-    } else if (strcasecmp(_command, "configopt save") == 0) {
-        bool OK = cm.saveOpt();
-        if (_term) {
-            if (OK) {
-                _term->println("OK");
-            } else {
-                _term->println("Saved failed.");
-            }
-        }
-    } else if (strcasecmp(_command, "configopt load") == 0) {
-        bool OK = cm.loadOpt();
-        if (_term) {
-            if (OK) {
-                _term->println("OK");
-            } else {
-                _term->println("Load failed.");
-            }
-        }
     } else {
-        _term->println("ERROR");
+        if (_command && *_command) {
+            _term->println("ERROR");
+        }
     }
     _term->prompt();
 }

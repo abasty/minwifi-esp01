@@ -23,30 +23,28 @@
  * SOFTWARE.
  */
 
-#ifndef minitel_h
-#define minitel_h
+#ifndef __EVAL_H__
+#define __EVAL_H__
 
-// Cuseur ON
-#define CON "\x11"
+#include <stdint.h>
 
-// Protocole
-#define PRO1 "\x1B\x39"
-#define PRO2 "\x1B\x3A"
-#define PRO3 "\x1B\x3B"
+#include "bmemory.h"
+#include "token.h"
 
-#define P_OFF "\x60"
-#define P_ON "\x61"
-#define P_NON_RETOUR_ACQUITEMENT "\x64"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define P_CLAVIER_TX "\x51"
-#define P_MODEM_RX "\x5A"
-#define P_PRISE_TX "\x53"
+typedef struct {
+    uint16_t line_no;
+    uint8_t *read_ptr;
+    uint8_t *write_ptr;
+} t_interpreter_state;
 
-// Non retour d'acquitement sur prise
-#define P_ACK_OFF_PRISE PRO2 P_NON_RETOUR_ACQUITEMENT P_PRISE_TX
+int8_t eval_prog(prog_t *prog, bool do_eval);
 
-// Echo ON en mode local
-#define P_LOCAL_ECHO_ON PRO3 P_ON P_MODEM_RX P_CLAVIER_TX
-#define P_LOCAL_ECHO_OFF PRO3 P_OFF P_MODEM_RX P_CLAVIER_TX
+#ifdef __cplusplus
+}
+#endif
 
-#endif // minitel_h
+#endif // __EVAL_H__

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Alain Basty
+ * Copyright © 2021 Alain Basty
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -23,30 +23,20 @@
  * SOFTWARE.
  */
 
-#ifndef minitel_h
-#define minitel_h
+#include <stddef.h>
 
-// Cuseur ON
-#define CON "\x11"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// Protocole
-#define PRO1 "\x1B\x39"
-#define PRO2 "\x1B\x3A"
-#define PRO3 "\x1B\x3B"
+#define DS_IS_EMPTY(_ds) (((_ds)->count) == 0)
 
-#define P_OFF "\x60"
-#define P_ON "\x61"
-#define P_NON_RETOUR_ACQUITEMENT "\x64"
+#define DS_OBJECT_OF(_ds, _item) ((void *)(((char *)(_item)) - (_ds)->_offset_in_object))
 
-#define P_CLAVIER_TX "\x51"
-#define P_MODEM_RX "\x5A"
-#define P_PRISE_TX "\x53"
+#define DS_ITEM_OF(_ds, _object) ((__typeof__((_ds)->root))(((char *)(_object)) + (_ds)->_offset_in_object))
 
-// Non retour d'acquitement sur prise
-#define P_ACK_OFF_PRISE PRO2 P_NON_RETOUR_ACQUITEMENT P_PRISE_TX
+#define DS_EXT_OBJECT_OF(_item) ((_item)->object)
 
-// Echo ON en mode local
-#define P_LOCAL_ECHO_ON PRO3 P_ON P_MODEM_RX P_CLAVIER_TX
-#define P_LOCAL_ECHO_OFF PRO3 P_OFF P_MODEM_RX P_CLAVIER_TX
-
-#endif // minitel_h
+#ifdef __cplusplus
+}
+#endif

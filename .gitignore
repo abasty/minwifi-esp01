@@ -3,3 +3,6 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+*.pdf
+lib/basic/examples/test/bin/**
+lib/basic/examples/test/obj/**

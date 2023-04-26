@@ -23,30 +23,14 @@
  * SOFTWARE.
  */
 
-#ifndef minitel_h
-#define minitel_h
+#ifndef __BERROR_H__
+#define __BERROR_H__
 
-// Cuseur ON
-#define CON "\x11"
+#include <stdint.h>
 
-// Protocole
-#define PRO1 "\x1B\x39"
-#define PRO2 "\x1B\x3A"
-#define PRO3 "\x1B\x3B"
+#define BERROR_NONE   ((int8_t) 0)
+#define BERROR_SYNTAX ((int8_t) -1)
+#define BERROR_RUN    ((int8_t) -2)
 
-#define P_OFF "\x60"
-#define P_ON "\x61"
-#define P_NON_RETOUR_ACQUITEMENT "\x64"
 
-#define P_CLAVIER_TX "\x51"
-#define P_MODEM_RX "\x5A"
-#define P_PRISE_TX "\x53"
-
-// Non retour d'acquitement sur prise
-#define P_ACK_OFF_PRISE PRO2 P_NON_RETOUR_ACQUITEMENT P_PRISE_TX
-
-// Echo ON en mode local
-#define P_LOCAL_ECHO_ON PRO3 P_ON P_MODEM_RX P_CLAVIER_TX
-#define P_LOCAL_ECHO_OFF PRO3 P_OFF P_MODEM_RX P_CLAVIER_TX
-
-#endif // minitel_h
+#endif // __BERROR_H__
