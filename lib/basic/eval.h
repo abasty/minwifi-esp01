@@ -23,43 +23,28 @@
  * SOFTWARE.
  */
 
-#ifndef __BMEMORY_H__
-#define __BMEMORY_H__
+#ifndef __EVAL_H__
+#define __EVAL_H__
 
 #include <stdint.h>
 
-#include "ds_btree.h"
+#include "bmemory.h"
+#include "token.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct {
-    ds_btree_item_t item;
-    // ds_lifo_item_t next;
     uint16_t line_no;
-    uint16_t len;
-    uint8_t *line;
-} prog_t;
+    uint8_t *read_ptr;
+    uint8_t *write_ptr;
+} t_interpreter_state;
 
-typedef struct {
-    ds_btree_item_t item;
-    uint32_t symbol;
-    uint8_t token;
-    union {
-        uint32_t number;
-        char *string;
-        // float number; (4 bytes)
-    };
-} var_t;
-
-
-int bmem_init();
-void bmem_prog_free(prog_t *prog);
-prog_t *bmem_prog_new(uint16_t line_no, uint8_t *line, uint16_t len);
+int8_t eval_prog(prog_t *prog, bool do_eval);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // __BMEMORY_H__
+#endif // __EVAL_H__

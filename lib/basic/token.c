@@ -30,7 +30,8 @@
 
 #include "token.h"
 #include "berror.h"
-#include "keywords.inc"
+
+extern const char *keywords;
 
 #define TOKENS_MAX_LINE_SIZE (256)
 uint8_t token_buffer[TOKENS_MAX_LINE_SIZE];

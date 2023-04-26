@@ -5,7 +5,7 @@ trap 'rm -rf -- "$TMPDIR"' EXIT
 
 KEYWORDS_FILE=${TMPDIR}/keywords
 
-KEYWORDS_C=keywords.inc
+KEYWORDS_C=keywords.c
 KEYWORDS_H=keywords.h
 
 cat >${KEYWORDS_FILE} <<EOF
@@ -17,7 +17,6 @@ connect
 clear
 load
 save
-configopt
 tcp
 ws
 help
@@ -25,6 +24,9 @@ list
 wifi
 on
 off
+print
+input
+inkey
 EOF
 
 sort -o ${KEYWORDS_FILE}{,}
