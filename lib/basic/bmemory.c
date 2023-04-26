@@ -56,7 +56,10 @@ int bmem_init()
 
 void bmem_prog_free(prog_t *prog)
 {
-    ds_btree_remove_object(&progs, prog);
+    if (prog->line_no != 0)
+    {
+        ds_btree_remove_object(&progs, prog);
+    }
     free(prog->line);
     free(prog);
 }
@@ -77,6 +80,11 @@ prog_t *bmem_prog_new(uint16_t line_no, uint8_t *line, uint16_t len)
     memcpy(prog->line, line, len + 1);
     prog->len = len;
     prog->line_no = line_no;
+
+    if (line_no == 0)
+    {
+        return prog;
+    }
 
     prog_t *exist = (prog_t *)ds_btree_insert(&progs, prog);
     if (exist != prog)

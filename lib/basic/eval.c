@@ -41,6 +41,9 @@ typedef struct
     uint8_t token;
 } t_eval_state;
 
+extern ds_btree_t progs;
+extern ds_btree_t vars;
+
 bool eval_next_token(t_eval_state *state)
 {
     if (*state->read_ptr == 0)
@@ -51,7 +54,6 @@ bool eval_next_token(t_eval_state *state)
     state->token = *state->read_ptr++;
     return true;
 }
-
 
 #ifdef __NO__
 #define DEBUG_PRINTF printf
@@ -101,6 +103,16 @@ float expr(void)
 
 bool eval_string(t_eval_state *state)
 {
+    if (state->token != TOKEN_STRING)
+        return false;
+
+    int n = 0;
+
+    if (state->do_eval)
+        n = printf("%s", state->read_ptr);
+    else
+        n = snprintf(0, 0, "%s", state->read_ptr);
+    state->read_ptr += n + 1;
     return true;
 }
 
@@ -110,21 +122,59 @@ bool eval_print(t_eval_state *state)
         return false;
 
     bool eval = true;
-    while (eval_next_token(state) && eval)
+    while (eval && eval_next_token(state))
     {
         eval = eval_string(state);
-        // handle ',' and
+        if (eval && eval_next_token(state))
+        {
+            if (state->token == ';')
+            {
+                continue;
+            }
+            if (state->token == ',')
+            {
+                if (state->do_eval)
+                    printf(" ");
+                continue;
+            }
+            eval = false;
+            break;
+        }
     }
 
-    if (eval)
+    if (state->do_eval)
     {
-        if (state->do_eval)
-        {
-            printf("** eval_print **\n");
-        }
-        return true;
+        printf("\n");
     }
-    return false;
+    return eval;
+}
+
+#define progof(_ds, _item) ((prog_t *)DS_OBJECT_OF(_ds, _item))
+
+void btree_node_print(ds_btree_t *btree, ds_btree_item_t *node)
+{
+    if (node)
+    {
+        btree_node_print(btree, node->left);
+        printf("%u", progof(btree, node)->line_no);
+        printf("%s\n", untokenize(progof(btree, node)->line));
+        btree_node_print(btree, node->right);
+    }
+}
+
+bool eval_list(t_eval_state *state)
+{
+    if (state->token != TOKEN_KEYWORD_LIST)
+        return false;
+
+    if (state->do_eval)
+    {
+        printf("Program: %zd line(s).\n", progs.count);
+        printf("Variables: %zd symbols(s).\n", vars.count);
+        btree_node_print(&progs, progs.root);
+    }
+
+    return true;
 }
 
 int8_t eval_prog(prog_t *prog, bool do_eval)
@@ -139,7 +189,7 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
     bool eval = true;
     while (eval && eval_next_token(&state))
     {
-        eval = eval_print(&state); // || eval_input(&state) ...
+        eval = eval_print(&state) || eval_list(&state); // || eval_input(&state) ...
     }
 
     if (eval)
