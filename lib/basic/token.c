@@ -251,7 +251,11 @@ int8_t tokenize(t_tokenizer_state *state, char *input)
             // keyword
             err = tokenize_keyword(state, keywords);
         }
-        else if (c == ';' || c == ',' || c == '+' || c == '-' || c == '|' || c == '&')
+        else if (
+            c == ';' || c == ',' ||
+            c == '+' || c == '-' || c == '|' || c == '&' ||
+            c == '*' || c == '/' || c == '%' ||
+            c == '(' || c == ')')
         {
             *state->write_ptr++ = *state->read_ptr++;
         }
@@ -279,7 +283,7 @@ uint8_t token_get_next(t_tokenizer_state *state)
 float token_number_get_value(t_tokenizer_state *state)
 {
     float value = 0;
-    uint8_t *write_value_ptr = (uint8_t *) &value;
+    uint8_t *write_value_ptr = (uint8_t *)&value;
     *write_value_ptr++ = *state->read_ptr++;
     *write_value_ptr++ = *state->read_ptr++;
     *write_value_ptr++ = *state->read_ptr++;
