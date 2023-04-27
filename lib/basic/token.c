@@ -264,7 +264,7 @@ int8_t tokenize(t_tokenizer_state *state, char *input)
             // keyword
             err = tokenize_keyword(state, keywords);
         }
-        else if (c == ';' || c == ',')
+        else if (c == ';' || c == ',' || c == '+' || c == '-' || c == '|' || c == '&')
         {
             *state->write_ptr++ = *state->read_ptr++;
         }

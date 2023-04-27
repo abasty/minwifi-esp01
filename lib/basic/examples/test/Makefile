@@ -41,7 +41,7 @@ DEPENDS := $(OBJECTS:.o=.d)
 # compile C source
 COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@
 # link objects
-LINK.o = $(LD) $(LDFLAGS) $(LDLIBS) $(OBJECTS) -o $@
+LINK.o = $(LD) $(LDFLAGS) $(OBJECTS) $(LDLIBS) -o $@
 
 .DEFAULT_GOAL = all
 

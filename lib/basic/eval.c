@@ -39,6 +39,7 @@ typedef struct
     bool do_eval;
     uint8_t *read_ptr;
     uint8_t token;
+    float number;
 } t_eval_state;
 
 extern ds_btree_t progs;
@@ -101,8 +102,99 @@ float expr(void)
 }
 #endif
 
+bool eval_number(t_eval_state *state)
+{
+    bool result = true;
+    bool minus = false;
+
+    // TODO: Mark
+    if (state->token == '-')
+    {
+        minus = true;
+        result = eval_next_token(state);
+        if (!result)
+            goto do_minus;
+    }
+    if ((state->token & TOKEN_INTEGER_TYPE_MASK) != TOKEN_INTEGER)
+    {
+        // TODO rewind
+        return false;
+    }
+    if ((state->token & TOKEN_INTEGER_BITS_MASK) == TOKEN_INTEGER_4)
+    {
+        state->number = state->token & 0b00001111;
+        goto do_minus;
+    }
+    uint16_t value = *state->read_ptr++;
+    if ((state->token & TOKEN_INTEGER_BITS_MASK) == TOKEN_INTEGER_8)
+    {
+        state->number = value;
+        goto do_minus;
+    }
+
+    value += *state->read_ptr << 8;
+    state->number = value;
+    state->read_ptr++;
+
+do_minus:
+    if (minus)
+        state->number = -state->number;
+
+    return result;
+}
+
+bool eval_term(t_eval_state *state)
+{
+    bool result = eval_number(state);
+    return result;
+}
+
+bool eval_expr(t_eval_state *state)
+{
+    bool result = true;
+    float acc = 0;
+    if (eval_term(state))
+    {
+        acc = state->number;
+        while (result && eval_next_token(state))
+        {
+            uint8_t op = state->token;
+            result = eval_next_token(state) && eval_term(state);
+            if (!result)
+            {
+                break;
+            }
+            if (result)
+            {
+                switch(op)
+                {
+                case '+':
+                    acc += state->number;
+                    break;
+                case '-':
+                    acc -= state->number;
+                    break;
+                case '&':
+                    acc = (int)(truncf(acc)) & (int)(truncf(state->number));
+                    break;
+                case '|':
+                    acc = (int)(truncf(acc)) | (int)(truncf(state->number));
+                    break;
+                }
+                state->number = acc;
+            }
+        }
+    }
+    if (state->do_eval)
+    {
+        printf("%f", state->number);
+    }
+    return result;
+}
+
 bool eval_string(t_eval_state *state)
 {
+    // TODO: Faire un test sur state->error
     if (state->token != TOKEN_STRING)
         return false;
 
@@ -118,14 +210,16 @@ bool eval_string(t_eval_state *state)
 
 bool eval_print(t_eval_state *state)
 {
+    // TODO: Faire un test sur state->error
     if (state->token != TOKEN_KEYWORD_PRINT)
         return false;
 
-    bool eval = true;
-    while (eval && eval_next_token(state))
+    // TODO: mark
+    bool result = true;
+    while (result && eval_next_token(state))
     {
-        eval = eval_string(state);
-        if (eval && eval_next_token(state))
+        result = eval_string(state) || eval_expr(state);
+        if (result && eval_next_token(state))
         {
             if (state->token == ';')
             {
@@ -137,7 +231,7 @@ bool eval_print(t_eval_state *state)
                     printf(" ");
                 continue;
             }
-            eval = false;
+            result = false;
             break;
         }
     }
@@ -146,7 +240,8 @@ bool eval_print(t_eval_state *state)
     {
         printf("\n");
     }
-    return eval;
+    // TODO: if !result, rewind to mark
+    return result;
 }
 
 #define progof(_ds, _item) ((prog_t *)DS_OBJECT_OF(_ds, _item))
