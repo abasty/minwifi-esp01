@@ -1,3 +1,13 @@
+# TODO
+
+* [ ] Passer tout en float
+* [ ] Coder `eval_factor`
+* [ ] Code `( expr )` dans factor ?
+* [ ] save / run
+* [ ] printf: ansi / minitel
+* [ ] input (envoie de caractère depuis le main vers le basic)
+* [ ] integration "edit_min" ?
+
 # Liens
 
 * <https://www.museeminitel.fr/>
