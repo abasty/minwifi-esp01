@@ -79,7 +79,8 @@ const char *untokenize_keyword(t_tokenizer_state *state, const char *keyword)
         return 0;
     }
     keyword_char = keyword;
-    do {
+    do
+    {
         c = *keyword_char++;
         putchar(c & ~KEYWORD_END_TAG);
     } while ((c & KEYWORD_END_TAG) == 0);
@@ -130,40 +131,26 @@ int8_t tokenize_keyword(t_tokenizer_state *state, const char *keyword_char)
     return BERROR_SYNTAX;
 }
 
-int8_t tokenize_integer(t_tokenizer_state *state)
+int8_t tokenize_number(t_tokenizer_state *state)
 {
-    uint16_t value = 0;
-
+    float value = 0;
+    uint8_t *read_value_ptr = (uint8_t *)(&value);
     char c = *state->read_ptr;
+
     while (char_is_digit(c))
     {
-        if (value > 6553)
-        {
-            return BERROR_SYNTAX;
-        }
         value *= 10;
         c -= '0';
-        if (value == 65530 && c > 5)
-        {
-            return BERROR_SYNTAX;
-        }
         value += c;
         c = *++state->read_ptr;
     }
-    if (value < 16)
-    {
-        *state->write_ptr++ = TOKEN_INTEGER_4 + value;
-        return 0;
-    }
-    if (value < 256)
-    {
-        *state->write_ptr++ = TOKEN_INTEGER_8;
-        *state->write_ptr++ = value;
-        return 0;
-    }
-    *state->write_ptr++ = TOKEN_INTEGER_16;
-    *state->write_ptr++ = value & 0xFF;
-    *state->write_ptr++ = value >> 8;
+    // TODO: Handle '.' and decimal part
+    // TODO: Handle 'E', 'E+', 'E-'
+    *state->write_ptr++ = TOKEN_NUMBER;
+    *state->write_ptr++ = *read_value_ptr++;
+    *state->write_ptr++ = *read_value_ptr++;
+    *state->write_ptr++ = *read_value_ptr++;
+    *state->write_ptr++ = *read_value_ptr++;
     return 0;
 }
 
@@ -203,10 +190,10 @@ char *untokenize(uint8_t *input)
             token &= ~TOKEN_KEYWORD;
             untokenize_keyword(&state, keywords);
         }
-        else if ((token & TOKEN_INTEGER_TYPE_MASK) == TOKEN_INTEGER)
+        else if (token == TOKEN_NUMBER)
         {
-            uint16_t value = token_integer_get_value(&state);
-            printf("%u", value);
+            float value = token_number_get_value(&state);
+            printf("%f", value);
         }
         else if (token == TOKEN_STRING)
         {
@@ -248,13 +235,13 @@ int8_t tokenize(t_tokenizer_state *state, char *input)
         else if (c >= '0' && c <= '9')
         {
             // integer
-            err = tokenize_integer(state);
+            err = tokenize_number(state);
             if (err == 0 && token_count == 0)
             {
                 uint8_t *read_ptr = state->read_ptr;
                 state->read_ptr = token_buffer;
                 token_get_next(state);
-                state->line_no = token_integer_get_value(state);
+                state->line_no = token_number_get_value(state);
                 state->read_ptr = read_ptr;
                 state->write_ptr = token_buffer;
             }
@@ -289,20 +276,14 @@ uint8_t token_get_next(t_tokenizer_state *state)
     return *state->read_ptr != 0 ? *state->read_ptr++ : 0;
 }
 
-uint16_t token_integer_get_value(t_tokenizer_state *state)
+float token_number_get_value(t_tokenizer_state *state)
 {
-    uint8_t token = *(state->read_ptr - 1);
-    if ((token & TOKEN_INTEGER_BITS_MASK) == TOKEN_INTEGER_4)
-    {
-        return token & 0b00001111;
-    }
-    uint16_t value = *state->read_ptr++;
-    if ((token & TOKEN_INTEGER_BITS_MASK) == TOKEN_INTEGER_8)
-    {
-        return value;
-    }
-    value += *state->read_ptr << 8;
-    state->read_ptr++;
+    float value = 0;
+    uint8_t *write_value_ptr = (uint8_t *) &value;
+    *write_value_ptr++ = *state->read_ptr++;
+    *write_value_ptr++ = *state->read_ptr++;
+    *write_value_ptr++ = *state->read_ptr++;
+    *write_value_ptr++ = *state->read_ptr++;
     return value;
 }
 

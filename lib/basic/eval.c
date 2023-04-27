@@ -113,33 +113,29 @@ bool eval_number(t_eval_state *state)
         minus = true;
         result = eval_next_token(state);
         if (!result)
+        {
+            // TDOD: rewind
             goto do_minus;
+        }
     }
-    if ((state->token & TOKEN_INTEGER_TYPE_MASK) != TOKEN_INTEGER)
+    if (state->token != TOKEN_NUMBER)
     {
         // TODO rewind
         return false;
     }
-    if ((state->token & TOKEN_INTEGER_BITS_MASK) == TOKEN_INTEGER_4)
-    {
-        state->number = state->token & 0b00001111;
-        goto do_minus;
-    }
-    uint16_t value = *state->read_ptr++;
-    if ((state->token & TOKEN_INTEGER_BITS_MASK) == TOKEN_INTEGER_8)
-    {
-        state->number = value;
-        goto do_minus;
-    }
-
-    value += *state->read_ptr << 8;
+    float value = 0;
+    uint8_t *write_value_ptr = (uint8_t *) &value;
+    *write_value_ptr++ = *state->read_ptr++;
+    *write_value_ptr++ = *state->read_ptr++;
+    *write_value_ptr++ = *state->read_ptr++;
+    *write_value_ptr++ = *state->read_ptr++;
     state->number = value;
-    state->read_ptr++;
 
 do_minus:
     if (minus)
+    {
         state->number = -state->number;
-
+    }
     return result;
 }
 

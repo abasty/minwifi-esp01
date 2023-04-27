@@ -79,9 +79,9 @@ void MinitelShell::runCommand()
     tokenize(&state, _command);
     uint8_t token1 = token_get_next(&state);
     uint16_t value = 0;
-    if ((token1 & TOKEN_INTEGER_TYPE_MASK) == TOKEN_INTEGER)
+    if (token1 == TOKEN_NUMBER)
     {
-        value = token_integer_get_value(&state);
+        value = token_number_get_value(&state);
         _term->printf("value: %u\n", value);
     }
     uint8_t token2 = token_get_next(&state);
@@ -126,7 +126,7 @@ void MinitelShell::runCommand()
         }
     } else if (token1 == TOKEN_KEYWORD_CLEAR) {
         _term->clear();
-    } else if (token1 == TOKEN_INTEGER && value == 3615) {
+    } else if (token1 == TOKEN_NUMBER && value == 3615) {
 #ifdef MINITEL
         _term->print((char *)P_LOCAL_ECHO_OFF);
 #endif
@@ -134,7 +134,7 @@ void MinitelShell::runCommand()
         webSocket.onEvent(webSocketEvent);
         _3611 = true;
         return;
-    } else if (token1 == TOKEN_INTEGER && value == 3611) {
+    } else if (token1 == TOKEN_NUMBER && value == 3611) {
 #ifdef MINITEL
         _term->print((char *)P_LOCAL_ECHO_OFF);
 #endif

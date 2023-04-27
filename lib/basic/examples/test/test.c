@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
             //     }
             //     else if ((token & TOKEN_INTEGER_TYPE_MASK) == TOKEN_INTEGER)
             //     {
-            //         uint16_t value = token_integer_get_value(&line);
+            //         uint16_t value = token_number_get_value(&line);
             //         printf("[uint: %u]\n", value);
             //     }
             //     else if (token == TOKEN_STRING)
