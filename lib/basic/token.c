@@ -24,6 +24,7 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,20 +37,13 @@ extern const char *keywords;
 #define TOKENS_MAX_LINE_SIZE (256)
 uint8_t token_buffer[TOKENS_MAX_LINE_SIZE];
 
-int8_t char_is_sep(char test_char)
-{
-    return test_char <= ' ' || test_char == ':' || test_char == ';' || test_char == ',' || test_char == '"';
-}
-
-int8_t char_of_keyword(char test_char)
+bool char_of_keyword(char test_char)
 {
     // TODO: test other implementation for size
-    return (test_char >= 'A' && test_char <= 'Z') || (test_char >= 'a' && test_char <= 'z') || (test_char >= '0' && test_char <= '9') || (test_char == '_');
-}
-
-int8_t char_is_digit(uint8_t test_char)
-{
-    return test_char >= '0' && test_char <= '9';
+    return (test_char >= 'A' && test_char <= 'Z') ||
+           (test_char >= 'a' && test_char <= 'z') ||
+           (test_char >= '0' && test_char <= '9') ||
+           (test_char == '$');
 }
 
 const char *untokenize_keyword(t_tokenizer_state *state, const char *keyword)

@@ -14,7 +14,7 @@ const char *keywords =
     "EX""\xd0"
     "FRE""\xc5"
     "HEL""\xd0"
-    "INKE""\xd9"
+    "INKEY""\xa4"
     "INPU""\xd4"
     "IN""\xd4"
     "LIS""\xd4"
