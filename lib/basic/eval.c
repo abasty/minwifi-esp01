@@ -25,6 +25,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 #include "berror.h"
@@ -90,7 +91,19 @@ bool eval_token_one_of(t_eval_state *state, const char *set)
     return true;
 }
 
+bool eval_string(t_eval_state *state);
+bool eval_factor(t_eval_state *state);
 bool eval_expr(t_eval_state *state);
+
+bool eval_code(t_eval_state *state)
+{
+    if (eval_token(state, TOKEN_KEYWORD_CODE) && eval_string(state))
+    {
+        state->number = state->string[0];
+        return true;
+    }
+    return false;
+}
 
 bool eval_number(t_eval_state *state)
 {
@@ -100,6 +113,10 @@ bool eval_number(t_eval_state *state)
     if (eval_token(state, TOKEN_KEYWORD_PI))
     {
         value = 3.1415926536;
+    }
+    else if (eval_token(state, TOKEN_KEYWORD_RND))
+    {
+        value = (float)((double)rand() / (double)RAND_MAX);
     }
     else if (eval_token(state, TOKEN_NUMBER))
     {
@@ -129,7 +146,7 @@ bool eval_function(t_eval_state *state)
         return false;
     }
     uint8_t f = state->token;
-    if (!eval_expr(state))
+    if (!eval_factor(state))
     {
         return false;
     }
@@ -169,7 +186,7 @@ bool eval_function(t_eval_state *state)
         state->number = sinf(state->number);
         break;
     case TOKEN_KEYWORD_SQR:
-        state->number = cosf(state->number);
+        state->number = sqrtf(state->number);
         break;
     case TOKEN_KEYWORD_TAN:
         state->number = tanf(state->number);
@@ -184,8 +201,9 @@ bool eval_factor(t_eval_state *state)
 {
     bool result =
         eval_number(state) ||
-        (eval_token(state, '(') && eval_expr(state) && eval_token(state, ')')) ||
-        eval_function(state);
+        eval_function(state) ||
+        eval_code(state) ||
+        (eval_token(state, '(') && eval_expr(state) && eval_token(state, ')'));
     return result;
 }
 
@@ -196,6 +214,7 @@ bool eval_term(t_eval_state *state)
     if ((result = eval_factor(state)))
     {
         acc = state->number;
+        // TODO: Manage / and % by zero (inf)
         while (eval_token_one_of(state, "*/%"))
         {
             uint8_t op = state->token;
@@ -222,6 +241,9 @@ bool eval_term(t_eval_state *state)
     return result;
 }
 
+// TODO: Add eval_condition (< > <> = <= >=)
+// TODO: Add eval_boolean (AND OR)
+
 bool eval_expr(t_eval_state *state)
 {
     bool result = true;
@@ -229,7 +251,7 @@ bool eval_expr(t_eval_state *state)
     if ((result = eval_term(state)))
     {
         acc = state->number;
-        while (eval_token_one_of(state, "+/|&"))
+        while (eval_token_one_of(state, "+-|&"))
         {
             uint8_t op = state->token;
             result = eval_term(state);

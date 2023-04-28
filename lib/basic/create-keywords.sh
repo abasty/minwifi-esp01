@@ -15,11 +15,13 @@ asn
 atn
 bin
 chr
+code
 cos
 exp
 int
 ln
 pi
+rnd
 sgn
 sin
 sqr

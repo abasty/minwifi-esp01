@@ -4,7 +4,7 @@
 * [x] Coder `eval_factor`
 * [x] Code `( expr )` dans factor ?
 * [x] Gérer la virgule et l'exposant
-* [x] Ajouter quelques fonctions sur float SIN, COS, etc et PI
+* [x] Ajouter les fonctions numériques sur float SIN, COS, etc et PI, RND, CODE
 * [ ] Ajouter les variables
 * [ ] AT, INK, PAPER, CLS
 * [ ] save / run
