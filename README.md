@@ -4,6 +4,9 @@
 * [x] Coder `eval_factor`
 * [x] Code `( expr )` dans factor ?
 * [x] Gérer la virgule et l'exposant
+* [x] Ajouter quelques fonctions sur float SIN, COS, etc et PI
+* [ ] Ajouter les variables
+* [ ] AT, INK, PAPER, CLS
 * [ ] save / run
 * [ ] printf: ansi / minitel
 * [ ] input (envoie de caractère depuis le main vers le basic)

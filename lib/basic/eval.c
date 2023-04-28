@@ -46,7 +46,22 @@ typedef struct
 extern ds_btree_t progs;
 extern ds_btree_t vars;
 
-bool eval_expr(t_eval_state *state);
+uint8_t functions[] = {
+    TOKEN_KEYWORD_ABS,
+    TOKEN_KEYWORD_ACS,
+    TOKEN_KEYWORD_ASN,
+    TOKEN_KEYWORD_ATN,
+    TOKEN_KEYWORD_BIN,
+    TOKEN_KEYWORD_COS,
+    TOKEN_KEYWORD_EXP,
+    TOKEN_KEYWORD_INT,
+    TOKEN_KEYWORD_LN,
+    TOKEN_KEYWORD_SGN,
+    TOKEN_KEYWORD_SIN,
+    TOKEN_KEYWORD_SQR,
+    TOKEN_KEYWORD_TAN,
+    0,
+};
 
 bool eval_token(t_eval_state *state, uint8_t c)
 {
@@ -75,21 +90,30 @@ bool eval_token_one_of(t_eval_state *state, const char *set)
     return true;
 }
 
+bool eval_expr(t_eval_state *state);
+
 bool eval_number(t_eval_state *state)
 {
     bool minus = eval_token(state, '-');
+    float value = 0;
 
-    if (!eval_token(state, TOKEN_NUMBER))
+    if (eval_token(state, TOKEN_KEYWORD_PI))
+    {
+        value = 3.1415926536;
+    }
+    else if (eval_token(state, TOKEN_NUMBER))
+    {
+        uint8_t *write_value_ptr = (uint8_t *)&value;
+        *write_value_ptr++ = *state->read_ptr++;
+        *write_value_ptr++ = *state->read_ptr++;
+        *write_value_ptr++ = *state->read_ptr++;
+        *write_value_ptr++ = *state->read_ptr++;
+    }
+    else
     {
         return false;
     }
 
-    float value = 0;
-    uint8_t *write_value_ptr = (uint8_t *)&value;
-    *write_value_ptr++ = *state->read_ptr++;
-    *write_value_ptr++ = *state->read_ptr++;
-    *write_value_ptr++ = *state->read_ptr++;
-    *write_value_ptr++ = *state->read_ptr++;
     state->number = value;
     if (minus)
     {
@@ -98,11 +122,70 @@ bool eval_number(t_eval_state *state)
     return true;
 }
 
+bool eval_function(t_eval_state *state)
+{
+    if (!eval_token_one_of(state, (char *)functions))
+    {
+        return false;
+    }
+    uint8_t f = state->token;
+    if (!eval_expr(state))
+    {
+        return false;
+    }
+    switch (f)
+    {
+    case TOKEN_KEYWORD_ABS:
+        state->number = fabsf(state->number);
+        break;
+    case TOKEN_KEYWORD_ACS:
+        state->number = acosf(state->number);
+        break;
+    case TOKEN_KEYWORD_ASN:
+        state->number = asinf(state->number);
+        break;
+    case TOKEN_KEYWORD_ATN:
+        state->number = atanf(state->number);
+        break;
+    case TOKEN_KEYWORD_BIN:
+        // FIXME
+        break;
+    case TOKEN_KEYWORD_COS:
+        state->number = cosf(state->number);
+        break;
+    case TOKEN_KEYWORD_EXP:
+        state->number = expf(state->number);
+        break;
+    case TOKEN_KEYWORD_INT:
+        state->number = truncf(state->number);
+        break;
+    case TOKEN_KEYWORD_LN:
+        state->number = logf(state->number);
+        break;
+    case TOKEN_KEYWORD_SGN:
+        state->number = (state->number > 0) - (state->number < 0);
+        break;
+    case TOKEN_KEYWORD_SIN:
+        state->number = sinf(state->number);
+        break;
+    case TOKEN_KEYWORD_SQR:
+        state->number = cosf(state->number);
+        break;
+    case TOKEN_KEYWORD_TAN:
+        state->number = tanf(state->number);
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
+
 bool eval_factor(t_eval_state *state)
 {
     bool result =
         eval_number(state) ||
-        (eval_token(state, '(') && eval_expr(state) && eval_token(state, ')'));
+        (eval_token(state, '(') && eval_expr(state) && eval_token(state, ')')) ||
+        eval_function(state);
     return result;
 }
 

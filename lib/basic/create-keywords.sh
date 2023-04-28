@@ -9,6 +9,21 @@ KEYWORDS_C=keywords.c
 KEYWORDS_H=keywords.h
 
 cat >${KEYWORDS_FILE} <<EOF
+abs
+acs
+asn
+atn
+bin
+chr
+cos
+exp
+int
+ln
+pi
+sgn
+sin
+sqr
+tan
 free
 cats
 reset
