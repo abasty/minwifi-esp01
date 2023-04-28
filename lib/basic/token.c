@@ -47,7 +47,7 @@ int8_t char_of_keyword(char test_char)
     return (test_char >= 'A' && test_char <= 'Z') || (test_char >= 'a' && test_char <= 'z') || (test_char >= '0' && test_char <= '9') || (test_char == '_');
 }
 
-int8_t char_is_digit(char test_char)
+int8_t char_is_digit(uint8_t test_char)
 {
     return test_char >= '0' && test_char <= '9';
 }
@@ -111,7 +111,7 @@ int8_t tokenize_keyword(t_tokenizer_state *state, const char *keyword_char)
             if ((c & KEYWORD_END_TAG) != 0)
             {
                 *state->write_ptr++ = index | TOKEN_KEYWORD;
-                return 0;
+                return BERROR_NONE;
             }
             word_char++;
             keyword_char++;
@@ -134,24 +134,20 @@ int8_t tokenize_keyword(t_tokenizer_state *state, const char *keyword_char)
 int8_t tokenize_number(t_tokenizer_state *state)
 {
     float value = 0;
-    uint8_t *read_value_ptr = (uint8_t *)(&value);
-    char c = *state->read_ptr;
-
-    while (char_is_digit(c))
+    int n = 0;
+    if (sscanf((char *)state->read_ptr, "%f%n", &value, &n) != 1)
     {
-        value *= 10;
-        c -= '0';
-        value += c;
-        c = *++state->read_ptr;
+        return BERROR_SYNTAX;
     }
-    // TODO: Handle '.' and decimal part
-    // TODO: Handle 'E', 'E+', 'E-'
+    state->read_ptr += n; // +1 ?
+
+    uint8_t *read_value_ptr = (uint8_t *)(&value);
     *state->write_ptr++ = TOKEN_NUMBER;
     *state->write_ptr++ = *read_value_ptr++;
     *state->write_ptr++ = *read_value_ptr++;
     *state->write_ptr++ = *read_value_ptr++;
-    *state->write_ptr++ = *read_value_ptr++;
-    return 0;
+    *state->write_ptr++ = *read_value_ptr;
+    return BERROR_NONE;
 }
 
 int8_t tokenize_string(t_tokenizer_state *state)
@@ -169,7 +165,7 @@ int8_t tokenize_string(t_tokenizer_state *state)
     }
     *state->write_ptr++ = 0;
     state->read_ptr++;
-    return 0;
+    return BERROR_NONE;
 }
 
 char *untokenize(uint8_t *input)
