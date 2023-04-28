@@ -79,13 +79,13 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        if (eval_prog(prog, false))
-        {
-            printf("Syntax error.\n");
-            bmem_prog_free(prog);
-            free(command);
-            continue;
-        }
+        // if (eval_prog(prog, false))
+        // {
+        //     printf("Syntax error.\n");
+        //     bmem_prog_free(prog);
+        //     free(command);
+        //     continue;
+        // }
 
         if (line.line_no == 0)
         {
