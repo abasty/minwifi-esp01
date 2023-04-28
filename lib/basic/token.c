@@ -189,7 +189,7 @@ char *untokenize(uint8_t *input)
         else if (token == TOKEN_NUMBER)
         {
             float value = token_number_get_value(&state);
-            printf("%f", value);
+            printf("%g", value);
         }
         else if (token == TOKEN_STRING)
         {

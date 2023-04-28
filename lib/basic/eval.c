@@ -309,7 +309,7 @@ bool eval_print(t_eval_state *state)
         {
             if (state->do_eval)
             {
-                printf("%f", state->number);
+                printf("%g", state->number);
             }
         }
         else
