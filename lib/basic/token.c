@@ -47,7 +47,7 @@ int8_t char_of_keyword(char test_char)
     return (test_char >= 'A' && test_char <= 'Z') || (test_char >= 'a' && test_char <= 'z') || (test_char >= '0' && test_char <= '9') || (test_char == '_');
 }
 
-int8_t char_is_digit(char test_char)
+int8_t char_is_digit(uint8_t test_char)
 {
     return test_char >= '0' && test_char <= '9';
 }
@@ -135,7 +135,7 @@ int8_t tokenize_number(t_tokenizer_state *state)
 {
     float value = 0;
     uint8_t *read_value_ptr = (uint8_t *)(&value);
-    char c = *state->read_ptr;
+    uint8_t c = *state->read_ptr;
 
     while (char_is_digit(c))
     {
@@ -144,7 +144,16 @@ int8_t tokenize_number(t_tokenizer_state *state)
         value += c;
         c = *++state->read_ptr;
     }
-    // TODO: Handle '.' and decimal part
+    if (c == '.')
+    {
+        float div = 10;
+        state->read_ptr++;
+        while (char_is_digit((c = *state->read_ptr++)))
+        {
+            value += (c - '0') / div;
+            div *= 10;
+        }
+    }
     // TODO: Handle 'E', 'E+', 'E-'
     *state->write_ptr++ = TOKEN_NUMBER;
     *state->write_ptr++ = *read_value_ptr++;
