@@ -3,7 +3,7 @@
 * [x] Passer tout en float
 * [x] Coder `eval_factor`
 * [x] Code `( expr )` dans factor ?
-* [ ] Gérer la virgule et l'exposant
+* [x] Gérer la virgule et l'exposant
 * [ ] save / run
 * [ ] printf: ansi / minitel
 * [ ] input (envoie de caractère depuis le main vers le basic)
