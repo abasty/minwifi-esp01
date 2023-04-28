@@ -7,6 +7,13 @@
             "label": "basic: Make",
             "type": "shell",
             "command": "make",
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": [
+                    "relative",
+                    "${workspaceFolder}/lib/basic/examples/test"
+                ]
+            },
             "options": {
                 "cwd": "${workspaceFolder}/lib/basic/examples/test",
             },
