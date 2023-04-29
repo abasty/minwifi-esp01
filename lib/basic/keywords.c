@@ -17,6 +17,7 @@ const char *keywords =
     "INKEY""\xa4"
     "INPU""\xd4"
     "IN""\xd4"
+    "LE""\xd4"
     "LIS""\xd4"
     "L""\xce"
     "LOA""\xc4"

@@ -275,6 +275,7 @@ int8_t tokenize(t_tokenizer_state *state, char *input)
             c == ';' || c == ',' ||
             c == '+' || c == '-' || c == '|' || c == '&' ||
             c == '*' || c == '/' || c == '%' ||
+            c == '=' || c == '<' || c == '>' ||
             c == '(' || c == ')')
         {
             *state->write_ptr++ = *state->read_ptr++;

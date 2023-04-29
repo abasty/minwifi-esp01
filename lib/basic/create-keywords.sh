@@ -41,6 +41,7 @@ list
 wifi
 on
 off
+let
 print
 input
 inkey$
