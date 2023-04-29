@@ -317,6 +317,24 @@ void *ds_btree_insert(ds_btree_t *btree, void *object)
     return btree->_equal_node ? DS_OBJECT_OF(btree, btree->_equal_node) : object;
 }
 
+void *ds_btree_find(ds_btree_t *btree, void *object)
+{
+    ds_btree_item_t *node = btree->root;
+
+    while(node)
+    {
+        void *cmp_object = DS_OBJECT_OF(btree, node);
+        int cmp = btree->cmp(object, cmp_object);
+        if (cmp == 0)
+            return cmp_object;
+        if (cmp < 0)
+            node = node->left;
+        else
+            node = node->right;
+    }
+    return 0;
+}
+
 void *ds_btree_remove(ds_btree_t *btree, ds_btree_item_t *item)
 {
     btree->_cmp_node = item;

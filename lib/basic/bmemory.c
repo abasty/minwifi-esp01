@@ -54,6 +54,14 @@ int bmem_init()
     return 0;
 }
 
+var_t *bmem_var_get(char *name)
+{
+    var_t search = {
+        .name = name,
+    };
+    return ds_btree_find(&vars, &search);
+}
+
 void bmem_var_number_free(var_t *var)
 {
     ds_btree_remove_object(&vars, var);

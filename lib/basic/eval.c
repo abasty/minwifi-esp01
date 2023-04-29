@@ -26,6 +26,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 #include "berror.h"
@@ -131,6 +132,17 @@ bool eval_number(t_eval_state *state)
         *write_value_ptr++ = *state->read_ptr++;
         *write_value_ptr++ = *state->read_ptr++;
         *write_value_ptr++ = *state->read_ptr++;
+    }
+    else if (eval_token(state, TOKEN_VARIABLE_NUMBER))
+    {
+        state->read_ptr--;
+        var_t *var = bmem_var_get((char *) state->read_ptr);
+        if (!var)
+        {
+            return false;
+        }
+        value = var->number;
+        state->read_ptr += strlen(var->name) + 1;
     }
     else
     {
@@ -307,7 +319,8 @@ bool eval_let(t_eval_state *state)
     uint8_t token = state->token;
 
     // Pass variable chars until zero
-    while (*state->read_ptr++);
+    while (*state->read_ptr++)
+        ;
 
     if (!eval_token(state, '='))
         return false;
@@ -416,7 +429,7 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_print(&state) ||
         eval_list(&state) ||
         eval_let(&state);
-        // || eval_input(&state) ...
+    // || eval_input(&state) ...
 
     if (!eval)
     {

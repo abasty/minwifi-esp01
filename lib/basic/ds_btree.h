@@ -70,7 +70,6 @@ void ds_btree_init(ds_btree_t *btree, size_t offset_in_object, bs_btree_cmp_f cm
  \* @brief Insert an item into a btree and associate the related object
  *
  \* @param btree The btree
- \* @param item The item to insert
  \* @param object The associated object
  *
  \* @return If `object` has no equal object in the btree, the object is inserted
@@ -79,6 +78,16 @@ void ds_btree_init(ds_btree_t *btree, size_t offset_in_object, bs_btree_cmp_f cm
  * object. "Equal" stands for : The comparison function returns 0.
  */
 void *ds_btree_insert(ds_btree_t *btree, void *object);
+
+/**
+ \* @brief Search for an object into a btree
+ *
+ \* @param btree The btree
+ \* @param object The object to search for
+ *
+ \* @return The found object or 0 if the object is not found.
+ */
+void *ds_btree_find(ds_btree_t *btree, void *object);
 
 /**
  * @brief Remove an item from a btree. The comparison function is used.
