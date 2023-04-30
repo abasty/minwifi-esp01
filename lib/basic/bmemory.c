@@ -78,6 +78,14 @@ void bmem_var_number_free(var_t *var)
     free(var);
 }
 
+void bmem_var_new()
+{
+    while (vars.root)
+    {
+        bmem_var_number_free((var_t *)DS_OBJECT_OF(&vars, vars.root));
+    }
+}
+
 var_t *bmem_var_number_new(char *name, float value)
 {
     var_t *var = (var_t *)malloc(sizeof(var_t));
@@ -108,7 +116,16 @@ var_t *bmem_var_number_new(char *name, float value)
     return var;
 }
 
-void bmem_prog_free(prog_t *prog)
+void bmem_prog_new()
+{
+    bmem_var_new();
+    while (prog_tree.root)
+    {
+        bmem_prog_line_free((prog_t *)DS_OBJECT_OF(&prog_tree, prog_tree.root));
+    }
+}
+
+void bmem_prog_line_free(prog_t *prog)
 {
     if (prog->line_no != 0)
     {
@@ -119,7 +136,7 @@ void bmem_prog_free(prog_t *prog)
     free(prog);
 }
 
-prog_t *bmem_prog_new(uint16_t line_no, uint8_t *line, uint16_t len)
+prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
 {
     prog_t *prog = (prog_t *)malloc(sizeof(prog_t));
     if (prog == 0)
@@ -153,7 +170,7 @@ prog_t *bmem_prog_new(uint16_t line_no, uint8_t *line, uint16_t len)
 
     if (prog->len == 0)
     {
-        bmem_prog_free(prog);
+        bmem_prog_line_free(prog);
         return 0;
     }
 
@@ -172,7 +189,7 @@ void bmem_node_push(ds_btree_item_t *node)
     }
 }
 
-prog_t *bmem_prog_first()
+prog_t *bmem_prog_first_line()
 {
     if (prog_list.root == 0)
     {
@@ -185,7 +202,7 @@ prog_t *bmem_prog_first()
     return (prog_t *)(DS_OBJECT_OF(&prog_list, prog_list.root));
 }
 
-prog_t *bmem_prog_next(prog_t *prog)
+prog_t *bmem_prog_next_line(prog_t *prog)
 {
     if (!prog)
         return 0;

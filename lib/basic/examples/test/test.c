@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        prog_t *prog = bmem_prog_new(line.line_no, line.read_ptr, line.write_ptr - line.read_ptr);
+        prog_t *prog = bmem_prog_line_new(line.line_no, line.read_ptr, line.write_ptr - line.read_ptr);
         if (prog == 0)
         {
             free(command);
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
         if (eval_prog(prog, false))
         {
             printf("Syntax error.\n");
-            bmem_prog_free(prog);
+            bmem_prog_line_free(prog);
             free(command);
             continue;
         }
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
         if (line.line_no == 0)
         {
             eval_prog(prog, true);
-            bmem_prog_free(prog);
+            bmem_prog_line_free(prog);
             // uint8_t token;
             // while ((token = token_get_next(&line)))
             // {

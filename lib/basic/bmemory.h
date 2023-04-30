@@ -55,11 +55,13 @@ typedef struct {
 
 int bmem_init();
 
-void bmem_prog_free(prog_t *prog);
-prog_t *bmem_prog_new(uint16_t line_no, uint8_t *line, uint16_t len);
-prog_t *bmem_prog_first();
-prog_t *bmem_prog_next(prog_t *prog);
+void bmem_prog_new();
+void bmem_prog_line_free(prog_t *prog);
+prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len);
+prog_t *bmem_prog_first_line();
+prog_t *bmem_prog_next_line(prog_t *prog);
 
+void bmem_var_new();
 var_t *bmem_var_number_new(char *name, float value);
 var_t *bmem_var_get(char *name);
 

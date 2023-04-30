@@ -6,12 +6,17 @@
 * [x] Gérer la virgule et l'exposant
 * [x] Ajouter les fonctions numériques sur float SIN, COS, etc et PI, RND, CODE
 * [x] Ajouter les variables
-* [ ] Ajouter RUN
+* [x] Ajouter RUN / CLEAR / NEW
 * [ ] Ajouter io (interface avec materiel)
-* [ ] AT, INK, PAPER, CLS
-* [ ] save / run
 * [ ] printf: ansi / minitel
-* [ ] input (envoie de caractère depuis le main vers le basic)
+* [ ] INPUT (envoie de caractère depuis le main vers le basic)
+* [ ] SAVE / LOAD
+* [ ] AT, INK, PAPER, CLS
+* [ ] expr strings
+* [ ] comparaison, condition
+* [ ] IF, GOTO
+* [ ] GOSUB, RETURN
+* [ ] FOR, NEXT
 * [ ] integration "edit_min" ?
 
 # Liens

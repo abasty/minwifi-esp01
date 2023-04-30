@@ -26,12 +26,13 @@ sgn
 sin
 sqr
 tan
+clear
+new
 free
 cats
 reset
 config
 connect
-clear
 load
 save
 tcp

@@ -21,6 +21,7 @@ const char *keywords =
     "LIS""\xd4"
     "L""\xce"
     "LOA""\xc4"
+    "NE""\xd7"
     "OF""\xc6"
     "O""\xce"
     "P""\xc9"

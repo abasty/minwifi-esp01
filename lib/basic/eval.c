@@ -427,15 +427,17 @@ bool eval_run(t_eval_state *state)
     if (!state->do_eval)
         return true;
 
+    bmem_var_new();
+
     int8_t err = 0;
-    prog_t *prog = bmem_prog_first();
+    prog_t *prog = bmem_prog_first_line();
 
     while (prog)
     {
         err = eval_prog(prog, true);
         if (err < 0)
             break;
-        prog = bmem_prog_next(prog);
+        prog = bmem_prog_next_line(prog);
     }
 
     if (err < 0)
@@ -444,6 +446,32 @@ bool eval_run(t_eval_state *state)
     }
 
     return err;
+}
+
+bool eval_clear(t_eval_state *state)
+{
+    if (!eval_token(state, TOKEN_KEYWORD_CLEAR))
+        return false;
+
+    if (state->do_eval)
+    {
+        bmem_var_new();
+    }
+
+    return true;
+}
+
+bool eval_new(t_eval_state *state)
+{
+    if (!eval_token(state, TOKEN_KEYWORD_NEW))
+        return false;
+
+    if (state->do_eval)
+    {
+        bmem_prog_new();
+    }
+
+    return true;
 }
 
 int8_t eval_prog(prog_t *prog, bool do_eval)
@@ -459,6 +487,8 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_print(&state) ||
         eval_list(&state) ||
         eval_run(&state) ||
+        eval_new(&state) ||
+        eval_clear(&state) ||
         eval_let(&state);
     // || eval_input(&state) ...
 
