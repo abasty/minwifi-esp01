@@ -136,13 +136,16 @@ bool eval_number(t_eval_state *state)
     else if (eval_token(state, TOKEN_VARIABLE_NUMBER))
     {
         state->read_ptr--;
-        var_t *var = bmem_var_get((char *) state->read_ptr);
-        if (!var)
+        if (state->do_eval)
         {
-            return false;
+            var_t *var = bmem_var_get((char *)state->read_ptr);
+            if (!var)
+            {
+                return false;
+            }
+            value = var->number;
         }
-        value = var->number;
-        state->read_ptr += strlen(var->name) + 1;
+        state->read_ptr += strlen((char *)state->read_ptr) + 1;
     }
     else
     {
