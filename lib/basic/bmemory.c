@@ -44,7 +44,7 @@ int bmem_vars_cmp(void *_var1, void *_var2)
 {
     var_t *var1 = (var_t *)_var1;
     var_t *var2 = (var_t *)_var2;
-    return var1->symbol - var2->symbol;
+    return strcmp(var1->name, var2->name);
 }
 
 int bmem_init()
@@ -52,6 +52,51 @@ int bmem_init()
     ds_btree_init(&progs, offsetof(prog_t, item), bmem_prog_cmp);
     ds_btree_init(&vars, offsetof(var_t, item), bmem_vars_cmp);
     return 0;
+}
+
+var_t *bmem_var_get(char *name)
+{
+    var_t search = {
+        .name = name,
+    };
+    return ds_btree_find(&vars, &search);
+}
+
+void bmem_var_number_free(var_t *var)
+{
+    ds_btree_remove_object(&vars, var);
+    free(var->name);
+    free(var);
+}
+
+var_t *bmem_var_number_new(char *name, float value)
+{
+    var_t *var = (var_t *)malloc(sizeof(var_t));
+    if (var == 0)
+    {
+        return 0;
+    }
+    var->number = value;
+    var->name = name;
+
+    var_t *exist = (var_t *)ds_btree_insert(&vars, var);
+    if (exist != var)
+    {
+        exist->number = var->number;
+        free(var);
+        return exist;
+    }
+
+    size_t n = strlen(name);
+    var->name = (char *)malloc(n);
+    if (var->name == 0)
+    {
+        bmem_var_number_free(var);
+        return 0;
+    }
+    strcpy(var->name, name);
+
+    return var;
 }
 
 void bmem_prog_free(prog_t *prog)

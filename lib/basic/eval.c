@@ -26,6 +26,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 #include "berror.h"
@@ -61,6 +62,12 @@ uint8_t functions[] = {
     TOKEN_KEYWORD_SIN,
     TOKEN_KEYWORD_SQR,
     TOKEN_KEYWORD_TAN,
+    0,
+};
+
+uint8_t variables[] = {
+    TOKEN_VARIABLE_NUMBER,
+    TOKEN_VARIABLE_STRING,
     0,
 };
 
@@ -125,6 +132,17 @@ bool eval_number(t_eval_state *state)
         *write_value_ptr++ = *state->read_ptr++;
         *write_value_ptr++ = *state->read_ptr++;
         *write_value_ptr++ = *state->read_ptr++;
+    }
+    else if (eval_token(state, TOKEN_VARIABLE_NUMBER))
+    {
+        state->read_ptr--;
+        var_t *var = bmem_var_get((char *) state->read_ptr);
+        if (!var)
+        {
+            return false;
+        }
+        value = var->number;
+        state->read_ptr += strlen(var->name) + 1;
     }
     else
     {
@@ -290,6 +308,39 @@ bool eval_string(t_eval_state *state)
     return true;
 }
 
+bool eval_let(t_eval_state *state)
+{
+    if (!eval_token(state, TOKEN_KEYWORD_LET))
+        return false;
+
+    char *name = (char *)state->read_ptr;
+    if (!eval_token_one_of(state, (char *)variables))
+        return false;
+    uint8_t token = state->token;
+
+    // Pass variable chars until zero
+    while (*state->read_ptr++)
+        ;
+
+    if (!eval_token(state, '='))
+        return false;
+
+    if (token == TOKEN_VARIABLE_NUMBER)
+    {
+        if (!eval_expr(state))
+            return false;
+
+        if (state->do_eval)
+        {
+            if (bmem_var_number_new(name, state->number) == 0)
+                return false;
+        }
+        return true;
+    }
+
+    return false;
+}
+
 bool eval_print(t_eval_state *state)
 {
     if (!eval_token(state, TOKEN_KEYWORD_PRINT))
@@ -374,10 +425,16 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         .token = 0,
     };
 
-    bool eval = eval_print(&state) || eval_list(&state); // || eval_input(&state) ...
+    bool eval =
+        eval_print(&state) ||
+        eval_list(&state) ||
+        eval_let(&state);
+    // || eval_input(&state) ...
 
-    if (eval)
-        return BERROR_NONE;
+    if (!eval)
+    {
+        return BERROR_SYNTAX;
+    }
 
-    return BERROR_SYNTAX;
+    return BERROR_NONE;
 }

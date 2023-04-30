@@ -24,6 +24,7 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,20 +37,13 @@ extern const char *keywords;
 #define TOKENS_MAX_LINE_SIZE (256)
 uint8_t token_buffer[TOKENS_MAX_LINE_SIZE];
 
-int8_t char_is_sep(char test_char)
-{
-    return test_char <= ' ' || test_char == ':' || test_char == ';' || test_char == ',' || test_char == '"';
-}
-
-int8_t char_of_keyword(char test_char)
+bool char_of_keyword(char test_char)
 {
     // TODO: test other implementation for size
-    return (test_char >= 'A' && test_char <= 'Z') || (test_char >= 'a' && test_char <= 'z') || (test_char >= '0' && test_char <= '9') || (test_char == '_');
-}
-
-int8_t char_is_digit(uint8_t test_char)
-{
-    return test_char >= '0' && test_char <= '9';
+    return (test_char >= 'A' && test_char <= 'Z') ||
+           (test_char >= 'a' && test_char <= 'z') ||
+           (test_char >= '0' && test_char <= '9') ||
+           (test_char == '$');
 }
 
 const char *untokenize_keyword(t_tokenizer_state *state, const char *keyword)
@@ -88,13 +82,14 @@ const char *untokenize_keyword(t_tokenizer_state *state, const char *keyword)
     return keyword;
 }
 
-int8_t tokenize_keyword(t_tokenizer_state *state, const char *keyword_char)
+int8_t tokenize_keyword(t_tokenizer_state *state, const char *keywords)
 {
-    char *word = (char *)(state->read_ptr);
-    char *word_char = word;
+    uint8_t *keyword_char = (uint8_t *) keywords;
+    uint8_t *word = state->read_ptr;
+    uint8_t *word_char = word;
 
     // Search end of keyword and transform to uppercase
-    char c = *state->read_ptr;
+    uint8_t c = *state->read_ptr;
     while (char_of_keyword(c))
     {
         *state->read_ptr++ = c >= 'a' && c <= 'z' ? c - 32 : c;
@@ -128,7 +123,28 @@ int8_t tokenize_keyword(t_tokenizer_state *state, const char *keyword_char)
             word_char = word;
         }
     }
-    return BERROR_SYNTAX;
+
+    // The word is not a keyword but a variable name
+
+    // Get the last char of the variable name and test for string vs number
+    word_char = state->read_ptr - 1;
+    uint8_t token = *word_char == ('$' | KEYWORD_END_TAG) ? TOKEN_VARIABLE_STRING : TOKEN_VARIABLE_NUMBER;
+    *state->write_ptr++ = token;
+
+    // Copy all variable chars
+    for (word_char = word; word_char != state->read_ptr; word_char++)
+    {
+        *state->write_ptr++ = *word_char & ~KEYWORD_END_TAG;
+    }
+    // Do not take last '$'
+    if (token == TOKEN_VARIABLE_STRING)
+    {
+        state->write_ptr--;
+    }
+    // Zero terminate variable name
+    *state->write_ptr++ = 0;
+
+    return BERROR_NONE;
 }
 
 int8_t tokenize_number(t_tokenizer_state *state)
@@ -196,6 +212,15 @@ char *untokenize(uint8_t *input)
             char *value = token_string_get_value(&state);
             printf("\"%s\"", value);
         }
+        else if (token == TOKEN_VARIABLE_NUMBER || token == TOKEN_VARIABLE_STRING)
+        {
+            int n = printf("%s", state.read_ptr);
+            state.read_ptr += n;
+            if (token == TOKEN_VARIABLE_STRING)
+            {
+                putchar('$');
+            }
+        }
         else
         {
             putchar(token);
@@ -244,13 +269,13 @@ int8_t tokenize(t_tokenizer_state *state, char *input)
         }
         else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
         {
-            // keyword
             err = tokenize_keyword(state, keywords);
         }
         else if (
             c == ';' || c == ',' ||
             c == '+' || c == '-' || c == '|' || c == '&' ||
             c == '*' || c == '/' || c == '%' ||
+            c == '=' || c == '<' || c == '>' ||
             c == '(' || c == ')')
         {
             *state->write_ptr++ = *state->read_ptr++;

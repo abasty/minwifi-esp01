@@ -41,9 +41,10 @@ list
 wifi
 on
 off
+let
 print
 input
-inkey
+inkey$
 EOF
 
 sort -o ${KEYWORDS_FILE}{,}
@@ -58,6 +59,7 @@ index=0
 while IFS= read -r keyword; do
     u_key=${keyword^^}
     echo ${u_key} >/dev/tty
+    u_key=${u_key%$}
     echo "#define TOKEN_KEYWORD_${u_key} ((uint8_t) (${index} | 0b10000000))" >>${KEYWORDS_H}
     ((index++))
 done < ${KEYWORDS_FILE}

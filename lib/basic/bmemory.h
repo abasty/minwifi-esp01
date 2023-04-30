@@ -44,19 +44,21 @@ typedef struct {
 
 typedef struct {
     ds_btree_item_t item;
-    uint32_t symbol;
-    uint8_t token;
+    char *name;
     union {
-        uint32_t number;
+        float number;
         char *string;
-        // float number; (4 bytes)
     };
 } var_t;
 
 
 int bmem_init();
+
 void bmem_prog_free(prog_t *prog);
 prog_t *bmem_prog_new(uint16_t line_no, uint8_t *line, uint16_t len);
+
+var_t *bmem_var_number_new(char *name, float value);
+var_t *bmem_var_get(char *name);
 
 #ifdef __cplusplus
 }
