@@ -26,12 +26,13 @@ sgn
 sin
 sqr
 tan
+clear
+new
 free
 cats
 reset
 config
 connect
-clear
 load
 save
 tcp
@@ -45,6 +46,7 @@ let
 print
 input
 inkey$
+run
 EOF
 
 sort -o ${KEYWORDS_FILE}{,}

@@ -45,7 +45,7 @@ typedef struct
     char *string;
 } t_eval_state;
 
-extern ds_btree_t progs;
+extern ds_btree_t prog_tree;
 extern ds_btree_t vars;
 
 uint8_t functions[] = {
@@ -139,11 +139,14 @@ bool eval_number(t_eval_state *state)
         if (state->do_eval)
         {
             var_t *var = bmem_var_get((char *)state->read_ptr);
-            if (!var)
+            if (var)
             {
-                return false;
+                value = var->number;
             }
-            value = var->number;
+            else
+            {
+                value = 0;
+            }
         }
         state->read_ptr += strlen((char *)state->read_ptr) + 1;
     }
@@ -411,9 +414,64 @@ bool eval_list(t_eval_state *state)
 
     if (state->do_eval)
     {
-        printf("Program: %zd line(s).\n", progs.count);
+        printf("Program: %zd line(s).\n", prog_tree.count);
         printf("Variables: %zd symbols(s).\n", vars.count);
-        btree_node_print(&progs, progs.root);
+        btree_node_print(&prog_tree, prog_tree.root);
+    }
+
+    return true;
+}
+
+bool eval_run(t_eval_state *state)
+{
+    if (!eval_token(state, TOKEN_KEYWORD_RUN))
+        return false;
+
+    if (!state->do_eval)
+        return true;
+
+    bmem_var_new();
+
+    int8_t err = 0;
+    prog_t *prog = bmem_prog_first_line();
+
+    while (prog)
+    {
+        err = eval_prog(prog, true);
+        if (err != BERROR_NONE)
+            break;
+        prog = bmem_prog_next_line(prog);
+    }
+
+    if (err < 0)
+    {
+        printf("Error %d\n", -err);
+    }
+
+    return err == BERROR_NONE;
+}
+
+bool eval_clear(t_eval_state *state)
+{
+    if (!eval_token(state, TOKEN_KEYWORD_CLEAR))
+        return false;
+
+    if (state->do_eval)
+    {
+        bmem_var_new();
+    }
+
+    return true;
+}
+
+bool eval_new(t_eval_state *state)
+{
+    if (!eval_token(state, TOKEN_KEYWORD_NEW))
+        return false;
+
+    if (state->do_eval)
+    {
+        bmem_prog_new();
     }
 
     return true;
@@ -431,6 +489,9 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
     bool eval =
         eval_print(&state) ||
         eval_list(&state) ||
+        eval_run(&state) ||
+        eval_new(&state) ||
+        eval_clear(&state) ||
         eval_let(&state);
     // || eval_input(&state) ...
 

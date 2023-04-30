@@ -215,7 +215,7 @@ char *untokenize(uint8_t *input)
         else if (token == TOKEN_VARIABLE_NUMBER || token == TOKEN_VARIABLE_STRING)
         {
             int n = printf("%s", state.read_ptr);
-            state.read_ptr += n;
+            state.read_ptr += n + 1;
             if (token == TOKEN_VARIABLE_STRING)
             {
                 putchar('$');

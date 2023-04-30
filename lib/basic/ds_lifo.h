@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Alain Basty
+ * Copyright © 2021 Alain Basty
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -23,50 +23,51 @@
  * SOFTWARE.
  */
 
-#ifndef __BMEMORY_H__
-#define __BMEMORY_H__
+#ifndef __DS_LIFO_H__
+#define __DS_LIFO_H__
 
-#include <stdint.h>
+#include <stddef.h>
 
-#include "ds_btree.h"
-#include "ds_lifo.h"
+#include "ds_common.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef struct ds_lifo_item_s ds_lifo_item_t;
+struct ds_lifo_item_s
+{
+    ds_lifo_item_t *next;
+};
 
-typedef struct {
-    ds_btree_item_t tree;
-    ds_lifo_item_t list;
-    uint16_t line_no;
-    uint16_t len;
-    uint8_t *line;
-} prog_t;
+typedef struct ds_lifo_s ds_lifo_t;
+struct ds_lifo_s
+{
+    size_t count;
+    ds_lifo_item_t *root;
+    size_t _offset_in_object;
+};
 
-typedef struct {
-    ds_btree_item_t tree;
-    char *name;
-    union {
-        float number;
-        char *string;
-    };
-} var_t;
-
-
-int bmem_init();
-
-void bmem_prog_new();
-void bmem_prog_line_free(prog_t *prog);
-prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len);
-prog_t *bmem_prog_first_line();
-prog_t *bmem_prog_next_line(prog_t *prog);
-
-void bmem_var_new();
-var_t *bmem_var_number_new(char *name, float value);
-var_t *bmem_var_get(char *name);
-
-#ifdef __cplusplus
+static inline void ds_lifo_init(ds_lifo_t *lifo, size_t offset_in_object)
+{
+    lifo->_offset_in_object = offset_in_object;
+    lifo->root = 0;
+    lifo->count = 0;
 }
-#endif
 
-#endif // __BMEMORY_H__
+static inline void ds_lifo_push(ds_lifo_t *lifo, void *object)
+{
+    ds_lifo_item_t *item = DS_ITEM_OF(lifo, object);
+    lifo->count++;
+    item->next = lifo->root;
+    lifo->root = item;
+}
+
+static inline void *ds_lifo_pop(ds_lifo_t *lifo)
+{
+    ds_lifo_item_t *item = lifo->root;
+    if (!item)
+        return 0;
+    lifo->root = item->next;
+    item->next = 0;
+    lifo->count--;
+    return DS_OBJECT_OF(lifo, item);
+}
+
+#endif // __DS_LIFO_H__
