@@ -139,11 +139,14 @@ bool eval_number(t_eval_state *state)
         if (state->do_eval)
         {
             var_t *var = bmem_var_get((char *)state->read_ptr);
-            if (!var)
+            if (var)
             {
-                return false;
+                value = var->number;
             }
-            value = var->number;
+            else
+            {
+                value = 0;
+            }
         }
         state->read_ptr += strlen((char *)state->read_ptr) + 1;
     }
@@ -435,7 +438,7 @@ bool eval_run(t_eval_state *state)
     while (prog)
     {
         err = eval_prog(prog, true);
-        if (err < 0)
+        if (err != BERROR_NONE)
             break;
         prog = bmem_prog_next_line(prog);
     }
@@ -445,7 +448,7 @@ bool eval_run(t_eval_state *state)
         printf("Error %d\n", -err);
     }
 
-    return err;
+    return err == BERROR_NONE;
 }
 
 bool eval_clear(t_eval_state *state)
