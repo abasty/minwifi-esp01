@@ -36,7 +36,7 @@ void keyword_print_all(const char *keyword_char)
     printf("\n");
 }
 
-extern ds_btree_t progs;
+extern ds_btree_t prog_tree;
 extern ds_btree_t vars;
 
 #include <math.h>

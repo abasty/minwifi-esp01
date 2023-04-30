@@ -7,6 +7,7 @@
 * [x] Ajouter les fonctions numériques sur float SIN, COS, etc et PI, RND, CODE
 * [x] Ajouter les variables
 * [ ] Ajouter RUN
+* [ ] Ajouter io (interface avec materiel)
 * [ ] AT, INK, PAPER, CLS
 * [ ] save / run
 * [ ] printf: ansi / minitel

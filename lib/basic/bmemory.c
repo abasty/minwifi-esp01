@@ -27,11 +27,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ds_common.h"
 #include "ds_btree.h"
+#include "ds_lifo.h"
 #include "bmemory.h"
 
-ds_btree_t progs;
+ds_btree_t prog_tree;
 ds_btree_t vars;
+ds_lifo_t prog_list;
 
 int bmem_prog_cmp(void *_prog1, void *_prog2)
 {
@@ -47,10 +50,16 @@ int bmem_vars_cmp(void *_var1, void *_var2)
     return strcmp(var1->name, var2->name);
 }
 
+static inline void bmem_invalidate_prog_list()
+{
+    prog_list.root = 0;
+}
+
 int bmem_init()
 {
-    ds_btree_init(&progs, offsetof(prog_t, item), bmem_prog_cmp);
-    ds_btree_init(&vars, offsetof(var_t, item), bmem_vars_cmp);
+    ds_btree_init(&prog_tree, offsetof(prog_t, tree), bmem_prog_cmp);
+    ds_btree_init(&vars, offsetof(var_t, tree), bmem_vars_cmp);
+    ds_lifo_init(&prog_list, offsetof(prog_t, list));
     return 0;
 }
 
@@ -103,7 +112,8 @@ void bmem_prog_free(prog_t *prog)
 {
     if (prog->line_no != 0)
     {
-        ds_btree_remove_object(&progs, prog);
+        bmem_invalidate_prog_list();
+        ds_btree_remove_object(&prog_tree, prog);
     }
     free(prog->line);
     free(prog);
@@ -131,7 +141,7 @@ prog_t *bmem_prog_new(uint16_t line_no, uint8_t *line, uint16_t len)
         return prog;
     }
 
-    prog_t *exist = (prog_t *)ds_btree_insert(&progs, prog);
+    prog_t *exist = (prog_t *)ds_btree_insert(&prog_tree, prog);
     if (exist != prog)
     {
         free(exist->line);
@@ -147,5 +157,41 @@ prog_t *bmem_prog_new(uint16_t line_no, uint8_t *line, uint16_t len)
         return 0;
     }
 
+    bmem_invalidate_prog_list();
+
     return prog;
+}
+
+void bmem_node_push(ds_btree_item_t *node)
+{
+    if (node)
+    {
+        bmem_node_push(node->right);
+        ds_lifo_push(&prog_list, DS_OBJECT_OF(&prog_tree, node));
+        bmem_node_push(node->left);
+    }
+}
+
+prog_t *bmem_prog_first()
+{
+    if (prog_list.root == 0)
+    {
+        bmem_node_push(prog_tree.root);
+    }
+
+    if (prog_list.root == 0)
+        return 0;
+
+    return (prog_t *)(DS_OBJECT_OF(&prog_list, prog_list.root));
+}
+
+prog_t *bmem_prog_next(prog_t *prog)
+{
+    if (!prog)
+        return 0;
+
+    if (!(prog->list.next))
+        return 0;
+
+    return (prog_t *) (DS_OBJECT_OF(&prog_list, prog->list.next));
 }

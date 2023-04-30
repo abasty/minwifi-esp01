@@ -27,6 +27,7 @@ const char *keywords =
     "PRIN""\xd4"
     "RESE""\xd4"
     "RN""\xc4"
+    "RU""\xce"
     "SAV""\xc5"
     "SG""\xce"
     "SI""\xce"

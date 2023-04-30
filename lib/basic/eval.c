@@ -45,7 +45,7 @@ typedef struct
     char *string;
 } t_eval_state;
 
-extern ds_btree_t progs;
+extern ds_btree_t prog_tree;
 extern ds_btree_t vars;
 
 uint8_t functions[] = {
@@ -411,12 +411,34 @@ bool eval_list(t_eval_state *state)
 
     if (state->do_eval)
     {
-        printf("Program: %zd line(s).\n", progs.count);
+        printf("Program: %zd line(s).\n", prog_tree.count);
         printf("Variables: %zd symbols(s).\n", vars.count);
-        btree_node_print(&progs, progs.root);
+        btree_node_print(&prog_tree, prog_tree.root);
     }
 
     return true;
+}
+
+bool eval_run(t_eval_state *state)
+{
+    if (!eval_token(state, TOKEN_KEYWORD_RUN))
+        return false;
+
+    if (!state->do_eval)
+        return true;
+
+    bool result = true;
+    prog_t *prog = bmem_prog_first();
+
+    while (prog)
+    {
+        result = eval_prog(prog, true);
+        if (!result)
+            break;
+        prog = bmem_prog_next(prog);
+    }
+
+    return result;
 }
 
 int8_t eval_prog(prog_t *prog, bool do_eval)
@@ -431,6 +453,7 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
     bool eval =
         eval_print(&state) ||
         eval_list(&state) ||
+        eval_run(&state) ||
         eval_let(&state);
     // || eval_input(&state) ...
 
