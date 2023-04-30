@@ -427,18 +427,23 @@ bool eval_run(t_eval_state *state)
     if (!state->do_eval)
         return true;
 
-    bool result = true;
+    int8_t err = 0;
     prog_t *prog = bmem_prog_first();
 
     while (prog)
     {
-        result = eval_prog(prog, true);
-        if (!result)
+        err = eval_prog(prog, true);
+        if (err < 0)
             break;
         prog = bmem_prog_next(prog);
     }
 
-    return result;
+    if (err < 0)
+    {
+        printf("Error %d\n", -err);
+    }
+
+    return err;
 }
 
 int8_t eval_prog(prog_t *prog, bool do_eval)
