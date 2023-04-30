@@ -5,7 +5,8 @@
 * [x] Code `( expr )` dans factor ?
 * [x] Gérer la virgule et l'exposant
 * [x] Ajouter les fonctions numériques sur float SIN, COS, etc et PI, RND, CODE
-* [ ] Ajouter les variables
+* [x] Ajouter les variables
+* [ ] Ajouter RUN
 * [ ] AT, INK, PAPER, CLS
 * [ ] save / run
 * [ ] printf: ansi / minitel
@@ -32,18 +33,18 @@ TX -     - RX
 
 Sur le fil DIN noir :
 
-TX : Bleu
-RX : Rouge
-Tresse : 0v
+* TX : Bleu
+* RX : Rouge
+* Tresse : 0v
 
-9v : Vert
-OT : Blanc
+* 9v : Vert
+* OT : Blanc
 
 Sur la DIN, 3 fils souples papa :
 
-TX : Marron
-RX : Rouge
-0v : Noir
+* TX : Marron
+* RX : Rouge
+* 0v : Noir
 
 # Style C
 
