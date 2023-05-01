@@ -26,10 +26,16 @@ int print_integer(char *format, int32_t i)
     return printf(format, i);
 }
 
+void newline()
+{
+
+}
+
 bastos_io_t io = {
     .print_string = print_string,
     .print_float = print_float,
     .print_integer = print_integer,
+    .newline = newline,
 };
 
 extern char *keywords;

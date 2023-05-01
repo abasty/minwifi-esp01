@@ -393,7 +393,7 @@ bool eval_print()
 
     if (eval_state.do_eval)
     {
-        bio->print_string("\n");
+        bio->print_string("\r\n");
     }
 
     return result;
@@ -408,7 +408,7 @@ void btree_node_print(ds_btree_t *btree, ds_btree_item_t *node)
         btree_node_print(btree, node->left);
         bio->print_integer("%d", (int) progof(btree, node)->line_no);
         bio->print_string(untokenize(progof(btree, node)->line));
-        bio->print_string("\n");
+        bio->print_string("\r\n");
         btree_node_print(btree, node->right);
     }
 }
@@ -420,8 +420,8 @@ bool eval_list()
 
     if (eval_state.do_eval)
     {
-        bio->print_integer("Program: %d line(s).\n", prog_tree.count);
-        bio->print_integer("Variables: %d symbols(s).\n", vars.count);
+        bio->print_integer("Program: %d line(s).\r\n", prog_tree.count);
+        bio->print_integer("Variables: %d symbols(s).\r\n", vars.count);
         btree_node_print(&prog_tree, prog_tree.root);
     }
 
