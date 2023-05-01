@@ -39,11 +39,14 @@ typedef struct
 {
     prog_t prog;
     bool do_eval;
+    bool running;
     uint8_t *read_ptr;
     uint8_t token;
     float number;
     char *string;
-} t_eval_state;
+} eval_state_t;
+
+eval_state_t eval_state;
 
 extern bastos_io_t *bio;
 
@@ -73,19 +76,19 @@ uint8_t variables[] = {
     0,
 };
 
-bool eval_token(t_eval_state *state, uint8_t c)
+bool eval_token(uint8_t c)
 {
-    if (*state->read_ptr != c)
+    if (*eval_state.read_ptr != c)
     {
         return false;
     }
-    state->token = *state->read_ptr++;
+    eval_state.token = *eval_state.read_ptr++;
     return true;
 }
 
-bool eval_token_one_of(t_eval_state *state, const char *set)
+bool eval_token_one_of(const char *set)
 {
-    char c = *state->read_ptr;
+    char c = *eval_state.read_ptr;
 
     while (*set && c != *set)
     {
@@ -95,52 +98,52 @@ bool eval_token_one_of(t_eval_state *state, const char *set)
     {
         return false;
     }
-    state->token = c;
-    state->read_ptr++;
+    eval_state.token = c;
+    eval_state.read_ptr++;
     return true;
 }
 
-bool eval_string(t_eval_state *state);
-bool eval_factor(t_eval_state *state);
-bool eval_expr(t_eval_state *state);
+bool eval_string();
+bool eval_factor();
+bool eval_expr();
 
-bool eval_code(t_eval_state *state)
+bool eval_code()
 {
-    if (eval_token(state, TOKEN_KEYWORD_CODE) && eval_string(state))
+    if (eval_token(TOKEN_KEYWORD_CODE) && eval_string())
     {
-        state->number = state->string[0];
+        eval_state.number = eval_state.string[0];
         return true;
     }
     return false;
 }
 
-bool eval_number(t_eval_state *state)
+bool eval_number()
 {
-    bool minus = eval_token(state, '-');
+    bool minus = eval_token('-');
     float value = 0;
 
-    if (eval_token(state, TOKEN_KEYWORD_PI))
+    if (eval_token(TOKEN_KEYWORD_PI))
     {
         value = 3.1415926536;
     }
-    else if (eval_token(state, TOKEN_KEYWORD_RND))
+    else if (eval_token(TOKEN_KEYWORD_RND))
     {
         value = (float)((double)rand() / (double)RAND_MAX);
     }
-    else if (eval_token(state, TOKEN_NUMBER))
+    else if (eval_token(TOKEN_NUMBER))
     {
         uint8_t *write_value_ptr = (uint8_t *)&value;
-        *write_value_ptr++ = *state->read_ptr++;
-        *write_value_ptr++ = *state->read_ptr++;
-        *write_value_ptr++ = *state->read_ptr++;
-        *write_value_ptr++ = *state->read_ptr++;
+        *write_value_ptr++ = *eval_state.read_ptr++;
+        *write_value_ptr++ = *eval_state.read_ptr++;
+        *write_value_ptr++ = *eval_state.read_ptr++;
+        *write_value_ptr++ = *eval_state.read_ptr++;
     }
-    else if (eval_token(state, TOKEN_VARIABLE_NUMBER))
+    else if (eval_token(TOKEN_VARIABLE_NUMBER))
     {
-        state->read_ptr--;
-        if (state->do_eval)
+        eval_state.read_ptr--;
+        if (eval_state.do_eval)
         {
-            var_t *var = bmem_var_get((char *)state->read_ptr);
+            var_t *var = bmem_var_get((char *)eval_state.read_ptr);
             if (var)
             {
                 value = var->number;
@@ -150,72 +153,72 @@ bool eval_number(t_eval_state *state)
                 value = 0;
             }
         }
-        state->read_ptr += strlen((char *)state->read_ptr) + 1;
+        eval_state.read_ptr += strlen((char *)eval_state.read_ptr) + 1;
     }
     else
     {
         return false;
     }
 
-    state->number = value;
+    eval_state.number = value;
     if (minus)
     {
-        state->number = -state->number;
+        eval_state.number = -eval_state.number;
     }
     return true;
 }
 
-bool eval_function(t_eval_state *state)
+bool eval_function()
 {
-    if (!eval_token_one_of(state, (char *)functions))
+    if (!eval_token_one_of((char *)functions))
     {
         return false;
     }
-    uint8_t f = state->token;
-    if (!eval_factor(state))
+    uint8_t f = eval_state.token;
+    if (!eval_factor())
     {
         return false;
     }
     switch (f)
     {
     case TOKEN_KEYWORD_ABS:
-        state->number = fabsf(state->number);
+        eval_state.number = fabsf(eval_state.number);
         break;
     case TOKEN_KEYWORD_ACS:
-        state->number = acosf(state->number);
+        eval_state.number = acosf(eval_state.number);
         break;
     case TOKEN_KEYWORD_ASN:
-        state->number = asinf(state->number);
+        eval_state.number = asinf(eval_state.number);
         break;
     case TOKEN_KEYWORD_ATN:
-        state->number = atanf(state->number);
+        eval_state.number = atanf(eval_state.number);
         break;
     case TOKEN_KEYWORD_BIN:
         // FIXME
         break;
     case TOKEN_KEYWORD_COS:
-        state->number = cosf(state->number);
+        eval_state.number = cosf(eval_state.number);
         break;
     case TOKEN_KEYWORD_EXP:
-        state->number = expf(state->number);
+        eval_state.number = expf(eval_state.number);
         break;
     case TOKEN_KEYWORD_INT:
-        state->number = truncf(state->number);
+        eval_state.number = truncf(eval_state.number);
         break;
     case TOKEN_KEYWORD_LN:
-        state->number = logf(state->number);
+        eval_state.number = logf(eval_state.number);
         break;
     case TOKEN_KEYWORD_SGN:
-        state->number = (state->number > 0) - (state->number < 0);
+        eval_state.number = (eval_state.number > 0) - (eval_state.number < 0);
         break;
     case TOKEN_KEYWORD_SIN:
-        state->number = sinf(state->number);
+        eval_state.number = sinf(eval_state.number);
         break;
     case TOKEN_KEYWORD_SQR:
-        state->number = sqrtf(state->number);
+        eval_state.number = sqrtf(eval_state.number);
         break;
     case TOKEN_KEYWORD_TAN:
-        state->number = tanf(state->number);
+        eval_state.number = tanf(eval_state.number);
         break;
     default:
         return false;
@@ -223,28 +226,28 @@ bool eval_function(t_eval_state *state)
     return true;
 }
 
-bool eval_factor(t_eval_state *state)
+bool eval_factor()
 {
     bool result =
-        eval_number(state) ||
-        eval_function(state) ||
-        eval_code(state) ||
-        (eval_token(state, '(') && eval_expr(state) && eval_token(state, ')'));
+        eval_number() ||
+        eval_function() ||
+        eval_code() ||
+        (eval_token('(') && eval_expr() && eval_token(')'));
     return result;
 }
 
-bool eval_term(t_eval_state *state)
+bool eval_term()
 {
     bool result = true;
     float acc = 0;
-    if ((result = eval_factor(state)))
+    if ((result = eval_factor()))
     {
-        acc = state->number;
+        acc = eval_state.number;
         // TODO: Manage / and % by zero (inf)
-        while (eval_token_one_of(state, "*/%"))
+        while (eval_token_one_of("*/%"))
         {
-            uint8_t op = state->token;
-            result = eval_factor(state);
+            uint8_t op = eval_state.token;
+            result = eval_factor();
             if (!result)
             {
                 break;
@@ -252,16 +255,16 @@ bool eval_term(t_eval_state *state)
             switch (op)
             {
             case '*':
-                acc *= state->number;
+                acc *= eval_state.number;
                 break;
             case '/':
-                acc /= state->number;
+                acc /= eval_state.number;
                 break;
             case '%':
-                acc = (int)(truncf(acc)) % (int)(truncf(state->number));
+                acc = (int)(truncf(acc)) % (int)(truncf(eval_state.number));
                 break;
             }
-            state->number = acc;
+            eval_state.number = acc;
         }
     }
     return result;
@@ -270,17 +273,17 @@ bool eval_term(t_eval_state *state)
 // TODO: Add eval_condition (< > <> = <= >=)
 // TODO: Add eval_boolean (AND OR)
 
-bool eval_expr(t_eval_state *state)
+bool eval_expr()
 {
     bool result = true;
     float acc = 0;
-    if ((result = eval_term(state)))
+    if ((result = eval_term()))
     {
-        acc = state->number;
-        while (eval_token_one_of(state, "+-|&"))
+        acc = eval_state.number;
+        while (eval_token_one_of("+-|&"))
         {
-            uint8_t op = state->token;
-            result = eval_term(state);
+            uint8_t op = eval_state.token;
+            result = eval_term();
             if (!result)
             {
                 break;
@@ -288,59 +291,59 @@ bool eval_expr(t_eval_state *state)
             switch (op)
             {
             case '+':
-                acc += state->number;
+                acc += eval_state.number;
                 break;
             case '-':
-                acc -= state->number;
+                acc -= eval_state.number;
                 break;
             case '&':
-                acc = (int)(truncf(acc)) & (int)(truncf(state->number));
+                acc = (int)(truncf(acc)) & (int)(truncf(eval_state.number));
                 break;
             case '|':
-                acc = (int)(truncf(acc)) | (int)(truncf(state->number));
+                acc = (int)(truncf(acc)) | (int)(truncf(eval_state.number));
                 break;
             }
-            state->number = acc;
+            eval_state.number = acc;
         }
     }
     return result;
 }
 
-bool eval_string(t_eval_state *state)
+bool eval_string()
 {
-    if (!eval_token(state, TOKEN_STRING))
+    if (!eval_token(TOKEN_STRING))
         return false;
 
-    state->string = (char *)(state->read_ptr);
-    while(*state->read_ptr++);
+    eval_state.string = (char *)(eval_state.read_ptr);
+    while(*eval_state.read_ptr++);
     return true;
 }
 
-bool eval_let(t_eval_state *state)
+bool eval_let()
 {
-    if (!eval_token(state, TOKEN_KEYWORD_LET))
+    if (!eval_token(TOKEN_KEYWORD_LET))
         return false;
 
-    char *name = (char *)state->read_ptr;
-    if (!eval_token_one_of(state, (char *)variables))
+    char *name = (char *)eval_state.read_ptr;
+    if (!eval_token_one_of((char *)variables))
         return false;
-    uint8_t token = state->token;
+    uint8_t token = eval_state.token;
 
     // Pass variable chars until zero
-    while (*state->read_ptr++)
+    while (*eval_state.read_ptr++)
         ;
 
-    if (!eval_token(state, '='))
+    if (!eval_token('='))
         return false;
 
     if (token == TOKEN_VARIABLE_NUMBER)
     {
-        if (!eval_expr(state))
+        if (!eval_expr(eval_state))
             return false;
 
-        if (state->do_eval)
+        if (eval_state.do_eval)
         {
-            if (bmem_var_number_new(name, state->number) == 0)
+            if (bmem_var_number_new(name, eval_state.number) == 0)
                 return false;
         }
         return true;
@@ -349,35 +352,35 @@ bool eval_let(t_eval_state *state)
     return false;
 }
 
-bool eval_print(t_eval_state *state)
+bool eval_print()
 {
-    if (!eval_token(state, TOKEN_KEYWORD_PRINT))
+    if (!eval_token(TOKEN_KEYWORD_PRINT))
         return false;
 
     bool result = true;
     while (true)
     {
-        if (eval_string(state))
+        if (eval_string(eval_state))
         {
-            if (state->do_eval)
+            if (eval_state.do_eval)
             {
-                bio->print_string(state->string);
+                bio->print_string(eval_state.string);
             }
         }
-        else if (eval_expr(state))
+        else if (eval_expr(eval_state))
         {
-            if (state->do_eval)
+            if (eval_state.do_eval)
             {
-                bio->print_float(state->number);
+                bio->print_float(eval_state.number);
             }
         }
         else
         {
             result = false;
         }
-        if (result && eval_token_one_of(state, ";,"))
+        if (result && eval_token_one_of(";,"))
         {
-            if (state->token == ',' && state->do_eval)
+            if (eval_state.token == ',' && eval_state.do_eval)
             {
                 bio->print_string(" ");
             }
@@ -388,7 +391,7 @@ bool eval_print(t_eval_state *state)
         }
     }
 
-    if (state->do_eval)
+    if (eval_state.do_eval)
     {
         bio->print_string("\n");
     }
@@ -410,12 +413,12 @@ void btree_node_print(ds_btree_t *btree, ds_btree_item_t *node)
     }
 }
 
-bool eval_list(t_eval_state *state)
+bool eval_list()
 {
-    if (!eval_token(state, TOKEN_KEYWORD_LIST))
+    if (!eval_token(TOKEN_KEYWORD_LIST))
         return false;
 
-    if (state->do_eval)
+    if (eval_state.do_eval)
     {
         bio->print_integer("Program: %d line(s).\n", prog_tree.count);
         bio->print_integer("Variables: %d symbols(s).\n", vars.count);
@@ -425,12 +428,12 @@ bool eval_list(t_eval_state *state)
     return true;
 }
 
-bool eval_run(t_eval_state *state)
+bool eval_run()
 {
-    if (!eval_token(state, TOKEN_KEYWORD_RUN))
+    if (!eval_token(TOKEN_KEYWORD_RUN))
         return false;
 
-    if (!state->do_eval)
+    if (!eval_state.do_eval)
         return true;
 
     bmem_var_new();
@@ -454,12 +457,12 @@ bool eval_run(t_eval_state *state)
     return err == BERROR_NONE;
 }
 
-bool eval_clear(t_eval_state *state)
+bool eval_clear()
 {
-    if (!eval_token(state, TOKEN_KEYWORD_CLEAR))
+    if (!eval_token(TOKEN_KEYWORD_CLEAR))
         return false;
 
-    if (state->do_eval)
+    if (eval_state.do_eval)
     {
         bmem_var_new();
     }
@@ -467,12 +470,12 @@ bool eval_clear(t_eval_state *state)
     return true;
 }
 
-bool eval_new(t_eval_state *state)
+bool eval_new()
 {
-    if (!eval_token(state, TOKEN_KEYWORD_NEW))
+    if (!eval_token(TOKEN_KEYWORD_NEW))
         return false;
 
-    if (state->do_eval)
+    if (eval_state.do_eval)
     {
         bmem_prog_new();
     }
@@ -482,21 +485,19 @@ bool eval_new(t_eval_state *state)
 
 int8_t eval_prog(prog_t *prog, bool do_eval)
 {
-    t_eval_state state = {
-        .do_eval = do_eval,
-        .prog = *prog,
-        .read_ptr = prog->line,
-        .token = 0,
-    };
+    eval_state.do_eval = do_eval;
+    eval_state.prog = *prog;
+    eval_state.read_ptr = prog->line;
+    eval_state.token = 0;
 
     bool eval =
-        eval_print(&state) ||
-        eval_list(&state) ||
-        eval_run(&state) ||
-        eval_new(&state) ||
-        eval_clear(&state) ||
-        eval_let(&state);
-    // || eval_input(&state) ...
+        eval_print() ||
+        eval_list() ||
+        eval_run() ||
+        eval_new() ||
+        eval_clear() ||
+        eval_let();
+    // || eval_input() ...
 
     if (!eval)
     {
