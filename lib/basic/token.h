@@ -47,14 +47,14 @@ typedef struct {
     uint16_t line_no;
     uint8_t *read_ptr;
     uint8_t *write_ptr;
-} t_tokenizer_state;
+} tokenizer_state_t;
 
-int8_t tokenize(t_tokenizer_state *state, char *line);
+int8_t tokenize(tokenizer_state_t *state, char *line);
 char *untokenize(uint8_t *input);
 
-uint8_t token_get_next(t_tokenizer_state *state);
-float token_number_get_value(t_tokenizer_state *state);
-char* token_string_get_value(t_tokenizer_state *state);
+uint8_t token_get_next(tokenizer_state_t *state);
+float token_number_get_value(tokenizer_state_t *state);
+char* token_string_get_value(tokenizer_state_t *state);
 
 #ifdef __cplusplus
 }

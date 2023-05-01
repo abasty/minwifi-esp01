@@ -75,7 +75,7 @@ void MinitelShell::runCommand()
 {
     _term->newLineIfNeeded();
 
-    t_tokenizer_state state;
+    tokenizer_state_t state;
     tokenize(&state, _command);
     uint8_t token1 = token_get_next(&state);
     uint16_t value = 0;

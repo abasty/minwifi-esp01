@@ -43,11 +43,11 @@ typedef struct
 {
     strtof_t *strtof;
     printf_t *printf;
-} t_bastos_io;
+} bastos_io_t;
 
-extern t_bastos_io *io;
+extern bastos_io_t *io;
 
-void bastos_init(t_bastos_io *_io);
+void bastos_init(bastos_io_t *_io);
 
 size_t bastos_handle_keys(char *keys, size_t n);
 void bastos_loop();
