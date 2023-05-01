@@ -26,12 +26,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include "token.h"
 #include "berror.h"
+#include "bio.h"
 
+extern bastos_io_t *bio;
 extern const char *keywords;
 
 uint8_t token_buffer[TOKEN_LINE_SIZE];
@@ -75,7 +76,8 @@ const char *untokenize_keyword(tokenizer_state_t *state, const char *keyword)
     do
     {
         c = *keyword_char++;
-        putchar(c & ~KEYWORD_END_TAG);
+        char char_str[2] = {c & ~KEYWORD_END_TAG, 0};
+        bio->print_string(char_str);
     } while ((c & KEYWORD_END_TAG) == 0);
 
     return keyword;
@@ -83,7 +85,7 @@ const char *untokenize_keyword(tokenizer_state_t *state, const char *keyword)
 
 int8_t tokenize_keyword(tokenizer_state_t *state, const char *keywords)
 {
-    uint8_t *keyword_char = (uint8_t *) keywords;
+    uint8_t *keyword_char = (uint8_t *)keywords;
     uint8_t *word = state->read_ptr;
     uint8_t *word_char = word;
 
@@ -148,9 +150,10 @@ int8_t tokenize_keyword(tokenizer_state_t *state, const char *keywords)
 
 int8_t tokenize_number(tokenizer_state_t *state)
 {
-    float value = 0;
-    int n = 0;
-    if (sscanf((char *)state->read_ptr, "%f%n", &value, &n) != 1)
+    char *end_ptr = 0;
+    float value = strtof((char *)state->read_ptr, &end_ptr);
+    int n = end_ptr - (char *)state->read_ptr;
+    if (n == 0)
     {
         return BERROR_SYNTAX;
     }
@@ -195,7 +198,7 @@ char *untokenize(uint8_t *input)
     uint8_t token;
     while ((token = token_get_next(&state)))
     {
-        putchar(' ');
+        bio->print_string(" ");
         if ((token & TOKEN_KEYWORD) != 0)
         {
             token &= ~TOKEN_KEYWORD;
@@ -204,25 +207,28 @@ char *untokenize(uint8_t *input)
         else if (token == TOKEN_NUMBER)
         {
             float value = token_number_get_value(&state);
-            printf("%g", value);
+            bio->print_float(value);
         }
         else if (token == TOKEN_STRING)
         {
             char *value = token_string_get_value(&state);
-            printf("\"%s\"", value);
+            bio->print_string("\"");
+            bio->print_string(value);
+            bio->print_string("\"");
         }
         else if (token == TOKEN_VARIABLE_NUMBER || token == TOKEN_VARIABLE_STRING)
         {
-            int n = printf("%s", state.read_ptr);
+            int n = bio->print_string((char *)state.read_ptr);
             state.read_ptr += n + 1;
             if (token == TOKEN_VARIABLE_STRING)
             {
-                putchar('$');
+                bio->print_string("$");
             }
         }
         else
         {
-            putchar(token);
+            char token_str[2] = {token, 0};
+            bio->print_string(token_str);
         }
     }
 

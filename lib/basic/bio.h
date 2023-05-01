@@ -36,16 +36,16 @@ extern "C"
 
 #define IO_BUFFER_SIZE (256)
 
-typedef float strtof_t(const char *nptr, char **endptr);
-typedef int printf_t(const char *format, ...);
+typedef int print_string_t(char *s);
+typedef int print_float_t(float f);
+typedef int print_format_integer_t(char *format, int i);
 
 typedef struct
 {
-    strtof_t *strtof;
-    printf_t *printf;
+    print_string_t *print_string;
+    print_float_t *print_float;
+    print_format_integer_t *print_integer;
 } bastos_io_t;
-
-extern bastos_io_t *io;
 
 void bastos_init(bastos_io_t *_io);
 

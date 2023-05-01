@@ -35,12 +35,33 @@
 #include "CncManager.h"
 #include "minitel.h"
 
-#include "bmemory.h"
+#include "bio.h"
 
 // 0:	BUTTON
 // 13:	LED
 // 12:	RELAY
 // 14:	EXTRA GPIO
+
+extern "C" int print_float(float f)
+{
+    return Serial.printf("%g", f);
+}
+
+extern "C" int print_string(char *s)
+{
+    return Serial.printf("%s", s);
+}
+
+extern "C" int print_integer(char *format, int i)
+{
+    return Serial.printf(format, i);
+}
+
+bastos_io_t io = {
+    .print_string = print_string,
+    .print_float = print_float,
+    .print_integer = print_integer,
+};
 
 int relayPin = 12;
 int ledPin = 13;
@@ -157,8 +178,7 @@ void setup()
     Serial.setTimeout(0);
     initMinitel(false);
 
-    bmem_init();
-    // bastos_init()
+    bastos_init(&io);
 
     // connect to Minitel server if any
     serialTerminal->prompt();
@@ -193,10 +213,10 @@ void loop()
     // Handle commands from WiFi Client
     if (wifiClient && wifiClient->available() > 0) {
         // read client data
-        uint8_t buffer[32];
+        char buffer[32];
         size_t n = wifiClient->read(buffer, 32);
-        wifiShell->handle((char *)buffer, n);
-        // bastos_handle_keys(buffer, n)
+        // wifiShell->handle((char *)buffer, n);
+        bastos_handle_keys(buffer, n);
     }
 
     // Forward Minitel server incoming data to serial output
@@ -224,10 +244,10 @@ void loop()
     if (Serial && Serial.available() > 0) {
         if (!_3611) {
             // Command mode: Handle serial input with command shell
-            uint8_t buffer[32];
+            char buffer[32];
             size_t n = Serial.readBytes(buffer, 32);
-            serialShell->handle((char *)buffer, n);
-            // bastos_handle_keys(buffer, n)
+            //serialShell->handle((char *)buffer, n);
+            bastos_handle_keys(buffer, n);
         } else {
             // Minitel mode: Forward serial input to Minitel sever
             uint8_t key;
@@ -239,5 +259,5 @@ void loop()
             }
         }
     }
-    // bastos_loop()
+    bastos_loop();
 }

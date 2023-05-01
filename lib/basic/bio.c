@@ -24,7 +24,6 @@
  */
 
 #include <stdbool.h>
-#include <stdio.h>
 
 #include "berror.h"
 #include "bmemory.h"
@@ -32,14 +31,14 @@
 #include "eval.h"
 #include "bio.h"
 
-bastos_io_t *io = 0;
+bastos_io_t *bio = 0;
 
 uint8_t io_buffer[IO_BUFFER_SIZE];
 char *io_buffer_char = (char *)io_buffer;
 
 void bastos_init(bastos_io_t *_io)
 {
-    io = _io;
+    bio = _io;
     *io_buffer = 0;
     bmem_init();
 }
@@ -97,10 +96,11 @@ int8_t io_run_command()
     // Tokenize command
     tokenizer_state_t line;
     err = tokenize(&line, io_buffer_char);
-    if (err < 0)
+    uint16_t len = line.write_ptr - line.read_ptr;
+    if (err < 0 || len == 0)
         goto finalize;
     // Allocate memory for the prog line
-    prog_t *prog = bmem_prog_line_new(line.line_no, line.read_ptr, line.write_ptr - line.read_ptr);
+    prog_t *prog = bmem_prog_line_new(line.line_no, line.read_ptr, len);
     if (prog == 0)
     {
         err = BERROR_MEMORY;
@@ -130,7 +130,7 @@ finalize:
 
     if (err != BERROR_NONE)
     {
-        printf("Syntax error.\n");
+        bio->print_integer("Syntax error: %d.\n", (int) -err);
     }
 
     return err;

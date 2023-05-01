@@ -24,7 +24,6 @@
  */
 
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -34,6 +33,7 @@
 #include "token.h"
 #include "keywords.h"
 #include "eval.h"
+#include "bio.h"
 
 typedef struct
 {
@@ -44,6 +44,8 @@ typedef struct
     float number;
     char *string;
 } t_eval_state;
+
+extern bastos_io_t *bio;
 
 extern ds_btree_t prog_tree;
 extern ds_btree_t vars;
@@ -310,7 +312,7 @@ bool eval_string(t_eval_state *state)
         return false;
 
     state->string = (char *)(state->read_ptr);
-    state->read_ptr += snprintf(0, 0, "%s", state->read_ptr) + 1;
+    while(*state->read_ptr++);
     return true;
 }
 
@@ -359,14 +361,14 @@ bool eval_print(t_eval_state *state)
         {
             if (state->do_eval)
             {
-                printf("%s", state->string);
+                bio->print_string(state->string);
             }
         }
         else if (eval_expr(state))
         {
             if (state->do_eval)
             {
-                printf("%g", state->number);
+                bio->print_float(state->number);
             }
         }
         else
@@ -377,7 +379,7 @@ bool eval_print(t_eval_state *state)
         {
             if (state->token == ',' && state->do_eval)
             {
-                printf(" ");
+                bio->print_string(" ");
             }
         }
         else
@@ -388,7 +390,7 @@ bool eval_print(t_eval_state *state)
 
     if (state->do_eval)
     {
-        printf("\n");
+        bio->print_string("\n");
     }
 
     return result;
@@ -401,8 +403,9 @@ void btree_node_print(ds_btree_t *btree, ds_btree_item_t *node)
     if (node)
     {
         btree_node_print(btree, node->left);
-        printf("%u", progof(btree, node)->line_no);
-        printf("%s\n", untokenize(progof(btree, node)->line));
+        bio->print_integer("%d", (int) progof(btree, node)->line_no);
+        bio->print_string(untokenize(progof(btree, node)->line));
+        bio->print_string("\n");
         btree_node_print(btree, node->right);
     }
 }
@@ -414,8 +417,8 @@ bool eval_list(t_eval_state *state)
 
     if (state->do_eval)
     {
-        printf("Program: %zd line(s).\n", prog_tree.count);
-        printf("Variables: %zd symbols(s).\n", vars.count);
+        bio->print_integer("Program: %d line(s).\n", prog_tree.count);
+        bio->print_integer("Variables: %d symbols(s).\n", vars.count);
         btree_node_print(&prog_tree, prog_tree.root);
     }
 
@@ -445,7 +448,7 @@ bool eval_run(t_eval_state *state)
 
     if (err < 0)
     {
-        printf("Error %d\n", -err);
+        bio->print_integer("Error %d\n", -err);
     }
 
     return err == BERROR_NONE;

@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "ds_common.h"
 #include "ds_btree.h"
@@ -10,6 +10,28 @@
 #include "token.h"
 #include "keywords.h"
 #include "bio.h"
+
+
+int print_float(float f)
+{
+    return printf("%g", f);
+}
+
+int print_string(char *s)
+{
+    return printf("%s", s);
+}
+
+int print_integer(char *format, int32_t i)
+{
+    return printf(format, i);
+}
+
+bastos_io_t io = {
+    .print_string = print_string,
+    .print_float = print_float,
+    .print_integer = print_integer,
+};
 
 extern char *keywords;
 
@@ -40,14 +62,9 @@ extern ds_btree_t vars;
 
 #include <math.h>
 
-bastos_io_t bio = {
-    .printf = 0,
-    .strtof = 0,
-};
-
 int main(int argc, char *argv[])
 {
-    bastos_init(&bio);
+    bastos_init(&io);
     bastos_handle_keys("print", 5);
     bastos_loop();
     bastos_handle_keys("\"Hello from Catlabs\"", 42);
