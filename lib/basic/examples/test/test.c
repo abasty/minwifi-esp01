@@ -48,6 +48,12 @@ bastos_io_t bio = {
 int main(int argc, char *argv[])
 {
     bastos_init(&bio);
+    bastos_handle_keys("print", 5);
+    bastos_loop();
+    bastos_handle_keys("\"Hello from Catlabs\"", 42);
+    bastos_loop();
+    bastos_handle_keys("\n", 42);
+    bastos_loop();
 
     bool cont = true;
     while (cont)

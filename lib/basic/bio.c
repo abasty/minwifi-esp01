@@ -86,6 +86,9 @@ int8_t io_run_command()
     {
         next++;
     }
+    // If no command: do nothing
+    if (*next == 0)
+        return BERROR_NONE;
     // Mark first command end with 0 and point to next one
     *next++ = 0;
     // Prepare move of the next commands to buffer start
