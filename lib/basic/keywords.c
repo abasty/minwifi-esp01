@@ -7,6 +7,7 @@ const char *keywords =
     "CAT""\xd3"
     "CH""\xd2"
     "CLEA""\xd2"
+    "CL""\xd3"
     "COD""\xc5"
     "CONFI""\xc7"
     "CONNEC""\xd4"

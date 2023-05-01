@@ -352,6 +352,15 @@ bool eval_let()
     return false;
 }
 
+bool eval_cls()
+{
+    if (!eval_token(TOKEN_KEYWORD_CLS))
+        return false;
+
+    bio->cls();
+    return true;
+}
+
 bool eval_print()
 {
     if (!eval_token(TOKEN_KEYWORD_PRINT))
@@ -508,6 +517,7 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
     eval_state.token = 0;
 
     bool eval =
+        eval_cls() ||
         eval_print() ||
         eval_list() ||
         eval_run() ||

@@ -26,16 +26,21 @@ int print_integer(char *format, int32_t i)
     return printf(format, i);
 }
 
-void newline()
+void echo_newline()
 {
+}
 
+void cls()
+{
+    printf("%s", "\033[2J" "\033[H");
 }
 
 bastos_io_t io = {
     .print_string = print_string,
     .print_float = print_float,
     .print_integer = print_integer,
-    .newline = newline,
+    .echo_newline = echo_newline,
+    .cls = cls,
 };
 
 extern char *keywords;

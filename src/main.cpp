@@ -57,10 +57,19 @@ extern "C" int print_integer(char *format, int i)
     return Serial.printf(format, i);
 }
 
-extern "C" void newline()
+extern "C" void echo_newline()
 {
 #ifdef MINITEL
     Serial.print("\r\n");
+#endif
+}
+
+extern "C" void cls()
+{
+#ifdef MINITEL
+    Serial.print("\x0C");
+#else
+    Serial.print("\033[2J" "\033[H");
 #endif
 }
 
@@ -68,7 +77,8 @@ bastos_io_t io = {
     .print_string = print_string,
     .print_float = print_float,
     .print_integer = print_integer,
-    .newline = newline,
+    .echo_newline = echo_newline,
+    .cls = cls,
 };
 
 int relayPin = 12;
