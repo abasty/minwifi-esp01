@@ -55,12 +55,11 @@ static inline void bmem_invalidate_prog_list()
     prog_list.root = 0;
 }
 
-int bmem_init()
+void bmem_init()
 {
     ds_btree_init(&prog_tree, offsetof(prog_t, tree), bmem_prog_cmp);
     ds_btree_init(&vars, offsetof(var_t, tree), bmem_vars_cmp);
     ds_lifo_init(&prog_list, offsetof(prog_t, list));
-    return 0;
 }
 
 var_t *bmem_var_get(char *name)

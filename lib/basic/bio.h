@@ -34,6 +34,8 @@ extern "C"
 {
 #endif
 
+#define IO_BUFFER_SIZE (256)
+
 typedef float strtof_t(const char *nptr, char **endptr);
 typedef int printf_t(const char *format, ...);
 

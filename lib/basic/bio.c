@@ -23,6 +23,7 @@
  * SOFTWARE.
  */
 
+#include <stdbool.h>
 
 #include "bmemory.h"
 #include "token.h"
@@ -30,64 +31,68 @@
 
 t_bastos_io *io = 0;
 
+uint8_t io_buffer[IO_BUFFER_SIZE];
+char *io_buffer_char = (char *)io_buffer;
+
 void bastos_init(t_bastos_io *_io)
 {
-    // TODO handle errors
     io = _io;
+    *io_buffer = 0;
     bmem_init();
 }
 
 size_t bastos_handle_keys(char *keys, size_t n)
 {
-    size_t i;
-    for (i = 0, _srcCurP = keys; i < n; i++)
+    size_t m = 0;
+    uint8_t *src = (uint8_t *)keys;
+
+    // Find the terminal 0 in io buffer
+    uint8_t *dst = io_buffer;
+    while (*dst)
+        dst++;
+
+    // Copy keys at the end of io buffer
+    size_t size = dst - io_buffer;
+    while (size < IO_BUFFER_SIZE - 1 && *src)
     {
-        // if char is in the EOS
-        if (*_srcCurP == *_endOfSeqCurP)
+        if (*src == '\r')
         {
-
-            _srcCurP++;
-            _endOfSeqCurP++;
-            // if EOS reached
-            if (_endOfSeqCurP - _endOfSeqP == _endOfSeqLength)
-            {
-                // handle _command
-                _handleCommand();
-
-                // if EOS has not been reset by _handleCommand()
-                // then reset it to default endOfCommand sequence.
-                if (_endOfSeqCurP != _endOfSeqP)
-                {
-                    _setEndOfSeq(endOfCommand);
-                }
-            }
+            *dst++ = '\n';
+            src++;
         }
         else
         {
-            // the char is out of the EOS
-            // copy left EOS chars if any
-            for (const char *copySeqP = _endOfSeqP; copySeqP != _endOfSeqCurP;)
-            {
-                *_commandCurP++ = *copySeqP++;
-            }
-            // reset EOS
-            _endOfSeqCurP = _endOfSeqP;
-            if (*_srcCurP >= ' ')
-            {
-                // copy char
-                *_commandCurP++ = *_srcCurP++;
-            }
-            // if buffer full
-            if (_commandCurP - _command >= COMMAND_MAX_SIZE)
-            {
-                _handleCommand();
-            }
+            *dst++ = *src++;
+            size++;
         }
+        m++;
     }
-    return n;
+    *dst = 0;
+
+    return m;
 }
 
 void bastos_loop()
 {
-    // run a prog step
+    // run a prog step if "running"
+    // else get a command and run it
+    if (true)
+    {
+        // Find first command
+        uint8_t *command_end = io_buffer;
+        while(*command_end && *command_end != '\n')
+        {
+            command_end++;
+        }
+        // Mark first command
+        *command_end++ = 0;
+
+        // Tokenize
+        t_tokenizer_state line;
+        int8_t err = tokenize(&line, io_buffer_char);
+
+        // Check syntax
+
+        // If line# is 0, evaluate and remove
+    }
 }
