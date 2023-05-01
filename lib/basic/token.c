@@ -34,8 +34,7 @@
 
 extern const char *keywords;
 
-#define TOKENS_MAX_LINE_SIZE (256)
-uint8_t token_buffer[TOKENS_MAX_LINE_SIZE];
+uint8_t token_buffer[TOKEN_LINE_SIZE];
 
 bool char_of_keyword(char test_char)
 {

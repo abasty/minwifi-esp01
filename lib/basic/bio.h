@@ -23,41 +23,35 @@
  * SOFTWARE.
  */
 
-#ifndef __TOKEN_H__
-#define __TOKEN_H__
+#ifndef __BIO_H__
+#define __BIO_H__
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-#define TOKEN_LINE_SIZE         (256)
+typedef float strtof_t(const char *nptr, char **endptr);
+typedef int printf_t(const char *format, ...);
 
-#define KEYWORD_END_TAG         ((uint8_t)  0b10000000)
-#define VARIABLE_STRING_TAG     ((uint32_t) 0x80000000)
+typedef struct
+{
+    strtof_t *strtof;
+    printf_t *printf;
+} t_bastos_io;
 
-#define TOKEN_KEYWORD           ((uint8_t) 0b10000000)
-#define TOKEN_NUMBER            ((uint8_t) 0b01000000)
-#define TOKEN_STRING            ((uint8_t) 0b00100000)
-#define TOKEN_VARIABLE_NUMBER   ((uint8_t) 0b00010000)
-#define TOKEN_VARIABLE_STRING   ((uint8_t) 0b00010001)
+extern t_bastos_io *io;
 
-typedef struct {
-    uint16_t line_no;
-    uint8_t *read_ptr;
-    uint8_t *write_ptr;
-} t_tokenizer_state;
+void bastos_init(t_bastos_io *_io);
 
-int8_t tokenize(t_tokenizer_state *state, char *line);
-char *untokenize(uint8_t *input);
-
-uint8_t token_get_next(t_tokenizer_state *state);
-float token_number_get_value(t_tokenizer_state *state);
-char* token_string_get_value(t_tokenizer_state *state);
+size_t bastos_handle_keys(char *keys, size_t n);
+void bastos_loop();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // __TOKEN_H__
+#endif // __BIO_H__

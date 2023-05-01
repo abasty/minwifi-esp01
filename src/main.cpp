@@ -158,6 +158,7 @@ void setup()
     initMinitel(false);
 
     bmem_init();
+    // bastos_init()
 
     // connect to Minitel server if any
     serialTerminal->prompt();
@@ -195,6 +196,7 @@ void loop()
         uint8_t buffer[32];
         size_t n = wifiClient->read(buffer, 32);
         wifiShell->handle((char *)buffer, n);
+        // bastos_handle_keys(buffer, n)
     }
 
     // Forward Minitel server incoming data to serial output
@@ -225,6 +227,7 @@ void loop()
             uint8_t buffer[32];
             size_t n = Serial.readBytes(buffer, 32);
             serialShell->handle((char *)buffer, n);
+            // bastos_handle_keys(buffer, n)
         } else {
             // Minitel mode: Forward serial input to Minitel sever
             uint8_t key;
@@ -236,4 +239,5 @@ void loop()
             }
         }
     }
+    // bastos_loop()
 }
