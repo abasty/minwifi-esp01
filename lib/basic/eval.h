@@ -42,6 +42,8 @@ typedef struct {
 } t_interpreter_state;
 
 int8_t eval_prog(prog_t *prog, bool do_eval);
+bool eval_running();
+int8_t eval_prog_next();
 
 #ifdef __cplusplus
 }

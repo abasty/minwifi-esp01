@@ -136,12 +136,19 @@ finalize:
     return err;
 }
 
+bool bastos_is_running()
+{
+    return eval_running();
+}
+
 void bastos_loop()
 {
-    io_run_command();
-    // run a prog step if "running"
-    // else get a command and run it
-    if (true)
+    if (eval_running())
     {
+        eval_prog_next();
+    }
+    else
+    {
+        io_run_command();
     }
 }

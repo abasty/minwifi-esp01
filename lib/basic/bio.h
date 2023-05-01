@@ -51,6 +51,7 @@ void bastos_init(bastos_io_t *_io);
 
 size_t bastos_handle_keys(char *keys, size_t n);
 void bastos_loop();
+bool bastos_is_running();
 
 #ifdef __cplusplus
 }

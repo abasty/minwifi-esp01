@@ -11,7 +11,6 @@
 #include "keywords.h"
 #include "bio.h"
 
-
 int print_float(float f)
 {
     return printf("%g", f);
@@ -80,6 +79,9 @@ int main(int argc, char *argv[])
         ssize_t len = getline(&command, &size, stdin);
         bastos_handle_keys(command, len);
         free(command);
-        bastos_loop();
+        do
+        {
+            bastos_loop();
+        } while (bastos_is_running());
     }
 }

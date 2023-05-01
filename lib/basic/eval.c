@@ -37,7 +37,7 @@
 
 typedef struct
 {
-    prog_t prog;
+    prog_t *pc;
     bool do_eval;
     bool running;
     uint8_t *read_ptr;
@@ -428,6 +428,37 @@ bool eval_list()
     return true;
 }
 
+bool eval_running()
+{
+    return eval_state.running;
+}
+
+int8_t eval_prog_next()
+{
+    int8_t err = BERROR_NONE;
+
+    if (eval_state.pc)
+    {
+        err = eval_prog(eval_state.pc, true);
+        if (err == BERROR_NONE)
+        {
+            eval_state.pc = bmem_prog_next_line(eval_state.pc);
+        }
+        else
+        {
+            bio->print_integer("Error %d", -err);
+            bio->print_integer(" on line %d", eval_state.pc->line_no);
+        }
+    }
+    else
+    {
+        eval_state.pc = 0;
+        eval_state.running = false;
+        err = BERROR_NONE;
+    }
+    return err;
+}
+
 bool eval_run()
 {
     if (!eval_token(TOKEN_KEYWORD_RUN))
@@ -438,23 +469,10 @@ bool eval_run()
 
     bmem_var_new();
 
-    int8_t err = 0;
-    prog_t *prog = bmem_prog_first_line();
+    eval_state.pc = bmem_prog_first_line();
+    eval_state.running = true;
 
-    while (prog)
-    {
-        err = eval_prog(prog, true);
-        if (err != BERROR_NONE)
-            break;
-        prog = bmem_prog_next_line(prog);
-    }
-
-    if (err < 0)
-    {
-        bio->print_integer("Error %d\n", -err);
-    }
-
-    return err == BERROR_NONE;
+    return eval_prog_next() == BERROR_NONE;
 }
 
 bool eval_clear()
@@ -486,7 +504,6 @@ bool eval_new()
 int8_t eval_prog(prog_t *prog, bool do_eval)
 {
     eval_state.do_eval = do_eval;
-    eval_state.prog = *prog;
     eval_state.read_ptr = prog->line;
     eval_state.token = 0;
 
