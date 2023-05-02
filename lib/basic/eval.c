@@ -261,7 +261,14 @@ bool eval_term()
                 acc /= eval_state.number;
                 break;
             case '%':
-                acc = (int)(truncf(acc)) % (int)(truncf(eval_state.number));
+                if ((int)(truncf(eval_state.number)) != 0)
+                {
+                   acc = (int)(truncf(acc)) % (int)(truncf(eval_state.number));
+                }
+                else
+                {
+                    acc = INFINITY;
+                }
                 break;
             }
             eval_state.number = acc;

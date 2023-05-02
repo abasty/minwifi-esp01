@@ -42,18 +42,29 @@
 // 12:	RELAY
 // 14:	EXTRA GPIO
 
+// wifi shell, terminal and client
+WiFiClient *wifiClient = 0;
+Shell *wifiShell = 0;
+Terminal *wifiTerminal = 0;
+
 extern "C" int print_float(float f)
 {
+    if (wifiClient)
+        wifiClient->printf("%g", f);
     return Serial.printf("%g", f);
 }
 
 extern "C" int print_string(char *s)
 {
+    if (wifiClient)
+        wifiClient->printf("%s", s);
     return Serial.printf("%s", s);
 }
 
 extern "C" int print_integer(char *format, int i)
 {
+    if (wifiClient)
+        wifiClient->printf(format, i);
     return Serial.printf(format, i);
 }
 
@@ -66,6 +77,8 @@ extern "C" void echo_newline()
 
 extern "C" void cls()
 {
+    if (wifiClient)
+        wifiClient->print("\033[2J" "\033[H");
 #ifdef MINITEL
     Serial.print("\x0C");
 #else
@@ -95,11 +108,6 @@ Terminal *serialTerminal = new TerminalVT100(&Serial);
 #endif
 MinitelShell *serialShell = new MinitelShell(serialTerminal);
 
-// wifi shell, terminal and client
-WiFiClient *wifiClient = 0;
-Shell *wifiShell = 0;
-Terminal *wifiTerminal = 0;
-
 // Connection manager
 ConnectionManager cm(serialShell);
 
@@ -119,7 +127,7 @@ void initMinitel(bool clear)
     }
     Serial.flush();
     if (clear) {
-        serialTerminal->clear();
+        cls();
     }
 #ifdef MINITEL
     Serial.print((char *)P_ACK_OFF_PRISE);
@@ -142,9 +150,7 @@ void setup()
 #endif
 
     Serial.flush();
-    Serial.println("");
-    Serial.println("");
-    serialTerminal->clear();
+    cls();
     Serial.println("Loading and connecting.");
 
     // Initialize file system
@@ -242,6 +248,7 @@ void loop()
         // transparently forward bytes to serial
         uint8_t buffer[128];
         size_t n = tcpMinitelConnexion.read(buffer, 128);
+        // conversion stream Videotex vers ANSI
         Serial.write(buffer, n);
     }
 
@@ -265,6 +272,7 @@ void loop()
             char buffer[32];
             size_t n = Serial.readBytes(buffer, 32);
             //serialShell->handle((char *)buffer, n);
+            // TODO: Manage Minitel keys
             bastos_handle_keys(buffer, n);
         } else {
             // Minitel mode: Forward serial input to Minitel sever

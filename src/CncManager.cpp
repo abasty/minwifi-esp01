@@ -105,9 +105,11 @@ void ConnectionManager::_waitForWiFi(const char *message)
     if (WiFi.status() == WL_CONNECTED) {
         // TODO: This should not use Serial but _shell
         Serial.println("WiFi connected.");
-        Serial.print("miniterm -e \"socket://");
+        Serial.print("telnet ");
         Serial.print(WiFi.localIP());
-        Serial.printf(":%u\"", COMMAND_IP_PORT);
+#if COMMAND_IP_PORT != 23
+        Serial.printf(" %u", COMMAND_IP_PORT);
+#endif
         Serial.println("");
     } else {
         _shell->println("Connection Failed.");

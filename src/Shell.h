@@ -31,7 +31,7 @@
 
 #include "Terminal.h"
 
-#define COMMAND_IP_PORT 8267
+#define COMMAND_IP_PORT 23
 
 class Shell
 {

@@ -9,10 +9,13 @@
 * [x] Ajouter RUN / CLEAR / NEW
 * [x] Ajouter io (interface avec materiel)
 * [x] printf: ansi / minitel
-* [ ] Ajouter mode rouleau, mode 40/80, AT, INK, PAPER
-* [ ] print sur network
+* [ ] vitesse serial ()
+* [ ] Ajouter mode rouleau, mode 40/80, AT, INK, PAPER, co, coff, echo
+* [ ] Ajouter edit
+* [x] print sur network
 * [ ] INPUT (envoie de caractère depuis le main vers le basic)
-* [ ] SAVE / LOAD
+* [ ] SAVE / LOAD / DOWNLOAD / UPLOAD
+* [ ] TELNET / TELNET WS
 * [ ] AT, INK, PAPER, CLS
 * [ ] expr strings
 * [ ] comparaison, condition
