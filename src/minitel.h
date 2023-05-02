@@ -49,4 +49,6 @@
 #define P_LOCAL_ECHO_ON PRO3 P_ON P_MODEM_RX P_CLAVIER_TX
 #define P_LOCAL_ECHO_OFF PRO3 P_OFF P_MODEM_RX P_CLAVIER_TX
 
+#define P_ROULEAU PRO2 "\x69\x43"
+
 #endif // minitel_h

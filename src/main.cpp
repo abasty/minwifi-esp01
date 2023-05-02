@@ -132,6 +132,7 @@ void initMinitel(bool clear)
 #ifdef MINITEL
     Serial.print((char *)P_ACK_OFF_PRISE);
     Serial.print((char *)P_LOCAL_ECHO_ON);
+    Serial.print((char *)P_ROULEAU);
     Serial.print((char *)CON);
 #endif
 }
