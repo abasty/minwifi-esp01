@@ -28,6 +28,7 @@ sqr
 tan
 clear
 new
+cls
 free
 cats
 reset

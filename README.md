@@ -7,10 +7,15 @@
 * [x] Ajouter les fonctions numériques sur float SIN, COS, etc et PI, RND, CODE
 * [x] Ajouter les variables
 * [x] Ajouter RUN / CLEAR / NEW
-* [ ] Ajouter io (interface avec materiel)
-* [ ] printf: ansi / minitel
+* [x] Ajouter io (interface avec materiel)
+* [x] printf: ansi / minitel
+* [ ] vitesse serial ()
+* [ ] Ajouter mode rouleau, mode 40/80, AT, INK, PAPER, co, coff, echo
+* [ ] Ajouter edit
+* [x] print sur network
 * [ ] INPUT (envoie de caractère depuis le main vers le basic)
-* [ ] SAVE / LOAD
+* [ ] SAVE / LOAD / DOWNLOAD / UPLOAD
+* [ ] TELNET / TELNET WS
 * [ ] AT, INK, PAPER, CLS
 * [ ] expr strings
 * [ ] comparaison, condition

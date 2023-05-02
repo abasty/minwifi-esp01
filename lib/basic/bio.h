@@ -23,15 +23,42 @@
  * SOFTWARE.
  */
 
-#ifndef __BERROR_H__
-#define __BERROR_H__
+#ifndef __BIO_H__
+#define __BIO_H__
 
 #include <stdint.h>
+#include <stddef.h>
 
-#define BERROR_NONE   ((int8_t) 0)
-#define BERROR_SYNTAX ((int8_t) -1)
-#define BERROR_RUN    ((int8_t) -2)
-#define BERROR_MEMORY ((int8_t) -3)
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
+#define IO_BUFFER_SIZE (256)
 
-#endif // __BERROR_H__
+typedef int print_string_t(char *s);
+typedef int print_float_t(float f);
+typedef int print_format_integer_t(char *format, int i);
+typedef void echo_newline_t();
+typedef void cls_t();
+
+typedef struct
+{
+    print_string_t *print_string;
+    print_float_t *print_float;
+    print_format_integer_t *print_integer;
+    echo_newline_t *echo_newline;
+    cls_t *cls;
+} bastos_io_t;
+
+void bastos_init(bastos_io_t *_io);
+
+size_t bastos_handle_keys(char *keys, size_t n);
+void bastos_loop();
+bool bastos_is_running();
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // __BIO_H__

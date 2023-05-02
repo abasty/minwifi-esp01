@@ -53,7 +53,7 @@ typedef struct {
 } var_t;
 
 
-int bmem_init();
+void bmem_init();
 
 void bmem_prog_new();
 void bmem_prog_line_free(prog_t *prog);

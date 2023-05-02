@@ -1,20 +1,51 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "ds_common.h"
 #include "ds_btree.h"
 
 #include "token.h"
 #include "keywords.h"
-#include "bmemory.h"
-#include "eval.h"
+#include "bio.h"
+
+int print_float(float f)
+{
+    return printf("%g", f);
+}
+
+int print_string(char *s)
+{
+    return printf("%s", s);
+}
+
+int print_integer(char *format, int32_t i)
+{
+    return printf(format, i);
+}
+
+void echo_newline()
+{
+}
+
+void cls()
+{
+    printf("%s", "\033[2J" "\033[H");
+}
+
+bastos_io_t io = {
+    .print_string = print_string,
+    .print_float = print_float,
+    .print_integer = print_integer,
+    .echo_newline = echo_newline,
+    .cls = cls,
+};
 
 extern char *keywords;
 
-#define KEYWORD_MAX_LENGHT ((uint8_t) 16)
+#define KEYWORD_MAX_LENGHT ((uint8_t)16)
 void keyword_print_all(const char *keyword_char)
 {
     char keyword[KEYWORD_MAX_LENGHT + 1];
@@ -43,86 +74,25 @@ extern ds_btree_t vars;
 
 int main(int argc, char *argv[])
 {
+    bastos_init(&io);
+    bastos_handle_keys("print", 5);
+    bastos_loop();
+    bastos_handle_keys("\"Hello from Catlabs\"", 42);
+    bastos_loop();
+    bastos_handle_keys("\n", 42);
+    bastos_loop();
+
     bool cont = true;
-    t_tokenizer_state line;
-
-    bmem_init();
-
     while (cont)
     {
         size_t size = 0;
         char *command = 0;
         ssize_t len = getline(&command, &size, stdin);
-
-        if (len == 1)
-        {
-            break;
-        }
-
-        if (len > 0)
-        {
-            command[len - 1] = 0;
-        }
-
-        int err = tokenize(&line, command);
-        if (err)
-        {
-            printf("Syntax error.\n");
-            free(command);
-            continue;
-        }
-
-        prog_t *prog = bmem_prog_line_new(line.line_no, line.read_ptr, line.write_ptr - line.read_ptr);
-        if (prog == 0)
-        {
-            free(command);
-            continue;
-        }
-
-        if (eval_prog(prog, false))
-        {
-            printf("Syntax error.\n");
-            bmem_prog_line_free(prog);
-            free(command);
-            continue;
-        }
-
-        if (line.line_no == 0)
-        {
-            eval_prog(prog, true);
-            bmem_prog_line_free(prog);
-            // uint8_t token;
-            // while ((token = token_get_next(&line)))
-            // {
-            //     if ((token & TOKEN_KEYWORD) != 0)
-            //     {
-            //         if (token == TOKEN_KEYWORD_HELP)
-            //         {
-            //             keyword_print_all(keywords);
-            //         }
-            //         else if (token == TOKEN_KEYWORD_LIST)
-            //         {
-            //             prog_list();
-            //         }
-            //         token &= ~TOKEN_KEYWORD;
-            //         // printf("[keyword id: %u]\n", token);
-            //     }
-            //     else if ((token & TOKEN_INTEGER_TYPE_MASK) == TOKEN_INTEGER)
-            //     {
-            //         uint16_t value = token_number_get_value(&line);
-            //         printf("[uint: %u]\n", value);
-            //     }
-            //     else if (token == TOKEN_STRING)
-            //     {
-            //         char *value = token_string_get_value(&line);
-            //         printf("[string: %s]\n", value);
-            //     }
-            //     else
-            //     {
-            //         printf("%u\n", token);
-            //     }
-            // }
-        }
+        bastos_handle_keys(command, len);
         free(command);
+        do
+        {
+            bastos_loop();
+        } while (bastos_is_running());
     }
 }
