@@ -53,9 +53,9 @@ typedef struct
 
 void bastos_init(bastos_io_t *_io);
 
-size_t bastos_handle_keys(char *keys, size_t n);
+size_t bastos_send_keys(char *keys, size_t n);
 void bastos_loop();
-bool bastos_is_running();
+bool bastos_running();
 
 #ifdef __cplusplus
 }

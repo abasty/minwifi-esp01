@@ -43,7 +43,7 @@ void bastos_init(bastos_io_t *_io)
     bmem_init();
 }
 
-size_t bastos_handle_keys(char *keys, size_t n)
+size_t bastos_send_keys(char *keys, size_t n)
 {
     size_t m = 0;
     uint8_t *src = (uint8_t *)keys;
@@ -75,7 +75,7 @@ size_t bastos_handle_keys(char *keys, size_t n)
     return m;
 }
 
-int8_t io_run_command()
+int8_t bastos_input()
 {
     int8_t err = BERROR_NONE;
 
@@ -85,21 +85,34 @@ int8_t io_run_command()
     {
         next++;
     }
+
     // If no command: do nothing
     if (*next == 0)
         return BERROR_NONE;
+
     bio->echo_newline();
+
     // Mark first command end with 0 and point to next one
     *next++ = 0;
+
     // Prepare move of the next commands to buffer start
     uint8_t *src = next;
     uint8_t *dst = io_buffer;
+
+    // Manage INPUT command
+    if (eval_inputting())
+    {
+        err = eval_input_store((char *) io_buffer);
+        goto finalize;
+    }
+
     // Tokenize command
     tokenizer_state_t line;
     err = tokenize(&line, io_buffer_char);
     uint16_t len = line.write_ptr - line.read_ptr;
     if (err < 0 || len == 0)
         goto finalize;
+
     // Allocate memory for the prog line
     prog_t *prog = bmem_prog_line_new(line.line_no, line.read_ptr, len);
     if (prog == 0)
@@ -107,6 +120,7 @@ int8_t io_run_command()
         err = BERROR_MEMORY;
         goto finalize;
     }
+
     // Check syntax
     err = eval_prog(prog, false);
     if (err != BERROR_NONE)
@@ -114,6 +128,7 @@ int8_t io_run_command()
         bmem_prog_line_free(prog);
         goto finalize;
     }
+
     // If line number is 0, evaluate and remove
     if (prog->line_no == 0)
     {
@@ -129,26 +144,28 @@ finalize:
     }
     *dst = 0;
 
+    // Handle error
     if (err != BERROR_NONE)
     {
-        bio->print_integer("Syntax error: %d.\r\n", (int) -err);
+        bio->print_integer("Syntax error: %d\r\n", (int)-err);
     }
+
     return err;
 }
 
-bool bastos_is_running()
+bool bastos_running()
 {
     return eval_running();
 }
 
 void bastos_loop()
 {
-    if (eval_running())
+
+    if (eval_running() && !eval_inputting())
     {
         eval_prog_next();
+        return;
     }
-    else
-    {
-        io_run_command();
-    }
+
+    bastos_input();
 }

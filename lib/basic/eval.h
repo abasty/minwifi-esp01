@@ -43,6 +43,9 @@ typedef struct {
 
 int8_t eval_prog(prog_t *prog, bool do_eval);
 bool eval_running();
+bool eval_inputting();
+void eval_input_mode(bool mode);
+int8_t eval_input_store(char *io_string);
 int8_t eval_prog_next();
 
 #ifdef __cplusplus

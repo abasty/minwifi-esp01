@@ -1,8 +1,11 @@
+#define _GNU_SOURCE
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <termios.h>
+#include <poll.h>
 
 #include "ds_common.h"
 #include "ds_btree.h"
@@ -11,6 +14,7 @@
 #include "keywords.h"
 #include "bio.h"
 
+
 int print_float(float f)
 {
     return printf("%g", f);
@@ -18,7 +22,9 @@ int print_float(float f)
 
 int print_string(char *s)
 {
-    return printf("%s", s);
+    int n = printf("%s", s);
+    fflush(stdout);
+    return n;
 }
 
 int print_integer(char *format, int32_t i)
@@ -32,7 +38,9 @@ void echo_newline()
 
 void cls()
 {
-    printf("%s", "\033[2J" "\033[H");
+    printf("%s", "\033[2J"
+                 "\033[H");
+    fflush(stdout);
 }
 
 bastos_io_t io = {
@@ -70,29 +78,36 @@ void keyword_print_all(const char *keyword_char)
 extern ds_btree_t prog_tree;
 extern ds_btree_t vars;
 
-#include <math.h>
+int getch()
+{
+    struct termios old, new;
+    tcgetattr(0, &old);
+    new = old;
+    new.c_lflag &= ~ICANON;
+    new.c_lflag &= true ? ECHO : ~ECHO;
+    tcsetattr(0, TCSANOW, &new);
+    struct pollfd input[1] = {{fd: 0, events: POLLIN}};
+    int ch = 0;
+    if (poll(input, 1, 10) == 1)
+        ch = getchar();
+    tcsetattr(0, TCSANOW, &old);
+    return ch;
+}
 
 int main(int argc, char *argv[])
 {
     bastos_init(&io);
-    bastos_handle_keys("print", 5);
-    bastos_loop();
-    bastos_handle_keys("\"Hello from Catlabs\"", 42);
-    bastos_loop();
-    bastos_handle_keys("\n", 42);
-    bastos_loop();
 
     bool cont = true;
     while (cont)
     {
-        size_t size = 0;
-        char *command = 0;
-        ssize_t len = getline(&command, &size, stdin);
-        bastos_handle_keys(command, len);
-        free(command);
-        do
+        int i = getch();
+        if (i != 0 && i != 3)
         {
-            bastos_loop();
-        } while (bastos_is_running());
+            char *keys = (char *) &i;
+            bastos_send_keys(keys, 1);
+        }
+        bastos_loop();
+        cont = i != 3;
     }
 }

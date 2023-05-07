@@ -40,10 +40,12 @@ typedef struct
     prog_t *pc;
     bool do_eval;
     bool running;
+    bool inputting;
     uint8_t *read_ptr;
     uint8_t token;
     float number;
     char *string;
+    char *var_ref;
 } eval_state_t;
 
 eval_state_t eval_state;
@@ -140,7 +142,6 @@ bool eval_number()
     }
     else if (eval_token(TOKEN_VARIABLE_NUMBER))
     {
-        eval_state.read_ptr--;
         if (eval_state.do_eval)
         {
             var_t *var = bmem_var_get((char *)eval_state.read_ptr);
@@ -326,22 +327,33 @@ bool eval_string()
     return true;
 }
 
-bool eval_let()
+bool eval_variable_ref()
 {
-    if (!eval_token(TOKEN_KEYWORD_LET))
-        return false;
+    eval_state.var_ref = (char *)eval_state.read_ptr;
 
-    char *name = (char *)eval_state.read_ptr;
     if (!eval_token_one_of((char *)variables))
         return false;
-    uint8_t token = eval_state.token;
 
     // Pass variable chars until zero
     while (*eval_state.read_ptr++)
         ;
 
+    return true;
+}
+
+bool eval_let()
+{
+    if (!eval_token(TOKEN_KEYWORD_LET))
+        return false;
+
+    if (!eval_variable_ref())
+        return false;
+
     if (!eval_token('='))
         return false;
+
+    char *name = eval_state.var_ref + 1;
+    uint8_t token = *((uint8_t *)eval_state.var_ref);
 
     if (token == TOKEN_VARIABLE_NUMBER)
     {
@@ -356,6 +368,8 @@ bool eval_let()
         return true;
     }
 
+    // TODO: Implement string var
+
     return false;
 }
 
@@ -368,6 +382,50 @@ bool eval_cls()
     return true;
 }
 
+int8_t eval_input_store(char *io_string)
+{
+    eval_input_mode(false);
+    if (*eval_state.var_ref == TOKEN_VARIABLE_NUMBER)
+    {
+        char *end_ptr = 0;
+        float value = strtof(io_string, &end_ptr);
+        if (end_ptr - io_string != strlen(io_string))
+            return BERROR_SYNTAX;
+
+        if (bmem_var_number_new(eval_state.var_ref + 1, value) == 0)
+            return BERROR_MEMORY;
+
+        return BERROR_NONE;
+    }
+    return BERROR_SYNTAX;
+}
+
+bool eval_input()
+{
+    if (!eval_token(TOKEN_KEYWORD_INPUT))
+        return false;
+
+    if (eval_string())
+    {
+        if (eval_state.do_eval)
+        {
+            bio->print_string(eval_state.string);
+        }
+
+        if (!eval_token(','))
+            return false;
+    }
+
+    if (!eval_variable_ref())
+        return false;
+
+    if (eval_state.do_eval)
+    {
+        eval_input_mode(true);
+    }
+    return true;
+}
+
 bool eval_print()
 {
     if (!eval_token(TOKEN_KEYWORD_PRINT))
@@ -376,7 +434,7 @@ bool eval_print()
     bool result = true;
     while (true)
     {
-        if (eval_string(eval_state))
+        if (eval_string())
         {
             if (eval_state.do_eval)
             {
@@ -447,6 +505,16 @@ bool eval_list()
 bool eval_running()
 {
     return eval_state.running;
+}
+
+bool eval_inputting()
+{
+    return eval_state.inputting;
+}
+
+void eval_input_mode(bool mode)
+{
+    eval_state.inputting = mode;
 }
 
 int8_t eval_prog_next()
@@ -530,13 +598,11 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_run() ||
         eval_new() ||
         eval_clear() ||
-        eval_let();
-    // || eval_input() ...
+        eval_let() ||
+        eval_input();
 
     if (!eval)
-    {
         return BERROR_SYNTAX;
-    }
 
     return BERROR_NONE;
 }

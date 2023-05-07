@@ -241,7 +241,7 @@ void loop()
         char buffer[32];
         size_t n = wifiClient->read(buffer, 32);
         // wifiShell->handle((char *)buffer, n);
-        bastos_handle_keys(buffer, n);
+        bastos_send_keys(buffer, n);
     }
 
     // Forward Minitel server incoming data to serial output
@@ -274,7 +274,7 @@ void loop()
             size_t n = Serial.readBytes(buffer, 32);
             //serialShell->handle((char *)buffer, n);
             // TODO: Manage Minitel keys
-            bastos_handle_keys(buffer, n);
+            bastos_send_keys(buffer, n);
         } else {
             // Minitel mode: Forward serial input to Minitel sever
             uint8_t key;
