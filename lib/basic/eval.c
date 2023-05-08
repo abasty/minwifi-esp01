@@ -107,13 +107,13 @@ bool eval_token_one_of(const char *set)
     return true;
 }
 
-bool eval_string();
+bool eval_string_expr();
 bool eval_factor();
 bool eval_expr();
 
 bool eval_code()
 {
-    if (eval_token(TOKEN_KEYWORD_CODE) && eval_string())
+    if (eval_token(TOKEN_KEYWORD_CODE) && eval_string_expr())
     {
         bstate.number = bstate.string[0];
         return true;
@@ -146,7 +146,7 @@ bool eval_number()
     {
         if (bstate.do_eval)
         {
-            var_t *var = bmem_var_get((char *)bstate.read_ptr);
+            var_t *var = bmem_var_find((char *)bstate.read_ptr - 1);
             if (var)
             {
                 value = var->number;
@@ -329,6 +329,33 @@ bool eval_string()
     return true;
 }
 
+bool eval_string_var()
+{
+    if (!eval_token(TOKEN_VARIABLE_STRING))
+        return false;
+
+    if (bstate.do_eval)
+    {
+        var_t *var = bmem_var_find((char *)bstate.read_ptr - 1);
+        if (var)
+        {
+            bstate.string = var->string;
+        }
+        else
+        {
+            bstate.string = 0;
+        }
+    }
+    while(*bstate.read_ptr++);
+    // bstate.read_ptr += strlen((char *)bstate.read_ptr) + 1;
+    return true;
+}
+
+bool eval_string_expr()
+{
+    return eval_string() || eval_string_var();
+}
+
 bool eval_variable_ref()
 {
     bstate.var_ref = (char *)bstate.read_ptr;
@@ -354,23 +381,33 @@ bool eval_let()
     if (!eval_token('='))
         return false;
 
-    char *name = bstate.var_ref + 1;
-    uint8_t token = *((uint8_t *)bstate.var_ref);
+    char *name = bstate.var_ref;
+    uint8_t token = *((uint8_t *)name);
 
     if (token == TOKEN_VARIABLE_NUMBER)
     {
-        if (!eval_expr(bstate))
+        if (!eval_expr())
             return false;
 
         if (bstate.do_eval)
         {
-            if (bmem_var_number_new(name, bstate.number) == 0)
+            if (bmem_var_number_set(name, bstate.number) == 0)
                 return false;
         }
         return true;
     }
+    else if (token == TOKEN_VARIABLE_STRING)
+    {
+        if (!eval_string_expr())
+            return false;
 
-    // TODO: Implement string var
+        if (bstate.do_eval)
+        {
+            if (bmem_var_string_set(name, bstate.string) == 0)
+                return false;
+        }
+        return true;
+    }
 
     return false;
 }
@@ -398,7 +435,14 @@ int8_t eval_input_store(char *io_string)
         if (end_ptr - io_string != strlen(io_string))
             return BERROR_SYNTAX;
 
-        if (bmem_var_number_new(bstate.input_var->name, value) == 0)
+        if (bmem_var_number_set(bstate.input_var->name, value) == 0)
+            return BERROR_MEMORY;
+
+        return BERROR_NONE;
+    }
+    else if (bstate.input_var_token == TOKEN_VARIABLE_STRING)
+    {
+        if (bmem_var_string_set(bstate.input_var->name, io_string) == 0)
             return BERROR_MEMORY;
 
         return BERROR_NONE;
@@ -434,11 +478,11 @@ bool eval_input()
         if (bstate.input_var_token == TOKEN_VARIABLE_NUMBER)
         {
             // Create variable with default value of 0
-            bstate.input_var = bmem_var_number_new(bstate.var_ref + 1, 0);
+            bstate.input_var = bmem_var_number_set(bstate.var_ref, 0);
         }
         else if (bstate.input_var_token == TOKEN_VARIABLE_STRING)
         {
-            // TODO: Create a string variable with an empty string
+            bstate.input_var = bmem_var_string_set(bstate.var_ref, 0);
         }
         if (bstate.input_var == 0)
             return false;
@@ -457,14 +501,14 @@ bool eval_print()
     bool result = true;
     while (true)
     {
-        if (eval_string())
+        if (eval_string_expr())
         {
             if (bstate.do_eval)
             {
-                bio->print_string(bstate.string);
+                bio->print_string(bstate.string ? bstate.string : "");
             }
         }
-        else if (eval_expr(bstate))
+        else if (eval_expr())
         {
             if (bstate.do_eval)
             {
@@ -574,7 +618,7 @@ bool eval_run()
     if (!bstate.do_eval)
         return true;
 
-    bmem_var_new();
+    bmem_vars_clear();
 
     bstate.pc = bmem_prog_first_line();
     bstate.running = true;
@@ -589,7 +633,7 @@ bool eval_clear()
 
     if (bstate.do_eval)
     {
-        bmem_var_new();
+        bmem_vars_clear();
     }
 
     return true;

@@ -10,7 +10,7 @@
 * [x] Ajouter io (interface avec materiel)
 * [x] printf: ansi / minitel
 * [x] INPUT (envoie de caractères depuis le main vers le basic)
-* [ ] Variables strings
+* [x] Variables strings
 * [ ] Expressions strings
 * [ ] Ajouter edit, integration "edit_min" ?
 * [ ] vitesse serial ()

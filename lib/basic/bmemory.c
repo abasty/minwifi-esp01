@@ -31,6 +31,7 @@
 #include "ds_btree.h"
 #include "ds_lifo.h"
 #include "bmemory.h"
+#include "token.h"
 
 ds_btree_t prog_tree;
 ds_btree_t vars;
@@ -62,7 +63,7 @@ void bmem_init()
     ds_lifo_init(&prog_list, offsetof(prog_t, list));
 }
 
-var_t *bmem_var_get(char *name)
+var_t *bmem_var_find(char *name)
 {
     var_t search = {
         .name = name,
@@ -70,54 +71,80 @@ var_t *bmem_var_get(char *name)
     return ds_btree_find(&vars, &search);
 }
 
-void bmem_var_number_free(var_t *var)
+void bmem_var_unset(var_t *var)
 {
     ds_btree_remove_object(&vars, var);
+    if (var->name && *var->name == TOKEN_VARIABLE_STRING)
+    {
+        free(var->string);
+    }
     free(var->name);
     free(var);
 }
 
-void bmem_var_new()
+void bmem_vars_clear()
 {
     while (vars.root)
     {
-        bmem_var_number_free((var_t *)DS_OBJECT_OF(&vars, vars.root));
+        bmem_var_unset((var_t *)DS_OBJECT_OF(&vars, vars.root));
     }
 }
 
-var_t *bmem_var_number_new(char *name, float value)
+var_t *bmem_var_get_or_new(char *name)
 {
-    var_t *var = (var_t *)malloc(sizeof(var_t));
+    var_t *var = bmem_var_find(name);
     if (var == 0)
     {
-        return 0;
+        var = (var_t *)malloc(sizeof(var_t));
+        if (var == 0)
+            return 0;
+        size_t n = strlen(name) + 1;
+        var->name = (char *)malloc(n);
+        if (var->name == 0)
+        {
+            free(var);
+            return 0;
+        }
+        strcpy(var->name, name);
+        var->value = 0;
+        ds_btree_insert(&vars, var);
     }
+    return var;
+}
+
+var_t *bmem_var_string_set(char *name, char *value)
+{
+    var_t *var = bmem_var_get_or_new(name);
+    if (var == 0)
+        return 0;
+    if (var->string != 0)
+    {
+        free(var->string);
+        var->string = 0;
+    }
+    if (value != 0)
+    {
+        var->string = (char *)malloc(strlen(value) + 1);
+        if (var->string != 0)
+        {
+            strcpy(var->string, value);
+        }
+    }
+    return var;
+}
+
+var_t *bmem_var_number_set(char *name, float value)
+{
+    var_t *var = bmem_var_get_or_new(name);
+    if (var == 0)
+        return 0;
     var->number = value;
-    var->name = name;
-
-    var_t *exist = (var_t *)ds_btree_insert(&vars, var);
-    if (exist != var)
-    {
-        exist->number = var->number;
-        free(var);
-        return exist;
-    }
-
-    size_t n = strlen(name);
-    var->name = (char *)malloc(n);
-    if (var->name == 0)
-    {
-        bmem_var_number_free(var);
-        return 0;
-    }
-    strcpy(var->name, name);
-
     return var;
 }
 
 void bmem_prog_new()
 {
-    bmem_var_new();
+    bmem_vars_clear();
     while (prog_tree.root)
     {
         bmem_prog_line_free((prog_t *)DS_OBJECT_OF(&prog_tree, prog_tree.root));

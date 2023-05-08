@@ -47,6 +47,7 @@ typedef struct {
     ds_btree_item_t tree;
     char *name;
     union {
+        void *value;
         float number;
         char *string;
     };
@@ -61,9 +62,10 @@ prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len);
 prog_t *bmem_prog_first_line();
 prog_t *bmem_prog_next_line(prog_t *prog);
 
-void bmem_var_new();
-var_t *bmem_var_number_new(char *name, float value);
-var_t *bmem_var_get(char *name);
+void bmem_vars_clear();
+var_t *bmem_var_string_set(char *name, char *value);
+var_t *bmem_var_number_set(char *name, float value);
+var_t *bmem_var_find(char *name);
 
 #ifdef __cplusplus
 }
