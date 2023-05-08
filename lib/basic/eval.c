@@ -115,7 +115,10 @@ bool eval_code()
 {
     if (eval_token(TOKEN_KEYWORD_CODE) && eval_string_expr())
     {
-        bstate.number = bstate.string[0];
+        if (bstate.do_eval)
+        {
+            bstate.number = bstate.string ? *bstate.string : 0;
+        }
         return true;
     }
     return false;
