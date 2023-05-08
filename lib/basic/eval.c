@@ -386,6 +386,9 @@ bool eval_cls()
 
 int8_t eval_input_store(char *io_string)
 {
+    if (strlen(io_string) == 0)
+        return BERROR_NONE;
+
     eval_input_mode(false);
 
     if (bstate.input_var_token == TOKEN_VARIABLE_NUMBER)
