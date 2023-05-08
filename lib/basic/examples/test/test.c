@@ -53,10 +53,10 @@ bastos_io_t io = {
 
 extern char *keywords;
 
-#define KEYWORD_MAX_LENGHT ((uint8_t)16)
+#define KEYWORD_MAX_LENGTH ((uint8_t)16)
 void keyword_print_all(const char *keyword_char)
 {
-    char keyword[KEYWORD_MAX_LENGHT + 1];
+    char keyword[KEYWORD_MAX_LENGTH + 1];
 
     char *current_keyword_char = keyword;
     uint8_t index = 0;
