@@ -51,6 +51,7 @@ bastos_io_t io = {
     .cls = cls,
 };
 
+#if 0
 extern char *keywords;
 
 #define KEYWORD_MAX_LENGTH ((uint8_t)16)
@@ -75,8 +76,7 @@ void keyword_print_all(const char *keyword_char)
     printf("\n");
 }
 
-extern ds_btree_t prog_tree;
-extern ds_btree_t vars;
+#endif
 
 int getch()
 {
@@ -101,13 +101,13 @@ int main(int argc, char *argv[])
     bool cont = true;
     while (cont)
     {
-        int i = getch();
-        if (i != 0 && i != 3)
+        int c = getch();
+        if (c != 0 && c != 3)
         {
-            char *keys = (char *) &i;
+            char *keys = (char *) &c;
             bastos_send_keys(keys, 1);
         }
         bastos_loop();
-        cont = i != 3;
+        cont = c != 3;
     }
 }

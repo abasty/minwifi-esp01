@@ -9,11 +9,13 @@
 * [x] Ajouter RUN / CLEAR / NEW
 * [x] Ajouter io (interface avec materiel)
 * [x] printf: ansi / minitel
+* [x] INPUT (envoie de caractères depuis le main vers le basic)
+* [ ] Variables strings
+* [ ] Expressions strings
+* [ ] Ajouter edit, integration "edit_min" ?
 * [ ] vitesse serial ()
 * [ ] Ajouter mode rouleau, mode 40/80, AT, INK, PAPER, co, coff, echo
-* [ ] Ajouter edit
 * [x] print sur network
-* [ ] INPUT (envoie de caractère depuis le main vers le basic)
 * [ ] SAVE / LOAD / DOWNLOAD / UPLOAD
 * [ ] TELNET / TELNET WS
 * [ ] AT, INK, PAPER, CLS
@@ -22,7 +24,7 @@
 * [ ] IF, GOTO
 * [ ] GOSUB, RETURN
 * [ ] FOR, NEXT
-* [ ] integration "edit_min" ?
+* [ ] Tableaux (DIM)
 
 # Liens
 

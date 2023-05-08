@@ -46,6 +46,8 @@ typedef struct
     float number;
     char *string;
     char *var_ref;
+    var_t *input_var;
+    uint8_t input_var_token;
 } eval_state_t;
 
 eval_state_t eval_state;
@@ -385,14 +387,15 @@ bool eval_cls()
 int8_t eval_input_store(char *io_string)
 {
     eval_input_mode(false);
-    if (*eval_state.var_ref == TOKEN_VARIABLE_NUMBER)
+
+    if (eval_state.input_var_token == TOKEN_VARIABLE_NUMBER)
     {
         char *end_ptr = 0;
         float value = strtof(io_string, &end_ptr);
         if (end_ptr - io_string != strlen(io_string))
             return BERROR_SYNTAX;
 
-        if (bmem_var_number_new(eval_state.var_ref + 1, value) == 0)
+        if (bmem_var_number_new(eval_state.input_var->name, value) == 0)
             return BERROR_MEMORY;
 
         return BERROR_NONE;
@@ -421,6 +424,23 @@ bool eval_input()
 
     if (eval_state.do_eval)
     {
+        eval_state.input_var = 0;
+        eval_state.input_var_token = eval_state.token;
+
+        // Create input variable
+        if (eval_state.input_var_token == TOKEN_VARIABLE_NUMBER)
+        {
+            // Create variable with default value of 0
+            eval_state.input_var = bmem_var_number_new(eval_state.var_ref + 1, 0);
+        }
+        else if (eval_state.input_var_token == TOKEN_VARIABLE_STRING)
+        {
+            // TODO: Create a string variable with an empty string
+        }
+        if (eval_state.input_var == 0)
+            return false;
+
+        // Go to input mode
         eval_input_mode(true);
     }
     return true;
