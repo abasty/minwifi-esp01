@@ -61,10 +61,10 @@ size_t bastos_send_keys(char *keys, size_t n)
         {
             *dst++ = '\n';
             src++;
-            if (*src == '\n')
-            {
-                src++;
-            }
+            // if (*src == '\n')
+            // {
+            //     src++;
+            // }
         }
         else
         {
