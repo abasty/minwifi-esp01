@@ -37,14 +37,44 @@
 
 typedef struct
 {
+    char *chars;
+    bool allocated;
+} string_t;
+
+static inline void string_set(string_t *string, char *chars, bool allocated)
+{
+    string->chars = chars;
+    string->allocated = allocated;
+}
+
+static inline void string_normalize(string_t *string)
+{
+    if (!string->chars)
+    {
+        string->allocated = false;
+    }
+    else if (*string->chars == 0)
+    {
+        if (string->allocated)
+        {
+            free(string->chars);
+            string->allocated = false;
+        }
+        string->chars = 0;
+    }
+}
+
+typedef struct
+{
     prog_t *pc;
     bool do_eval;
     bool running;
     bool inputting;
+    bool allocated_string;
     uint8_t *read_ptr;
     uint8_t token;
     float number;
-    char *string;
+    string_t string;
     char *var_ref;
     var_t *input_var;
     uint8_t input_var_token;
@@ -117,7 +147,7 @@ bool eval_code()
     {
         if (bstate.do_eval)
         {
-            bstate.number = bstate.string ? *bstate.string : 0;
+            bstate.number = bstate.string.chars ? *bstate.string.chars : 0;
         }
         return true;
     }
@@ -327,7 +357,7 @@ bool eval_string()
     if (!eval_token(TOKEN_STRING))
         return false;
 
-    bstate.string = (char *)(bstate.read_ptr);
+    string_set(&bstate.string, (char *)(bstate.read_ptr), false);
     while(*bstate.read_ptr++);
     return true;
 }
@@ -342,21 +372,69 @@ bool eval_string_var()
         var_t *var = bmem_var_find((char *)bstate.read_ptr - 1);
         if (var)
         {
-            bstate.string = var->string;
+            string_set(&bstate.string, var->string, false);
         }
         else
         {
-            bstate.string = 0;
+            string_set(&bstate.string, 0, false);
         }
     }
     while(*bstate.read_ptr++);
-    // bstate.read_ptr += strlen((char *)bstate.read_ptr) + 1;
     return true;
+}
+
+bool eval_string_term()
+{
+    return eval_string() || eval_string_var();
+    // || (eval_string_expr())
 }
 
 bool eval_string_expr()
 {
-    return eval_string() || eval_string_var();
+    bool result = true;
+    if ((result = eval_string_term()))
+    {
+        string_t string1 = bstate.string;
+        string_normalize(&string1);
+        string_set(&bstate.string, 0, false);
+
+        while(eval_token('+'))
+        {
+            result = eval_string_term();
+            if (!result)
+            {
+                break;
+            }
+
+            if (!bstate.do_eval)
+            {
+                continue;
+            }
+
+            // Concat string1 and string2
+            string_t string2 = bstate.string;
+            string_normalize(&string2);
+            if (!string2.chars)
+            {
+                bstate.string = string1;
+                continue;
+            }
+            if (!string1.chars)
+            {
+                bstate.string = string2;
+                continue;
+            }
+            char *concat = (char *)malloc(strlen(string1.chars) + strlen(string2.chars) + 1);
+            char *dst = concat;
+            char *src = string1.chars;
+            while (*src) *dst++ = *src++;
+            src = string2.chars;
+            while (*src) *dst++ = *src++;
+            if (bstate.string.allocated) free(bstate.string.chars);
+            string_set(&bstate.string, concat, true);
+        }
+    }
+    return result;
 }
 
 bool eval_variable_ref()
@@ -406,7 +484,7 @@ bool eval_let()
 
         if (bstate.do_eval)
         {
-            if (bmem_var_string_set(name, bstate.string) == 0)
+            if (bmem_var_string_set(name, bstate.string.chars) == 0)
                 return false;
         }
         return true;
@@ -462,7 +540,7 @@ bool eval_input()
     {
         if (bstate.do_eval)
         {
-            bio->print_string(bstate.string);
+            bio->print_string(bstate.string.chars);
         }
 
         if (!eval_token(','))
@@ -508,7 +586,7 @@ bool eval_print()
         {
             if (bstate.do_eval)
             {
-                bio->print_string(bstate.string ? bstate.string : "");
+                bio->print_string(bstate.string.chars ? bstate.string.chars : "");
             }
         }
         else if (eval_expr())
