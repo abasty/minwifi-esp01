@@ -43,6 +43,8 @@ typedef struct
 
 static inline void string_set(string_t *string, char *chars, bool allocated)
 {
+    if (string->allocated && string->chars != chars)
+        free(string->chars);
     string->chars = chars;
     string->allocated = allocated;
 }
@@ -70,7 +72,6 @@ typedef struct
     bool do_eval;
     bool running;
     bool inputting;
-    bool allocated_string;
     uint8_t *read_ptr;
     uint8_t token;
     float number;
@@ -396,32 +397,27 @@ bool eval_string_expr()
     {
         string_t string1 = bstate.string;
         string_normalize(&string1);
-        string_set(&bstate.string, 0, false);
 
         while(eval_token('+'))
         {
             result = eval_string_term();
             if (!result)
-            {
                 break;
-            }
 
             if (!bstate.do_eval)
-            {
                 continue;
-            }
 
             // Concat string1 and string2
             string_t string2 = bstate.string;
             string_normalize(&string2);
             if (!string2.chars)
             {
-                bstate.string = string1;
+                string_set(&bstate.string, string1.chars, string1.allocated);
                 continue;
             }
             if (!string1.chars)
             {
-                bstate.string = string2;
+                string_set(&bstate.string, string2.chars, string2.allocated);
                 continue;
             }
             char *concat = (char *)malloc(strlen(string1.chars) + strlen(string2.chars) + 1);
@@ -430,9 +426,10 @@ bool eval_string_expr()
             while (*src) *dst++ = *src++;
             src = string2.chars;
             while (*src) *dst++ = *src++;
-            if (bstate.string.allocated) free(bstate.string.chars);
-            string_set(&bstate.string, concat, true);
+            *dst = 0;
+            string_set(&string1, concat, true);
         }
+        string_set(&bstate.string, string1.chars, string1.allocated);
     }
     return result;
 }
@@ -738,6 +735,8 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
     bstate.do_eval = do_eval;
     bstate.read_ptr = prog->line;
     bstate.token = 0;
+    bstate.string.allocated = 0;
+    bstate.string.chars = 0;
 
     bool eval =
         eval_cls() ||
@@ -748,6 +747,9 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_clear() ||
         eval_let() ||
         eval_input();
+
+    // Free memory if needed
+    string_set(&bstate.string, 0, false);
 
     if (!eval)
         return BERROR_SYNTAX;
