@@ -36,6 +36,8 @@
 #include "MinitelShell.h"
 
 extern ConnectionManager cm;
+
+#ifndef OTA_ONLY
 extern WiFiClient tcpMinitelConnexion;
 extern bool minitelMode;
 
@@ -70,6 +72,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
         break;
     }
 }
+#endif
 
 void MinitelShell::runCommand()
 {
@@ -126,6 +129,7 @@ void MinitelShell::runCommand()
         }
     } else if (token1 == TOKEN_KEYWORD_CLEAR) {
         _term->clear();
+#ifndef OTA_ONLY
     } else if (token1 == TOKEN_NUMBER && value == 3615) {
 #ifdef MINITEL
         _term->print((char *)P_LOCAL_ECHO_OFF);
@@ -142,6 +146,7 @@ void MinitelShell::runCommand()
         webSocket.onEvent(webSocketEvent);
         _3611 = true;
         return;
+#endif
     } else {
         if (_command && *_command) {
             _term->println("ERROR");

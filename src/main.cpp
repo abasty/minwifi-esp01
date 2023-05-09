@@ -38,9 +38,14 @@
 #include "bio.h"
 
 // 0:	BUTTON
-// 13:	LED
 // 12:	RELAY
+// 13:	LED
 // 14:	EXTRA GPIO
+
+int relayPin = 12;
+int ledPin = 13;
+
+#ifndef OTA_ONLY
 
 // wifi shell, terminal and client
 WiFiClient *wifiClient = 0;
@@ -94,22 +99,8 @@ bastos_io_t io = {
     .cls = cls,
 };
 
-int relayPin = 12;
-int ledPin = 13;
-
 // wifi server
 WiFiServer *wifiServer = 0;
-
-// serial shell, terminal and client
-#ifdef MINITEL
-Terminal *serialTerminal = new TerminalMinitel(&Serial);
-#else
-Terminal *serialTerminal = new TerminalVT100(&Serial);
-#endif
-MinitelShell *serialShell = new MinitelShell(serialTerminal);
-
-// Connection manager
-ConnectionManager cm(serialShell);
 
 // Minitel server TCP/IP connexion
 WiFiClient tcpMinitelConnexion;
@@ -136,6 +127,23 @@ void initMinitel(bool clear)
     Serial.print((char *)CON);
 #endif
 }
+#else
+extern "C" void cls()
+{
+    Serial.print("\x0C");
+}
+#endif
+
+// serial shell, terminal and client
+#ifdef MINITEL
+Terminal *serialTerminal = new TerminalMinitel(&Serial);
+#else
+Terminal *serialTerminal = new TerminalVT100(&Serial);
+#endif
+MinitelShell *serialShell = new MinitelShell(serialTerminal);
+
+// Connection manager
+ConnectionManager cm(serialShell);
 
 void setup()
 {
@@ -171,31 +179,9 @@ void setup()
     ArduinoOTA.setHostname("esp-minitel-dev");
 #endif
 
-    // No authentication by default
-    // ArduinoOTA.setPassword((const char *)"123");
-
-#ifndef MINITEL
-    // TODO: Serial can be for another usage. So remove Serial at some time.
-    ArduinoOTA.onStart([]() {
-        Serial.println("FOTA Start");
-    });
-
-    ArduinoOTA.onEnd([]() {
-        Serial.println("FOTA End");
-        Serial.println("RESET");
-    });
-
-    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        //Serial.printf("FOTA Progress: %u%%\r", (progress / (total / 100)));
-    });
-
-    ArduinoOTA.onError([](ota_error_t error) {
-        Serial.printf("FOTA Error %u: ", error);
-    });
-#endif
-
     ArduinoOTA.begin();
 
+#ifndef OTA_ONLY
     // Launch traces server
     wifiServer = new WiFiServer(COMMAND_IP_PORT);
     wifiServer->begin();
@@ -204,15 +190,14 @@ void setup()
     initMinitel(false);
 
     bastos_init(&io);
-
-    // connect to Minitel server if any
-    serialTerminal->prompt();
+#endif
 }
 
 void loop()
 {
     ArduinoOTA.handle();
 
+#ifndef OTA_ONLY
     digitalWrite(ledPin, HIGH);
 
     // Accept TCP shell connections
@@ -287,4 +272,5 @@ void loop()
         }
     }
     bastos_loop();
+#endif
 }

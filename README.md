@@ -59,6 +59,22 @@ Sur la DIN, 3 fils souples papa :
 * RX : Rouge
 * 0v : Noir
 
+# Target PlatformIO
+
+* `[env:minwifi]` : À redéfinir, devra être le firmware_ota_only pour le Sonoff
+  branché sur FTDI. À utiliser uniquement la 1ère fois pour reflasher le sonoff
+  où quand OTA n'est plus accessible.
+
+* `[env:minwifi_ota]` : Le firmware complet pour minitel uniquement. OTA ne
+  permet pas de recharger ce même firmware. Transmis par OTA step 1.
+
+* `[env:minwifi_ota_only]` : Le firmware avec juste OTA sans basic. À utiliser
+  comme step 1 quand le firmware complet est trop gros. Transmis par OTA.
+
+* `[env:esp01_1m]` : Un firmware complet pour un ESP01s branché directement un
+  FTDI / programmateur. Il est transmis par USB Serial.
+
+
 # Style C
 
 ```
