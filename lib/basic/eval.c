@@ -66,6 +66,14 @@ void string_normalize(string_t *string)
     }
 }
 
+void string_move(string_t *from, string_t *to)
+{
+    *to = *from;
+    from->chars = 0;
+    from->allocated = false;
+    string_normalize(to);
+}
+
 void string_slice(string_t *string, uint16_t start, uint16_t end)
 {
     string_normalize(string);
@@ -423,6 +431,29 @@ bool eval_expr()
     return result;
 }
 
+bool eval_string_str()
+{
+    if (!eval_token(TOKEN_KEYWORD_STR))
+        return false;
+
+    if (!eval_term())
+        return false;
+
+    if (bstate.do_eval)
+    {
+        char *str = (char *)malloc(2);
+        if (!str)
+            return false;
+
+        str[0] = (char)((uint8_t)(truncf(bstate.number)));
+        str[1] = 0;
+
+        string_set(&bstate.string, str, true);
+    }
+
+    return true;
+}
+
 bool eval_string_const()
 {
     if (!eval_token(TOKEN_STRING))
@@ -459,6 +490,7 @@ bool eval_string_term()
     bool result =
         eval_string_const() ||
         eval_string_var() ||
+        eval_string_str() ||
         (eval_token('(') && eval_string_expr() && eval_token(')'));
 
     if (!result)
@@ -511,8 +543,8 @@ bool eval_string_expr()
     bool result = true;
     if ((result = eval_string_term()))
     {
-        string_t string1 = bstate.string;
-        string_normalize(&string1);
+        string_t string1;
+        string_move(&bstate.string, &string1);
 
         while(eval_token('+'))
         {
