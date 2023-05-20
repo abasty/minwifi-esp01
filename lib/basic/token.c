@@ -196,13 +196,14 @@ char *untokenize(uint8_t *input)
     state.line_no = 0;
 
     uint8_t token;
+    bio->print_string(" ");
     while ((token = token_get_next(&state)))
     {
-        bio->print_string(" ");
         if ((token & TOKEN_KEYWORD) != 0)
         {
             token &= ~TOKEN_KEYWORD;
             untokenize_keyword(&state, keywords);
+            bio->print_string(" ");
         }
         else if (token == TOKEN_NUMBER)
         {
@@ -218,8 +219,14 @@ char *untokenize(uint8_t *input)
         }
         else if (token == TOKEN_VARIABLE_NUMBER || token == TOKEN_VARIABLE_STRING)
         {
-            int n = bio->print_string((char *)state.read_ptr);
-            state.read_ptr += n + 1;
+            char char_str[2] = {0, 0};
+            while (*state.read_ptr != 0)
+            {
+                *char_str = (char) *state.read_ptr++;
+                *char_str |= 32;
+                bio->print_string(char_str);
+            }
+            state.read_ptr++;
             if (token == TOKEN_VARIABLE_STRING)
             {
                 bio->print_string("$");
