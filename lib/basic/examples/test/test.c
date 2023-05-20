@@ -4,6 +4,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <termios.h>
 #include <poll.h>
 
@@ -43,7 +47,34 @@ void cls()
     fflush(stdout);
 }
 
+int bopen(const char *pathname, int flags)
+{
+    if ((flags & O_CREAT) != 0)
+        return creat(pathname, 0644);
+
+    return open(pathname, flags);
+}
+
+int bclose(int fd)
+{
+    return close(fd);
+}
+
+int bwrite(int fd, const void *buf, int count)
+{
+    return write(fd, buf, count);
+}
+
+int bread(int fd, void *buf, int count)
+{
+    return read(fd, buf, count);
+}
+
 bastos_io_t io = {
+    .bopen = bopen,
+    .bclose = bclose,
+    .bwrite = bwrite,
+    .bread = bread,
     .print_string = print_string,
     .print_float = print_float,
     .print_integer = print_integer,

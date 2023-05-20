@@ -162,6 +162,21 @@ bool bastos_running()
     return eval_running();
 }
 
+int bastos_save(char *name)
+{
+    int fd = bio->bopen(name, B_CREAT | B_RDWR);
+    prog_t *line = bmem_prog_first_line();
+    while (line)
+    {
+        bio->bwrite(fd, &line->line_no, sizeof(line->line_no));
+        bio->bwrite(fd, &line->len, sizeof(line->len));
+        bio->bwrite(fd, line->line, line->len);
+        line = bmem_prog_next_line(line);
+    }
+    bio->bclose(fd);
+    return 0;
+}
+
 void bastos_loop()
 {
 
