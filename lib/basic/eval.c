@@ -879,6 +879,24 @@ bool eval_save()
     return true;
 }
 
+bool eval_load()
+{
+    if (!eval_token(TOKEN_KEYWORD_LOAD))
+        return false;
+
+    if (!eval_string_expr())
+        return false;
+
+    if (bstate.do_eval)
+    {
+        if (bstate.string.chars == 0)
+            return false;
+
+        bastos_load(bstate.string.chars);
+    }
+    return true;
+}
+
 int8_t eval_prog(prog_t *prog, bool do_eval)
 {
     bstate.do_eval = do_eval;
@@ -896,7 +914,8 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_clear() ||
         eval_let() ||
         eval_input() ||
-        eval_save();
+        eval_save() ||
+        eval_load();
 
     // Test end of line. We can support multiple intruction on the same line here
     eval = eval && *bstate.read_ptr == 0;

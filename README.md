@@ -12,7 +12,8 @@
 * [x] INPUT (envoie de caractères depuis le main vers le basic)
 * [x] Variables strings
 * [x] Expressions strings
-* [ ] SAVE / LOAD / DOWNLOAD / UPLOAD
+* [ ] SAVE / LOAD
+* [ ] DOWNLOAD / UPLOAD
 * [ ] Ajouter edit, integration "edit_min" ?
 * [ ] vitesse serial ()
 * [ ] Ajouter mode rouleau, mode 40/80, AT, INK, PAPER, co, coff, echo
