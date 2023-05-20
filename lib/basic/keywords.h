@@ -36,5 +36,6 @@
 #define TOKEN_KEYWORD_SQR ((uint8_t) (34 | 0b10000000))
 #define TOKEN_KEYWORD_TAN ((uint8_t) (35 | 0b10000000))
 #define TOKEN_KEYWORD_TCP ((uint8_t) (36 | 0b10000000))
-#define TOKEN_KEYWORD_WIFI ((uint8_t) (37 | 0b10000000))
-#define TOKEN_KEYWORD_WS ((uint8_t) (38 | 0b10000000))
+#define TOKEN_KEYWORD_TO ((uint8_t) (37 | 0b10000000))
+#define TOKEN_KEYWORD_WIFI ((uint8_t) (38 | 0b10000000))
+#define TOKEN_KEYWORD_WS ((uint8_t) (39 | 0b10000000))

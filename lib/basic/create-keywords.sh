@@ -48,6 +48,7 @@ print
 input
 inkey$
 run
+to
 EOF
 
 sort -o ${KEYWORDS_FILE}{,}

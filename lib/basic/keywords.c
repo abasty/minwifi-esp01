@@ -36,6 +36,7 @@ const char *keywords =
     "SQ""\xd2"
     "TA""\xce"
     "TC""\xd0"
+    "T""\xcf"
     "WIF""\xc9"
     "W""\xd3"
 ;
