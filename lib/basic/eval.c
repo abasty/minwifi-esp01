@@ -37,6 +37,115 @@
 
 typedef struct
 {
+    char *chars;
+    bool allocated;
+} string_t;
+
+void string_set(string_t *string, char *chars, bool allocated)
+{
+    if (string->allocated && string->chars != chars)
+        free(string->chars);
+    string->chars = chars;
+    string->allocated = allocated;
+}
+
+void string_normalize(string_t *string)
+{
+    if (!string->chars)
+    {
+        string->allocated = false;
+    }
+    else if (*string->chars == 0)
+    {
+        if (string->allocated)
+        {
+            free(string->chars);
+            string->allocated = false;
+        }
+        string->chars = 0;
+    }
+}
+
+void string_move(string_t *from, string_t *to)
+{
+    *to = *from;
+    from->chars = 0;
+    from->allocated = false;
+    string_normalize(to);
+}
+
+void string_slice(string_t *string, uint16_t start, uint16_t end)
+{
+    string_normalize(string);
+
+    if (!string->chars)
+        return;
+
+    uint16_t len = strlen(string->chars);
+
+    if (end == 0)
+    {
+        end = len;
+    }
+
+    if (start > end || start > len)
+    {
+        string_set(string, 0, false);
+        return;
+    }
+
+    if (end > len || end == 0)
+    {
+        end = len;
+    }
+
+    uint16_t slice_len = end - start + 1;
+    char *slice = (char *)malloc(slice_len + 1);
+
+    if (!slice)
+    {
+        string_set(string, 0, false);
+        return;
+    }
+
+    char *src = string->chars + start - 1;
+    char *dst = slice;
+
+    while (slice_len > 0)
+    {
+        *dst++ = *src++;
+        slice_len--;
+    }
+    *dst = 0;
+
+    string_set(string, slice, true);
+}
+
+void string_concat(string_t *string1, string_t *string2)
+{
+    string_normalize(string2);
+
+    if (!string2->chars)
+        return;
+
+    if (!string1->chars)
+    {
+        string_set(string1, string2->chars, string2->allocated);
+        return;
+    }
+
+    char *concat = (char *)malloc(strlen(string1->chars) + strlen(string2->chars) + 1);
+    char *dst = concat;
+    char *src = string1->chars;
+    while (*src) *dst++ = *src++;
+    src = string2->chars;
+    while (*src) *dst++ = *src++;
+    *dst = 0;
+    string_set(string1, concat, true);
+}
+
+typedef struct
+{
     prog_t *pc;
     bool do_eval;
     bool running;
@@ -44,7 +153,7 @@ typedef struct
     uint8_t *read_ptr;
     uint8_t token;
     float number;
-    char *string;
+    string_t string;
     char *var_ref;
     var_t *input_var;
     uint8_t input_var_token;
@@ -117,7 +226,7 @@ bool eval_code()
     {
         if (bstate.do_eval)
         {
-            bstate.number = bstate.string ? *bstate.string : 0;
+            bstate.number = bstate.string.chars ? *bstate.string.chars : 0;
         }
         return true;
     }
@@ -322,12 +431,35 @@ bool eval_expr()
     return result;
 }
 
-bool eval_string()
+bool eval_string_str()
+{
+    if (!eval_token(TOKEN_KEYWORD_STR))
+        return false;
+
+    if (!eval_term())
+        return false;
+
+    if (bstate.do_eval)
+    {
+        char *str = (char *)malloc(2);
+        if (!str)
+            return false;
+
+        str[0] = (char)((uint8_t)(truncf(bstate.number)));
+        str[1] = 0;
+
+        string_set(&bstate.string, str, true);
+    }
+
+    return true;
+}
+
+bool eval_string_const()
 {
     if (!eval_token(TOKEN_STRING))
         return false;
 
-    bstate.string = (char *)(bstate.read_ptr);
+    string_set(&bstate.string, (char *)(bstate.read_ptr), false);
     while(*bstate.read_ptr++);
     return true;
 }
@@ -342,21 +474,95 @@ bool eval_string_var()
         var_t *var = bmem_var_find((char *)bstate.read_ptr - 1);
         if (var)
         {
-            bstate.string = var->string;
+            string_set(&bstate.string, var->string, false);
         }
         else
         {
-            bstate.string = 0;
+            string_set(&bstate.string, 0, false);
         }
     }
     while(*bstate.read_ptr++);
-    // bstate.read_ptr += strlen((char *)bstate.read_ptr) + 1;
     return true;
+}
+
+bool eval_string_term()
+{
+    bool result =
+        eval_string_const() ||
+        eval_string_var() ||
+        eval_string_str() ||
+        (eval_token('(') && eval_string_expr() && eval_token(')'));
+
+    if (!result)
+        return false;
+
+    // Optional range
+    if (!eval_token('('))
+        return true;
+
+    uint16_t start = 1;
+    uint16_t end = 0;
+
+    if (eval_expr())
+    {
+        if (bstate.number < 1)
+            return false;
+
+        start = bstate.number;
+        end = start;
+    }
+
+    if (eval_token(TOKEN_KEYWORD_TO))
+    {
+        if (eval_expr())
+        {
+            if (bstate.number < 1)
+                return false;
+
+            end = bstate.number;
+        }
+        else
+        {
+            end = 0;
+        }
+    }
+
+    if (!eval_token(')'))
+        return false;
+
+    if (bstate.do_eval)
+    {
+        string_slice(&bstate.string, start, end);
+    }
+
+    return result;
 }
 
 bool eval_string_expr()
 {
-    return eval_string() || eval_string_var();
+    bool result = true;
+    if ((result = eval_string_term()))
+    {
+        string_t string1;
+        string_move(&bstate.string, &string1);
+
+        while(eval_token('+'))
+        {
+            result = eval_string_term();
+            if (!result)
+                break;
+
+            if (bstate.do_eval)
+            {
+                string_concat(&string1, &bstate.string);
+            }
+        }
+        if (bstate.do_eval)
+        {
+            string_set(&bstate.string, string1.chars, string1.allocated);
+        }
+    }
+    return result;
 }
 
 bool eval_variable_ref()
@@ -406,7 +612,7 @@ bool eval_let()
 
         if (bstate.do_eval)
         {
-            if (bmem_var_string_set(name, bstate.string) == 0)
+            if (bmem_var_string_set(name, bstate.string.chars) == 0)
                 return false;
         }
         return true;
@@ -458,11 +664,11 @@ bool eval_input()
     if (!eval_token(TOKEN_KEYWORD_INPUT))
         return false;
 
-    if (eval_string())
+    if (eval_string_const())
     {
         if (bstate.do_eval)
         {
-            bio->print_string(bstate.string);
+            bio->print_string(bstate.string.chars);
         }
 
         if (!eval_token(','))
@@ -508,7 +714,7 @@ bool eval_print()
         {
             if (bstate.do_eval)
             {
-                bio->print_string(bstate.string ? bstate.string : "");
+                bio->print_string(bstate.string.chars ? bstate.string.chars : "");
             }
         }
         else if (eval_expr())
@@ -660,6 +866,8 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
     bstate.do_eval = do_eval;
     bstate.read_ptr = prog->line;
     bstate.token = 0;
+    bstate.string.allocated = 0;
+    bstate.string.chars = 0;
 
     bool eval =
         eval_cls() ||
@@ -670,6 +878,12 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_clear() ||
         eval_let() ||
         eval_input();
+
+    // Test end of line. We can support multiple intruction on the same line here
+    eval = eval && *bstate.read_ptr == 0;
+
+    // Free memory if needed
+    string_set(&bstate.string, 0, false);
 
     if (!eval)
         return BERROR_SYNTAX;

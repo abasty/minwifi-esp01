@@ -34,8 +34,10 @@ const char *keywords =
     "SG""\xce"
     "SI""\xce"
     "SQ""\xd2"
+    "STR""\xa4"
     "TA""\xce"
     "TC""\xd0"
+    "T""\xcf"
     "WIF""\xc9"
     "W""\xd3"
 ;
