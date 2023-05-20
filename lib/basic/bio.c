@@ -188,7 +188,6 @@ int8_t bastos_load(char *name)
         return BERROR_IO;
 
     bmem_prog_new();
-    bmem_vars_clear();
 
     while (err == BERROR_NONE)
     {
