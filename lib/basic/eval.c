@@ -847,6 +847,9 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_let() ||
         eval_input();
 
+    // Test end of line. We can support multiple intruction on the same line here
+    eval = eval && *bstate.read_ptr == 0;
+
     // Free memory if needed
     string_set(&bstate.string, 0, false);
 
