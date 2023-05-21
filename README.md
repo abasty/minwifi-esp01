@@ -12,7 +12,12 @@
 * [x] INPUT (envoie de caractères depuis le main vers le basic)
 * [x] Variables strings
 * [x] Expressions strings
-* [ ] SAVE / LOAD
+* [x] SAVE / LOAD prog
+* [ ] SAVE / LOAD vars
+* [ ] comparaison, condition
+* [ ] IF, GOTO
+* [ ] GOSUB, RETURN
+* [ ] FOR, NEXT
 * [ ] DOWNLOAD / UPLOAD
 * [ ] Ajouter edit, integration "edit_min" ?
 * [ ] vitesse serial ()
@@ -20,11 +25,6 @@
 * [x] print sur network
 * [ ] TELNET / TELNET WS
 * [ ] AT, INK, PAPER, CLS
-* [ ] expr strings
-* [ ] comparaison, condition
-* [ ] IF, GOTO
-* [ ] GOSUB, RETURN
-* [ ] FOR, NEXT
 * [ ] Tableaux (DIM)
 
 # Liens
