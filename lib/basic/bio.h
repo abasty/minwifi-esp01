@@ -36,14 +36,29 @@ extern "C"
 
 #define IO_BUFFER_SIZE (256)
 
+#define B_RDONLY  00
+#define B_WRONLY  01
+#define B_RDWR    02
+#define B_CREAT   0100
+#define B_TRUNC   01000
+#define B_APPEND  02000
+
 typedef int print_string_t(char *s);
 typedef int print_float_t(float f);
 typedef int print_format_integer_t(char *format, int i);
 typedef void echo_newline_t();
 typedef void cls_t();
+typedef int bopen_t(const char *pathname, int flags);
+typedef int bclose_t(int fd);
+typedef int bwrite_t(int fd, const void *buf, int count);
+typedef int bread_t(int fd, void *buf, int count);
 
 typedef struct
 {
+    bopen_t *bopen;
+    bclose_t *bclose;
+    bwrite_t *bwrite;
+    bread_t *bread;
     print_string_t *print_string;
     print_float_t *print_float;
     print_format_integer_t *print_integer;
@@ -56,6 +71,9 @@ void bastos_init(bastos_io_t *_io);
 size_t bastos_send_keys(char *keys, size_t n);
 void bastos_loop();
 bool bastos_running();
+
+int8_t bastos_save(char *name);
+int8_t bastos_load(char *name);
 
 #ifdef __cplusplus
 }

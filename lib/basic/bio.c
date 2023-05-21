@@ -36,6 +36,8 @@ bastos_io_t *bio = 0;
 uint8_t io_buffer[IO_BUFFER_SIZE];
 char *io_buffer_char = (char *)io_buffer;
 
+extern uint8_t token_buffer[TOKEN_LINE_SIZE];
+
 void bastos_init(bastos_io_t *_io)
 {
     bio = _io;
@@ -110,20 +112,24 @@ int8_t bastos_input()
         goto finalize;
     }
 
-    // Tokenize command
+    // Tokenize command and handle tokenize error case
     tokenizer_state_t line;
     err = tokenize(&line, io_buffer_char);
-    uint16_t len = line.write_ptr - line.read_ptr;
-    if (err < 0 || len == 0)
+    if (err < 0)
         goto finalize;
 
     // Allocate memory for the prog line
+    uint16_t len = line.write_ptr - line.read_ptr;
     prog_t *prog = bmem_prog_line_new(line.line_no, line.read_ptr, len);
-    if (prog == 0)
+    if (prog == 0 && len > 0)
     {
         err = BERROR_MEMORY;
         goto finalize;
     }
+
+    // Handle empty line case
+    if (prog == 0 && len == 0)
+        goto finalize;
 
     // Check syntax
     err = eval_prog(prog, false);
@@ -151,7 +157,7 @@ finalize:
     // Handle error
     if (err != BERROR_NONE)
     {
-        bio->print_integer("Syntax error: %d\r\n", (int)-err);
+        bio->print_integer("Error %d\r\n", (int)-err);
     }
 
     return err;
@@ -160,6 +166,81 @@ finalize:
 bool bastos_running()
 {
     return eval_running();
+}
+
+int8_t bastos_save(char *name)
+{
+    int fd = bio->bopen(name, B_CREAT | B_RDWR);
+    prog_t *line = bmem_prog_first_line();
+    while (line)
+    {
+        bio->bwrite(fd, &line->line_no, sizeof(line->line_no));
+        bio->bwrite(fd, &line->len, sizeof(line->len));
+        bio->bwrite(fd, line->line, line->len);
+        line = bmem_prog_next_line(line);
+    }
+    bio->bclose(fd);
+    return 0;
+}
+
+int8_t bastos_load(char *name)
+{
+    int8_t err = BERROR_NONE;
+    int fd = bio->bopen(name, B_RDONLY);
+
+    if (fd < 0)
+        return BERROR_IO;
+
+    bmem_prog_new();
+
+    while (err == BERROR_NONE)
+    {
+        uint16_t line_no;
+        uint16_t len;
+
+        int bread = bio->bread(fd, &line_no, sizeof(line_no));
+        if (bread != sizeof(line_no) && bread != 0)
+        {
+            err = BERROR_IO;
+            break;
+        }
+        if (bread == 0)
+            break;
+
+        bread = bio->bread(fd, &len, sizeof(len));
+        if (bread != sizeof(line_no))
+        {
+            err = BERROR_IO;
+            break;
+        }
+        if (line_no == 0 || len == 0 || len >= TOKEN_LINE_SIZE)
+        {
+            err = BERROR_IO;
+            break;
+        }
+        if (bio->bread(fd, token_buffer, len) != len)
+        {
+            err = BERROR_IO;
+            break;
+        }
+
+        prog_t *prog = bmem_prog_line_new(line_no, token_buffer, len);
+        if (prog == 0)
+        {
+            err = BERROR_MEMORY;
+            break;
+        }
+
+        err = eval_prog(prog, false);
+        if (err != BERROR_NONE)
+        {
+            bmem_prog_line_free(prog);
+            break;
+        }
+    }
+
+    bio->bclose(fd);
+    return err;
 }
 
 void bastos_loop()

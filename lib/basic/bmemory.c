@@ -175,7 +175,8 @@ prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
         return 0;
     }
 
-    memcpy(prog->line, line, len + 1);
+    memcpy(prog->line, line, len);
+    prog->line[len] = 0;
     prog->len = len;
     prog->line_no = line_no;
 
@@ -183,6 +184,8 @@ prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
     {
         return prog;
     }
+
+    bmem_invalidate_prog_list();
 
     prog_t *exist = (prog_t *)ds_btree_insert(&prog_tree, prog);
     if (exist != prog)
@@ -199,8 +202,6 @@ prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
         bmem_prog_line_free(prog);
         return 0;
     }
-
-    bmem_invalidate_prog_list();
 
     return prog;
 }

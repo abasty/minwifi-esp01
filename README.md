@@ -11,19 +11,20 @@
 * [x] printf: ansi / minitel
 * [x] INPUT (envoie de caractères depuis le main vers le basic)
 * [x] Variables strings
-* [ ] Expressions strings
-* [ ] Ajouter edit, integration "edit_min" ?
-* [ ] vitesse serial ()
-* [ ] Ajouter mode rouleau, mode 40/80, AT, INK, PAPER, co, coff, echo
-* [x] print sur network
-* [ ] SAVE / LOAD / DOWNLOAD / UPLOAD
-* [ ] TELNET / TELNET WS
-* [ ] AT, INK, PAPER, CLS
-* [ ] expr strings
+* [x] Expressions strings
+* [x] SAVE / LOAD prog
+* [ ] SAVE / LOAD vars
 * [ ] comparaison, condition
 * [ ] IF, GOTO
 * [ ] GOSUB, RETURN
 * [ ] FOR, NEXT
+* [ ] DOWNLOAD / UPLOAD
+* [ ] Ajouter edit, integration "edit_min" ?
+* [ ] vitesse serial ()
+* [ ] Ajouter mode rouleau, mode 40/80, AT, INK, PAPER, co, coff, echo
+* [x] print sur network
+* [ ] TELNET / TELNET WS
+* [ ] AT, INK, PAPER, CLS
 * [ ] Tableaux (DIM)
 
 # Liens
@@ -149,13 +150,10 @@ $ pio run -e minwifi -t clean
 
 ## Valeurs
 
-* réels : Utiliser IEEE_754 : <https://fr.wikipedia.org/wiki/IEEE_754>
-* integers : 4, 8, 16 bits
+* réels sur 4 octets : Utiliser IEEE_754 : <https://fr.wikipedia.org/wiki/IEEE_754>
 * string
 
 ## Expressions
-
-Il serait malin de les analyser et de les stocker en RPN (bof pour LIST).
 
 ## Variables
 
@@ -163,39 +161,39 @@ Il serait malin de les analyser et de les stocker en RPN (bof pour LIST).
 
 * Symbole
 
-- log(36, 2^31) = 5.99621851
-
-Donc on peut convenir qu'un symbole est composé au max de 5 lettres/chiffres. Un
-`$` est accepté à la fin pour signifier "string". Ces 5 caractères forment les 31
-bits de poids faible d'un `uint32_t`. La présence du `$` est signalé par le bit
-32 à 1.
-
-Les symboles sont stockés dans un arbre binaire, indexé par la valeur du
-symbole.
+Un `$` est accepté à la fin pour signifier "string". Les symboles sont stockés
+dans un arbre binaire, indexé par la valeur du symbole.
 
 * Valeur
 
-Pour les chaines de caractères, la valeur associée au symbole est un
-pointeur. Pour les valeurs nombre (integer, float), c'est la valeur en forme
-token (le token + la valeur tokenisée).
+Pour les chaines de caractères, la valeur associée au symbole est un pointeur.
+Pour les valeurs nombre (float), c'est la valeur en forme token (le token + la
+valeur tokenisée).
 
 * Tableaux
 
 Stocker les dimensions et le pointeur, vers la zone mémoire allouée avec calloc.
 4  dimensions max ?.
 
-
 ## Ligne de prog
 
-Les lignes sont stockées dans un arbre binaire indexé par le n0 de ligne. Du
-coup ça peut être un `uint32_t`, comme pour les symboles.
+Les lignes sont stockées dans un arbre binaire indexé par le n0 de ligne (uint16_t).
 
 ## Sauvegarde
 
 Les lignes de prog et les variables sont sauvegardées. Un parcours GRD suffit
 pour sérialiser.
 
+Pour le prog, chaque ligne est sauvegardée selon le schéma suivant :
+
+* n° de ligne (uint16_t)
+* longueur de la ligne (uint16_t)
+* ligne tokenizée
+
+Visualiser un fichier sauvegardé :
+
+```
+$ hexdump -C toto
+```
 
 ## Mémoire
-
-* C++: 459400, C: 459368 (32 octets)
