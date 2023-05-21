@@ -432,6 +432,30 @@ bool eval_expr()
     return result;
 }
 
+bool eval_string_chr()
+{
+    if (!eval_token(TOKEN_KEYWORD_CHR))
+        return false;
+
+    if (!eval_term())
+        return false;
+
+    if (bstate.do_eval)
+    {
+        char *str = (char *)malloc(2);
+        if (!str)
+            return false;
+
+        str[0] = (char)((uint8_t)(truncf(bstate.number)));
+        str[1] = 0;
+
+        string_set(&bstate.string, str, true);
+    }
+
+    return true;
+}
+
+#if 0
 bool eval_string_str()
 {
     if (!eval_token(TOKEN_KEYWORD_STR))
@@ -454,6 +478,7 @@ bool eval_string_str()
 
     return true;
 }
+#endif
 
 bool eval_string_const()
 {
@@ -491,7 +516,7 @@ bool eval_string_term()
     bool result =
         eval_string_const() ||
         eval_string_var() ||
-        eval_string_str() ||
+        eval_string_chr() ||
         (eval_token('(') && eval_string_expr() && eval_token(')'));
 
     if (!result)

@@ -14,7 +14,7 @@ acs
 asn
 atn
 bin
-chr
+chr$
 code
 cos
 exp

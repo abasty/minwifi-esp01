@@ -5,7 +5,7 @@ const char *keywords =
     "AT""\xce"
     "BI""\xce"
     "CAT""\xd3"
-    "CH""\xd2"
+    "CHR""\xa4"
     "CLEA""\xd2"
     "CL""\xd3"
     "COD""\xc5"
