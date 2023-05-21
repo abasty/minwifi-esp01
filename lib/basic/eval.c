@@ -25,6 +25,7 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
 
@@ -455,7 +456,6 @@ bool eval_string_chr()
     return true;
 }
 
-#if 0
 bool eval_string_str()
 {
     if (!eval_token(TOKEN_KEYWORD_STR))
@@ -466,19 +466,18 @@ bool eval_string_str()
 
     if (bstate.do_eval)
     {
-        char *str = (char *)malloc(2);
+        char dummy[2];
+        int n = snprintf(dummy, 2, "%g", bstate.number);
+        char *str = (char *)malloc(n + 1);
         if (!str)
             return false;
 
-        str[0] = (char)((uint8_t)(truncf(bstate.number)));
-        str[1] = 0;
-
+        sprintf(str, "%g", bstate.number);
         string_set(&bstate.string, str, true);
     }
 
     return true;
 }
-#endif
 
 bool eval_string_const()
 {
@@ -517,6 +516,7 @@ bool eval_string_term()
         eval_string_const() ||
         eval_string_var() ||
         eval_string_chr() ||
+        eval_string_str() ||
         (eval_token('(') && eval_string_expr() && eval_token(')'));
 
     if (!result)
