@@ -804,19 +804,18 @@ int8_t eval_prog_next()
         if (err == BERROR_NONE)
         {
             bstate.pc = bmem_prog_next_line(bstate.pc);
-        }
-        else
-        {
-            bio->print_integer("Error %d", -err);
-            bio->print_integer(" on line %d", bstate.pc->line_no);
+            return BERROR_NONE;
         }
     }
-    else
+
+    if (err != BERROR_NONE)
     {
-        bstate.pc = 0;
-        bstate.running = false;
-        err = BERROR_NONE;
+        bio->print_integer("On line %d: ", bstate.pc->line_no);
     }
+
+    bstate.pc = 0;
+    bstate.running = false;
+
     return err;
 }
 
