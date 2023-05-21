@@ -112,20 +112,24 @@ int8_t bastos_input()
         goto finalize;
     }
 
-    // Tokenize command
+    // Tokenize command and handle tokenize error case
     tokenizer_state_t line;
     err = tokenize(&line, io_buffer_char);
-    uint16_t len = line.write_ptr - line.read_ptr;
-    if (err < 0 || len == 0)
+    if (err < 0)
         goto finalize;
 
     // Allocate memory for the prog line
+    uint16_t len = line.write_ptr - line.read_ptr;
     prog_t *prog = bmem_prog_line_new(line.line_no, line.read_ptr, len);
-    if (prog == 0)
+    if (prog == 0 && len > 0)
     {
         err = BERROR_MEMORY;
         goto finalize;
     }
+
+    // Handle empty line case
+    if (prog == 0 && len == 0)
+        goto finalize;
 
     // Check syntax
     err = eval_prog(prog, false);

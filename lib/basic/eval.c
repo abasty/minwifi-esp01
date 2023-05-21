@@ -917,7 +917,7 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_save() ||
         eval_load();
 
-    // Test end of line. We can support multiple intruction on the same line here
+    // Test end of line. We can support multiple intructions on the same line here
     eval = eval && *bstate.read_ptr == 0;
 
     // Free memory if needed
