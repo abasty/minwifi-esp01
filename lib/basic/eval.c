@@ -892,6 +892,8 @@ bool eval_load()
         if (bstate.string.chars == 0)
             return false;
 
+        bstate.running = false;
+        bstate.pc = 0;
         bstate.error = bastos_load(bstate.string.chars);
     }
     return true;
