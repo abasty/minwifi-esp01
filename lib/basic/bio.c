@@ -157,7 +157,7 @@ finalize:
     // Handle error
     if (err != BERROR_NONE)
     {
-        bio->print_integer("Syntax error: %d\r\n", (int)-err);
+        bio->print_integer("Error: %d\r\n", (int)-err);
     }
 
     return err;

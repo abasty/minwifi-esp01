@@ -157,6 +157,7 @@ typedef struct
     char *var_ref;
     var_t *input_var;
     uint8_t input_var_token;
+    int8_t error;
 } eval_state_t;
 
 eval_state_t bstate;
@@ -892,19 +893,22 @@ bool eval_load()
         if (bstate.string.chars == 0)
             return false;
 
-        bastos_load(bstate.string.chars);
+        bstate.error = bastos_load(bstate.string.chars);
     }
     return true;
 }
 
 int8_t eval_prog(prog_t *prog, bool do_eval)
 {
+    // Init evaluator state
     bstate.do_eval = do_eval;
     bstate.read_ptr = prog->line;
     bstate.token = 0;
     bstate.string.allocated = 0;
     bstate.string.chars = 0;
+    bstate.error = BERROR_NONE;
 
+    // Do syntax check or eval
     bool eval =
         eval_cls() ||
         eval_print() ||
@@ -917,14 +921,33 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_save() ||
         eval_load();
 
-    // Test end of line. We can support multiple intructions on the same line here
+    // Syntax check end of line.
     eval = eval && *bstate.read_ptr == 0;
 
-    // Free memory if needed
+    // Free evaluator state
     string_set(&bstate.string, 0, false);
 
-    if (!eval)
-        return BERROR_SYNTAX;
+    // Handle syntax error
+    if (!eval && bstate.error == BERROR_NONE)
+    {
+        bstate.error = BERROR_SYNTAX;
+    }
 
-    return BERROR_NONE;
+    // TODO: We can support multiple intructions on the same line here
+
+    // // Handle state program counter
+    // if (bstate.do_eval && bstate.pc)
+    // {
+    //     // Handle running state
+    //     if (bstate.error == BERROR_NONE)
+    //     {
+    //         bstate.pc = bmem_prog_next_line(bstate.pc);
+    //     }
+    //     else
+    //     {
+    //         bstate.pc = 0;
+    //     }
+    // }
+
+    return bstate.error;
 }
