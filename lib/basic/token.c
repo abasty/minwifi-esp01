@@ -28,6 +28,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "keywords.h"
 #include "token.h"
 #include "berror.h"
 #include "bio.h"
@@ -202,8 +203,15 @@ char *untokenize(uint8_t *input)
         if ((token & TOKEN_KEYWORD) != 0)
         {
             token &= ~TOKEN_KEYWORD;
+            if (token == (TOKEN_KEYWORD_TO & ~TOKEN_KEYWORD))
+            {
+                bio->print_string(" ");
+            }
             untokenize_keyword(&state, keywords);
-            bio->print_string(" ");
+            if (*state.read_ptr != '(' && token != (TOKEN_KEYWORD_PI & ~TOKEN_KEYWORD) && token != (TOKEN_KEYWORD_RND & ~TOKEN_KEYWORD))
+            {
+                bio->print_string(" ");
+            }
         }
         else if (token == TOKEN_NUMBER)
         {
