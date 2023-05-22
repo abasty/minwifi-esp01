@@ -164,14 +164,33 @@ void bmem_prog_line_free(prog_t *prog)
 
 prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
 {
-    prog_t *prog = (prog_t *)malloc(sizeof(prog_t));
-    if (prog == 0)
-    {
+
+    if (len == 0 && line_no == 0)
         return 0;
+
+    bmem_invalidate_prog_list();
+
+    prog_t search = {
+        .line_no = line_no,
+    };
+
+    prog_t *prog = ds_btree_find(&prog_tree, &search);
+    if (prog != 0)
+    {
+        bmem_prog_line_free(prog);
     }
+
+    if (len == 0)
+        return 0;
+
+    prog = (prog_t *)malloc(sizeof(prog_t));
+    if (prog == 0)
+        return 0;
+
     prog->line = (uint8_t *)malloc(len + 1);
     if (prog->line == 0)
     {
+        free(prog);
         return 0;
     }
 
@@ -180,27 +199,9 @@ prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
     prog->len = len;
     prog->line_no = line_no;
 
-    if (line_no == 0)
+    if (line_no > 0)
     {
-        return prog;
-    }
-
-    bmem_invalidate_prog_list();
-
-    prog_t *exist = (prog_t *)ds_btree_insert(&prog_tree, prog);
-    if (exist != prog)
-    {
-        free(exist->line);
-        exist->line = prog->line;
-        exist->len = prog->len;
-        free(prog);
-        prog = exist;
-    }
-
-    if (prog->len == 0)
-    {
-        bmem_prog_line_free(prog);
-        return 0;
+        ds_btree_insert(&prog_tree, prog);
     }
 
     return prog;

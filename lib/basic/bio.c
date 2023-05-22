@@ -121,15 +121,14 @@ int8_t bastos_input()
     // Allocate memory for the prog line
     uint16_t len = line.write_ptr - line.read_ptr;
     prog_t *prog = bmem_prog_line_new(line.line_no, line.read_ptr, len);
-    if (prog == 0 && len > 0)
+    if (prog == 0)
     {
-        err = BERROR_MEMORY;
+        if (len != 0)
+        {
+            err = BERROR_MEMORY;
+        }
         goto finalize;
     }
-
-    // Handle empty line case
-    if (prog == 0 && len == 0)
-        goto finalize;
 
     // Check syntax
     err = eval_prog(prog, false);
