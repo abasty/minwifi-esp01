@@ -24,6 +24,8 @@
  */
 
 #include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "berror.h"
 #include "bmemory.h"
@@ -170,6 +172,7 @@ bool bastos_running()
 int8_t bastos_save(char *name)
 {
     int fd = bio->bopen(name, B_CREAT | B_RDWR);
+    // save prog
     prog_t *line = bmem_prog_first_line();
     while (line)
     {
@@ -177,6 +180,34 @@ int8_t bastos_save(char *name)
         bio->bwrite(fd, &line->len, sizeof(line->len));
         bio->bwrite(fd, line->line, line->len);
         line = bmem_prog_next_line(line);
+    }
+
+    // write "end of prog"
+    uint32_t zero = 0;
+    bio->bwrite(fd, &zero, sizeof(zero));
+
+    // save vars
+    var_t *var = bmem_var_first();
+    while (var)
+    {
+        uint16_t len = strlen(var->name);
+        bio->bwrite(fd, &len, sizeof(len));
+        bio->bwrite(fd, var->name, len);
+        uint8_t token = var->name[0];
+        if (token == TOKEN_VARIABLE_STRING)
+        {
+            len = var->string ? strlen(var->string) : 0;
+            bio->bwrite(fd, &len, sizeof(len));
+            if (len > 0)
+            {
+                bio->bwrite(fd, var->string, len);
+            }
+        }
+        else if (token == TOKEN_VARIABLE_NUMBER)
+        {
+            bio->bwrite(fd, &var->number, sizeof(var->number));
+        }
+        var = bmem_var_next(var);
     }
     bio->bclose(fd);
     return 0;
@@ -191,13 +222,17 @@ int8_t bastos_load(char *name)
         return BERROR_IO;
 
     bmem_prog_new();
+    bmem_vars_clear();
 
+    int bread;
+
+    // load prog
     while (err == BERROR_NONE)
     {
         uint16_t line_no;
         uint16_t len;
 
-        int bread = bio->bread(fd, &line_no, sizeof(line_no));
+        bread = bio->bread(fd, &line_no, sizeof(line_no));
         if (bread != sizeof(line_no) && bread != 0)
         {
             err = BERROR_IO;
@@ -212,6 +247,11 @@ int8_t bastos_load(char *name)
             err = BERROR_IO;
             break;
         }
+
+        // End of prog
+        if (line_no == 0 && len == 0)
+            break;
+
         if (line_no == 0 || len == 0 || len >= TOKEN_LINE_SIZE)
         {
             err = BERROR_IO;
@@ -234,6 +274,78 @@ int8_t bastos_load(char *name)
         if (err != BERROR_NONE)
         {
             bmem_prog_line_free(prog);
+            break;
+        }
+    }
+
+    // load vars
+    while (err == BERROR_NONE)
+    {
+        uint16_t len_name;
+        char name[TOKEN_LINE_SIZE];
+        var_t *var;
+
+        bread = bio->bread(fd, &len_name, sizeof(len_name));
+        if (bread == 0)
+            break;
+
+        if (bread != sizeof(len_name) || len_name < 1 || len_name > TOKEN_LINE_SIZE - 1)
+        {
+            err = BERROR_IO;
+            break;
+        }
+        bread = bio->bread(fd, name, len_name);
+        name[len_name] = 0;
+        uint8_t token = name[0];
+        if (token == TOKEN_VARIABLE_STRING)
+        {
+            uint16_t len;
+            bread = bio->bread(fd, &len, sizeof(len));
+            if (bread != sizeof(len))
+            {
+                err = BERROR_IO;
+                break;
+            }
+            char *string = (char *) malloc(len + 1);
+            if (!string)
+            {
+                err = BERROR_MEMORY;
+                break;
+            }
+            bread = bio->bread(fd, string, len);
+            if (bread != len)
+            {
+                err = BERROR_IO;
+                break;
+            }
+            string[len] = 0;
+            var = bmem_var_string_set(name, string);
+            free(string);
+            if (!var)
+            {
+                err = BERROR_MEMORY;
+                break;
+            }
+        }
+        else if (token == TOKEN_VARIABLE_NUMBER)
+        {
+            float number;
+            bread = bio->bread(fd, &number, sizeof(number));
+            if (bread != sizeof(number))
+            {
+                err = BERROR_IO;
+                break;
+            }
+            var = bmem_var_number_set(name, number);
+            if (!var)
+            {
+                err = BERROR_MEMORY;
+                break;
+            }
+        }
+        else
+        {
+            err = BERROR_IO;
             break;
         }
     }

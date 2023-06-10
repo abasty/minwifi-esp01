@@ -13,7 +13,8 @@
 * [x] Variables strings
 * [x] Expressions strings
 * [x] SAVE / LOAD prog
-* [ ] SAVE / LOAD vars
+* [x] SAVE / LOAD vars
+* [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
 * [ ] comparaison, condition
 * [ ] IF, GOTO
 * [ ] GOSUB, RETURN

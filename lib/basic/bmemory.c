@@ -34,8 +34,9 @@
 #include "token.h"
 
 ds_btree_t prog_tree;
-ds_btree_t vars;
 ds_lifo_t prog_list;
+ds_btree_t var_tree;
+ds_lifo_t var_list;
 
 int bmem_prog_cmp(void *_prog1, void *_prog2)
 {
@@ -51,29 +52,17 @@ int bmem_vars_cmp(void *_var1, void *_var2)
     return strcmp(var1->name, var2->name);
 }
 
-static inline void bmem_invalidate_prog_list()
-{
-    prog_list.root = 0;
-}
-
-void bmem_init()
-{
-    ds_btree_init(&prog_tree, offsetof(prog_t, tree), bmem_prog_cmp);
-    ds_btree_init(&vars, offsetof(var_t, tree), bmem_vars_cmp);
-    ds_lifo_init(&prog_list, offsetof(prog_t, list));
-}
-
 var_t *bmem_var_find(char *name)
 {
     var_t search = {
         .name = name,
     };
-    return ds_btree_find(&vars, &search);
+    return ds_btree_find(&var_tree, &search);
 }
 
 void bmem_var_unset(var_t *var)
 {
-    ds_btree_remove_object(&vars, var);
+    ds_btree_remove_object(&var_tree, var);
     if (var->name && *var->name == TOKEN_VARIABLE_STRING)
     {
         free(var->string);
@@ -84,9 +73,9 @@ void bmem_var_unset(var_t *var)
 
 void bmem_vars_clear()
 {
-    while (vars.root)
+    while (var_tree.root)
     {
-        bmem_var_unset((var_t *)DS_OBJECT_OF(&vars, vars.root));
+        bmem_var_unset((var_t *)DS_OBJECT_OF(&var_tree, var_tree.root));
     }
 }
 
@@ -107,7 +96,7 @@ var_t *bmem_var_get_or_new(char *name)
         }
         strcpy(var->name, name);
         var->value = 0;
-        ds_btree_insert(&vars, var);
+        ds_btree_insert(&var_tree, var);
     }
     return var;
 }
@@ -140,6 +129,11 @@ var_t *bmem_var_number_set(char *name, float value)
         return 0;
     var->number = value;
     return var;
+}
+
+static inline void bmem_invalidate_prog_list()
+{
+    prog_list.root = 0;
 }
 
 void bmem_prog_new()
@@ -207,13 +201,13 @@ prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
     return prog;
 }
 
-void bmem_node_push(ds_btree_item_t *node)
+void bmem_prog_node_push(ds_btree_item_t *node)
 {
     if (node)
     {
-        bmem_node_push(node->right);
+        bmem_prog_node_push(node->right);
         ds_lifo_push(&prog_list, DS_OBJECT_OF(&prog_tree, node));
-        bmem_node_push(node->left);
+        bmem_prog_node_push(node->left);
     }
 }
 
@@ -221,7 +215,7 @@ prog_t *bmem_prog_first_line()
 {
     if (prog_list.root == 0)
     {
-        bmem_node_push(prog_tree.root);
+        bmem_prog_node_push(prog_tree.root);
     }
 
     if (prog_list.root == 0)
@@ -239,4 +233,44 @@ prog_t *bmem_prog_next_line(prog_t *prog)
         return 0;
 
     return (prog_t *) (DS_OBJECT_OF(&prog_list, prog->list.next));
+}
+
+void bmem_var_node_push(ds_btree_item_t *node)
+{
+    if (node)
+    {
+        bmem_var_node_push(node->right);
+        ds_lifo_push(&var_list, DS_OBJECT_OF(&var_tree, node));
+        bmem_var_node_push(node->left);
+    }
+}
+
+var_t *bmem_var_first()
+{
+    var_list.root = 0;
+    bmem_var_node_push(var_tree.root);
+
+    if (var_list.root == 0)
+        return 0;
+
+    return (var_t *)(DS_OBJECT_OF(&var_list, var_list.root));
+}
+
+var_t *bmem_var_next(var_t *var)
+{
+    if (!var)
+        return 0;
+
+    if (!(var->list.next))
+        return 0;
+
+    return (var_t *) (DS_OBJECT_OF(&var_list, var->list.next));
+}
+
+void bmem_init()
+{
+    ds_btree_init(&prog_tree, offsetof(prog_t, tree), bmem_prog_cmp);
+    ds_btree_init(&var_tree, offsetof(var_t, tree), bmem_vars_cmp);
+    ds_lifo_init(&prog_list, offsetof(prog_t, list));
+    ds_lifo_init(&var_list, offsetof(var_t, list));
 }

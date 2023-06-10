@@ -166,7 +166,7 @@ eval_state_t bstate;
 extern bastos_io_t *bio;
 
 extern ds_btree_t prog_tree;
-extern ds_btree_t vars;
+extern ds_btree_t var_tree;
 
 uint8_t functions[] = {
     TOKEN_KEYWORD_ABS,
@@ -797,7 +797,7 @@ bool eval_list()
     if (bstate.do_eval)
     {
         bio->print_integer("Program: %d line(s).\r\n", prog_tree.count);
-        bio->print_integer("Variables: %d symbols(s).\r\n", vars.count);
+        bio->print_integer("Variables: %d symbols(s).\r\n", var_tree.count);
         btree_node_print(&prog_tree, prog_tree.root);
     }
 

@@ -45,6 +45,7 @@ typedef struct {
 
 typedef struct {
     ds_btree_item_t tree;
+    ds_lifo_item_t list;
     char *name;
     union {
         void *value;
@@ -66,6 +67,9 @@ void bmem_vars_clear();
 var_t *bmem_var_string_set(char *name, char *value);
 var_t *bmem_var_number_set(char *name, float value);
 var_t *bmem_var_find(char *name);
+var_t *bmem_var_first();
+var_t *bmem_var_next(var_t *var);
+
 
 #ifdef __cplusplus
 }
