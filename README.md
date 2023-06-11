@@ -15,6 +15,7 @@
 * [x] SAVE / LOAD prog
 * [x] SAVE / LOAD vars
 * [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
+* [ ] Unifier load / save methods (read_uint16, read_len_mem0)
 * [ ] comparaison, condition
 * [ ] IF, GOTO
 * [ ] GOSUB, RETURN
