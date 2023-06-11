@@ -59,14 +59,14 @@ extern "C" int print_float(float f)
     return Serial.printf("%g", f);
 }
 
-extern "C" int print_string(char *s)
+extern "C" int print_string(const char *s)
 {
     if (wifiClient)
         wifiClient->printf("%s", s);
     return Serial.printf("%s", s);
 }
 
-extern "C" int print_integer(char *format, int i)
+extern "C" int print_integer(const char *format, int i)
 {
     if (wifiClient)
         wifiClient->printf(format, i);
@@ -122,6 +122,31 @@ extern "C" int bread(int fd, void *buf, int count)
     return bastos_file0.read((uint8_t *) buf, count);
 }
 
+extern "C" void bcat()
+{
+    Dir dir = LittleFS.openDir("/");
+    while (dir.next())
+    {
+        uint8_t len = strlen(dir.fileName().c_str());
+        print_string(dir.fileName().c_str());
+        for (int i = 16 - len; i > 0; i--)
+            print_string(" ");
+        print_integer("%u\r\n", dir.fileSize());
+    }
+    FSInfo info;
+    LittleFS.info(info);
+    print_integer("Bytes: %u/", info.usedBytes);
+    print_integer("%u\r\n", info.totalBytes);
+}
+
+extern "C" int berase(const char *pathname)
+{
+    bool ret = LittleFS.remove(pathname);
+    if (ret)
+        return 0;
+    return -1;
+}
+
 bastos_io_t io = {
     .bopen = bopen,
     .bclose = bclose,
@@ -132,6 +157,8 @@ bastos_io_t io = {
     .print_integer = print_integer,
     .echo_newline = echo_newline,
     .cls = cls,
+    .cat = bcat,
+    .erase = berase,
 };
 
 // wifi server

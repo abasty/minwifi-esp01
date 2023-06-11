@@ -24,14 +24,14 @@ int print_float(float f)
     return printf("%g", f);
 }
 
-int print_string(char *s)
+int print_string(const char *s)
 {
     int n = printf("%s", s);
     fflush(stdout);
     return n;
 }
 
-int print_integer(char *format, int32_t i)
+int print_integer(const char *format, int32_t i)
 {
     return printf(format, i);
 }

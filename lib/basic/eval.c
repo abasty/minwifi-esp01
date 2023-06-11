@@ -924,6 +924,34 @@ bool eval_load()
     return true;
 }
 
+bool eval_cat()
+{
+    if (!eval_token(TOKEN_KEYWORD_CAT))
+        return false;
+
+    if (bstate.do_eval)
+    {
+        bio->cat();
+    }
+    return true;
+}
+
+bool eval_erase()
+{
+    if (!eval_token(TOKEN_KEYWORD_ERASE))
+        return false;
+
+    if (!eval_string_expr())
+        return false;
+
+    if (bstate.do_eval)
+    {
+        if (bio->erase(bstate.string.chars) != 0)
+            bstate.error = BERROR_IO;
+    }
+    return true;
+}
+
 int8_t eval_prog(prog_t *prog, bool do_eval)
 {
     // Init evaluator state
@@ -945,7 +973,9 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_let() ||
         eval_input() ||
         eval_save() ||
-        eval_load();
+        eval_load() ||
+        eval_cat() ||
+        eval_erase();
 
     // Syntax check end of line.
     eval = eval && *bstate.read_ptr == 0;

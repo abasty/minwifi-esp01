@@ -30,7 +30,8 @@ clear
 new
 cls
 free
-cats
+cat
+erase
 reset
 config
 connect

@@ -43,15 +43,17 @@ extern "C"
 #define B_TRUNC   01000
 #define B_APPEND  02000
 
-typedef int print_string_t(char *s);
+typedef int print_string_t(const char *s);
 typedef int print_float_t(float f);
-typedef int print_format_integer_t(char *format, int i);
+typedef int print_format_integer_t(const char *format, int i);
 typedef void echo_newline_t();
 typedef void cls_t();
 typedef int bopen_t(const char *pathname, int flags);
 typedef int bclose_t(int fd);
 typedef int bwrite_t(int fd, const void *buf, int count);
 typedef int bread_t(int fd, void *buf, int count);
+typedef void cat_t();
+typedef int erase_t(const char *pathname);
 
 typedef struct
 {
@@ -64,6 +66,8 @@ typedef struct
     print_format_integer_t *print_integer;
     echo_newline_t *echo_newline;
     cls_t *cls;
+    cat_t *cat;
+    erase_t *erase;
 } bastos_io_t;
 
 void bastos_init(bastos_io_t *_io);

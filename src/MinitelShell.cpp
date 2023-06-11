@@ -93,8 +93,8 @@ void MinitelShell::runCommand()
         _term->printf("Flash Real Size:  %u bytes.\r\n", ESP.getFlashChipRealSize());
         _term->printf("Sketch Size:      %u bytes.\r\n", ESP.getSketchSize());
         _term->printf("Free Sketch Size: %u bytes.\r\n", ESP.getFreeSketchSpace());
-    } else if (token1 == TOKEN_KEYWORD_CATS) {
-        _term->println("Hello from Cat-Labs");
+    // } else if (token1 == TOKEN_KEYWORD_CATS) {
+    //     _term->println("Hello from Cat-Labs");
     } else if (token1 == TOKEN_KEYWORD_RESET) {
         ESP.restart();
     } else if (token1 == TOKEN_KEYWORD_CONNECT) {
