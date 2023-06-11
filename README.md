@@ -15,7 +15,11 @@
 * [x] SAVE / LOAD prog
 * [x] SAVE / LOAD vars
 * [x] Ajouter FS sur target ESP-01
-* [ ] Ajouter CAT, ERASE
+* [x] Ajouter CAT, ERASE
+* [ ] Variables WiFi dans fichier invisible par CAT, version limitée avec juste
+  OTA, let, load vars, save vars et init Wifi ()
+* [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?, passer en SPIFS
+  ? Faire que les kerywords aient le même ID (possible sans sort ?)
 * [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
 * [ ] Unifier load / save methods (read_uint16, read_len_mem0)
 * [ ] comparaison, condition
