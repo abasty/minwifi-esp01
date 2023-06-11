@@ -964,18 +964,22 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
 
     // Do syntax check or eval
     bool eval =
-        eval_cls() ||
+        eval_let() ||
+        eval_save() ||
         eval_print() ||
-        eval_list() ||
+        eval_input() ||
         eval_run() ||
         eval_new() ||
         eval_clear() ||
-        eval_let() ||
-        eval_input() ||
-        eval_save() ||
-        eval_load() ||
+        eval_cls() ||
+        eval_load()
+#ifndef OTA_ONLY
+        ||
+        eval_list() ||
         eval_cat() ||
-        eval_erase();
+        eval_erase()
+#endif
+        ;
 
     // Syntax check end of line.
     eval = eval && *bstate.read_ptr == 0;

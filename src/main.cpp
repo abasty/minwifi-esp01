@@ -44,9 +44,17 @@ int ledPin = 13;
 #define COMMAND_IP_PORT 23
 #define CNCMGR_SAVE_FILE "/etc/cncmgr.save"
 
-#ifndef OTA_ONLY
-
 WiFiClient *wifiClient = 0;
+// wifi server
+WiFiServer *wifiServer = 0;
+
+// Minitel server TCP/IP connexion
+WiFiClient tcpMinitelConnexion;
+WebSocketsClient webSocket;
+bool _3611 = false;
+
+bool minitelMode;
+
 
 extern "C" int print_float(float f)
 {
@@ -157,16 +165,6 @@ bastos_io_t io = {
     .erase = berase,
 };
 
-// wifi server
-WiFiServer *wifiServer = 0;
-
-// Minitel server TCP/IP connexion
-WiFiClient tcpMinitelConnexion;
-WebSocketsClient webSocket;
-bool _3611 = false;
-
-bool minitelMode;
-
 void initMinitel(bool clear)
 {
     // Empty Serial buffer
@@ -185,12 +183,6 @@ void initMinitel(bool clear)
     Serial.print((char *)CON);
 #endif
 }
-#else
-extern "C" void cls()
-{
-    Serial.print("\x0C");
-}
-#endif
 
 void setup_wifi()
 {
@@ -262,7 +254,6 @@ void setup()
 
     ArduinoOTA.begin();
 
-#ifndef OTA_ONLY
     // Launch traces server
     wifiServer = new WiFiServer(COMMAND_IP_PORT);
     wifiServer->begin();
@@ -271,14 +262,12 @@ void setup()
     initMinitel(false);
 
     bastos_init(&io);
-#endif
 }
 
 void loop()
 {
     ArduinoOTA.handle();
 
-#ifndef OTA_ONLY
     digitalWrite(ledPin, HIGH);
 
     // Accept TCP shell connections
@@ -343,5 +332,4 @@ void loop()
         }
     }
     bastos_loop();
-#endif
 }
