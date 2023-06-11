@@ -29,10 +29,6 @@
 #include <WebSocketsClient.h>
 #include <LittleFS.h>
 
-#include "Terminal.h"
-#include "Shell.h"
-#include "MinitelShell.h"
-#include "CncManager.h"
 #include "minitel.h"
 
 #include "bio.h"
@@ -45,12 +41,12 @@
 int relayPin = 12;
 int ledPin = 13;
 
+#define COMMAND_IP_PORT 23
+#define CNCMGR_SAVE_FILE "/etc/cncmgr.save"
+
 #ifndef OTA_ONLY
 
-// wifi shell, terminal and client
 WiFiClient *wifiClient = 0;
-Shell *wifiShell = 0;
-Terminal *wifiTerminal = 0;
 
 extern "C" int print_float(float f)
 {
@@ -196,16 +192,40 @@ extern "C" void cls()
 }
 #endif
 
-// serial shell, terminal and client
-#ifdef MINITEL
-Terminal *serialTerminal = new TerminalMinitel(&Serial);
-#else
-Terminal *serialTerminal = new TerminalVT100(&Serial);
-#endif
-MinitelShell *serialShell = new MinitelShell(serialTerminal);
+void setup_wifi()
+{
+    String _ssid;
+    String _secret;
+    File file = LittleFS.open(CNCMGR_SAVE_FILE, "r");
+    if (file)
+    {
+        _ssid = file.readStringUntil('\n');
+        _secret = file.readStringUntil('\n');
+        file.close();
+    }
+    WiFi.persistent(false);
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(_ssid, _secret);
 
-// Connection manager
-ConnectionManager cm(serialShell);
+    Serial.print("Connecting");
+    unsigned long startTime = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println("");
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("WiFi connected.");
+        Serial.print("telnet ");
+        Serial.print(WiFi.localIP());
+#if COMMAND_IP_PORT != 23
+        Serial.printf(" %u", COMMAND_IP_PORT);
+#endif
+        Serial.println("");
+    } else {
+        Serial.println("Connection Failed.");
+    }
+}
 
 void setup()
 {
@@ -228,8 +248,7 @@ void setup()
     LittleFS.begin();
 
     // connect Wifi if configuration available
-    cm.load();
-    cm.connect();
+    setup_wifi();
 
     // Initialize OTA
     ArduinoOTA.setPort(8266);
@@ -269,17 +288,7 @@ void loop()
         if (wifiClient) {
             delete wifiClient;
         }
-        if (wifiShell) {
-            delete wifiShell;
-        }
-        if (wifiTerminal) {
-            delete wifiTerminal;
-        }
         wifiClient = new WiFiClient(wifiServer->available());
-        wifiTerminal = new TerminalVT100(wifiClient);
-        wifiShell = new MinitelShell(wifiTerminal);
-
-        wifiTerminal->prompt();
     }
 
     // Handle commands from WiFi Client
