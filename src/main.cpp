@@ -91,7 +91,42 @@ extern "C" void cls()
 #endif
 }
 
+File bastos_file0;
+
+extern "C" int bopen(const char *pathname, int flags)
+{
+    const char *access = "r";
+    if (flags & B_CREAT)
+    {
+        access = "w+";
+    }
+    bastos_file0 = LittleFS.open(pathname, access);
+    if (!bastos_file0)
+        return -1;
+    return 0;
+}
+
+extern "C" int bclose(int fd)
+{
+    bastos_file0.close();
+    return 0;
+}
+
+extern "C" int bwrite(int fd, const void *buf, int count)
+{
+    return bastos_file0.write((const uint8_t *) buf, count);
+}
+
+extern "C" int bread(int fd, void *buf, int count)
+{
+    return bastos_file0.read((uint8_t *) buf, count);
+}
+
 bastos_io_t io = {
+    .bopen = bopen,
+    .bclose = bclose,
+    .bwrite = bwrite,
+    .bread = bread,
     .print_string = print_string,
     .print_float = print_float,
     .print_integer = print_integer,
