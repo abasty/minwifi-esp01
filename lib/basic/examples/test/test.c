@@ -14,6 +14,8 @@
 #include "ds_common.h"
 #include "ds_btree.h"
 
+#include "berror.h"
+#include "bmemory.h"
 #include "token.h"
 #include "keywords.h"
 #include "bio.h"
@@ -127,9 +129,28 @@ int getch()
 
 int main(int argc, char *argv[])
 {
+    bool cont = true;
+    var_t *var = 0;
+
     bastos_init(&io);
 
-    bool cont = true;
+    int err = bastos_load("config$$$");
+    if (err != BERROR_NONE)
+        goto finalize;
+
+    print_string("Cofig file loaded.\n");
+
+    var = bmem_var_find("\021WSSID");
+    if (!var)
+        goto finalize;
+
+    var = bmem_var_find("\021WSECRET");
+    if (!var)
+        goto finalize;
+
+    print_string("Config vars OK.\n");
+
+finalize:
     while (cont)
     {
         int c = getch();

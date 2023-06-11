@@ -16,8 +16,9 @@
 * [x] SAVE / LOAD vars
 * [x] Ajouter FS sur target ESP-01
 * [x] Ajouter CAT, ERASE
-* [ ] Variables WiFi dans fichier invisible par CAT, version limitée avec juste
+* [x] Variables WiFi dans fichier invisible par CAT, version limitée avec juste
   OTA, let, load vars, save vars et init Wifi ()
+* [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
 * [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?, passer en SPIFS
   ? Faire que les keywords aient le même ID (possible sans sort ?)
 * [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds

@@ -31,6 +31,8 @@
 
 #include "minitel.h"
 
+#include "berror.h"
+#include "bmemory.h"
 #include "bio.h"
 
 // 0:	BUTTON
@@ -186,37 +188,61 @@ void initMinitel(bool clear)
 
 void setup_wifi()
 {
-    String _ssid;
-    String _secret;
-    File file = LittleFS.open(CNCMGR_SAVE_FILE, "r");
-    if (file)
-    {
-        _ssid = file.readStringUntil('\n');
-        _secret = file.readStringUntil('\n');
-        file.close();
-    }
+    unsigned long startTime = millis();
+    char *wssid = 0;
+    char *wsecret = 0;
+    var_t *var = 0;
+
     WiFi.persistent(false);
     WiFi.mode(WIFI_STA);
-    WiFi.begin(_ssid, _secret);
 
-    Serial.print("Connecting");
-    unsigned long startTime = millis();
+    int err = bastos_load("config$$$");
+    if (err != BERROR_NONE)
+        goto finalize;
+
+    var = bmem_var_find("\021WSSID");
+    if (!var)
+        goto finalize;
+    wssid = var->string;
+
+    var = bmem_var_find("\021WSECRET");
+    if (!var)
+        goto finalize;
+    wsecret = var->string;
+
+    WiFi.begin(wssid, wsecret);
+
+    print_string("Connecting");
     while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000) {
         delay(500);
-        Serial.print(".");
+        print_string(".");
     }
-    Serial.println("");
-    if (WiFi.status() == WL_CONNECTED) {
-        Serial.println("WiFi connected.");
-        Serial.print("telnet ");
-        Serial.print(WiFi.localIP());
+    print_string("\r\n");
+    if (WiFi.status() != WL_CONNECTED)
+        goto finalize;
+
+    print_string("WiFi connected.\r\ntelnet ");
+    Serial.print(WiFi.localIP());
 #if COMMAND_IP_PORT != 23
-        Serial.printf(" %u", COMMAND_IP_PORT);
+    Serial.printf(" %u", COMMAND_IP_PORT);
 #endif
-        Serial.println("");
-    } else {
-        Serial.println("Connection Failed.");
+    print_string("\r\n");
+
+    if (!LittleFS.exists("format$$$"))
+    {
+        bmem_prog_new();
+        return;
     }
+
+    LittleFS.end();
+    LittleFS.format();
+    LittleFS.begin();
+    bastos_save("config$$$");
+    return;
+
+finalize:
+    Serial.println("Connection Failed.");
+    bmem_prog_new();
 }
 
 void setup()
@@ -238,6 +264,7 @@ void setup()
 
     // Initialize file system
     LittleFS.begin();
+    bastos_init(&io);
 
     // connect Wifi if configuration available
     setup_wifi();
@@ -260,8 +287,6 @@ void setup()
 
     Serial.setTimeout(0);
     initMinitel(false);
-
-    bastos_init(&io);
 }
 
 void loop()
