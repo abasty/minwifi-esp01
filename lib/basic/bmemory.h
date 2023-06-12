@@ -64,9 +64,9 @@ prog_t *bmem_prog_first_line();
 prog_t *bmem_prog_next_line(prog_t *prog);
 
 void bmem_vars_clear();
-var_t *bmem_var_string_set(char *name, char *value);
-var_t *bmem_var_number_set(char *name, float value);
-var_t *bmem_var_find(char *name);
+var_t *bmem_var_string_set(const char *name, char *value);
+var_t *bmem_var_number_set(const char *name, float value);
+var_t *bmem_var_find(const char *name);
 var_t *bmem_var_first();
 var_t *bmem_var_next(var_t *var);
 

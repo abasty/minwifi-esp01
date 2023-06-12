@@ -54,6 +54,7 @@ typedef int bwrite_t(int fd, const void *buf, int count);
 typedef int bread_t(int fd, void *buf, int count);
 typedef void cat_t();
 typedef int erase_t(const char *pathname);
+typedef void reset_t();
 
 typedef struct
 {
@@ -68,16 +69,17 @@ typedef struct
     cls_t *cls;
     cat_t *cat;
     erase_t *erase;
+    reset_t *reset;
 } bastos_io_t;
 
 void bastos_init(bastos_io_t *_io);
 
-size_t bastos_send_keys(char *keys, size_t n);
+size_t bastos_send_keys(const char *keys, size_t n);
 void bastos_loop();
 bool bastos_running();
 
-int8_t bastos_save(char *name);
-int8_t bastos_load(char *name);
+int8_t bastos_save(const char *name);
+int8_t bastos_load(const char *name);
 
 #ifdef __cplusplus
 }

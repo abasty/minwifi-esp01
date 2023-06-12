@@ -52,10 +52,10 @@ int bmem_vars_cmp(void *_var1, void *_var2)
     return strcmp(var1->name, var2->name);
 }
 
-var_t *bmem_var_find(char *name)
+var_t *bmem_var_find(const char *name)
 {
     var_t search = {
-        .name = name,
+        .name = (char *) name,
     };
     return ds_btree_find(&var_tree, &search);
 }
@@ -79,7 +79,7 @@ void bmem_vars_clear()
     }
 }
 
-var_t *bmem_var_get_or_new(char *name)
+var_t *bmem_var_get_or_new(const char *name)
 {
     var_t *var = bmem_var_find(name);
     if (var == 0)
@@ -101,7 +101,7 @@ var_t *bmem_var_get_or_new(char *name)
     return var;
 }
 
-var_t *bmem_var_string_set(char *name, char *value)
+var_t *bmem_var_string_set(const char *name, char *value)
 {
     var_t *var = bmem_var_get_or_new(name);
     if (var == 0)
@@ -122,7 +122,7 @@ var_t *bmem_var_string_set(char *name, char *value)
     return var;
 }
 
-var_t *bmem_var_number_set(char *name, float value)
+var_t *bmem_var_number_set(const char *name, float value)
 {
     var_t *var = bmem_var_get_or_new(name);
     if (var == 0)

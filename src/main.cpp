@@ -29,12 +29,10 @@
 #include <WebSocketsClient.h>
 #include <LittleFS.h>
 
-#include "Terminal.h"
-#include "Shell.h"
-#include "MinitelShell.h"
-#include "CncManager.h"
 #include "minitel.h"
 
+#include "berror.h"
+#include "bmemory.h"
 #include "bio.h"
 
 // 0:	BUTTON
@@ -45,12 +43,20 @@
 int relayPin = 12;
 int ledPin = 13;
 
-#ifndef OTA_ONLY
+#define COMMAND_IP_PORT 23
+#define CNCMGR_SAVE_FILE "/etc/cncmgr.save"
 
-// wifi shell, terminal and client
 WiFiClient *wifiClient = 0;
-Shell *wifiShell = 0;
-Terminal *wifiTerminal = 0;
+// wifi server
+WiFiServer *wifiServer = 0;
+
+// Minitel server TCP/IP connexion
+WiFiClient tcpMinitelConnexion;
+WebSocketsClient webSocket;
+bool _3611 = false;
+
+bool minitelMode;
+
 
 extern "C" int print_float(float f)
 {
@@ -147,6 +153,11 @@ extern "C" int berase(const char *pathname)
     return -1;
 }
 
+extern "C" void breset()
+{
+    ESP.restart();
+}
+
 bastos_io_t io = {
     .bopen = bopen,
     .bclose = bclose,
@@ -159,17 +170,8 @@ bastos_io_t io = {
     .cls = cls,
     .cat = bcat,
     .erase = berase,
+    .reset = breset,
 };
-
-// wifi server
-WiFiServer *wifiServer = 0;
-
-// Minitel server TCP/IP connexion
-WiFiClient tcpMinitelConnexion;
-WebSocketsClient webSocket;
-bool _3611 = false;
-
-bool minitelMode;
 
 void initMinitel(bool clear)
 {
@@ -189,23 +191,73 @@ void initMinitel(bool clear)
     Serial.print((char *)CON);
 #endif
 }
-#else
-extern "C" void cls()
+
+#define config_prog \
+    "1INPUT\"SSID: \",WSSID$\n" \
+    "2INPUT\"PASS: \",WSECRET$\n" \
+    "3SAVE\"config$$$\"\n"
+
+void setup_wifi()
 {
-    Serial.print("\x0C");
+    unsigned long startTime = millis();
+    char *wssid = 0;
+    char *wsecret = 0;
+    var_t *var = 0;
+
+    WiFi.persistent(false);
+    WiFi.mode(WIFI_STA);
+
+    int err = bastos_load("config$$$");
+    if (err != BERROR_NONE)
+        goto finalize;
+
+    var = bmem_var_find("\021WSSID");
+    if (!var)
+        goto finalize;
+    wssid = var->string;
+
+    var = bmem_var_find("\021WSECRET");
+    if (!var)
+        goto finalize;
+    wsecret = var->string;
+
+    WiFi.begin(wssid, wsecret);
+
+    print_string("Connecting");
+    while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000) {
+        delay(500);
+        print_string(".");
+    }
+    print_string("\r\n");
+    if (WiFi.status() != WL_CONNECTED)
+        goto finalize;
+
+    print_string("WiFi connected.\r\ntelnet ");
+    Serial.print(WiFi.localIP());
+#if COMMAND_IP_PORT != 23
+    Serial.printf(" %u", COMMAND_IP_PORT);
+#endif
+    print_string("\r\n");
+
+    if (!LittleFS.exists("format$$$"))
+    {
+        bmem_prog_new();
+        return;
+    }
+
+    LittleFS.end();
+    LittleFS.format();
+    LittleFS.begin();
+    bastos_save("config$$$");
+    bmem_prog_new();
+    return;
+
+finalize:
+    Serial.println("Connection failed, enter WiFi parameters.");
+    bmem_prog_new();
+    bastos_send_keys(config_prog, strlen(config_prog));
+    bastos_send_keys("RUN\n", 4);
 }
-#endif
-
-// serial shell, terminal and client
-#ifdef MINITEL
-Terminal *serialTerminal = new TerminalMinitel(&Serial);
-#else
-Terminal *serialTerminal = new TerminalVT100(&Serial);
-#endif
-MinitelShell *serialShell = new MinitelShell(serialTerminal);
-
-// Connection manager
-ConnectionManager cm(serialShell);
 
 void setup()
 {
@@ -226,10 +278,10 @@ void setup()
 
     // Initialize file system
     LittleFS.begin();
+    bastos_init(&io);
 
     // connect Wifi if configuration available
-    cm.load();
-    cm.connect();
+    setup_wifi();
 
     // Initialize OTA
     ArduinoOTA.setPort(8266);
@@ -243,23 +295,18 @@ void setup()
 
     ArduinoOTA.begin();
 
-#ifndef OTA_ONLY
     // Launch traces server
     wifiServer = new WiFiServer(COMMAND_IP_PORT);
     wifiServer->begin();
 
     Serial.setTimeout(0);
     initMinitel(false);
-
-    bastos_init(&io);
-#endif
 }
 
 void loop()
 {
     ArduinoOTA.handle();
 
-#ifndef OTA_ONLY
     digitalWrite(ledPin, HIGH);
 
     // Accept TCP shell connections
@@ -269,17 +316,7 @@ void loop()
         if (wifiClient) {
             delete wifiClient;
         }
-        if (wifiShell) {
-            delete wifiShell;
-        }
-        if (wifiTerminal) {
-            delete wifiTerminal;
-        }
         wifiClient = new WiFiClient(wifiServer->available());
-        wifiTerminal = new TerminalVT100(wifiClient);
-        wifiShell = new MinitelShell(wifiTerminal);
-
-        wifiTerminal->prompt();
     }
 
     // Handle commands from WiFi Client
@@ -334,5 +371,4 @@ void loop()
         }
     }
     bastos_loop();
-#endif
 }
