@@ -153,6 +153,11 @@ extern "C" int berase(const char *pathname)
     return -1;
 }
 
+extern "C" void breset()
+{
+    ESP.restart();
+}
+
 bastos_io_t io = {
     .bopen = bopen,
     .bclose = bclose,
@@ -165,6 +170,7 @@ bastos_io_t io = {
     .cls = cls,
     .cat = bcat,
     .erase = berase,
+    .reset = breset,
 };
 
 void initMinitel(bool clear)

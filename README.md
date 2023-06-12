@@ -23,8 +23,7 @@
 * [x] On ne peut pas uploader la flash par OTA quand on n'a pas encore la config
   WiFi => config manager minimal dans le code comme fait aujourd'hui.
   ~~Uploader le config manager  directement sur la flash par OTA~~
-* [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
-* [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
+* [x] Ajouter "RESET"
 * [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
 * [ ] Faire que les keywords aient le même ID (possible sans sort ?) afin
   d'assurer la compatibilité "binaire" des `*.bst`
@@ -39,9 +38,15 @@
 * [ ] TELNET / TELNET WS
 * [ ] AT, INK, PAPER, CLS
 * [ ] Tableaux (DIM)
-* [ ] **OPTIMISATION** (valable aussi pour la version OTA only)
+* [ ] **BUGS UI / AMELIORATIONS**
+  * [ ] `Error 1` quand on se logue
+  * [ ] Pouvoir sauvegarder uniquement les variables (config manager, "SAVE VARS")
+  * [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
+  * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
+* [ ] **OPTIMISATIONS** (valable aussi pour la version OTA only)
   * [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
   * [ ] Unifier load / save methods (read_uint16, read_len_mem0)
+  * [ ] Unifier FFI (bio.*) : un genre de callback fourre tout à la `ioctl` ?
 
 # Liens
 

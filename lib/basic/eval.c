@@ -952,6 +952,19 @@ bool eval_erase()
     return true;
 }
 
+bool eval_reset()
+{
+    if (!eval_token(TOKEN_KEYWORD_RESET))
+        return false;
+
+    if (bstate.do_eval)
+    {
+        bio->reset();
+    }
+
+    return true;
+}
+
 int8_t eval_prog(prog_t *prog, bool do_eval)
 {
     // Init evaluator state
@@ -972,6 +985,7 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_new() ||
         eval_clear() ||
         eval_cls() ||
+        eval_reset() ||
         eval_load()
 #ifndef OTA_ONLY
         ||
