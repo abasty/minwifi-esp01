@@ -186,6 +186,11 @@ void initMinitel(bool clear)
 #endif
 }
 
+#define config_prog \
+    "1INPUT\"SSID: \",WSSID$\n" \
+    "2INPUT\"PASS: \",WSECRET$\n" \
+    "3SAVE\"config$$$\"\n"
+
 void setup_wifi()
 {
     unsigned long startTime = millis();
@@ -238,11 +243,14 @@ void setup_wifi()
     LittleFS.format();
     LittleFS.begin();
     bastos_save("config$$$");
+    bmem_prog_new();
     return;
 
 finalize:
-    Serial.println("Connection Failed.");
+    Serial.println("Connection failed, enter WiFi parameters.");
     bmem_prog_new();
+    bastos_send_keys(config_prog, strlen(config_prog));
+    bastos_send_keys("RUN\n", 4);
 }
 
 void setup()

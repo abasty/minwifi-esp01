@@ -72,7 +72,7 @@ typedef struct
 
 void bastos_init(bastos_io_t *_io);
 
-size_t bastos_send_keys(char *keys, size_t n);
+size_t bastos_send_keys(const char *keys, size_t n);
 void bastos_loop();
 bool bastos_running();
 

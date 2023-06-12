@@ -55,7 +55,7 @@ int bmem_vars_cmp(void *_var1, void *_var2)
 var_t *bmem_var_find(const char *name)
 {
     var_t search = {
-        .name = name,
+        .name = (char *) name,
     };
     return ds_btree_find(&var_tree, &search);
 }

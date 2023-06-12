@@ -151,6 +151,14 @@ int main(int argc, char *argv[])
     print_string("Config vars OK.\n");
 
 finalize:
+
+    if (var == 0)
+    {
+        bastos_send_keys("10 INPUT\"SSID: \",WSSID$\n", 24);
+        bastos_send_keys("20 INPUT\"PASS: \",WSECRET$\n", 26);
+        bastos_send_keys("30 SAVE\"config$$$\"\n", 19);
+    }
+
     while (cont)
     {
         int c = getch();

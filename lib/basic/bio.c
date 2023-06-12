@@ -47,7 +47,7 @@ void bastos_init(bastos_io_t *_io)
     bmem_init();
 }
 
-size_t bastos_send_keys(char *keys, size_t n)
+size_t bastos_send_keys(const char *keys, size_t n)
 {
     size_t m = 0;
     uint8_t *src = (uint8_t *)keys;

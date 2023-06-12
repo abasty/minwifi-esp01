@@ -10,6 +10,7 @@
 * [x] Ajouter io (interface avec materiel)
 * [x] printf: ansi / minitel
 * [x] INPUT (envoie de caractères depuis le main vers le basic)
+* [x] print sur network (client wifi)
 * [x] Variables strings
 * [x] Expressions strings
 * [x] SAVE / LOAD prog
@@ -18,11 +19,15 @@
 * [x] Ajouter CAT, ERASE
 * [x] Variables WiFi dans fichier invisible par CAT, version limitée avec juste
   OTA, let, load vars, save vars et init Wifi ()
+* [x] Minimal embedded config manager
+* [x] On ne peut pas uploader la flash par OTA quand on n'a pas encore la config
+  WiFi => config manager minimal dans le code comme fait aujourd'hui.
+  ~~Uploader le config manager  directement sur la flash par OTA~~
+* [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
 * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
 * [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
-  ? Faire que les keywords aient le même ID (possible sans sort ?)
-* [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
-* [ ] Unifier load / save methods (read_uint16, read_len_mem0)
+* [ ] Faire que les keywords aient le même ID (possible sans sort ?) afin
+  d'assurer la compatibilité "binaire" des `*.bst`
 * [ ] comparaison, condition
 * [ ] IF, GOTO
 * [ ] GOSUB, RETURN
@@ -31,10 +36,12 @@
 * [ ] Ajouter edit, integration "edit_min" ?
 * [ ] vitesse serial ()
 * [ ] Ajouter mode rouleau, mode 40/80, AT, INK, PAPER, co, coff, echo
-* [x] print sur network
 * [ ] TELNET / TELNET WS
 * [ ] AT, INK, PAPER, CLS
 * [ ] Tableaux (DIM)
+* [ ] **OPTIMISATION** (valable aussi pour la version OTA only)
+  * [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
+  * [ ] Unifier load / save methods (read_uint16, read_len_mem0)
 
 # Liens
 
