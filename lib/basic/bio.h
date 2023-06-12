@@ -76,8 +76,8 @@ size_t bastos_send_keys(char *keys, size_t n);
 void bastos_loop();
 bool bastos_running();
 
-int8_t bastos_save(char *name);
-int8_t bastos_load(char *name);
+int8_t bastos_save(const char *name);
+int8_t bastos_load(const char *name);
 
 #ifdef __cplusplus
 }

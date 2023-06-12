@@ -19,7 +19,7 @@
 * [x] Variables WiFi dans fichier invisible par CAT, version limitée avec juste
   OTA, let, load vars, save vars et init Wifi ()
 * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
-* [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?, passer en SPIFS
+* [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
   ? Faire que les keywords aient le même ID (possible sans sort ?)
 * [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
 * [ ] Unifier load / save methods (read_uint16, read_len_mem0)

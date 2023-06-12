@@ -169,7 +169,7 @@ bool bastos_running()
     return eval_running();
 }
 
-int8_t bastos_save(char *name)
+int8_t bastos_save(const char *name)
 {
     int fd = bio->bopen(name, B_CREAT | B_RDWR);
     // save prog
@@ -213,7 +213,7 @@ int8_t bastos_save(char *name)
     return 0;
 }
 
-int8_t bastos_load(char *name)
+int8_t bastos_load(const char *name)
 {
     int8_t err = BERROR_NONE;
     int fd = bio->bopen(name, B_RDONLY);
