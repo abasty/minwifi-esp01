@@ -232,7 +232,7 @@ void setup_wifi()
     if (WiFi.status() != WL_CONNECTED)
         goto finalize;
 
-    print_string("WiFi connected.\r\ntelnet ");
+    print_string("WiFi connected with IP: ");
     Serial.print(WiFi.localIP());
 #if COMMAND_IP_PORT != 23
     Serial.printf(" %u", COMMAND_IP_PORT);
