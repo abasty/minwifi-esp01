@@ -239,16 +239,13 @@ void setup_wifi()
 #endif
     print_string("\r\n");
 
-    if (!LittleFS.exists("format$$$"))
+    if (LittleFS.exists("format$$$"))
     {
-        bmem_prog_new();
-        return;
+        LittleFS.end();
+        LittleFS.format();
+        LittleFS.begin();
+        bastos_save("config$$$");
     }
-
-    LittleFS.end();
-    LittleFS.format();
-    LittleFS.begin();
-    bastos_save("config$$$");
     bmem_prog_new();
     return;
 
