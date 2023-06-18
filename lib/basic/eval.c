@@ -797,6 +797,8 @@ bool eval_list()
 
     if (bstate.do_eval)
     {
+        bio->print_integer("lines/vars: %d/", prog_tree.count);
+        bio->print_integer("%d\r\n", var_tree.count);
         prog_t *prog = bmem_prog_first_line();
         while (prog && n >= 1)
         {
@@ -809,8 +811,6 @@ bool eval_list()
             }
             prog = bmem_prog_next_line(prog);
         }
-        bio->print_integer("lines/vars: %d/", prog_tree.count);
-        bio->print_integer("%d\r\n", var_tree.count);
     }
 
     return true;
