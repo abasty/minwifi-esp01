@@ -775,30 +775,42 @@ bool eval_print()
     return result;
 }
 
-#define progof(_ds, _item) ((prog_t *)DS_OBJECT_OF(_ds, _item))
-
-void btree_node_print(ds_btree_t *btree, ds_btree_item_t *node)
-{
-    if (node)
-    {
-        btree_node_print(btree, node->left);
-        bio->print_integer("%4d", (int) progof(btree, node)->line_no);
-        bio->print_string(untokenize(progof(btree, node)->line));
-        bio->print_string("\r\n");
-        btree_node_print(btree, node->right);
-    }
-}
-
 bool eval_list()
 {
     if (!eval_token(TOKEN_KEYWORD_LIST))
         return false;
 
+    uint16_t start = 0;
+    uint16_t n = 20;
+
+    if (eval_number())
+    {
+        start = bstate.number;
+        if (eval_token(','))
+        {
+            if (!eval_number())
+                return false;
+
+            n = bstate.number;
+        }
+    }
+
     if (bstate.do_eval)
     {
-        bio->print_integer("Program: %d line(s).\r\n", prog_tree.count);
-        bio->print_integer("Variables: %d symbols(s).\r\n", var_tree.count);
-        btree_node_print(&prog_tree, prog_tree.root);
+        prog_t *prog = bmem_prog_first_line();
+        while (prog && n >= 1)
+        {
+            if (prog->line_no >= start)
+            {
+                bio->print_integer("%4d", (int) prog->line_no);
+                bio->print_string(untokenize(prog->line));
+                bio->print_string("\r\n");
+                n--;
+            }
+            prog = bmem_prog_next_line(prog);
+        }
+        bio->print_integer("lines/vars: %d/", prog_tree.count);
+        bio->print_integer("%d\r\n", var_tree.count);
     }
 
     return true;
