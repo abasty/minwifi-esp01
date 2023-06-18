@@ -193,9 +193,11 @@ void initMinitel(bool clear)
 }
 
 #define config_prog \
-    "1INPUT\"SSID: \",WSSID$\n" \
-    "2INPUT\"PASS: \",WSECRET$\n" \
-    "3SAVE\"config$$$\"\n"
+    "1CLS\n" \
+    "2PRINT\"* WiFi parameters *\"\n" \
+    "4INPUT\"SSID: \",WSSID$\n" \
+    "5INPUT\"PASS: \",WSECRET$\n" \
+    "6SAVE\"config$$$\"\n"
 
 void setup_wifi()
 {
@@ -250,7 +252,7 @@ void setup_wifi()
     return;
 
 finalize:
-    Serial.println("Connection failed, enter WiFi parameters.");
+    Serial.println("Connection failed.");
     bmem_prog_new();
     bastos_send_keys(config_prog, strlen(config_prog));
     bastos_send_keys("RUN\n", 4);
