@@ -20,6 +20,8 @@
 #include "keywords.h"
 #include "bio.h"
 
+#define BASTOS_DISK_PATH "/home/alain/Projects/minwifi-esp01/lib/basic/examples/disk"
+
 
 int print_float(float f)
 {
@@ -72,6 +74,23 @@ int bread(int fd, void *buf, int count)
     return read(fd, buf, count);
 }
 
+#include <dirent.h>
+
+void cat()
+{
+    struct dirent **namelist;
+    int n = scandir(BASTOS_DISK_PATH, &namelist, NULL, NULL);
+    while (n--)
+    {
+        if (strcmp(".", namelist[n]->d_name) && strcmp("..", namelist[n]->d_name))
+        {
+            printf("%s\n", namelist[n]->d_name);
+            free(namelist[n]);
+        }
+    }
+    free(namelist);
+}
+
 bastos_io_t io = {
     .bopen = bopen,
     .bclose = bclose,
@@ -82,6 +101,7 @@ bastos_io_t io = {
     .print_integer = print_integer,
     .echo_newline = echo_newline,
     .cls = cls,
+    .cat = cat,
 };
 
 #if 0
@@ -131,6 +151,8 @@ int main(int argc, char *argv[])
 {
     bool cont = true;
     var_t *var = 0;
+
+    chdir(BASTOS_DISK_PATH);
 
     bastos_init(&io);
 
