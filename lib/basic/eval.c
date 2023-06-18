@@ -782,7 +782,7 @@ void btree_node_print(ds_btree_t *btree, ds_btree_item_t *node)
     if (node)
     {
         btree_node_print(btree, node->left);
-        bio->print_integer("%d", (int) progof(btree, node)->line_no);
+        bio->print_integer("%4d", (int) progof(btree, node)->line_no);
         bio->print_string(untokenize(progof(btree, node)->line));
         bio->print_string("\r\n");
         btree_node_print(btree, node->right);
