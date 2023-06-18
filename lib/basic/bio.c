@@ -360,6 +360,10 @@ void bastos_loop()
     if (eval_running() && !eval_inputting())
     {
         eval_prog_next();
+        if (!eval_running())
+        {
+            bio->print_string("OK\r\n");
+        }
         return;
     }
 
