@@ -652,7 +652,10 @@ bool eval_cls()
     if (!eval_token(TOKEN_KEYWORD_CLS))
         return false;
 
-    bio->cls();
+    if (bstate.do_eval)
+    {
+        bio->cls();
+    }
     return true;
 }
 
