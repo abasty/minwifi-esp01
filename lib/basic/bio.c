@@ -362,7 +362,7 @@ void bastos_loop()
         eval_prog_next();
         if (!eval_running())
         {
-            bio->print_string("OK\r\n");
+            bio->print_string("Ready\r\n");
         }
         return;
     }
