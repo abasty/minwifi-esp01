@@ -65,16 +65,22 @@ size_t bastos_send_keys(const char *keys, size_t n)
         {
             *dst++ = '\n';
             src++;
-            // if (*src == '\n')
-            // {
-            //     src++;
-            // }
+        }
+        else if (*src == 127)
+        {
+            if (dst - io_buffer >= 1 && *(dst - 1) != '\n')
+            {
+                dst--;
+                *dst = 0;
+                bio->del();
+            }
         }
         else
         {
             *dst++ = *src++;
             size++;
         }
+        size = dst - io_buffer;
         n--;
         m++;
     }

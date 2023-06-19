@@ -91,6 +91,11 @@ void cat()
     free(namelist);
 }
 
+void del()
+{
+    print_string("\x08 \x08");
+}
+
 bastos_io_t io = {
     .bopen = bopen,
     .bclose = bclose,
@@ -102,6 +107,7 @@ bastos_io_t io = {
     .echo_newline = echo_newline,
     .cls = cls,
     .cat = cat,
+    .del = del,
 };
 
 #if 0
@@ -160,7 +166,7 @@ int main(int argc, char *argv[])
     if (err != BERROR_NONE)
         goto finalize;
 
-    print_string("Cofig file loaded.\n");
+    print_string("Config file loaded.\n");
 
     var = bmem_var_find("\021WSSID");
     if (!var)

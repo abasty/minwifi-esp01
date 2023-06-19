@@ -992,18 +992,18 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
 
     // Do syntax check or eval
     bool eval =
-        eval_let() ||
         eval_save() ||
         eval_print() ||
         eval_input() ||
-        eval_run() ||
-        eval_new() ||
-        eval_clear() ||
         eval_cls() ||
         eval_reset() ||
         eval_load()
 #ifndef OTA_ONLY
         ||
+        eval_run() ||
+        eval_new() ||
+        eval_clear() ||
+        eval_let() ||
         eval_list() ||
         eval_cat() ||
         eval_erase()

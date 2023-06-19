@@ -54,7 +54,7 @@ WiFiServer *wifiServer = 0;
 WiFiClient tcpMinitelConnexion;
 WebSocketsClient webSocket;
 bool _3611 = false;
-
+bool fkey = false;
 bool minitelMode;
 
 
@@ -94,6 +94,17 @@ extern "C" void cls()
     Serial.print("\x0C");
 #else
     Serial.print("\033[2J" "\033[H");
+#endif
+}
+
+extern "C" void del()
+{
+    if (wifiClient)
+        wifiClient->print("\x08 \x08");
+#ifdef MINITEL
+    Serial.print("\x08\x08  \x08\x08");
+#else
+    Serial.print("\x08 \x08");
 #endif
 }
 
@@ -171,6 +182,7 @@ bastos_io_t io = {
     .cat = bcat,
     .erase = berase,
     .reset = breset,
+    .del = del,
 };
 
 void initMinitel(bool clear)
@@ -351,18 +363,31 @@ void loop()
 
     // Handle Serial input
     if (Serial && Serial.available() > 0) {
-        if (!_3611) {
-            // Command mode: Handle serial input with command shell
-            char buffer[32];
-            size_t n = Serial.readBytes(buffer, 32);
-            //serialShell->handle((char *)buffer, n);
-            // TODO: Manage Minitel keys
-            bastos_send_keys(buffer, n);
-        } else {
-            // Minitel mode: Forward serial input to Minitel sever
-            uint8_t key;
-            size_t n = Serial.readBytes(&key, 1);
-            if (n > 0) {
+        uint8_t key;
+        size_t n = Serial.readBytes(&key, 1);
+        if (n > 0) {
+            if (!_3611) {
+#ifdef MINITEL
+                if (key == 0x13) {
+                    fkey = true;
+                }
+                else {
+                    if (fkey) {
+                        if (key == 'G') { // CORRECTION
+                            Serial.print("\x7F");
+                            key = 0x7F;
+                        } else { // ENVOI
+                            key = '\n';
+                        }
+                        fkey = false;
+                    }
+                    bastos_send_keys((char *)&key, 1);
+                }
+#else
+                bastos_send_keys((char *)&key, 1);
+#endif
+            } else {
+                // Minitel mode: Forward serial input to Minitel sever
                 // tcpMinitelConnexion.setNoDelay(true); // Disable nagle's algo.
                 // tcpMinitelConnexion.write((char *)&key, 1);
                 webSocket.sendTXT(key);
