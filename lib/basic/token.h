@@ -52,10 +52,6 @@ typedef struct {
 int8_t tokenize(tokenizer_state_t *state, char *line);
 char *untokenize(uint8_t *input);
 
-uint8_t token_get_next(tokenizer_state_t *state);
-float token_number_get_value(tokenizer_state_t *state);
-char* token_string_get_value(tokenizer_state_t *state);
-
 #ifdef __cplusplus
 }
 #endif
