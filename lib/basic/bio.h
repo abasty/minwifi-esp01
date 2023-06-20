@@ -63,11 +63,6 @@ typedef int bread_t(int fd, void *buf, int count);
 typedef int erase_t(const char *pathname);
 
 typedef void bio_f0_t(int fn);
-typedef void cat_t();
-typedef void echo_newline_t();
-typedef void cls_t();
-typedef void reset_t();
-typedef void del_t();
 
 typedef struct
 {
@@ -85,11 +80,6 @@ typedef struct
     erase_t *erase;
 
     bio_f0_t *bio_f0;
- /*   cat_t *cat;
-    echo_newline_t *echo_newline;
-    cls_t *cls;
-    reset_t *reset;
-    del_t *del; */
 } bastos_io_t;
 
 void bastos_init(bastos_io_t *_io);
