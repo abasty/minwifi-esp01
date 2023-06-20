@@ -42,13 +42,16 @@ static uint8_t token_get_next(tokenizer_state_t *state);
 static float token_number_get_value(tokenizer_state_t *state);
 static char* token_string_get_value(tokenizer_state_t *state);
 
-static bool char_of_keyword(char test_char)
+static bool is_char_of_keyword(char test_char)
 {
-    // TODO: test other implementation for size
-    return (test_char >= 'A' && test_char <= 'Z') ||
-           (test_char >= 'a' && test_char <= 'z') ||
-           (test_char >= '0' && test_char <= '9') ||
-           (test_char == '$');
+    if (test_char == '$') return true;
+    if (test_char < '0') return false;
+    if (test_char <= '9') return true;
+    if (test_char < 'A') return false;
+    if (test_char <= 'Z') return true;
+    if (test_char < 'a') return false;
+    if (test_char <= 'z') return true;
+    return false;
 }
 
 static const char *untokenize_keyword(tokenizer_state_t *state, const char *keyword)
@@ -96,7 +99,7 @@ static int8_t tokenize_keyword(tokenizer_state_t *state, const char *keywords)
 
     // Search end of keyword and transform to uppercase
     uint8_t c = *state->read_ptr;
-    while (char_of_keyword(c))
+    while (is_char_of_keyword(c))
     {
         *state->read_ptr++ = c >= 'a' && c <= 'z' ? c - 32 : c;
         c = *state->read_ptr;
