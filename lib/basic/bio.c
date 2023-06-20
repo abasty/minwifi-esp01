@@ -72,7 +72,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
             {
                 dst--;
                 *dst = 0;
-                bio->del();
+                bio->bio_f0(BIO_F0_DEL);
             }
         }
         else
@@ -104,7 +104,7 @@ int8_t bastos_input()
     if (*next == 0)
         return BERROR_NONE;
 
-    bio->echo_newline();
+    bio->bio_f0(BIO_F0_LN);
 
     // Mark first command end with 0 and point to next one
     *next++ = 0;

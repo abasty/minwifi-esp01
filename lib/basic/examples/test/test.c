@@ -76,7 +76,7 @@ int bread(int fd, void *buf, int count)
 
 #include <dirent.h>
 
-void cat()
+void bcat()
 {
     struct dirent **namelist;
     int n = scandir(BASTOS_DISK_PATH, &namelist, NULL, NULL);
@@ -96,18 +96,45 @@ void del()
     print_string("\x08 \x08");
 }
 
+void bio_f0(int fn)
+{
+    switch (fn)
+    {
+    case BIO_F0_CAT:
+        bcat();
+        break;
+
+    case BIO_F0_CLS:
+        cls();
+        break;
+
+    case BIO_F0_DEL:
+        del();
+        break;
+
+    case BIO_F0_LN:
+        echo_newline();
+        break;
+
+    case BIO_F0_RESET:
+        //breset();
+        break;
+    }
+}
+
 bastos_io_t io = {
-    .bopen = bopen,
-    .bclose = bclose,
-    .bwrite = bwrite,
-    .bread = bread,
     .print_string = print_string,
     .print_float = print_float,
+
     .print_integer = print_integer,
-    .echo_newline = echo_newline,
-    .cls = cls,
-    .cat = cat,
-    .del = del,
+    .bopen = bopen,
+
+    .bclose = bclose,
+
+    .bwrite = bwrite,
+    .bread = bread,
+
+    .bio_f0 = bio_f0,
 };
 
 #if 0

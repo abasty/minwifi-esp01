@@ -43,35 +43,53 @@ extern "C"
 #define B_TRUNC   01000
 #define B_APPEND  02000
 
+#define BIO_F0_CAT   0
+#define BIO_F0_LN    1
+#define BIO_F0_CLS   2
+#define BIO_F0_RESET 3
+#define BIO_F0_DEL   4
+
 typedef int print_string_t(const char *s);
 typedef int print_float_t(float f);
+
 typedef int print_format_integer_t(const char *format, int i);
-typedef void echo_newline_t();
-typedef void cls_t();
 typedef int bopen_t(const char *pathname, int flags);
+
 typedef int bclose_t(int fd);
+
 typedef int bwrite_t(int fd, const void *buf, int count);
 typedef int bread_t(int fd, void *buf, int count);
-typedef void cat_t();
+
 typedef int erase_t(const char *pathname);
+
+typedef void bio_f0_t(int fn);
+typedef void cat_t();
+typedef void echo_newline_t();
+typedef void cls_t();
 typedef void reset_t();
 typedef void del_t();
 
 typedef struct
 {
-    bopen_t *bopen;
-    bclose_t *bclose;
-    bwrite_t *bwrite;
-    bread_t *bread;
     print_string_t *print_string;
     print_float_t *print_float;
+
     print_format_integer_t *print_integer;
+    bopen_t *bopen;
+
+    bclose_t *bclose;
+
+    bwrite_t *bwrite;
+    bread_t *bread;
+
+    erase_t *erase;
+
+    bio_f0_t *bio_f0;
+ /*   cat_t *cat;
     echo_newline_t *echo_newline;
     cls_t *cls;
-    cat_t *cat;
-    erase_t *erase;
     reset_t *reset;
-    del_t *del;
+    del_t *del; */
 } bastos_io_t;
 
 void bastos_init(bastos_io_t *_io);

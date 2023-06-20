@@ -654,7 +654,7 @@ bool eval_cls()
 
     if (bstate.do_eval)
     {
-        bio->cls();
+        bio->bio_f0(BIO_F0_CLS);
     }
     return true;
 }
@@ -946,7 +946,7 @@ bool eval_cat()
 
     if (bstate.do_eval)
     {
-        bio->cat();
+        bio->bio_f0(BIO_F0_CAT);
     }
     return true;
 }
@@ -974,7 +974,7 @@ bool eval_reset()
 
     if (bstate.do_eval)
     {
-        bio->reset();
+        bio->bio_f0(BIO_F0_RESET);
     }
 
     return true;
