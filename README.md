@@ -37,6 +37,7 @@
 * [ ] Ajouter mode rouleau, mode 40/80, AT, INK, PAPER, co, coff, echo
 * [ ] TELNET / TELNET WS
 * [ ] AT, INK, PAPER, CLS
+* [ ] plot / unplot / screen$(l,c) ?
 * [ ] Tableaux (DIM)
 * [ ] **BUGS UI / AMELIORATIONS**
   * [ ] `Error 1` quand on se logue
