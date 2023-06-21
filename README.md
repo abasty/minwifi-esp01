@@ -47,7 +47,7 @@
   * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
 * [ ] **OPTIMISATIONS** (valable aussi pour la version OTA only)
   * [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
-  * [ ] Unifier load / save methods (read_uint16, read_len_mem0)
+  * [x] N'optimise pas : Unifier load / save methods (read_uint16, read_len_mem0)
   * [x] Unifier FFI (bio.*) : un genre de callback fourre tout à la `ioctl` ?
 
 # Liens
