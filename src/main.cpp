@@ -79,13 +79,6 @@ extern "C" int print_integer(const char *format, int i)
     return Serial.printf(format, i);
 }
 
-static inline void echo_newline()
-{
-#ifdef MINITEL
-    Serial.print("\r\n");
-#endif
-}
-
 static inline void cls()
 {
     if (wifiClient)
@@ -101,11 +94,7 @@ static inline void del()
 {
     if (wifiClient)
         wifiClient->print("\x08 \x08");
-#ifdef MINITEL
-    Serial.print("\x08\x08  \x08\x08");
-#else
     Serial.print("\x08 \x08");
-#endif
 }
 
 File bastos_file0;
@@ -185,10 +174,6 @@ extern "C" void bio_f0(int fn)
         del();
         break;
 
-    case BIO_F0_LN:
-        echo_newline();
-        break;
-
     case BIO_F0_RESET:
         breset();
         break;
@@ -210,7 +195,7 @@ bastos_io_t io = {
     .bio_f0 = bio_f0,
 };
 
-void initMinitel(bool clear)
+static void initMinitel(bool clear)
 {
     // Empty Serial buffer
     while (Serial && Serial.available() > 0) {
@@ -223,7 +208,7 @@ void initMinitel(bool clear)
     }
 #ifdef MINITEL
     Serial.print((char *)P_ACK_OFF_PRISE);
-    Serial.print((char *)P_LOCAL_ECHO_ON);
+    Serial.print((char *)P_LOCAL_ECHO_OFF);
     Serial.print((char *)P_ROULEAU);
     Serial.print((char *)CON);
 #endif
@@ -236,7 +221,7 @@ void initMinitel(bool clear)
     "5INPUT\"PASS: \",WSECRET$\n" \
     "6SAVE\"config$$$\"\n"
 
-void setup_wifi()
+static void setup_wifi()
 {
     unsigned long startTime = millis();
     char *wssid = 0;
@@ -399,10 +384,9 @@ void loop()
                 else {
                     if (fkey) {
                         if (key == 'G') { // CORRECTION
-                            Serial.print("\x7F");
                             key = 0x7F;
                         } else { // ENVOI
-                            key = '\n';
+                            key = '\r';
                         }
                         fkey = false;
                     }

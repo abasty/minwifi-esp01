@@ -41,7 +41,7 @@
 * [ ] plot / unplot / screen$(l,c) ?
 * [ ] Tableaux (DIM)
 * [ ] **BUGS UI / AMELIORATIONS**
-  * [ ] `Error 1` quand on se logue
+  * [ ] `Error 1` quand on se logue : utiliser `nc` pas telnet
   * [ ] Pouvoir sauvegarder uniquement les variables (config manager, "SAVE VARS")
   * [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
   * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
@@ -118,6 +118,16 @@ Il faut **absolument** faire un HW reset de l'ESP :
 * Flash par USB serial => SW reboot de l'ESP
 * Débrancher / Rebrancher l'ESP => HW reboot
 * FOTA fonctionne
+
+# Shell sur port TCP 23
+
+On peut se connecter sur un shell distant de la façon suivante :
+
+```
+$ stty -echo cbreak && nc esp-minitel.local 23
+```
+
+Lorsqu'on sort de `nc` avec "Ctrl + C" on rétablit l'echo avec `stty sane`.
 
 # TCP Minitel
 

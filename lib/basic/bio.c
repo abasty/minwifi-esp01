@@ -65,6 +65,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
         {
             *dst++ = '\n';
             src++;
+            bio->print_string("\r\n");
         }
         else if (*src == 127)
         {
@@ -77,8 +78,11 @@ size_t bastos_send_keys(const char *keys, size_t n)
         }
         else
         {
+            uint8_t *c = dst;
             *dst++ = *src++;
+            *dst = 0;
             size++;
+            bio->print_string((char *) c);
         }
         size = dst - io_buffer;
         n--;
@@ -103,8 +107,6 @@ int8_t bastos_input()
     // If no command: do nothing
     if (*next == 0)
         return BERROR_NONE;
-
-    bio->bio_f0(BIO_F0_LN);
 
     // Mark first command end with 0 and point to next one
     *next++ = 0;
