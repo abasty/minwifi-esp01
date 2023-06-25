@@ -79,14 +79,14 @@ extern "C" int print_integer(const char *format, int i)
     return Serial.printf(format, i);
 }
 
-extern "C" void echo_newline()
+static inline void echo_newline()
 {
 #ifdef MINITEL
     Serial.print("\r\n");
 #endif
 }
 
-extern "C" void cls()
+static inline void cls()
 {
     if (wifiClient)
         wifiClient->print("\033[2J" "\033[H");
@@ -97,7 +97,7 @@ extern "C" void cls()
 #endif
 }
 
-extern "C" void del()
+static inline void del()
 {
     if (wifiClient)
         wifiClient->print("\x08 \x08");
@@ -139,7 +139,7 @@ extern "C" int bread(int fd, void *buf, int count)
     return bastos_file0.read((uint8_t *) buf, count);
 }
 
-extern "C" void bcat()
+static inline void bcat()
 {
     Dir dir = LittleFS.openDir("/");
     while (dir.next())
@@ -164,25 +164,50 @@ extern "C" int berase(const char *pathname)
     return -1;
 }
 
-extern "C" void breset()
+static inline void breset()
 {
     ESP.restart();
 }
 
+extern "C" void bio_f0(int fn)
+{
+    switch (fn)
+    {
+    case BIO_F0_CAT:
+        bcat();
+        break;
+
+    case BIO_F0_CLS:
+        cls();
+        break;
+
+    case BIO_F0_DEL:
+        del();
+        break;
+
+    case BIO_F0_LN:
+        echo_newline();
+        break;
+
+    case BIO_F0_RESET:
+        breset();
+        break;
+    }
+}
+
 bastos_io_t io = {
-    .bopen = bopen,
-    .bclose = bclose,
-    .bwrite = bwrite,
-    .bread = bread,
     .print_string = print_string,
     .print_float = print_float,
+
     .print_integer = print_integer,
-    .echo_newline = echo_newline,
-    .cls = cls,
-    .cat = bcat,
-    .erase = berase,
-    .reset = breset,
-    .del = del,
+    .bopen = bopen,
+
+    .bclose = bclose,
+
+    .bwrite = bwrite,
+    .bread = bread,
+
+    .bio_f0 = bio_f0,
 };
 
 void initMinitel(bool clear)

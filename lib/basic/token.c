@@ -38,16 +38,23 @@ extern const char *keywords;
 
 uint8_t token_buffer[TOKEN_LINE_SIZE];
 
-bool char_of_keyword(char test_char)
+static uint8_t token_get_next(tokenizer_state_t *state);
+static float token_number_get_value(tokenizer_state_t *state);
+static char* token_string_get_value(tokenizer_state_t *state);
+
+static bool is_char_of_keyword(char test_char)
 {
-    // TODO: test other implementation for size
-    return (test_char >= 'A' && test_char <= 'Z') ||
-           (test_char >= 'a' && test_char <= 'z') ||
-           (test_char >= '0' && test_char <= '9') ||
-           (test_char == '$');
+    if (test_char == '$') return true;
+    if (test_char < '0') return false;
+    if (test_char <= '9') return true;
+    if (test_char < 'A') return false;
+    if (test_char <= 'Z') return true;
+    if (test_char < 'a') return false;
+    if (test_char <= 'z') return true;
+    return false;
 }
 
-const char *untokenize_keyword(tokenizer_state_t *state, const char *keyword)
+static const char *untokenize_keyword(tokenizer_state_t *state, const char *keyword)
 {
     uint8_t token = (*(state->read_ptr - 1)) & ~TOKEN_KEYWORD;
     const char *keyword_char = keyword;
@@ -84,7 +91,7 @@ const char *untokenize_keyword(tokenizer_state_t *state, const char *keyword)
     return keyword;
 }
 
-int8_t tokenize_keyword(tokenizer_state_t *state, const char *keywords)
+static int8_t tokenize_keyword(tokenizer_state_t *state, const char *keywords)
 {
     uint8_t *keyword_char = (uint8_t *)keywords;
     uint8_t *word = state->read_ptr;
@@ -92,7 +99,7 @@ int8_t tokenize_keyword(tokenizer_state_t *state, const char *keywords)
 
     // Search end of keyword and transform to uppercase
     uint8_t c = *state->read_ptr;
-    while (char_of_keyword(c))
+    while (is_char_of_keyword(c))
     {
         *state->read_ptr++ = c >= 'a' && c <= 'z' ? c - 32 : c;
         c = *state->read_ptr;
@@ -149,7 +156,7 @@ int8_t tokenize_keyword(tokenizer_state_t *state, const char *keywords)
     return BERROR_NONE;
 }
 
-int8_t tokenize_number(tokenizer_state_t *state)
+static int8_t tokenize_number(tokenizer_state_t *state)
 {
     char *end_ptr = 0;
     float value = strtof((char *)state->read_ptr, &end_ptr);
@@ -169,7 +176,7 @@ int8_t tokenize_number(tokenizer_state_t *state)
     return BERROR_NONE;
 }
 
-int8_t tokenize_string(tokenizer_state_t *state)
+static int8_t tokenize_string(tokenizer_state_t *state)
 {
     *state->write_ptr++ = TOKEN_STRING;
     char c = *++state->read_ptr;
@@ -316,12 +323,12 @@ int8_t tokenize(tokenizer_state_t *state, char *input)
     return 0;
 }
 
-uint8_t token_get_next(tokenizer_state_t *state)
+static uint8_t token_get_next(tokenizer_state_t *state)
 {
     return *state->read_ptr != 0 ? *state->read_ptr++ : 0;
 }
 
-float token_number_get_value(tokenizer_state_t *state)
+static float token_number_get_value(tokenizer_state_t *state)
 {
     float value = 0;
     uint8_t *write_value_ptr = (uint8_t *)&value;
@@ -332,7 +339,7 @@ float token_number_get_value(tokenizer_state_t *state)
     return value;
 }
 
-char *token_string_get_value(tokenizer_state_t *state)
+static char *token_string_get_value(tokenizer_state_t *state)
 {
     char *value = (char *)(state->read_ptr);
     while (*state->read_ptr)

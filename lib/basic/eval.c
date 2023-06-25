@@ -42,7 +42,9 @@ typedef struct
     bool allocated;
 } string_t;
 
-void string_set(string_t *string, char *chars, bool allocated)
+static inline void eval_input_mode(bool mode);
+
+static void string_set(string_t *string, char *chars, bool allocated)
 {
     if (string->allocated && string->chars != chars)
         free(string->chars);
@@ -50,7 +52,7 @@ void string_set(string_t *string, char *chars, bool allocated)
     string->allocated = allocated;
 }
 
-void string_normalize(string_t *string)
+static void string_normalize(string_t *string)
 {
     if (!string->chars)
     {
@@ -67,7 +69,7 @@ void string_normalize(string_t *string)
     }
 }
 
-void string_move(string_t *from, string_t *to)
+static void string_move(string_t *from, string_t *to)
 {
     *to = *from;
     from->chars = 0;
@@ -75,7 +77,7 @@ void string_move(string_t *from, string_t *to)
     string_normalize(to);
 }
 
-void string_slice(string_t *string, uint16_t start, uint16_t end)
+static void string_slice(string_t *string, uint16_t start, uint16_t end)
 {
     string_normalize(string);
 
@@ -122,7 +124,7 @@ void string_slice(string_t *string, uint16_t start, uint16_t end)
     string_set(string, slice, true);
 }
 
-void string_concat(string_t *string1, string_t *string2)
+static void string_concat(string_t *string1, string_t *string2)
 {
     string_normalize(string2);
 
@@ -191,7 +193,7 @@ uint8_t variables[] = {
     0,
 };
 
-bool eval_token(uint8_t c)
+static bool eval_token(uint8_t c)
 {
     if (*bstate.read_ptr != c)
     {
@@ -201,7 +203,7 @@ bool eval_token(uint8_t c)
     return true;
 }
 
-bool eval_token_one_of(const char *set)
+static bool eval_token_one_of(const char *set)
 {
     char c = *bstate.read_ptr;
 
@@ -218,11 +220,11 @@ bool eval_token_one_of(const char *set)
     return true;
 }
 
-bool eval_string_expr();
-bool eval_factor();
-bool eval_expr();
+static bool eval_string_expr();
+static bool eval_factor();
+static bool eval_expr();
 
-bool eval_code()
+static bool eval_code()
 {
     if (eval_token(TOKEN_KEYWORD_CODE) && eval_string_expr())
     {
@@ -235,7 +237,7 @@ bool eval_code()
     return false;
 }
 
-bool eval_number()
+static bool eval_number()
 {
     bool minus = eval_token('-');
     float value = 0;
@@ -285,7 +287,7 @@ bool eval_number()
     return true;
 }
 
-bool eval_function()
+static bool eval_function()
 {
     if (!eval_token_one_of((char *)functions))
     {
@@ -343,7 +345,7 @@ bool eval_function()
     return true;
 }
 
-bool eval_factor()
+static bool eval_factor()
 {
     bool result =
         eval_number() ||
@@ -353,7 +355,7 @@ bool eval_factor()
     return result;
 }
 
-bool eval_term()
+static bool eval_term()
 {
     bool result = true;
     float acc = 0;
@@ -397,7 +399,7 @@ bool eval_term()
 // TODO: Add eval_condition (< > <> = <= >=)
 // TODO: Add eval_boolean (AND OR)
 
-bool eval_expr()
+static bool eval_expr()
 {
     bool result = true;
     float acc = 0;
@@ -433,7 +435,7 @@ bool eval_expr()
     return result;
 }
 
-bool eval_string_chr()
+static bool eval_string_chr()
 {
     if (!eval_token(TOKEN_KEYWORD_CHR))
         return false;
@@ -456,7 +458,7 @@ bool eval_string_chr()
     return true;
 }
 
-bool eval_string_str()
+static bool eval_string_str()
 {
     if (!eval_token(TOKEN_KEYWORD_STR))
         return false;
@@ -479,7 +481,7 @@ bool eval_string_str()
     return true;
 }
 
-bool eval_string_const()
+static bool eval_string_const()
 {
     if (!eval_token(TOKEN_STRING))
         return false;
@@ -489,7 +491,7 @@ bool eval_string_const()
     return true;
 }
 
-bool eval_string_var()
+static bool eval_string_var()
 {
     if (!eval_token(TOKEN_VARIABLE_STRING))
         return false;
@@ -510,7 +512,7 @@ bool eval_string_var()
     return true;
 }
 
-bool eval_string_term()
+static bool eval_string_term()
 {
     bool result =
         eval_string_const() ||
@@ -564,7 +566,7 @@ bool eval_string_term()
     return result;
 }
 
-bool eval_string_expr()
+static bool eval_string_expr()
 {
     bool result = true;
     if ((result = eval_string_term()))
@@ -591,7 +593,7 @@ bool eval_string_expr()
     return result;
 }
 
-bool eval_variable_ref()
+static bool eval_variable_ref()
 {
     bstate.var_ref = (char *)bstate.read_ptr;
 
@@ -605,7 +607,7 @@ bool eval_variable_ref()
     return true;
 }
 
-bool eval_let()
+static bool eval_let()
 {
     if (!eval_token(TOKEN_KEYWORD_LET))
         return false;
@@ -647,14 +649,14 @@ bool eval_let()
     return false;
 }
 
-bool eval_cls()
+static bool eval_cls()
 {
     if (!eval_token(TOKEN_KEYWORD_CLS))
         return false;
 
     if (bstate.do_eval)
     {
-        bio->cls();
+        bio->bio_f0(BIO_F0_CLS);
     }
     return true;
 }
@@ -688,7 +690,7 @@ int8_t eval_input_store(char *io_string)
     return BERROR_SYNTAX;
 }
 
-bool eval_input()
+static bool eval_input()
 {
     if (!eval_token(TOKEN_KEYWORD_INPUT))
         return false;
@@ -731,7 +733,7 @@ bool eval_input()
     return true;
 }
 
-bool eval_print()
+static bool eval_print()
 {
     if (!eval_token(TOKEN_KEYWORD_PRINT))
         return false;
@@ -778,7 +780,7 @@ bool eval_print()
     return result;
 }
 
-bool eval_list()
+static bool eval_list()
 {
     if (!eval_token(TOKEN_KEYWORD_LIST))
         return false;
@@ -829,7 +831,7 @@ bool eval_inputting()
     return bstate.inputting;
 }
 
-void eval_input_mode(bool mode)
+static inline void eval_input_mode(bool mode)
 {
     bstate.inputting = mode;
 }
@@ -859,7 +861,7 @@ int8_t eval_prog_next()
     return err;
 }
 
-bool eval_run()
+static bool eval_run()
 {
     if (!eval_token(TOKEN_KEYWORD_RUN))
         return false;
@@ -875,7 +877,7 @@ bool eval_run()
     return eval_prog_next() == BERROR_NONE;
 }
 
-bool eval_clear()
+static bool eval_clear()
 {
     if (!eval_token(TOKEN_KEYWORD_CLEAR))
         return false;
@@ -888,7 +890,7 @@ bool eval_clear()
     return true;
 }
 
-bool eval_new()
+static bool eval_new()
 {
     if (!eval_token(TOKEN_KEYWORD_NEW))
         return false;
@@ -901,7 +903,7 @@ bool eval_new()
     return true;
 }
 
-bool eval_save()
+static bool eval_save()
 {
     if (!eval_token(TOKEN_KEYWORD_SAVE))
         return false;
@@ -919,7 +921,7 @@ bool eval_save()
     return true;
 }
 
-bool eval_load()
+static bool eval_load()
 {
     if (!eval_token(TOKEN_KEYWORD_LOAD))
         return false;
@@ -939,19 +941,19 @@ bool eval_load()
     return true;
 }
 
-bool eval_cat()
+static bool eval_cat()
 {
     if (!eval_token(TOKEN_KEYWORD_CAT))
         return false;
 
     if (bstate.do_eval)
     {
-        bio->cat();
+        bio->bio_f0(BIO_F0_CAT);
     }
     return true;
 }
 
-bool eval_erase()
+static bool eval_erase()
 {
     if (!eval_token(TOKEN_KEYWORD_ERASE))
         return false;
@@ -967,14 +969,14 @@ bool eval_erase()
     return true;
 }
 
-bool eval_reset()
+static bool eval_reset()
 {
     if (!eval_token(TOKEN_KEYWORD_RESET))
         return false;
 
     if (bstate.do_eval)
     {
-        bio->reset();
+        bio->bio_f0(BIO_F0_RESET);
     }
 
     return true;
@@ -1023,20 +1025,6 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
     }
 
     // TODO: We can support multiple intructions on the same line here
-
-    // // Handle state program counter
-    // if (bstate.do_eval && bstate.pc)
-    // {
-    //     // Handle running state
-    //     if (bstate.error == BERROR_NONE)
-    //     {
-    //         bstate.pc = bmem_prog_next_line(bstate.pc);
-    //     }
-    //     else
-    //     {
-    //         bstate.pc = 0;
-    //     }
-    // }
 
     return bstate.error;
 }
