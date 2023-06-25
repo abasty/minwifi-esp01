@@ -44,7 +44,7 @@ extern "C"
 #define B_APPEND  02000
 
 #define BIO_F0_CAT   0
-#define BIO_F0_LN    1
+#define BIO_F0_RES0  1
 #define BIO_F0_CLS   2
 #define BIO_F0_RESET 3
 #define BIO_F0_DEL   4

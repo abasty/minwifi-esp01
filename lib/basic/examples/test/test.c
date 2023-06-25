@@ -40,10 +40,6 @@ int print_integer(const char *format, int32_t i)
     return printf(format, i);
 }
 
-void echo_newline()
-{
-}
-
 void cls()
 {
     printf("%s", "\033[2J"
@@ -112,10 +108,6 @@ void bio_f0(int fn)
         del();
         break;
 
-    case BIO_F0_LN:
-        echo_newline();
-        break;
-
     case BIO_F0_RESET:
         //breset();
         break;
@@ -170,7 +162,7 @@ int getch()
     tcgetattr(0, &old);
     new = old;
     new.c_lflag &= ~ICANON;
-    new.c_lflag &= true ? ECHO : ~ECHO;
+    new.c_lflag &= false ? ECHO : ~ECHO;
     tcsetattr(0, TCSANOW, &new);
     struct pollfd input[1] = {{fd: 0, events: POLLIN}};
     int ch = 0;

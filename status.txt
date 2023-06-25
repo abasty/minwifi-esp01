@@ -23,3 +23,8 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32700 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 474876 bytes from 958448 bytes)
 ---
+be9bc6d Implemented distant echo -88
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.9% (used 32684 bytes from 81920 bytes)
+Flash: [=====     ]  49.5% (used 474788 bytes from 958448 bytes)
+---
