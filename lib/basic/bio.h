@@ -66,8 +66,7 @@ typedef int bread_t(int fd, void *buf, int count);
 
 typedef int erase_t(const char *pathname);
 
-typedef void bio_f0_t(int fn);
-typedef int8_t bio_fn_t(uint8_t fn, ...);
+typedef void bio_f0_t(uint32_t fn);
 
 typedef struct
 {
@@ -85,7 +84,6 @@ typedef struct
     erase_t *erase;
 
     bio_f0_t *bio_f0;
-    bio_fn_t *fn;
 } bastos_io_t;
 
 void bastos_init(bastos_io_t *_io);

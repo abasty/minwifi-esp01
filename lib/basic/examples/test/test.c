@@ -93,9 +93,14 @@ void del()
     print_string("\x08 \x08");
 }
 
-void bio_f0(int fn)
+static inline void GotoXY(uint16_t c, uint16_t l)
 {
-    switch (fn)
+    printf("\x1B" "[%d;%dH", l, c);
+}
+
+void bio_f0(uint32_t fn)
+{
+    switch (fn & 0xFF)
     {
     case BIO_F0_CAT:
         bcat();
@@ -112,36 +117,14 @@ void bio_f0(int fn)
     case BIO_F0_RESET:
         //breset();
         break;
-    }
-}
-
-static void GotoXY(uint16_t c, uint16_t l)
-{
-    printf("\x1B" "[%d;%dH", l, c);
-}
-
-int8_t bfn(uint8_t fn, ...)
-{
-    va_list args;
-    va_start(args, fn);
-    switch (fn)
+    case BIO_FN_TTY_AT:
     {
-/*        case BIO_FN_PRINT_STRING:
-        {
-            char *str = (char *) va_arg(args, char*);
-            print_string(str);
-            break;
-        }
-*/
-        case BIO_FN_TTY_AT:
-        {
-            GotoXY(va_arg(args, int), va_arg(args, int));
-            break;
-        }
+        uint8_t x = (fn >> 16) & 0xFF;
+        uint8_t y = (fn >> 24) & 0xFF;
+        GotoXY(x, y);
+        break;
     }
-
-    va_end(args);
-    return 0;
+    }
 }
 
 bastos_io_t io = {
@@ -157,7 +140,6 @@ bastos_io_t io = {
     .bread = bread,
 
     .bio_f0 = bio_f0,
-    .fn = bfn,
 };
 
 #if 0

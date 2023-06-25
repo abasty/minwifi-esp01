@@ -1027,7 +1027,7 @@ static bool eval_tty()
 
     if (bstate.do_eval)
     {
-        bstate.error = bio->fn(fn, arg1, arg2);
+        bio->bio_f0(fn + (arg1 << 24) + (arg2 << 16));
     }
     return true;
 }
