@@ -24,7 +24,7 @@
   WiFi => config manager minimal dans le code comme fait aujourd'hui.
   ~~Uploader le config manager  directement sur la flash par OTA~~
 * [x] Ajouter "RESET"
-* [ ] Mettre en "echo" distant (pas d'echo local)
+* [x] Mettre en "echo" distant (pas d'echo local)
 * [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
 * [ ] Faire que les keywords aient le même ID (possible sans sort ?) afin
   d'assurer la compatibilité "binaire" des `*.bst`
