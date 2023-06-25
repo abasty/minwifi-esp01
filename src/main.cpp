@@ -28,6 +28,7 @@
 #include <ArduinoOTA.h>
 #include <WebSocketsClient.h>
 #include <LittleFS.h>
+#include <stdarg.h>
 
 #include "minitel.h"
 
@@ -44,7 +45,6 @@ int relayPin = 12;
 int ledPin = 13;
 
 #define COMMAND_IP_PORT 23
-#define CNCMGR_SAVE_FILE "/etc/cncmgr.save"
 
 WiFiClient *wifiClient = 0;
 // wifi server
@@ -180,6 +180,42 @@ extern "C" void bio_f0(int fn)
     }
 }
 
+static void GotoXY(uint16_t c, uint16_t l)
+{
+    if (wifiClient)
+        wifiClient->printf("\x1B" "[%d;%dH", c, l);
+#ifdef MINITEL
+    Serial.printf("\x1F%c%c", c + 0x40, l + 0x40);
+#else
+    Serial.printf("\x1B" "[%d;%dH", c, l);
+    xxx
+#endif
+}
+
+extern "C" int8_t bfn(uint8_t fn, ...)
+{
+    va_list args;
+    va_start(args, fn);
+    switch (fn)
+    {
+/*        case BIO_FN_PRINT_STRING:
+        {
+            char *str = (char *) va_arg(args, char*);
+            print_string(str);
+            break;
+        }
+*/
+        case BIO_FN_TTY_AT:
+        {
+            GotoXY(va_arg(args, int), va_arg(args, int));
+            break;
+        }
+    }
+
+    va_end(args);
+    return 0;
+}
+
 bastos_io_t io = {
     .print_string = print_string,
     .print_float = print_float,
@@ -193,6 +229,7 @@ bastos_io_t io = {
     .bread = bread,
 
     .bio_f0 = bio_f0,
+    .fn = bfn,
 };
 
 static void initMinitel(bool clear)

@@ -29,6 +29,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "keywords.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -44,10 +46,12 @@ extern "C"
 #define B_APPEND  02000
 
 #define BIO_F0_CAT   0
-#define BIO_F0_RES0  1
-#define BIO_F0_CLS   2
-#define BIO_F0_RESET 3
-#define BIO_F0_DEL   4
+#define BIO_F0_CLS   1
+#define BIO_F0_RESET 2
+#define BIO_F0_DEL   3
+
+#define BIO_FN_PRINT_STRING 10
+#define BIO_FN_TTY_AT       TOKEN_KEYWORD_AT
 
 typedef int print_string_t(const char *s);
 typedef int print_float_t(float f);
@@ -63,6 +67,7 @@ typedef int bread_t(int fd, void *buf, int count);
 typedef int erase_t(const char *pathname);
 
 typedef void bio_f0_t(int fn);
+typedef int8_t bio_fn_t(uint8_t fn, ...);
 
 typedef struct
 {
@@ -80,6 +85,7 @@ typedef struct
     erase_t *erase;
 
     bio_f0_t *bio_f0;
+    bio_fn_t *fn;
 } bastos_io_t;
 
 void bastos_init(bastos_io_t *_io);

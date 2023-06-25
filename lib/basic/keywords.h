@@ -32,3 +32,6 @@
 #define TOKEN_KEYWORD_RUN ((uint8_t) (30 | 0b10000000))
 #define TOKEN_KEYWORD_TO ((uint8_t) (31 | 0b10000000))
 #define TOKEN_KEYWORD_STR ((uint8_t) (32 | 0b10000000))
+#define TOKEN_KEYWORD_AT ((uint8_t) (33 | 0b10000000))
+#define TOKEN_KEYWORD_INK ((uint8_t) (34 | 0b10000000))
+#define TOKEN_KEYWORD_PAPER ((uint8_t) (35 | 0b10000000))

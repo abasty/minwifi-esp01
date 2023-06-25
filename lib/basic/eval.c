@@ -43,6 +43,7 @@ typedef struct
 } string_t;
 
 static inline void eval_input_mode(bool mode);
+static bool eval_tty();
 
 static void string_set(string_t *string, char *chars, bool allocated)
 {
@@ -190,6 +191,13 @@ uint8_t functions[] = {
 uint8_t variables[] = {
     TOKEN_VARIABLE_NUMBER,
     TOKEN_VARIABLE_STRING,
+    0,
+};
+
+char tty_codes[] = {
+    TOKEN_KEYWORD_AT,
+    TOKEN_KEYWORD_INK,
+    TOKEN_KEYWORD_PAPER,
     0,
 };
 
@@ -739,8 +747,11 @@ static bool eval_print()
         return false;
 
     bool result = true;
-    while (true)
+    bool ln = true;
+
+    while (result && *bstate.read_ptr != 0)
     {
+        ln = true;
         if (eval_string_expr())
         {
             if (bstate.do_eval)
@@ -755,26 +766,34 @@ static bool eval_print()
                 bio->print_float(bstate.number);
             }
         }
-        else
+        else if (eval_tty())
         {
-            result = false;
+            //
         }
-        if (result && eval_token_one_of(";,"))
+        else if (eval_token(','))
         {
-            if (bstate.token == ',' && bstate.do_eval)
+            if (bstate.do_eval)
             {
                 bio->print_string(" ");
             }
+
+        }
+        else if (eval_token(';'))
+        {
+            ln = false;
         }
         else
         {
-            break;
+            result = *bstate.read_ptr == 0;
         }
     }
 
-    if (bstate.do_eval)
+    if (result && bstate.do_eval)
     {
-        bio->print_string("\r\n");
+        if (ln)
+        {
+            bio->print_string("\r\n");
+        }
     }
 
     return result;
@@ -982,6 +1001,37 @@ static bool eval_reset()
     return true;
 }
 
+static bool eval_tty()
+{
+    if (!eval_token_one_of(tty_codes))
+        return false;
+
+    uint8_t fn = bstate.token;
+
+    if (!eval_expr())
+        return false;
+
+    uint16_t arg1 = bstate.number;
+    uint16_t arg2 = 0;
+
+    switch (fn)
+    {
+    case TOKEN_KEYWORD_AT:
+        if (!eval_token(','))
+            return false;
+        if (!eval_expr())
+            return false;
+        arg2 = bstate.number;
+        break;
+    }
+
+    if (bstate.do_eval)
+    {
+        bstate.error = bio->fn(fn, arg1, arg2);
+    }
+    return true;
+}
+
 int8_t eval_prog(prog_t *prog, bool do_eval)
 {
     // Init evaluator state
@@ -998,6 +1048,7 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_print() ||
         eval_input() ||
         eval_cls() ||
+        eval_tty() ||
         eval_reset() ||
         eval_load()
 #ifndef OTA_ONLY

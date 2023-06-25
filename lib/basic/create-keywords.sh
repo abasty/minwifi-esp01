@@ -44,6 +44,9 @@ inkey$
 run
 to
 str$
+at
+ink
+paper
 EOF
 
 # Do not sort to preserver save/load compatibility
