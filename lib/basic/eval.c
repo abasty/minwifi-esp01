@@ -1023,6 +1023,10 @@ static bool eval_tty()
             return false;
         arg2 = bstate.number;
         break;
+
+    case TOKEN_KEYWORD_INK:
+    case TOKEN_KEYWORD_PAPER:
+        break;
     }
 
     if (bstate.do_eval)

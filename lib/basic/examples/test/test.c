@@ -98,8 +98,15 @@ static inline void GotoXY(uint16_t c, uint16_t l)
     printf("\x1B" "[%d;%dH", l, c);
 }
 
+static void color(uint8_t color, uint8_t foreground)
+{
+    printf("\033" "[%dm", (foreground ? 30 : 40) + color);
+}
+
 void bio_f0(uint32_t fn)
 {
+    uint8_t x = (fn >> 16) & 0xFF;
+    uint8_t y = (fn >> 24) & 0xFF;
     switch (fn & 0xFF)
     {
     case BIO_F0_CAT:
@@ -117,13 +124,17 @@ void bio_f0(uint32_t fn)
     case BIO_F0_RESET:
         //breset();
         break;
-    case BIO_FN_TTY_AT:
-    {
-        uint8_t x = (fn >> 16) & 0xFF;
-        uint8_t y = (fn >> 24) & 0xFF;
+    case BIO_F0_AT:
         GotoXY(x, y);
         break;
-    }
+
+    case BIO_F0_INK:
+        color(y, 1);
+        break;
+
+    case BIO_F0_PAPER:
+        color(y, 0);
+        break;
     }
 }
 

@@ -158,7 +158,7 @@ static inline void breset()
     ESP.restart();
 }
 
-static void GotoXY(uint16_t c, uint16_t l)
+static void GotoXY(uint8_t c, uint8_t l)
 {
     if (wifiClient)
         wifiClient->printf("\x1B" "[%d;%dH", l, c);
@@ -169,8 +169,22 @@ static void GotoXY(uint16_t c, uint16_t l)
 #endif
 }
 
+static void color(uint8_t color, uint8_t foreground)
+{
+    if (wifiClient)
+        wifiClient->printf("\033" "[%dm", (foreground ? 30 : 40) + color);
+#ifdef MINITEL
+    Serial.printf("\x1B" "%c", color + (foreground ? 0x40 : 0x50));
+#else
+    Serial.printf("\033" "[%dm", (foreground ? 30 : 40) + color);
+#endif
+}
+
 extern "C" void bio_f0(uint32_t fn)
 {
+    uint8_t x = (fn >> 16) & 0xFF;
+    uint8_t y = (fn >> 24) & 0xFF;
+
     switch (fn & 0xFF)
     {
     case BIO_F0_CAT:
@@ -189,13 +203,17 @@ extern "C" void bio_f0(uint32_t fn)
         breset();
         break;
 
-    case BIO_FN_TTY_AT:
-    {
-        uint8_t x = (fn >> 16) & 0xFF;
-        uint8_t y = (fn >> 24) & 0xFF;
+    case BIO_F0_AT:
         GotoXY(x, y);
         break;
-    }
+
+    case BIO_F0_INK:
+        color(y, 1);
+        break;
+
+    case BIO_F0_PAPER:
+        color(y, 0);
+        break;
     }
 }
 

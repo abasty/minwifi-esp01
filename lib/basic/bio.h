@@ -50,8 +50,9 @@ extern "C"
 #define BIO_F0_RESET 2
 #define BIO_F0_DEL   3
 
-#define BIO_FN_PRINT_STRING 10
-#define BIO_FN_TTY_AT       TOKEN_KEYWORD_AT
+#define BIO_F0_AT    TOKEN_KEYWORD_AT
+#define BIO_F0_INK   TOKEN_KEYWORD_INK
+#define BIO_F0_PAPER TOKEN_KEYWORD_PAPER
 
 typedef int print_string_t(const char *s);
 typedef int print_float_t(float f);
