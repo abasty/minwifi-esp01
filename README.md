@@ -26,7 +26,7 @@
 * [x] Ajouter "RESET"
 * [x] Mettre en "echo" distant (pas d'echo local)
 * [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
-* [ ] Faire que les keywords aient le même ID (possible sans sort ?) afin
+* [x] Faire que les keywords aient le même ID (possible sans sort ?) afin
   d'assurer la compatibilité "binaire" des `*.bst`
 * [ ] comparaison, condition
 * [ ] IF, GOTO

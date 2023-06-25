@@ -8,6 +8,8 @@ KEYWORDS_FILE=${TMPDIR}/keywords
 KEYWORDS_C=keywords.c
 KEYWORDS_H=keywords.h
 
+# Add keywords after existing ones to preserve load/save compatibility
+
 cat >${KEYWORDS_FILE} <<EOF
 abs
 acs
@@ -29,21 +31,12 @@ tan
 clear
 new
 cls
-free
 cat
 erase
 reset
-config
-connect
 load
 save
-tcp
-ws
-help
 list
-wifi
-on
-off
 let
 print
 input
@@ -53,7 +46,8 @@ to
 str$
 EOF
 
-sort -o ${KEYWORDS_FILE}{,}
+# Do not sort to preserver save/load compatibility
+# sort -o ${KEYWORDS_FILE}{,}
 
 function ord {
   printf %d "'$1"
