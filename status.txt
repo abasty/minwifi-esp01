@@ -33,3 +33,13 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32648 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 474656 bytes from 958448 bytes)
 ---
+c132843 Added AT l,c command
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.9% (used 32688 bytes from 81920 bytes)
+Flash: [=====     ]  49.6% (used 474992 bytes from 958448 bytes)
+---
+c132843 Added AT l,c command
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.9% (used 32688 bytes from 81920 bytes)
+Flash: [=====     ]  49.6% (used 475008 bytes from 958448 bytes)
+---

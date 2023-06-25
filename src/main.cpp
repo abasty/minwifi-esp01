@@ -188,7 +188,6 @@ static void GotoXY(uint16_t c, uint16_t l)
     Serial.printf("\x1F%c%c", c + 0x40, l + 0x40);
 #else
     Serial.printf("\x1B" "[%d;%dH", c, l);
-    xxx
 #endif
 }
 
