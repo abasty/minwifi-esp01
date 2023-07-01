@@ -43,6 +43,13 @@ extern "C" {
 #define TOKEN_VARIABLE_NUMBER   ((uint8_t) 0b00010000)
 #define TOKEN_VARIABLE_STRING   ((uint8_t) 0b00010001)
 
+#define TOKEN_COMPARE_EQ        ((uint8_t) '=')
+#define TOKEN_COMPARE_LT        ((uint8_t) '<')
+#define TOKEN_COMPARE_GT        ((uint8_t) '>')
+#define TOKEN_COMPARE_NE        ((uint8_t) '=' + 32)
+#define TOKEN_COMPARE_LE        ((uint8_t) '<' + 32)
+#define TOKEN_COMPARE_GE        ((uint8_t) '>' + 32)
+
 typedef struct {
     uint16_t line_no;
     uint8_t *read_ptr;

@@ -60,6 +60,7 @@
 * Basic ZX81 : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/appxc.html>
 * Sinclair Basic : <https://en.wikipedia.org/wiki/Sinclair_BASIC>
 * Code minitel : <http://millevaches.hydraule.org/info/minitel/specs/codes.htm>
+* Python minitel avec fonctions et code : <https://github.com/Zigazou/PyMinitel/blob/master/minitel/Minitel.py>
 
 # Prise péri informatique
 

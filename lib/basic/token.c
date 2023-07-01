@@ -247,6 +247,18 @@ char *untokenize(uint8_t *input)
                 bio->print_string("$");
             }
         }
+        else if (token == TOKEN_COMPARE_NE)
+        {
+            bio->print_string("<>");
+        }
+        else if (token == TOKEN_COMPARE_LE)
+        {
+            bio->print_string("<=");
+        }
+        else if (token == TOKEN_COMPARE_GE)
+        {
+            bio->print_string(">=");
+        }
         else
         {
             char token_str[2] = {token, 0};
@@ -298,11 +310,31 @@ int8_t tokenize(tokenizer_state_t *state, char *input)
         {
             err = tokenize_keyword(state, keywords);
         }
+        else if (c == '=' || c == '<' || c == '>')
+        {
+            *state->write_ptr = *state->read_ptr++;
+            uint8_t cn = *state->read_ptr;
+            if (c == '<' && cn == '>')
+            {
+                *state->write_ptr = TOKEN_COMPARE_NE;
+                state->read_ptr++;
+            }
+            else if (c == '<' && cn == '=')
+            {
+                *state->write_ptr = TOKEN_COMPARE_LE;
+                state->read_ptr++;
+            }
+            else if (c == '>' && cn == '=')
+            {
+                *state->write_ptr = TOKEN_COMPARE_GE;
+                state->read_ptr++;
+            }
+            state->write_ptr++;
+        }
         else if (
             c == ';' || c == ',' ||
             c == '+' || c == '-' || c == '|' || c == '&' ||
             c == '*' || c == '/' || c == '%' ||
-            c == '=' || c == '<' || c == '>' ||
             c == '(' || c == ')')
         {
             *state->write_ptr++ = *state->read_ptr++;

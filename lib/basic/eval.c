@@ -201,6 +201,16 @@ char tty_codes[] = {
     0,
 };
 
+const char compare_tokens[] = {
+    TOKEN_COMPARE_EQ,
+    TOKEN_COMPARE_GT,
+    TOKEN_COMPARE_LT,
+    TOKEN_COMPARE_NE,
+    TOKEN_COMPARE_GE,
+    TOKEN_COMPARE_LE,
+    0,
+};
+
 static bool eval_token(uint8_t c)
 {
     if (*bstate.read_ptr != c)
@@ -404,10 +414,9 @@ static bool eval_term()
     return result;
 }
 
-// TODO: Add eval_condition (< > <> = <= >=)
 // TODO: Add eval_boolean (AND OR)
 
-static bool eval_expr()
+static bool eval_float_expr()
 {
     bool result = true;
     float acc = 0;
@@ -441,6 +450,45 @@ static bool eval_expr()
         }
     }
     return result;
+}
+
+static bool eval_expr()
+{
+    if (!eval_float_expr())
+        return false;
+
+    if (eval_token_one_of(compare_tokens))
+    {
+        float arg1 = bstate.number;
+        uint8_t op = bstate.token;
+
+        if (!eval_float_expr())
+            return false;
+
+        switch (op)
+        {
+        case '=':
+            bstate.number = arg1 == bstate.number;
+            break;
+        case '<':
+            bstate.number = arg1 < bstate.number;
+            break;
+        case '>':
+            bstate.number = arg1 > bstate.number;
+            break;
+        case TOKEN_COMPARE_NE:
+            bstate.number = arg1 != bstate.number;
+            break;
+        case TOKEN_COMPARE_LE:
+            bstate.number = arg1 <= bstate.number;
+            break;
+        case TOKEN_COMPARE_GE:
+            bstate.number = arg1 >= bstate.number;
+            break;
+        }
+    }
+
+    return true;
 }
 
 static bool eval_string_chr()
