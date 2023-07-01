@@ -92,9 +92,21 @@ void del()
     print_string("\x08 \x08");
 }
 
-void bio_f0(int fn)
+static inline void GotoXY(uint16_t c, uint16_t l)
 {
-    switch (fn)
+    printf("\x1B" "[%d;%dH", l, c);
+}
+
+static void color(uint8_t color, uint8_t foreground)
+{
+    printf("\033" "[%dm", (foreground ? 30 : 40) + color);
+}
+
+void bio_f0(uint32_t fn)
+{
+    uint8_t x = (fn >> 16) & 0xFF;
+    uint8_t y = (fn >> 24) & 0xFF;
+    switch (fn & 0xFF)
     {
     case BIO_F0_CAT:
         bcat();
@@ -110,6 +122,17 @@ void bio_f0(int fn)
 
     case BIO_F0_RESET:
         //breset();
+        break;
+    case BIO_F0_AT:
+        GotoXY(x, y);
+        break;
+
+    case BIO_F0_INK:
+        color(y, 1);
+        break;
+
+    case BIO_F0_PAPER:
+        color(y, 0);
         break;
     }
 }

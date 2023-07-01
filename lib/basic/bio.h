@@ -29,6 +29,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "keywords.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -44,10 +46,13 @@ extern "C"
 #define B_APPEND  02000
 
 #define BIO_F0_CAT   0
-#define BIO_F0_RES0  1
-#define BIO_F0_CLS   2
-#define BIO_F0_RESET 3
-#define BIO_F0_DEL   4
+#define BIO_F0_CLS   1
+#define BIO_F0_RESET 2
+#define BIO_F0_DEL   3
+
+#define BIO_F0_AT    TOKEN_KEYWORD_AT
+#define BIO_F0_INK   TOKEN_KEYWORD_INK
+#define BIO_F0_PAPER TOKEN_KEYWORD_PAPER
 
 typedef int print_string_t(const char *s);
 typedef int print_float_t(float f);
@@ -62,7 +67,7 @@ typedef int bread_t(int fd, void *buf, int count);
 
 typedef int erase_t(const char *pathname);
 
-typedef void bio_f0_t(int fn);
+typedef void bio_f0_t(uint32_t fn);
 
 typedef struct
 {

@@ -44,7 +44,6 @@ int relayPin = 12;
 int ledPin = 13;
 
 #define COMMAND_IP_PORT 23
-#define CNCMGR_SAVE_FILE "/etc/cncmgr.save"
 
 WiFiClient *wifiClient = 0;
 // wifi server
@@ -158,9 +157,34 @@ static inline void breset()
     ESP.restart();
 }
 
-extern "C" void bio_f0(int fn)
+static void GotoXY(uint8_t c, uint8_t l)
 {
-    switch (fn)
+    if (wifiClient)
+        wifiClient->printf("\x1B" "[%d;%dH", l, c);
+#ifdef MINITEL
+    Serial.printf("\x1F%c%c", l + 0x40, c + 0x40);
+#else
+    Serial.printf("\x1B" "[%d;%dH", l, c);
+#endif
+}
+
+static void color(uint8_t color, uint8_t foreground)
+{
+    if (wifiClient)
+        wifiClient->printf("\033" "[%dm", (foreground ? 30 : 40) + color);
+#ifdef MINITEL
+    Serial.printf("\x1B" "%c", color + (foreground ? 0x40 : 0x50));
+#else
+    Serial.printf("\033" "[%dm", (foreground ? 30 : 40) + color);
+#endif
+}
+
+extern "C" void bio_f0(uint32_t fn)
+{
+    uint8_t x = (fn >> 16) & 0xFF;
+    uint8_t y = (fn >> 24) & 0xFF;
+
+    switch (fn & 0xFF)
     {
     case BIO_F0_CAT:
         bcat();
@@ -176,6 +200,18 @@ extern "C" void bio_f0(int fn)
 
     case BIO_F0_RESET:
         breset();
+        break;
+
+    case BIO_F0_AT:
+        GotoXY(x, y);
+        break;
+
+    case BIO_F0_INK:
+        color(y, 1);
+        break;
+
+    case BIO_F0_PAPER:
+        color(y, 0);
         break;
     }
 }

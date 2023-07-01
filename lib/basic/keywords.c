@@ -32,4 +32,7 @@ const char *keywords =
     "RU""\xce"
     "T""\xcf"
     "STR""\xa4"
+    "A""\xd4"
+    "IN""\xcb"
+    "PAPE""\xd2"
 ;
