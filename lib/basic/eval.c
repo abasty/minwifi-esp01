@@ -185,6 +185,7 @@ uint8_t functions[] = {
     TOKEN_KEYWORD_SIN,
     TOKEN_KEYWORD_SQR,
     TOKEN_KEYWORD_TAN,
+    TOKEN_KEYWORD_NOT,
     0,
 };
 
@@ -342,6 +343,9 @@ static bool eval_function()
     case TOKEN_KEYWORD_INT:
         bstate.number = truncf(bstate.number);
         break;
+    case TOKEN_KEYWORD_NOT:
+        bstate.number = truncf(bstate.number) == 0 ? 1 : 0;
+        break;
     case TOKEN_KEYWORD_LN:
         bstate.number = logf(bstate.number);
         break;
@@ -414,8 +418,6 @@ static bool eval_term()
     return result;
 }
 
-// TODO: Add eval_boolean (AND OR)
-
 static bool eval_float_expr()
 {
     bool result = true;
@@ -452,7 +454,7 @@ static bool eval_float_expr()
     return result;
 }
 
-static bool eval_expr()
+static bool eval_compare_expr()
 {
     if (!eval_float_expr())
         return false;
@@ -488,6 +490,35 @@ static bool eval_expr()
         }
     }
 
+    return true;
+}
+
+static bool eval_expr()
+{
+    if (!eval_compare_expr())
+        return false;
+
+    float acc = bstate.number == 0 ? 0 : 1;
+
+    while (eval_token(TOKEN_KEYWORD_AND) || eval_token(TOKEN_KEYWORD_OR))
+    {
+        uint8_t op = bstate.token;
+
+        if (!eval_compare_expr())
+            return false;
+
+        float arg = bstate.number == 0 ? 0 : 1;
+
+        if (op == TOKEN_KEYWORD_AND)
+        {
+            acc = acc && arg;
+        }
+        else
+        {
+            acc = acc || arg;
+        }
+    }
+    bstate.number = acc;
     return true;
 }
 

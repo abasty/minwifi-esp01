@@ -47,6 +47,9 @@ str$
 at
 ink
 paper
+and
+or
+not
 EOF
 
 # Do not sort to preserver save/load compatibility

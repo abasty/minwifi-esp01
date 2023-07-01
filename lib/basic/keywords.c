@@ -35,4 +35,7 @@ const char *keywords =
     "A""\xd4"
     "IN""\xcb"
     "PAPE""\xd2"
+    "AN""\xc4"
+    "O""\xd2"
+    "NO""\xd4"
 ;

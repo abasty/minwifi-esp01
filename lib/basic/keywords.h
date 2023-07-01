@@ -35,3 +35,6 @@
 #define TOKEN_KEYWORD_AT ((uint8_t) (33 | 0b10000000))
 #define TOKEN_KEYWORD_INK ((uint8_t) (34 | 0b10000000))
 #define TOKEN_KEYWORD_PAPER ((uint8_t) (35 | 0b10000000))
+#define TOKEN_KEYWORD_AND ((uint8_t) (36 | 0b10000000))
+#define TOKEN_KEYWORD_OR ((uint8_t) (37 | 0b10000000))
+#define TOKEN_KEYWORD_NOT ((uint8_t) (38 | 0b10000000))
