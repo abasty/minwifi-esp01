@@ -10,7 +10,6 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <poll.h>
-#include <stdarg.h>
 
 #include "ds_common.h"
 #include "ds_btree.h"

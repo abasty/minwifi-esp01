@@ -28,7 +28,6 @@
 #include <ArduinoOTA.h>
 #include <WebSocketsClient.h>
 #include <LittleFS.h>
-#include <stdarg.h>
 
 #include "minitel.h"
 
