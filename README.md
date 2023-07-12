@@ -1,3 +1,7 @@
+# BUGS
+
+* [x] Bug expression / condition / comparaison
+
 # TODO
 
 * [x] Passer tout en float
@@ -46,6 +50,8 @@
   * [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
   * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
 * [ ] **OPTIMISATIONS** (valable aussi pour la version OTA only)
+  * [x] Removed Wifi client and server from MINITEL build
+  * [ ] Optimisation parser (règles et code générique)
   * [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
   * [x] N'optimise pas : Unifier load / save methods (read_uint16, read_len_mem0)
   * [x] Unifier FFI (bio.*) : un genre de callback fourre tout à la `ioctl` ?

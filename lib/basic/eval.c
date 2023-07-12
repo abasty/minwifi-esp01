@@ -499,6 +499,7 @@ static bool eval_expr()
         return false;
 
     float acc = bstate.number == 0 ? 0 : 1;
+    bool is_bool_expr = false;
 
     while (eval_token(TOKEN_KEYWORD_AND) || eval_token(TOKEN_KEYWORD_OR))
     {
@@ -517,8 +518,12 @@ static bool eval_expr()
         {
             acc = acc || arg;
         }
+        is_bool_expr = true;
     }
-    bstate.number = acc;
+    if (is_bool_expr)
+    {
+        bstate.number = acc;
+    }
     return true;
 }
 
