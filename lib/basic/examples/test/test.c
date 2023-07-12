@@ -195,6 +195,13 @@ int getch()
     return ch;
 }
 
+#define config_prog \
+    "1CLS\n" \
+    "2PRINT\"* WiFi parameters *\"\n" \
+    "4INPUT\"SSID: \",WSSID$\n" \
+    "5INPUT\"PASS: \",WSECRET$\n" \
+    "6SAVE\"config$$$\"\n"
+
 int main(int argc, char *argv[])
 {
     bool cont = true;
@@ -224,9 +231,9 @@ finalize:
 
     if (var == 0)
     {
-        bastos_send_keys("10 INPUT\"SSID: \",WSSID$\n", 24);
-        bastos_send_keys("20 INPUT\"PASS: \",WSECRET$\n", 26);
-        bastos_send_keys("30 SAVE\"config$$$\"\n", 19);
+        bmem_prog_new();
+        bastos_send_keys(config_prog, strlen(config_prog));
+        bastos_send_keys("RUN\n", 4);
     }
 
     while (cont)

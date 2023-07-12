@@ -68,8 +68,13 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32680 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 474024 bytes from 958448 bytes)
 ---
-Fixed bug on boolean expression
+8035dc7 Fixed bug on boolean expression
 Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32680 bytes from 81920 bytes)
-Flash: [=====     ]  49.5% (used 474040 bytes from 958448 bytes)
+Flash: [=====     ]  49.5% (used 474088 bytes from 958448 bytes)
+---
+Added string comparison and unified eval_compare_expr()
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.9% (used 32680 bytes from 81920 bytes)
+Flash: [=====     ]  49.5% (used 474104 bytes from 958448 bytes)
 ---

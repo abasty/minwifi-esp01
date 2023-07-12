@@ -241,7 +241,7 @@ static bool eval_token_one_of(const char *set)
 
 static bool eval_string_expr();
 static bool eval_factor();
-static bool eval_expr();
+static bool eval_expr(uint8_t type_token);
 
 static bool eval_code()
 {
@@ -299,6 +299,7 @@ static bool eval_number()
     }
 
     bstate.number = value;
+    bstate.token = TOKEN_NUMBER;
     if (minus)
     {
         bstate.number = -bstate.number;
@@ -373,7 +374,7 @@ static bool eval_factor()
         eval_number() ||
         eval_function() ||
         eval_code() ||
-        (eval_token('(') && eval_expr() && eval_token(')'));
+        (eval_token('(') && eval_expr(TOKEN_NUMBER) && eval_token(')'));
     return result;
 }
 
@@ -415,6 +416,7 @@ static bool eval_term()
             bstate.number = acc;
         }
     }
+    bstate.token = TOKEN_NUMBER;
     return result;
 }
 
@@ -450,53 +452,77 @@ static bool eval_float_expr()
             }
             bstate.number = acc;
         }
+        bstate.token = TOKEN_NUMBER;
     }
     return result;
 }
 
 static bool eval_compare_expr()
 {
-    if (!eval_float_expr())
+    if (!eval_float_expr() && !eval_string_expr())
         return false;
+
+    uint8_t type_token = bstate.token;
 
     if (eval_token_one_of(compare_tokens))
     {
-        float arg1 = bstate.number;
         uint8_t op = bstate.token;
+        int result = 0;
 
-        if (!eval_float_expr())
-            return false;
+        if (type_token == TOKEN_NUMBER)
+        {
+            float arg1 = bstate.number;
 
+            if (!eval_float_expr())
+                return false;
+
+            result = arg1 - bstate.number;
+        }
+        else // type_token == TOKEN_STRING
+        {
+            string_t string1;
+            string_move(&bstate.string, &string1);
+
+            if (!eval_string_expr())
+                return false;
+
+            result = strcmp(string1.chars ? string1.chars : "", bstate.string.chars ? bstate.string.chars : "");
+
+        }
         switch (op)
         {
         case '=':
-            bstate.number = arg1 == bstate.number;
+            bstate.number = result == 0;
             break;
         case '<':
-            bstate.number = arg1 < bstate.number;
+            bstate.number = result < 0;
             break;
         case '>':
-            bstate.number = arg1 > bstate.number;
+            bstate.number = result > 0;
             break;
         case TOKEN_COMPARE_NE:
-            bstate.number = arg1 != bstate.number;
+            bstate.number = result != 0;
             break;
         case TOKEN_COMPARE_LE:
-            bstate.number = arg1 <= bstate.number;
+            bstate.number = result <= 0;
             break;
         case TOKEN_COMPARE_GE:
-            bstate.number = arg1 >= bstate.number;
+            bstate.number = result >= 0;
             break;
         }
+        bstate.token = TOKEN_NUMBER;
     }
 
     return true;
 }
 
-static bool eval_expr()
+static bool eval_expr(uint8_t type_token)
 {
     if (!eval_compare_expr())
         return false;
+
+    if (bstate.token == TOKEN_STRING)
+        return (type_token & TOKEN_STRING) != 0;
 
     float acc = bstate.number == 0 ? 0 : 1;
     bool is_bool_expr = false;
@@ -524,7 +550,8 @@ static bool eval_expr()
     {
         bstate.number = acc;
     }
-    return true;
+
+    return (type_token & TOKEN_NUMBER) != 0;
 }
 
 static bool eval_string_chr()
@@ -623,7 +650,7 @@ static bool eval_string_term()
     uint16_t start = 1;
     uint16_t end = 0;
 
-    if (eval_expr())
+    if (eval_expr(TOKEN_NUMBER))
     {
         if (bstate.number < 1)
             return false;
@@ -634,7 +661,7 @@ static bool eval_string_term()
 
     if (eval_token(TOKEN_KEYWORD_TO))
     {
-        if (eval_expr())
+        if (eval_expr(TOKEN_NUMBER))
         {
             if (bstate.number < 1)
                 return false;
@@ -681,6 +708,7 @@ static bool eval_string_expr()
         {
             string_set(&bstate.string, string1.chars, string1.allocated);
         }
+        bstate.token = TOKEN_STRING;
     }
     return result;
 }
@@ -715,7 +743,7 @@ static bool eval_let()
 
     if (token == TOKEN_VARIABLE_NUMBER)
     {
-        if (!eval_expr())
+        if (!eval_expr(TOKEN_NUMBER))
             return false;
 
         if (bstate.do_eval)
@@ -727,7 +755,7 @@ static bool eval_let()
     }
     else if (token == TOKEN_VARIABLE_STRING)
     {
-        if (!eval_string_expr())
+        if (!eval_expr(TOKEN_STRING))
             return false;
 
         if (bstate.do_eval)
@@ -836,18 +864,18 @@ static bool eval_print()
     while (result && *bstate.read_ptr != 0)
     {
         ln = true;
-        if (eval_string_expr())
+        if (eval_expr(TOKEN_NUMBER | TOKEN_STRING))
         {
             if (bstate.do_eval)
             {
-                bio->print_string(bstate.string.chars ? bstate.string.chars : "");
-            }
-        }
-        else if (eval_expr())
-        {
-            if (bstate.do_eval)
-            {
-                bio->print_float(bstate.number);
+                if (bstate.token == TOKEN_NUMBER)
+                {
+                    bio->print_float(bstate.number);
+                }
+                else // TOKEN_STRING
+                {
+                    bio->print_string(bstate.string.chars ? bstate.string.chars : "");
+                }
             }
         }
         else if (eval_tty())
@@ -1092,7 +1120,7 @@ static bool eval_tty()
 
     uint8_t fn = bstate.token;
 
-    if (!eval_expr())
+    if (!eval_expr(TOKEN_NUMBER))
         return false;
 
     uint16_t arg1 = bstate.number;
@@ -1103,7 +1131,7 @@ static bool eval_tty()
     case TOKEN_KEYWORD_AT:
         if (!eval_token(','))
             return false;
-        if (!eval_expr())
+        if (!eval_expr(TOKEN_NUMBER))
             return false;
         arg2 = bstate.number;
         break;

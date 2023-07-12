@@ -32,16 +32,16 @@
 * [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
 * [x] Faire que les keywords aient le même ID (possible sans sort ?) afin
   d'assurer la compatibilité "binaire" des `*.bst`
-* [ ] comparaison, condition
+* [x] comparaison, condition sur number et string
 * [ ] IF, GOTO
 * [ ] GOSUB, RETURN
 * [ ] FOR, NEXT
 * [ ] DOWNLOAD / UPLOAD
 * [ ] Ajouter edit, integration "edit_min" ?
 * [ ] vitesse serial ()
-* [ ] Ajouter mode rouleau, mode 40/80, AT, INK, PAPER, co, coff, echo
+* [ ] Ajouter mode rouleau, mode 40/80, co, coff, echo
 * [ ] TELNET / TELNET WS
-* [ ] AT, INK, PAPER, CLS
+* [x] AT, INK, PAPER, CLS
 * [ ] plot / unplot / screen$(l,c) ?
 * [ ] Tableaux (DIM)
 * [ ] **BUGS UI / AMELIORATIONS**
