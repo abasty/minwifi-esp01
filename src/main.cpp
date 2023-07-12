@@ -45,9 +45,11 @@ int ledPin = 13;
 
 #define COMMAND_IP_PORT 23
 
+#ifndef MINITEL
 WiFiClient *wifiClient = 0;
 // wifi server
 WiFiServer *wifiServer = 0;
+#endif
 
 // Minitel server TCP/IP connexion
 WiFiClient tcpMinitelConnexion;
@@ -59,29 +61,37 @@ bool minitelMode;
 
 extern "C" int print_float(float f)
 {
+#ifndef MINITEL
     if (wifiClient)
         wifiClient->printf("%g", f);
+#endif
     return Serial.printf("%g", f);
 }
 
 extern "C" int print_string(const char *s)
 {
+#ifndef MINITEL
     if (wifiClient)
         wifiClient->printf("%s", s);
+#endif
     return Serial.printf("%s", s);
 }
 
 extern "C" int print_integer(const char *format, int i)
 {
+#ifndef MINITEL
     if (wifiClient)
         wifiClient->printf(format, i);
+#endif
     return Serial.printf(format, i);
 }
 
 static inline void cls()
 {
+#ifndef MINITEL
     if (wifiClient)
         wifiClient->print("\033[2J" "\033[H");
+#endif
 #ifdef MINITEL
     Serial.print("\x0C");
 #else
@@ -91,8 +101,10 @@ static inline void cls()
 
 static inline void del()
 {
+#ifndef MINITEL
     if (wifiClient)
         wifiClient->print("\x08 \x08");
+#endif
     Serial.print("\x08 \x08");
 }
 
@@ -159,8 +171,10 @@ static inline void breset()
 
 static void GotoXY(uint8_t c, uint8_t l)
 {
+#ifndef MINITEL
     if (wifiClient)
         wifiClient->printf("\x1B" "[%d;%dH", l, c);
+#endif
 #ifdef MINITEL
     Serial.printf("\x1F%c%c", l + 0x40, c + 0x40);
 #else
@@ -170,8 +184,10 @@ static void GotoXY(uint8_t c, uint8_t l)
 
 static void color(uint8_t color, uint8_t foreground)
 {
+#ifndef MINITEL
     if (wifiClient)
         wifiClient->printf("\033" "[%dm", (foreground ? 30 : 40) + color);
+#endif
 #ifdef MINITEL
     Serial.printf("\x1B" "%c", color + (foreground ? 0x40 : 0x50));
 #else
@@ -352,9 +368,11 @@ void setup()
 
     ArduinoOTA.begin();
 
+#ifndef MINITEL
     // Launch traces server
     wifiServer = new WiFiServer(COMMAND_IP_PORT);
     wifiServer->begin();
+#endif
 
     Serial.setTimeout(0);
     initMinitel(false);
@@ -366,6 +384,7 @@ void loop()
 
     digitalWrite(ledPin, HIGH);
 
+#ifndef MINITEL
     // Accept TCP shell connections
     if (wifiServer->hasClient()) {
         // Delete active connection if any and accept new one
@@ -384,6 +403,7 @@ void loop()
         // wifiShell->handle((char *)buffer, n);
         bastos_send_keys(buffer, n);
     }
+#endif
 
     // Forward Minitel server incoming data to serial output
     if (tcpMinitelConnexion && tcpMinitelConnexion.available() > 0) {
