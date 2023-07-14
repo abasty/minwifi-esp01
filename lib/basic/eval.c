@@ -222,21 +222,23 @@ static bool eval_token(uint8_t c)
     return true;
 }
 
-static bool eval_token_one_of(const char *set)
+static int eval_token_one_of(const char *set)
 {
     char c = *bstate.read_ptr;
+    int i = 1;
 
     while (*set && c != *set)
     {
         set++;
+        i++;
     }
     if (!*set)
     {
-        return false;
+        return 0;
     }
     bstate.token = c;
     bstate.read_ptr++;
-    return true;
+    return i;
 }
 
 static bool eval_string_expr();
@@ -769,18 +771,6 @@ static bool eval_let()
     return false;
 }
 
-static bool eval_cls()
-{
-    if (!eval_token(TOKEN_KEYWORD_CLS))
-        return false;
-
-    if (bstate.do_eval)
-    {
-        bio->bio_f0(BIO_F0_CLS);
-    }
-    return true;
-}
-
 int8_t eval_input_store(char *io_string)
 {
     if (strlen(io_string) == 0)
@@ -1008,32 +998,50 @@ static bool eval_run()
     return eval_prog_next() == BERROR_NONE;
 }
 
-static bool eval_clear()
+uint8_t rules[] = {
+    TOKEN_KEYWORD_CLEAR,
+    TOKEN_KEYWORD_NEW,
+    TOKEN_KEYWORD_CAT,
+    TOKEN_KEYWORD_CLS,
+    0,
+};
+
+static bool eval_instruction()
 {
-    if (!eval_token(TOKEN_KEYWORD_CLEAR))
+    int i;
+    if ((i = eval_token_one_of((char *)rules)) == 0)
         return false;
 
-    if (bstate.do_eval)
+    if (!bstate.do_eval)
+        return true;
+
+    i--;
+    if (i == 0)
     {
         bmem_vars_clear();
+        return true;
     }
-
-    return true;
-}
-
-static bool eval_new()
-{
-    if (!eval_token(TOKEN_KEYWORD_NEW))
-        return false;
-
-    if (bstate.do_eval)
+    i--;
+    if (i == 0)
     {
         bmem_prog_new();
+        return true;
+    }
+    i--;
+    if (i == 0)
+    {
+        bio->bio_f0(BIO_F0_CAT);
+        return true;
     }
 
-    return true;
+    i--;
+    if (i == 0)
+    {
+        bio->bio_f0(BIO_F0_CLS);
+        return true;
+    }
+    return false;
 }
-
 static bool eval_save()
 {
     if (!eval_token(TOKEN_KEYWORD_SAVE))
@@ -1068,18 +1076,6 @@ static bool eval_load()
         bstate.running = false;
         bstate.pc = 0;
         bstate.error = bastos_load(bstate.string.chars);
-    }
-    return true;
-}
-
-static bool eval_cat()
-{
-    if (!eval_token(TOKEN_KEYWORD_CAT))
-        return false;
-
-    if (bstate.do_eval)
-    {
-        bio->bio_f0(BIO_F0_CAT);
     }
     return true;
 }
@@ -1163,18 +1159,15 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_save() ||
         eval_print() ||
         eval_input() ||
-        eval_cls() ||
+        eval_instruction() ||
         eval_tty() ||
         eval_reset() ||
         eval_load()
 #ifndef OTA_ONLY
         ||
         eval_run() ||
-        eval_new() ||
-        eval_clear() ||
         eval_let() ||
         eval_list() ||
-        eval_cat() ||
         eval_erase()
 #endif
         ;
