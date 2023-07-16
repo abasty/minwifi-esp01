@@ -83,3 +83,8 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32684 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 474092 bytes from 958448 bytes)
 ---
+81c6f6a WIP: Instruction eval factorization
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.9% (used 32684 bytes from 81920 bytes)
+Flash: [=====     ]  49.5% (used 474076 bytes from 958448 bytes)
+---

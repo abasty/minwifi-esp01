@@ -1003,45 +1003,10 @@ uint8_t rules[] = {
     TOKEN_KEYWORD_NEW,
     TOKEN_KEYWORD_CAT,
     TOKEN_KEYWORD_CLS,
+    TOKEN_KEYWORD_RESET,
     0,
 };
 
-static bool eval_instruction()
-{
-    int i;
-    if ((i = eval_token_one_of((char *)rules)) == 0)
-        return false;
-
-    if (!bstate.do_eval)
-        return true;
-
-    i--;
-    if (i == 0)
-    {
-        bmem_vars_clear();
-        return true;
-    }
-    i--;
-    if (i == 0)
-    {
-        bmem_prog_new();
-        return true;
-    }
-    i--;
-    if (i == 0)
-    {
-        bio->bio_f0(BIO_F0_CAT);
-        return true;
-    }
-
-    i--;
-    if (i == 0)
-    {
-        bio->bio_f0(BIO_F0_CLS);
-        return true;
-    }
-    return false;
-}
 static bool eval_save()
 {
     if (!eval_token(TOKEN_KEYWORD_SAVE))
@@ -1096,17 +1061,30 @@ static bool eval_erase()
     return true;
 }
 
-static bool eval_reset()
+
+static void eval_clear()
 {
-    if (!eval_token(TOKEN_KEYWORD_RESET))
-        return false;
+    bmem_vars_clear();
+}
 
-    if (bstate.do_eval)
-    {
-        bio->bio_f0(BIO_F0_RESET);
-    }
+static void eval_new()
+{
+    bmem_prog_new();;
+}
 
-    return true;
+static void eval_reset()
+{
+    bio->bio_f0(BIO_F0_RESET);
+}
+
+static void eval_cls()
+{
+    bio->bio_f0(BIO_F0_CLS);
+}
+
+static void eval_cat()
+{
+    bio->bio_f0(BIO_F0_CAT);
 }
 
 static bool eval_tty()
@@ -1144,6 +1122,49 @@ static bool eval_tty()
     return true;
 }
 
+static bool eval_instruction()
+{
+    int i;
+    if ((i = eval_token_one_of((char *)rules)) == 0)
+        return false;
+
+    if (!bstate.do_eval)
+        return true;
+
+    i--;
+    if (i == 0)
+    {
+        eval_clear();
+        return true;
+    }
+    i--;
+    if (i == 0)
+    {
+        eval_new();
+        return true;
+    }
+    i--;
+    if (i == 0)
+    {
+        eval_cat();
+        return true;
+    }
+
+    i--;
+    if (i == 0)
+    {
+        eval_cls();
+        return true;
+    }
+    i--;
+    if (i == 0)
+    {
+        eval_reset();
+        return true;
+    }
+    return false;
+}
+
 int8_t eval_prog(prog_t *prog, bool do_eval)
 {
     // Init evaluator state
@@ -1161,7 +1182,7 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_input() ||
         eval_instruction() ||
         eval_tty() ||
-        eval_reset() ||
+//        eval_reset() ||
         eval_load()
 #ifndef OTA_ONLY
         ||
