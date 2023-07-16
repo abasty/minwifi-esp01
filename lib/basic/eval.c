@@ -222,15 +222,15 @@ static bool eval_token(uint8_t c)
     return true;
 }
 
-static int eval_token_one_of(const char *set)
+static uint8_t eval_token_one_of(const char *set)
 {
     char c = *bstate.read_ptr;
-    int i = 1;
+    // int i = 1;
 
     while (*set && c != *set)
     {
         set++;
-        i++;
+        // i++;
     }
     if (!*set)
     {
@@ -238,7 +238,7 @@ static int eval_token_one_of(const char *set)
     }
     bstate.token = c;
     bstate.read_ptr++;
-    return i;
+    return c;
 }
 
 static bool eval_string_expr();
@@ -1124,40 +1124,40 @@ static bool eval_tty()
 
 static bool eval_instruction()
 {
-    int i;
+    uint8_t i;
     if ((i = eval_token_one_of((char *)rules)) == 0)
         return false;
 
     if (!bstate.do_eval)
         return true;
 
-    i--;
-    if (i == 0)
+//     i--;
+    if (i == TOKEN_KEYWORD_CLEAR)
     {
         eval_clear();
         return true;
     }
-    i--;
-    if (i == 0)
+//     i--;
+    if (i == TOKEN_KEYWORD_NEW)
     {
         eval_new();
         return true;
     }
-    i--;
-    if (i == 0)
+//     i--;
+    if (i == TOKEN_KEYWORD_CAT)
     {
         eval_cat();
         return true;
     }
 
-    i--;
-    if (i == 0)
+//     i--;
+    if (i == TOKEN_KEYWORD_CLS)
     {
         eval_cls();
         return true;
     }
-    i--;
-    if (i == 0)
+//     i--;
+    if (i == TOKEN_KEYWORD_RESET)
     {
         eval_reset();
         return true;
