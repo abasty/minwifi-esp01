@@ -225,12 +225,10 @@ static bool eval_token(uint8_t c)
 static uint8_t eval_token_one_of(const char *set)
 {
     char c = *bstate.read_ptr;
-    // int i = 1;
 
     while (*set && c != *set)
     {
         set++;
-        // i++;
     }
     if (!*set)
     {
@@ -1131,32 +1129,26 @@ static bool eval_instruction()
     if (!bstate.do_eval)
         return true;
 
-//     i--;
     if (i == TOKEN_KEYWORD_CLEAR)
     {
         eval_clear();
         return true;
     }
-//     i--;
     if (i == TOKEN_KEYWORD_NEW)
     {
         eval_new();
         return true;
     }
-//     i--;
     if (i == TOKEN_KEYWORD_CAT)
     {
         eval_cat();
         return true;
     }
-
-//     i--;
     if (i == TOKEN_KEYWORD_CLS)
     {
         eval_cls();
         return true;
     }
-//     i--;
     if (i == TOKEN_KEYWORD_RESET)
     {
         eval_reset();
@@ -1182,7 +1174,6 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_input() ||
         eval_instruction() ||
         eval_tty() ||
-//        eval_reset() ||
         eval_load()
 #ifndef OTA_ONLY
         ||
