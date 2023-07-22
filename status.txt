@@ -88,8 +88,13 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32684 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 474076 bytes from 958448 bytes)
 ---
-STOP WIRKING ON OPTIM BECAUSE OF VERION AND SIZE CHANGES IN FRAMEWORK
+STOP WORKING ON OPTIM BECAUSE OF VERSION AND SIZE CHANGES IN FRAMEWORK
 Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.0% (used 32788 bytes from 81920 bytes)
 Flash: [=====     ]  49.6% (used 474968 bytes from 958448 bytes)
+---
+ADD DEPENDENCIES VERSIONS TO README
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.9% (used 32684 bytes from 81920 bytes)
+Flash: [=====     ]  49.5% (used 474076 bytes from 958448 bytes)
 ---

@@ -56,6 +56,22 @@
   * [x] N'optimise pas : Unifier load / save methods (read_uint16, read_len_mem0)
   * [x] Unifier FFI (bio.*) : un genre de callback fourre tout à la `ioctl` ?
 
+# Versions pour optim
+
+```
+Resolving minwifi_ota dependencies...
+Platform espressif8266 @ 3.2.0 (required: espressif8266)
+├── framework-arduinoespressif8266 @ 3.30002.0 (required: platformio/framework-arduinoespressif8266 @ ~3.30002.0)
+├── tool-esptool @ 1.413.0 (required: platformio/tool-esptool @ <2)
+├── tool-esptoolpy @ 1.30000.201119 (required: platformio/tool-esptoolpy @ ~1.30000.0)
+├── tool-mklittlefs @ 1.203.210628 (required: platformio/tool-mklittlefs @ ~1.203.0)
+├── tool-mkspiffs @ 1.200.0 (required: platformio/tool-mkspiffs @ ~1.200.0)
+└── toolchain-xtensa @ 2.100300.210717 (required: platformio/toolchain-xtensa @ ~2.100300.0)
+
+Libraries
+└── WebSockets @ 2.3.7 (required: links2004/WebSockets @ ^2.3.7)
+```
+
 # Liens
 
 * <https://www.museeminitel.fr/>
