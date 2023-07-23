@@ -47,4 +47,5 @@ const char *keywords =
     "STE""\xd0"
     "STO""\xd0"
     "CON""\xd4"
+    "THE""\xce"
 ;

@@ -195,7 +195,7 @@ int getch()
     tcsetattr(0, TCSANOW, &new);
     struct pollfd input[1] = {{fd: 0, events: POLLIN}};
     int ch = 0;
-    if (poll(input, 1, 10) == 1)
+    if (poll(input, 1, 1) == 1)
         ch = getchar();
     tcsetattr(0, TCSANOW, &old);
     return ch;

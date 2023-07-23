@@ -59,6 +59,7 @@ next
 step
 stop
 cont
+then
 EOF
 
 # Do not sort to preserver save/load compatibility

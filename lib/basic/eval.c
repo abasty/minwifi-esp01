@@ -151,6 +151,7 @@ static void string_concat(string_t *string1, string_t *string2)
 typedef struct
 {
     prog_t *pc;
+    prog_t *prog;
     bool do_eval;
     bool running;
     bool inputting;
@@ -1224,6 +1225,33 @@ static bool eval_instruction()
         ;
 }
 
+static bool eval_if()
+{
+    if (!eval_token(TOKEN_KEYWORD_IF))
+        return false;
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    if (bstate.do_eval)
+    {
+        if (bstate.number == 0)
+        {
+            // If test is negative, ignore end of line
+            bstate.read_ptr = bstate.prog->line + bstate.prog->len;
+            return true;
+        }
+    }
+
+    if (!eval_token(TOKEN_KEYWORD_THEN))
+        return false;
+
+    if (!eval_instruction())
+        return false;
+
+    return true;
+}
+
 int8_t eval_prog(prog_t *prog, bool do_eval)
 {
     // Init evaluator state
@@ -1233,9 +1261,10 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
     bstate.string.allocated = 0;
     bstate.string.chars = 0;
     bstate.error = BERROR_NONE;
+    bstate.prog = prog;
 
     // Do syntax check or eval
-    bool eval = eval_instruction();
+    bool eval = eval_instruction() || eval_if();
 
     // Syntax check end of line.
     eval = eval && *bstate.read_ptr == 0;
