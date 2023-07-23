@@ -1018,14 +1018,12 @@ static bool eval_goto()
         return true;
 
     bstate.pc = bmem_prog_get_line(bstate.number);
-    if (bstate.pc)
-    {
-        bstate.running = true;
-        return true;
-    }
+    bstate.running = bstate.pc != 0;
 
-    bstate.running = false;
-    bstate.error = BERROR_RUN;
+    if (!bstate.pc)
+    {
+        bstate.error = BERROR_RUN;
+    }
     return true;
 }
 
@@ -1134,7 +1132,7 @@ uint8_t rules1s[] = {
     0,
 };
 
-static bool eval_instruction()
+static bool eval_simple_instruction()
 {
     uint8_t instr;
 
@@ -1210,6 +1208,22 @@ EVAL:
     return false;
 }
 
+static bool eval_instruction()
+{
+    return
+        eval_print() ||
+        eval_input() ||
+        eval_simple_instruction() ||
+        eval_tty()
+#ifndef OTA_ONLY
+        ||
+        eval_goto() ||
+        eval_let() ||
+        eval_list()
+#endif
+        ;
+}
+
 int8_t eval_prog(prog_t *prog, bool do_eval)
 {
     // Init evaluator state
@@ -1221,18 +1235,7 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
     bstate.error = BERROR_NONE;
 
     // Do syntax check or eval
-    bool eval =
-        eval_print() ||
-        eval_input() ||
-        eval_instruction() ||
-        eval_tty()
-#ifndef OTA_ONLY
-        ||
-        eval_goto() ||
-        eval_let() ||
-        eval_list()
-#endif
-        ;
+    bool eval = eval_instruction();
 
     // Syntax check end of line.
     eval = eval && *bstate.read_ptr == 0;
