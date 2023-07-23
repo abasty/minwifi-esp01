@@ -929,6 +929,10 @@ static bool eval_list()
             if (prog->line_no >= start)
             {
                 bio->print_integer("%4d", (int) prog->line_no);
+                char c[2];
+                c[0] = bstate.pc == prog ? '>' : ' ';
+                c[1] = 0;
+                bio->print_string(c);
                 bio->print_string(untokenize(prog->line));
                 bio->print_string("\r\n");
                 n--;

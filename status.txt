@@ -79,8 +79,13 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32716 bytes from 81920 bytes)
 Flash: [=====     ]  49.3% (used 472776 bytes from 958448 bytes)
 ---
-Implemented STOP & CONT
+b9ec540 Implemented STOP & CONT
 Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.0% (used 32736 bytes from 81920 bytes)
 Flash: [=====     ]  49.3% (used 472820 bytes from 958448 bytes)
+---
+Added PC mark in program listing
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.0% (used 32736 bytes from 81920 bytes)
+Flash: [=====     ]  49.3% (used 472868 bytes from 958448 bytes)
 ---
