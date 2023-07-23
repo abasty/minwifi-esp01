@@ -89,3 +89,13 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.0% (used 32736 bytes from 81920 bytes)
 Flash: [=====     ]  49.3% (used 472868 bytes from 958448 bytes)
 ---
+9aab8e2 Moved ERASE to eval_instruction()
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.0% (used 32740 bytes from 81920 bytes)
+Flash: [=====     ]  49.3% (used 472856 bytes from 958448 bytes)
+---
+9aab8e2 Moved ERASE to eval_instruction()
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.0% (used 32740 bytes from 81920 bytes)
+Flash: [=====     ]  49.3% (used 472840 bytes from 958448 bytes)
+---
