@@ -99,3 +99,8 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.0% (used 32740 bytes from 81920 bytes)
 Flash: [=====     ]  49.3% (used 472840 bytes from 958448 bytes)
 ---
+86670b7 Implemented IF/THEN
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.0% (used 32736 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473020 bytes from 958448 bytes)
+---

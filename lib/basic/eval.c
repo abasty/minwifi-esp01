@@ -151,6 +151,7 @@ static void string_concat(string_t *string1, string_t *string2)
 typedef struct
 {
     prog_t *pc;
+    prog_t *prog;
     bool do_eval;
     bool running;
     bool inputting;
@@ -209,6 +210,25 @@ const char compare_tokens[] = {
     TOKEN_COMPARE_NE,
     TOKEN_COMPARE_GE,
     TOKEN_COMPARE_LE,
+    0,
+};
+
+uint8_t instr0[] = {
+    TOKEN_KEYWORD_CLEAR,
+    TOKEN_KEYWORD_NEW,
+    TOKEN_KEYWORD_CAT,
+    TOKEN_KEYWORD_CLS,
+    TOKEN_KEYWORD_RESET,
+    TOKEN_KEYWORD_STOP,
+    TOKEN_KEYWORD_CONT,
+    TOKEN_KEYWORD_RUN,
+    0,
+};
+
+uint8_t instr1s[] = {
+    TOKEN_KEYWORD_ERASE,
+    TOKEN_KEYWORD_SAVE,
+    TOKEN_KEYWORD_LOAD,
     0,
 };
 
@@ -944,26 +964,6 @@ static bool eval_list()
     return true;
 }
 
-void eval_stop()
-{
-    bstate.running = false;
-}
-
-void eval_cont()
-{
-    bstate.running = bstate.pc != 0;
-}
-
-bool eval_running()
-{
-    return bstate.running;
-}
-
-bool eval_inputting()
-{
-    return bstate.inputting;
-}
-
 static inline void eval_input_mode(bool mode)
 {
     bstate.inputting = mode;
@@ -999,6 +999,26 @@ int8_t eval_prog_next()
     return err;
 }
 
+void eval_stop()
+{
+    bstate.running = false;
+}
+
+void eval_cont()
+{
+    bstate.running = bstate.pc != 0;
+}
+
+bool eval_running()
+{
+    return bstate.running;
+}
+
+bool eval_inputting()
+{
+    return bstate.inputting;
+}
+
 static void eval_run()
 {
     bmem_vars_clear();
@@ -1026,18 +1046,6 @@ static bool eval_goto()
     }
     return true;
 }
-
-uint8_t rules0[] = {
-    TOKEN_KEYWORD_CLEAR,
-    TOKEN_KEYWORD_NEW,
-    TOKEN_KEYWORD_CAT,
-    TOKEN_KEYWORD_CLS,
-    TOKEN_KEYWORD_RESET,
-    TOKEN_KEYWORD_STOP,
-    TOKEN_KEYWORD_CONT,
-    TOKEN_KEYWORD_RUN,
-    0,
-};
 
 static void eval_save()
 {
@@ -1125,23 +1133,16 @@ static bool eval_tty()
     return true;
 }
 
-uint8_t rules1s[] = {
-    TOKEN_KEYWORD_ERASE,
-    TOKEN_KEYWORD_SAVE,
-    TOKEN_KEYWORD_LOAD,
-    0,
-};
-
 static bool eval_simple_instruction()
 {
     uint8_t instr;
 
     // 0 arg instructions
-    if ((instr =  eval_token_one_of((char *)rules0)))
+    if ((instr =  eval_token_one_of((char *)instr0)))
         goto EVAL;
 
     // 1 string instructions
-    if ((instr =  eval_token_one_of((char *)rules1s)) && eval_string_expr())
+    if ((instr =  eval_token_one_of((char *)instr1s)) && eval_string_expr())
         goto EVAL;
 
     return false;
@@ -1224,6 +1225,33 @@ static bool eval_instruction()
         ;
 }
 
+static bool eval_if()
+{
+    if (!eval_token(TOKEN_KEYWORD_IF))
+        return false;
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    if (bstate.do_eval)
+    {
+        if (bstate.number == 0)
+        {
+            // If test is negative, ignore end of line
+            bstate.read_ptr = bstate.prog->line + bstate.prog->len;
+            return true;
+        }
+    }
+
+    if (!eval_token(TOKEN_KEYWORD_THEN))
+        return false;
+
+    if (!eval_instruction())
+        return false;
+
+    return true;
+}
+
 int8_t eval_prog(prog_t *prog, bool do_eval)
 {
     // Init evaluator state
@@ -1233,9 +1261,10 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
     bstate.string.allocated = 0;
     bstate.string.chars = 0;
     bstate.error = BERROR_NONE;
+    bstate.prog = prog;
 
     // Do syntax check or eval
-    bool eval = eval_instruction();
+    bool eval = eval_instruction() || eval_if();
 
     // Syntax check end of line.
     eval = eval && *bstate.read_ptr == 0;

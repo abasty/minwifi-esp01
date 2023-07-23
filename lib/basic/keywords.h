@@ -47,3 +47,4 @@
 #define TOKEN_KEYWORD_STEP ((uint8_t) (45 | 0b10000000))
 #define TOKEN_KEYWORD_STOP ((uint8_t) (46 | 0b10000000))
 #define TOKEN_KEYWORD_CONT ((uint8_t) (47 | 0b10000000))
+#define TOKEN_KEYWORD_THEN ((uint8_t) (48 | 0b10000000))
