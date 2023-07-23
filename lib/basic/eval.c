@@ -945,6 +945,11 @@ void eval_stop()
     bstate.running = false;
 }
 
+void eval_cont()
+{
+    bstate.running = bstate.pc != 0;
+}
+
 bool eval_running()
 {
     return bstate.running;
@@ -972,7 +977,7 @@ int8_t eval_prog_next()
         {
             if (bstate.pc == pc)
             {
-                // If executed line did not change PC then take the next line
+                // If executed line did not change PC then move PC to next line
                 bstate.pc = bmem_prog_next_line(bstate.pc);
             }
             return BERROR_NONE;
@@ -1036,6 +1041,8 @@ uint8_t rules[] = {
     TOKEN_KEYWORD_CAT,
     TOKEN_KEYWORD_CLS,
     TOKEN_KEYWORD_RESET,
+    TOKEN_KEYWORD_STOP,
+    TOKEN_KEYWORD_CONT,
     0,
 };
 
@@ -1186,6 +1193,16 @@ static bool eval_instruction()
     if (i == TOKEN_KEYWORD_RESET)
     {
         eval_reset();
+        return true;
+    }
+    if (i == TOKEN_KEYWORD_STOP)
+    {
+        eval_stop();
+        return true;
+    }
+    if (i == TOKEN_KEYWORD_CONT)
+    {
+        eval_cont();
         return true;
     }
     return false;

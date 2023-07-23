@@ -45,4 +45,6 @@ const char *keywords =
     "FO""\xd2"
     "NEX""\xd4"
     "STE""\xd0"
+    "STO""\xd0"
+    "CON""\xd4"
 ;

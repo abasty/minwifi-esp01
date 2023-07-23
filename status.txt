@@ -74,8 +74,13 @@ Flash: [=====     ]  49.5% (used 474076 bytes from 958448 bytes)
 RAM:   [====      ]  39.9% (used 32696 bytes from 81920 bytes)
 Flash: [=====     ]  49.3% (used 472636 bytes from 958448 bytes)
 ---
-Implemented GOTO
+9f6a6ee Implemented GOTO
 Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32716 bytes from 81920 bytes)
 Flash: [=====     ]  49.3% (used 472776 bytes from 958448 bytes)
+---
+Implemented STOP & CONT
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.0% (used 32736 bytes from 81920 bytes)
+Flash: [=====     ]  49.3% (used 472820 bytes from 958448 bytes)
 ---
