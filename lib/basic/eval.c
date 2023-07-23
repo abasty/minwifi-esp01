@@ -999,21 +999,11 @@ int8_t eval_prog_next()
     return err;
 }
 
-static bool eval_run()
+static void eval_run()
 {
-    if (!eval_token(TOKEN_KEYWORD_RUN))
-        return false;
-
-    if (!bstate.do_eval)
-        return true;
-
     bmem_vars_clear();
-
     bstate.pc = bmem_prog_first_line();
     bstate.running = true;
-
-//    return eval_prog_next() == BERROR_NONE;
-    return true;
 }
 
 static bool eval_goto()
@@ -1039,7 +1029,7 @@ static bool eval_goto()
     return true;
 }
 
-uint8_t rules[] = {
+uint8_t rules0[] = {
     TOKEN_KEYWORD_CLEAR,
     TOKEN_KEYWORD_NEW,
     TOKEN_KEYWORD_CAT,
@@ -1047,63 +1037,35 @@ uint8_t rules[] = {
     TOKEN_KEYWORD_RESET,
     TOKEN_KEYWORD_STOP,
     TOKEN_KEYWORD_CONT,
+    TOKEN_KEYWORD_RUN,
     0,
 };
 
-static bool eval_save()
+static void eval_save()
 {
-    if (!eval_token(TOKEN_KEYWORD_SAVE))
-        return false;
+    if (bstate.string.chars == 0)
+        return;
 
-    if (!eval_string_expr())
-        return false;
-
-    if (bstate.do_eval)
-    {
-        if (bstate.string.chars == 0)
-            return false;
-
-        bastos_save(bstate.string.chars);
-    }
-    return true;
+    bastos_save(bstate.string.chars);
 }
 
-static bool eval_load()
+static void eval_load()
 {
-    if (!eval_token(TOKEN_KEYWORD_LOAD))
-        return false;
+    if (bstate.string.chars == 0)
+        return;
 
-    if (!eval_string_expr())
-        return false;
-
-    if (bstate.do_eval)
-    {
-        if (bstate.string.chars == 0)
-            return false;
-
-        bstate.running = false;
-        bstate.pc = 0;
-        bstate.error = bastos_load(bstate.string.chars);
-    }
-    return true;
+    bstate.running = false;
+    bstate.pc = 0;
+    bstate.error = bastos_load(bstate.string.chars);
 }
 
-static bool eval_erase()
+static void eval_erase()
 {
-    if (!eval_token(TOKEN_KEYWORD_ERASE))
-        return false;
-
-    if (!eval_string_expr())
-        return false;
-
-    if (bstate.do_eval)
+    if (bio->erase(bstate.string.chars) != 0)
     {
-        if (bio->erase(bstate.string.chars) != 0)
-            bstate.error = BERROR_IO;
+        bstate.error = BERROR_IO;
     }
-    return true;
 }
-
 
 static void eval_clear()
 {
@@ -1165,46 +1127,82 @@ static bool eval_tty()
     return true;
 }
 
+uint8_t rules1s[] = {
+    TOKEN_KEYWORD_ERASE,
+    TOKEN_KEYWORD_SAVE,
+    TOKEN_KEYWORD_LOAD,
+    0,
+};
+
 static bool eval_instruction()
 {
-    uint8_t i;
-    if ((i = eval_token_one_of((char *)rules)) == 0)
-        return false;
+    uint8_t instr;
 
+    // 0 arg instructions
+    if ((instr =  eval_token_one_of((char *)rules0)))
+        goto EVAL;
+
+    // 1 string instructions
+    if ((instr =  eval_token_one_of((char *)rules1s)) && eval_string_expr())
+        goto EVAL;
+
+    return false;
+
+EVAL:
     if (!bstate.do_eval)
         return true;
 
-    if (i == TOKEN_KEYWORD_CLEAR)
+    if (instr == TOKEN_KEYWORD_ERASE)
+    {
+        eval_erase();
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_SAVE)
+    {
+        eval_save();
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_LOAD)
+    {
+        eval_load();
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_CLEAR)
     {
         eval_clear();
         return true;
     }
-    if (i == TOKEN_KEYWORD_NEW)
+    if (instr == TOKEN_KEYWORD_RUN)
+    {
+        eval_run();
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_NEW)
     {
         eval_new();
         return true;
     }
-    if (i == TOKEN_KEYWORD_CAT)
+    if (instr == TOKEN_KEYWORD_CAT)
     {
         eval_cat();
         return true;
     }
-    if (i == TOKEN_KEYWORD_CLS)
+    if (instr == TOKEN_KEYWORD_CLS)
     {
         eval_cls();
         return true;
     }
-    if (i == TOKEN_KEYWORD_RESET)
+    if (instr == TOKEN_KEYWORD_RESET)
     {
         eval_reset();
         return true;
     }
-    if (i == TOKEN_KEYWORD_STOP)
+    if (instr == TOKEN_KEYWORD_STOP)
     {
         eval_stop();
         return true;
     }
-    if (i == TOKEN_KEYWORD_CONT)
+    if (instr == TOKEN_KEYWORD_CONT)
     {
         eval_cont();
         return true;
@@ -1224,19 +1222,15 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
 
     // Do syntax check or eval
     bool eval =
-        eval_save() ||
         eval_print() ||
         eval_input() ||
         eval_instruction() ||
-        eval_tty() ||
-        eval_load()
+        eval_tty()
 #ifndef OTA_ONLY
         ||
-        eval_run() ||
         eval_goto() ||
         eval_let() ||
-        eval_list() ||
-        eval_erase()
+        eval_list()
 #endif
         ;
 
