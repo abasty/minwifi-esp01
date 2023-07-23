@@ -20,7 +20,7 @@
 #include "keywords.h"
 #include "bio.h"
 
-#define BASTOS_DISK_PATH "/home/alain/Projects/minwifi-esp01/lib/basic/examples/disk"
+#define BASTOS_DISK_PATH "/home/abasty/Private/minwifi-esp01/lib/basic/examples/disk"
 
 
 int print_float(float f)
@@ -239,10 +239,17 @@ finalize:
     while (cont)
     {
         int c = getch();
-        if (c != 0 && c != 3)
+        if (c != 0 && c != 3 && c != 1)
         {
             char *keys = (char *) &c;
             bastos_send_keys(keys, 1);
+        }
+        else
+        {
+            if (c == 1)
+            {
+                bastos_stop();
+            }
         }
         bastos_loop();
         cont = c != 3;

@@ -235,6 +235,20 @@ prog_t *bmem_prog_next_line(prog_t *prog)
     return (prog_t *) (DS_OBJECT_OF(&prog_list, prog->list.next));
 }
 
+prog_t *bmem_prog_get_line(uint16_t line_no)
+{
+    prog_t search = {
+        .line_no = line_no,
+    };
+
+    if (prog_list.root == 0)
+    {
+        bmem_prog_node_push(prog_tree.root);
+    }
+
+    return ds_btree_find(&prog_tree, &search);
+}
+
 static void bmem_var_node_push(ds_btree_item_t *node)
 {
     if (node)

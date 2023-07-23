@@ -362,6 +362,11 @@ int8_t bastos_load(const char *name)
     return err;
 }
 
+void bastos_stop()
+{
+    eval_stop();
+}
+
 void bastos_loop()
 {
 

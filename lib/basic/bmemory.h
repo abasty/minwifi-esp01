@@ -62,6 +62,7 @@ void bmem_prog_line_free(prog_t *prog);
 prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len);
 prog_t *bmem_prog_first_line();
 prog_t *bmem_prog_next_line(prog_t *prog);
+prog_t *bmem_prog_get_line(uint16_t line_no);
 
 void bmem_vars_clear();
 var_t *bmem_var_string_set(const char *name, char *value);

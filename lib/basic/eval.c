@@ -940,6 +940,11 @@ static bool eval_list()
     return true;
 }
 
+void eval_stop()
+{
+    bstate.running = false;
+}
+
 bool eval_running()
 {
     return bstate.running;
@@ -994,6 +999,29 @@ static bool eval_run()
     bstate.running = true;
 
     return eval_prog_next() == BERROR_NONE;
+}
+
+static bool eval_goto()
+{
+    if (!eval_token(TOKEN_KEYWORD_GOTO))
+        return false;
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    if (!bstate.do_eval)
+        return true;
+
+    bstate.pc = bmem_prog_get_line(bstate.number);
+    if (bstate.pc)
+    {
+        bstate.running = true;
+        return true;
+    }
+
+    bstate.running = false;
+    bstate.error = BERROR_RUN;
+    return false;
 }
 
 uint8_t rules[] = {
@@ -1178,6 +1206,7 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
 #ifndef OTA_ONLY
         ||
         eval_run() ||
+        eval_goto() ||
         eval_let() ||
         eval_list() ||
         eval_erase()

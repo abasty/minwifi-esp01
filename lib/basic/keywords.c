@@ -38,4 +38,11 @@ const char *keywords =
     "AN""\xc4"
     "O""\xd2"
     "NO""\xd4"
+    "I""\xc6"
+    "GOT""\xcf"
+    "GOSU""\xc2"
+    "RETUR""\xce"
+    "FO""\xd2"
+    "NEX""\xd4"
+    "STE""\xd0"
 ;
