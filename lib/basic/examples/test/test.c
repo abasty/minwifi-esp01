@@ -87,6 +87,11 @@ void bcat()
     free(namelist);
 }
 
+int berase(const char *pathname)
+{
+    return unlink(pathname);
+}
+
 void del()
 {
     print_string("\x08 \x08");
@@ -143,6 +148,7 @@ bastos_io_t io = {
 
     .print_integer = print_integer,
     .bopen = bopen,
+    .erase = berase,
 
     .bclose = bclose,
 

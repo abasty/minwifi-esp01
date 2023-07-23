@@ -1088,22 +1088,13 @@ static bool eval_load()
     return true;
 }
 
-static bool eval_erase()
+static void eval_erase()
 {
-    if (!eval_token(TOKEN_KEYWORD_ERASE))
-        return false;
-
-    if (!eval_string_expr())
-        return false;
-
-    if (bstate.do_eval)
+    if (bio->erase(bstate.string.chars) != 0)
     {
-        if (bio->erase(bstate.string.chars) != 0)
-            bstate.error = BERROR_IO;
+        bstate.error = BERROR_IO;
     }
-    return true;
 }
-
 
 static void eval_clear()
 {
@@ -1165,6 +1156,11 @@ static bool eval_tty()
     return true;
 }
 
+uint8_t rules1s[] = {
+    TOKEN_KEYWORD_ERASE,
+    0,
+};
+
 static bool eval_instruction()
 {
     uint8_t instr;
@@ -1173,12 +1169,21 @@ static bool eval_instruction()
     if ((instr =  eval_token_one_of((char *)rules0)))
         goto EVAL;
 
+    // 1 string instructions
+    if ((instr =  eval_token_one_of((char *)rules1s)) && eval_string_expr())
+        goto EVAL;
+
     return false;
 
 EVAL:
     if (!bstate.do_eval)
         return true;
 
+    if (instr == TOKEN_KEYWORD_ERASE)
+    {
+        eval_erase();
+        return true;
+    }
     if (instr == TOKEN_KEYWORD_CLEAR)
     {
         eval_clear();
@@ -1240,8 +1245,7 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
         eval_run() ||
         eval_goto() ||
         eval_let() ||
-        eval_list() ||
-        eval_erase()
+        eval_list()
 #endif
         ;
 
