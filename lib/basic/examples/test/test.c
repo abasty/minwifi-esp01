@@ -239,10 +239,17 @@ finalize:
     while (cont)
     {
         int c = getch();
-        if (c != 0 && c != 3)
+        if (c != 0 && c != 3 && c != 1)
         {
             char *keys = (char *) &c;
             bastos_send_keys(keys, 1);
+        }
+        else
+        {
+            if (c == 1)
+            {
+                bastos_stop();
+            }
         }
         bastos_loop();
         cont = c != 3;

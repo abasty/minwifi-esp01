@@ -50,6 +50,15 @@ paper
 and
 or
 not
+if
+goto
+gosub
+return
+for
+next
+step
+stop
+cont
 EOF
 
 # Do not sort to preserver save/load compatibility

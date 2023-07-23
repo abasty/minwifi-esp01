@@ -204,7 +204,6 @@ char *untokenize(uint8_t *input)
     state.line_no = 0;
 
     uint8_t token;
-    bio->print_string(" ");
     while ((token = token_get_next(&state)))
     {
         if ((token & TOKEN_KEYWORD) != 0)

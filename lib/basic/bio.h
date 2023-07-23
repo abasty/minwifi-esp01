@@ -92,6 +92,7 @@ void bastos_init(bastos_io_t *_io);
 size_t bastos_send_keys(const char *keys, size_t n);
 void bastos_loop();
 bool bastos_running();
+void bastos_stop();
 
 int8_t bastos_save(const char *name);
 int8_t bastos_load(const char *name);

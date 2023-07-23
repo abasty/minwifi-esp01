@@ -929,6 +929,10 @@ static bool eval_list()
             if (prog->line_no >= start)
             {
                 bio->print_integer("%4d", (int) prog->line_no);
+                char c[2];
+                c[0] = bstate.pc == prog ? '>' : ' ';
+                c[1] = 0;
+                bio->print_string(c);
                 bio->print_string(untokenize(prog->line));
                 bio->print_string("\r\n");
                 n--;
@@ -938,6 +942,16 @@ static bool eval_list()
     }
 
     return true;
+}
+
+void eval_stop()
+{
+    bstate.running = false;
+}
+
+void eval_cont()
+{
+    bstate.running = bstate.pc != 0;
 }
 
 bool eval_running()
@@ -958,18 +972,23 @@ static inline void eval_input_mode(bool mode)
 int8_t eval_prog_next()
 {
     int8_t err = BERROR_NONE;
+    prog_t *pc = bstate.pc;
 
-    if (bstate.pc)
+    if (pc)
     {
-        err = eval_prog(bstate.pc, true);
+        err = eval_prog(pc, true);
         if (err == BERROR_NONE)
         {
-            bstate.pc = bmem_prog_next_line(bstate.pc);
+            if (bstate.pc == pc)
+            {
+                // If executed line did not change PC then move PC to next line
+                bstate.pc = bmem_prog_next_line(bstate.pc);
+            }
             return BERROR_NONE;
         }
     }
 
-    if (err != BERROR_NONE)
+    if (err != BERROR_NONE && bstate.pc != 0)
     {
         bio->print_integer("On line %d: ", bstate.pc->line_no);
     }
@@ -993,7 +1012,31 @@ static bool eval_run()
     bstate.pc = bmem_prog_first_line();
     bstate.running = true;
 
-    return eval_prog_next() == BERROR_NONE;
+//    return eval_prog_next() == BERROR_NONE;
+    return true;
+}
+
+static bool eval_goto()
+{
+    if (!eval_token(TOKEN_KEYWORD_GOTO))
+        return false;
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    if (!bstate.do_eval)
+        return true;
+
+    bstate.pc = bmem_prog_get_line(bstate.number);
+    if (bstate.pc)
+    {
+        bstate.running = true;
+        return true;
+    }
+
+    bstate.running = false;
+    bstate.error = BERROR_RUN;
+    return true;
 }
 
 uint8_t rules[] = {
@@ -1002,6 +1045,8 @@ uint8_t rules[] = {
     TOKEN_KEYWORD_CAT,
     TOKEN_KEYWORD_CLS,
     TOKEN_KEYWORD_RESET,
+    TOKEN_KEYWORD_STOP,
+    TOKEN_KEYWORD_CONT,
     0,
 };
 
@@ -1154,6 +1199,16 @@ static bool eval_instruction()
         eval_reset();
         return true;
     }
+    if (i == TOKEN_KEYWORD_STOP)
+    {
+        eval_stop();
+        return true;
+    }
+    if (i == TOKEN_KEYWORD_CONT)
+    {
+        eval_cont();
+        return true;
+    }
     return false;
 }
 
@@ -1178,6 +1233,7 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
 #ifndef OTA_ONLY
         ||
         eval_run() ||
+        eval_goto() ||
         eval_let() ||
         eval_list() ||
         eval_erase()

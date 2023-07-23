@@ -50,11 +50,14 @@
   * [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
   * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
 * [ ] **OPTIMISATIONS** (valable aussi pour la version OTA only)
-  * [x] Removed Wifi client and server from MINITEL build
+  * [ ] Rapporter tout le basic sauf l'API bastos dans un seul fichier et static
+    functions (notamment memory)
   * [ ] Optimisation parser (règles et code générique)
   * [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
+  * [x] Removed Wifi client and server from MINITEL build
   * [x] N'optimise pas : Unifier load / save methods (read_uint16, read_len_mem0)
   * [x] Unifier FFI (bio.*) : un genre de callback fourre tout à la `ioctl` ?
+  * [x] Versions de platform @ 3.2.0 et xtens8266 au 220621
 
 # Versions pour optim
 
