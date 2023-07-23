@@ -1,100 +1,76 @@
 88abb56 Added status post build generation
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32716 bytes from 81920 bytes)
 Flash: [=====     ]  49.6% (used 475868 bytes from 958448 bytes)
 ---
 b911a74 bio_f0: ram -16, flash -48
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32700 bytes from 81920 bytes)
 Flash: [=====     ]  49.6% (used 475820 bytes from 958448 bytes)
 ---
 ce69dc7 static in eval.c: flash -736
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32700 bytes from 81920 bytes)
 Flash: [=====     ]  49.6% (used 475084 bytes from 958448 bytes)
 ---
 43fbc36 static in bmemory.c & token.c: flash -192
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32700 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 474892 bytes from 958448 bytes)
 ---
 5ff7be8 Optimized char_of_keyword algo: flash -16
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32700 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 474876 bytes from 958448 bytes)
 ---
 be9bc6d Implemented distant echo -88
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32684 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 474788 bytes from 958448 bytes)
 ---
 274542a Avoid changing keywords ID -132
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32648 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 474656 bytes from 958448 bytes)
 ---
 c132843 Added AT l,c command
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32688 bytes from 81920 bytes)
 Flash: [=====     ]  49.6% (used 474992 bytes from 958448 bytes)
 ---
 c132843 Added AT l,c command
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32688 bytes from 81920 bytes)
 Flash: [=====     ]  49.6% (used 475008 bytes from 958448 bytes)
 ---
 3192916 Optimized AT l,c command
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32684 bytes from 81920 bytes)
 Flash: [=====     ]  49.6% (used 474940 bytes from 958448 bytes)
 ---
 a113e18 Added ink and paper
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32684 bytes from 81920 bytes)
 Flash: [=====     ]  49.6% (used 475044 bytes from 958448 bytes)
 ---
 Added compare tokens and float expressions
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32700 bytes from 81920 bytes)
 Flash: [=====     ]  49.6% (used 475444 bytes from 958448 bytes)
 ---
 Added condition and/or/not keywords
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32716 bytes from 81920 bytes)
 Flash: [=====     ]  49.6% (used 475740 bytes from 958448 bytes)
 ---
 4660155 Removed Wifi client and server from MINITEL build -1716
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32680 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 474024 bytes from 958448 bytes)
 ---
 8035dc7 Fixed bug on boolean expression
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32680 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 474088 bytes from 958448 bytes)
 ---
 Added string comparison and unified eval_compare_expr()
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32680 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 474104 bytes from 958448 bytes)
 ---
 81c6f6a WIP: Instruction eval factorization
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32684 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 474092 bytes from 958448 bytes)
 ---
 7b58e28 Added reset to instruction factorization. Reimplemented evals as static inline functions
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.9% (used 32684 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 474076 bytes from 958448 bytes)
 ---
-STOP WORKING ON OPTIM BECAUSE OF VERSION AND SIZE CHANGES IN FRAMEWORK
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
-RAM:   [====      ]  40.0% (used 32788 bytes from 81920 bytes)
-Flash: [=====     ]  49.6% (used 474968 bytes from 958448 bytes)
----
-ADD DEPENDENCIES VERSIONS TO README
-Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
-RAM:   [====      ]  39.9% (used 32684 bytes from 81920 bytes)
-Flash: [=====     ]  49.5% (used 474076 bytes from 958448 bytes)
+54ecd8ea Updated versions espressif8266@3.2.0 & toolchain-xtensa@2.100300.220621 -1440
+RAM:   [====      ]  39.9% (used 32696 bytes from 81920 bytes)
+Flash: [=====     ]  49.3% (used 472636 bytes from 958448 bytes)
 ---
