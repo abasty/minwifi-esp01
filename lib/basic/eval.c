@@ -212,6 +212,25 @@ const char compare_tokens[] = {
     0,
 };
 
+uint8_t instr0[] = {
+    TOKEN_KEYWORD_CLEAR,
+    TOKEN_KEYWORD_NEW,
+    TOKEN_KEYWORD_CAT,
+    TOKEN_KEYWORD_CLS,
+    TOKEN_KEYWORD_RESET,
+    TOKEN_KEYWORD_STOP,
+    TOKEN_KEYWORD_CONT,
+    TOKEN_KEYWORD_RUN,
+    0,
+};
+
+uint8_t instr1s[] = {
+    TOKEN_KEYWORD_ERASE,
+    TOKEN_KEYWORD_SAVE,
+    TOKEN_KEYWORD_LOAD,
+    0,
+};
+
 static bool eval_token(uint8_t c)
 {
     if (*bstate.read_ptr != c)
@@ -944,26 +963,6 @@ static bool eval_list()
     return true;
 }
 
-void eval_stop()
-{
-    bstate.running = false;
-}
-
-void eval_cont()
-{
-    bstate.running = bstate.pc != 0;
-}
-
-bool eval_running()
-{
-    return bstate.running;
-}
-
-bool eval_inputting()
-{
-    return bstate.inputting;
-}
-
 static inline void eval_input_mode(bool mode)
 {
     bstate.inputting = mode;
@@ -999,6 +998,26 @@ int8_t eval_prog_next()
     return err;
 }
 
+void eval_stop()
+{
+    bstate.running = false;
+}
+
+void eval_cont()
+{
+    bstate.running = bstate.pc != 0;
+}
+
+bool eval_running()
+{
+    return bstate.running;
+}
+
+bool eval_inputting()
+{
+    return bstate.inputting;
+}
+
 static void eval_run()
 {
     bmem_vars_clear();
@@ -1026,18 +1045,6 @@ static bool eval_goto()
     }
     return true;
 }
-
-uint8_t rules0[] = {
-    TOKEN_KEYWORD_CLEAR,
-    TOKEN_KEYWORD_NEW,
-    TOKEN_KEYWORD_CAT,
-    TOKEN_KEYWORD_CLS,
-    TOKEN_KEYWORD_RESET,
-    TOKEN_KEYWORD_STOP,
-    TOKEN_KEYWORD_CONT,
-    TOKEN_KEYWORD_RUN,
-    0,
-};
 
 static void eval_save()
 {
@@ -1125,23 +1132,16 @@ static bool eval_tty()
     return true;
 }
 
-uint8_t rules1s[] = {
-    TOKEN_KEYWORD_ERASE,
-    TOKEN_KEYWORD_SAVE,
-    TOKEN_KEYWORD_LOAD,
-    0,
-};
-
 static bool eval_simple_instruction()
 {
     uint8_t instr;
 
     // 0 arg instructions
-    if ((instr =  eval_token_one_of((char *)rules0)))
+    if ((instr =  eval_token_one_of((char *)instr0)))
         goto EVAL;
 
     // 1 string instructions
-    if ((instr =  eval_token_one_of((char *)rules1s)) && eval_string_expr())
+    if ((instr =  eval_token_one_of((char *)instr1s)) && eval_string_expr())
         goto EVAL;
 
     return false;
