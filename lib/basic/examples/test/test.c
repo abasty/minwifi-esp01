@@ -20,7 +20,7 @@
 #include "keywords.h"
 #include "bio.h"
 
-#define BASTOS_DISK_PATH "/home/abasty/Private/minwifi-esp01/lib/basic/examples/disk"
+#define BASTOS_DISK_PATH "/home/alain/Projects/minwifi-esp01/lib/basic/examples/disk"
 
 
 int print_float(float f)
