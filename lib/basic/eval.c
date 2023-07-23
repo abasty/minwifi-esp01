@@ -1039,7 +1039,7 @@ static bool eval_goto()
     return true;
 }
 
-uint8_t rules[] = {
+uint8_t rules0[] = {
     TOKEN_KEYWORD_CLEAR,
     TOKEN_KEYWORD_NEW,
     TOKEN_KEYWORD_CAT,
@@ -1167,44 +1167,49 @@ static bool eval_tty()
 
 static bool eval_instruction()
 {
-    uint8_t i;
-    if ((i = eval_token_one_of((char *)rules)) == 0)
-        return false;
+    uint8_t instr;
 
+    // 0 arg instructions
+    if ((instr =  eval_token_one_of((char *)rules0)))
+        goto EVAL;
+
+    return false;
+
+EVAL:
     if (!bstate.do_eval)
         return true;
 
-    if (i == TOKEN_KEYWORD_CLEAR)
+    if (instr == TOKEN_KEYWORD_CLEAR)
     {
         eval_clear();
         return true;
     }
-    if (i == TOKEN_KEYWORD_NEW)
+    if (instr == TOKEN_KEYWORD_NEW)
     {
         eval_new();
         return true;
     }
-    if (i == TOKEN_KEYWORD_CAT)
+    if (instr == TOKEN_KEYWORD_CAT)
     {
         eval_cat();
         return true;
     }
-    if (i == TOKEN_KEYWORD_CLS)
+    if (instr == TOKEN_KEYWORD_CLS)
     {
         eval_cls();
         return true;
     }
-    if (i == TOKEN_KEYWORD_RESET)
+    if (instr == TOKEN_KEYWORD_RESET)
     {
         eval_reset();
         return true;
     }
-    if (i == TOKEN_KEYWORD_STOP)
+    if (instr == TOKEN_KEYWORD_STOP)
     {
         eval_stop();
         return true;
     }
-    if (i == TOKEN_KEYWORD_CONT)
+    if (instr == TOKEN_KEYWORD_CONT)
     {
         eval_cont();
         return true;
