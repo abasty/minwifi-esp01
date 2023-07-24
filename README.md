@@ -28,27 +28,28 @@
   WiFi => config manager minimal dans le code comme fait aujourd'hui.
   ~~Uploader le config manager  directement sur la flash par OTA~~
 * [x] Ajouter "RESET"
+* [x] AT, INK, PAPER, CLS
 * [x] Mettre en "echo" distant (pas d'echo local)
-* [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
 * [x] Faire que les keywords aient le même ID (possible sans sort ?) afin
   d'assurer la compatibilité "binaire" des `*.bst`
 * [x] comparaison, condition sur number et string
-* [ ] IF, GOTO
-* [ ] GOSUB, RETURN
+* [x] IF, THEN, GOTO
 * [ ] FOR, NEXT
+* [ ] GOSUB, RETURN
+* [ ] PLOT / UNPLOT / SCREEN$(l,c) ?
+* [ ] Tableaux (DIM)
+* [ ] REM
 * [ ] DOWNLOAD / UPLOAD
+* [ ] TELNET / TELNET WS
+* [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
+  * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
 * [ ] Ajouter edit, integration "edit_min" ?
 * [ ] vitesse serial ()
 * [ ] Ajouter mode rouleau, mode 40/80, co, coff, echo
-* [ ] TELNET / TELNET WS
-* [x] AT, INK, PAPER, CLS
-* [ ] plot / unplot / screen$(l,c) ?
-* [ ] Tableaux (DIM)
 * [ ] **BUGS UI / AMELIORATIONS**
   * [ ] `Error 1` quand on se logue : utiliser `nc` pas telnet
   * [ ] Pouvoir sauvegarder uniquement les variables (config manager, "SAVE VARS")
   * [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
-  * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
 * [ ] **OPTIMISATIONS** (valable aussi pour la version OTA only)
   * [ ] Rapporter tout le basic sauf l'API bastos dans un seul fichier et static
     functions (notamment memory)
