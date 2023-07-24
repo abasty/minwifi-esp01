@@ -1252,6 +1252,57 @@ static bool eval_if()
     return true;
 }
 
+static bool eval_for()
+{
+    if (!eval_token(TOKEN_KEYWORD_FOR))
+        return false;
+
+    if (!eval_variable_ref() || *bstate.var_ref != TOKEN_VARIABLE_NUMBER)
+        return false;
+
+    if (!eval_token('='))
+        return false;
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    if (!eval_token(TOKEN_KEYWORD_TO))
+        return false;
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    if (eval_token(TOKEN_KEYWORD_STEP))
+    {
+        if (!eval_expr(TOKEN_NUMBER))
+            return false;
+    }
+
+    // TODO eval:
+    //
+    // * if loop state does not exist, create loop state, init variable, init
+    //   FOR line (NOT SURE: init TO limit and STEP value)
+    // * if loop state exists, eval STEP and condition.
+    // * If condition is false, set PC to NEXT (search for it if not init'd)
+
+    return true;
+}
+
+static bool eval_next()
+{
+    if (!eval_token(TOKEN_KEYWORD_NEXT))
+        return false;
+
+    if (!eval_variable_ref() || *bstate.var_ref != TOKEN_VARIABLE_NUMBER)
+        return false;
+
+    // TODO eval:
+    //
+    // * if loop state does not exist => error
+    // * if loop state exists, init NEXT line, go to FOR line
+    return true;
+}
+
 int8_t eval_prog(prog_t *prog, bool do_eval)
 {
     // Init evaluator state
@@ -1264,7 +1315,7 @@ int8_t eval_prog(prog_t *prog, bool do_eval)
     bstate.prog = prog;
 
     // Do syntax check or eval
-    bool eval = eval_instruction() || eval_if();
+    bool eval = eval_instruction() || eval_if() || eval_for() || eval_next();
 
     // Syntax check end of line.
     eval = eval && *bstate.read_ptr == 0;

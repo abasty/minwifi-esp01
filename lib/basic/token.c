@@ -210,6 +210,7 @@ char *untokenize(uint8_t *input)
         {
             token &= ~TOKEN_KEYWORD;
             if (token == (TOKEN_KEYWORD_TO & ~TOKEN_KEYWORD) ||
+                token == (TOKEN_KEYWORD_STEP & ~TOKEN_KEYWORD) ||
                 token == (TOKEN_KEYWORD_THEN & ~TOKEN_KEYWORD))
             {
                 bio->print_string(" ");
