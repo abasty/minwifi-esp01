@@ -36,6 +36,7 @@
 * [x] IF, THEN, GOTO
 * [ ] FOR, NEXT
 * [ ] GOSUB, RETURN
+* [ ] EVAL / EVAL$
 * [ ] PLOT / UNPLOT / SCREEN$(l,c) ?
 * [ ] Tableaux (DIM)
 * [ ] REM
