@@ -150,6 +150,13 @@ static void string_concat(string_t *string1, string_t *string2)
 
 typedef struct
 {
+    float limit;
+    float step;
+    prog_t *for_line;
+} loop_t;
+
+typedef struct
+{
     prog_t *pc;
     prog_t *prog;
     bool do_eval;
@@ -165,6 +172,7 @@ typedef struct
     int8_t error;
 } eval_state_t;
 
+loop_t loops[26] = {0};
 eval_state_t bstate;
 
 extern bastos_io_t *bio;
@@ -231,6 +239,11 @@ uint8_t instr1s[] = {
     TOKEN_KEYWORD_LOAD,
     0,
 };
+
+static void loops_clear()
+{
+    memset(loops, 0, sizeof(loops));
+}
 
 static bool eval_token(uint8_t c)
 {
@@ -1021,6 +1034,7 @@ bool eval_inputting()
 
 static void eval_run()
 {
+    loops_clear();
     bmem_vars_clear();
     bstate.pc = bmem_prog_first_line();
     bstate.running = true;
@@ -1062,6 +1076,7 @@ static void eval_load()
 
     bstate.running = false;
     bstate.pc = 0;
+    loops_clear();
     bstate.error = bastos_load(bstate.string.chars);
 }
 
@@ -1075,12 +1090,14 @@ static void eval_erase()
 
 static void eval_clear()
 {
+    loops_clear();
     bmem_vars_clear();
 }
 
 static void eval_new()
 {
-    bmem_prog_new();;
+    loops_clear();
+    bmem_prog_new();
 }
 
 static void eval_reset()
@@ -1257,7 +1274,7 @@ static bool eval_for()
     if (!eval_token(TOKEN_KEYWORD_FOR))
         return false;
 
-    if (!eval_variable_ref() || *bstate.var_ref != TOKEN_VARIABLE_NUMBER)
+    if (!eval_variable_ref() || bstate.var_ref[0] != TOKEN_VARIABLE_NUMBER || bstate.var_ref[2] != 0)
         return false;
 
     if (!eval_token('='))
@@ -1266,24 +1283,49 @@ static bool eval_for()
     if (!eval_expr(TOKEN_NUMBER))
         return false;
 
+    float init = bstate.number;
+
     if (!eval_token(TOKEN_KEYWORD_TO))
         return false;
 
     if (!eval_expr(TOKEN_NUMBER))
         return false;
 
+    float limit = bstate.number;
+    float step = 1;
+
     if (eval_token(TOKEN_KEYWORD_STEP))
     {
         if (!eval_expr(TOKEN_NUMBER))
             return false;
+
+        step = bstate.number;
     }
 
-    // TODO eval:
-    //
-    // * if loop state does not exist, create loop state, init variable, init
-    //   FOR line (NOT SURE: init TO limit and STEP value)
-    // * if loop state exists, eval STEP and condition.
-    // * If condition is false, set PC to NEXT (search for it if not init'd)
+    if (!bstate.do_eval)
+        return true;
+
+    int loop_index = bstate.var_ref[1] - 'A';
+    if (loop_index < 0 || loop_index > 25)
+    {
+        bstate.error = BERROR_RANGE;
+        return true;
+    }
+
+    loop_t *loop = loops + loop_index;
+    if (loop->for_line != 0)
+        return true;
+
+    if (bmem_var_number_set(bstate.var_ref, init) == 0)
+    {
+        bstate.error = BERROR_MEMORY;
+        return true;
+    }
+
+    loop->for_line = bstate.prog;
+    loop->limit = limit;
+    loop->step = step;
+    // TODO: Search for next and run next? See in emulator
 
     return true;
 }
@@ -1296,10 +1338,38 @@ static bool eval_next()
     if (!eval_variable_ref() || *bstate.var_ref != TOKEN_VARIABLE_NUMBER)
         return false;
 
-    // TODO eval:
-    //
-    // * if loop state does not exist => error
-    // * if loop state exists, init NEXT line, go to FOR line
+    if (!bstate.do_eval)
+        return true;
+
+    int loop_index = bstate.var_ref[1] - 'A';
+    if (loop_index < 0 || loop_index > 25)
+    {
+        bstate.error = BERROR_RANGE;
+        return true;
+    }
+
+    loop_t *loop = loops + loop_index;
+    if (loop->for_line == 0)
+    {
+        bstate.error = BERROR_RUN;
+        return true;
+    }
+
+    var_t *var = bmem_var_find(bstate.var_ref);
+    if (var == 0)
+    {
+        bstate.error = BERROR_RUN;
+        return true;
+    }
+
+    var->number += loop->step;
+    float cmp = loop->step >= 0 ? loop->limit - var->number : var->number - loop->limit;
+    bstate.pc = cmp >= 0 ? loop->for_line : bmem_prog_next_line(bstate.prog);
+    if (cmp < 0)
+    {
+        loop->for_line = 0;
+    }
+
     return true;
 }
 

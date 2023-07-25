@@ -104,8 +104,13 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.0% (used 32736 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473020 bytes from 958448 bytes)
 ---
-Implemented FOR/NEXT syntax
+9c685ac Implemented FOR/NEXT syntax
 Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.0% (used 32736 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473100 bytes from 958448 bytes)
+---
+Implemented FOR/NEXT eval
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.3% (used 33048 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473404 bytes from 958448 bytes)
 ---
