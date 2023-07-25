@@ -35,7 +35,7 @@
 * [x] comparaison, condition sur number et string
 * [x] IF, THEN, GOTO
 * [x] FOR, NEXT
-* [ ] GOSUB, RETURN
+* [x] GOSUB, RETURN
 * [ ] EVAL / EVAL$
 * [ ] PLOT / UNPLOT / SCREEN$(l,c) ?
 * [ ] Tableaux (DIM)
