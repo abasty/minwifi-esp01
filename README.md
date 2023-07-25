@@ -34,7 +34,7 @@
   d'assurer la compatibilité "binaire" des `*.bst`
 * [x] comparaison, condition sur number et string
 * [x] IF, THEN, GOTO
-* [ ] FOR, NEXT
+* [x] FOR, NEXT
 * [ ] GOSUB, RETURN
 * [ ] EVAL / EVAL$
 * [ ] PLOT / UNPLOT / SCREEN$(l,c) ?
