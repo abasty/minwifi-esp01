@@ -157,22 +157,32 @@ typedef struct
 
 typedef struct
 {
+    uint16_t line_no;
+} return_t;
+
+typedef struct
+{
     prog_t *pc;
     prog_t *prog;
+    char *var_ref;
+    var_t *input_var;
+    float number;
+    uint8_t *read_ptr;
+    uint8_t token;
+    uint8_t input_var_token;
+    int8_t error;
     bool do_eval;
     bool running;
     bool inputting;
-    uint8_t *read_ptr;
-    uint8_t token;
-    float number;
+    int sp;
     string_t string;
-    char *var_ref;
-    var_t *input_var;
-    uint8_t input_var_token;
-    int8_t error;
 } eval_state_t;
 
 loop_t loops[26] = {0};
+
+#define EVAL_RETURNS_SIZE 32
+return_t returns[EVAL_RETURNS_SIZE] = {0};
+
 eval_state_t bstate;
 
 extern bastos_io_t *bio;
@@ -240,8 +250,9 @@ uint8_t instr1s[] = {
     0,
 };
 
-static void loops_clear()
+static void running_state_clear()
 {
+    bstate.sp = 0;
     memset(loops, 0, sizeof(loops));
 }
 
@@ -1034,7 +1045,7 @@ bool eval_inputting()
 
 static void eval_run()
 {
-    loops_clear();
+    running_state_clear();
     bmem_vars_clear();
     bstate.pc = bmem_prog_first_line();
     bstate.running = true;
@@ -1072,6 +1083,24 @@ static bool eval_gosub()
     if (!bstate.do_eval)
         return true;
 
+    if (bstate.sp >= EVAL_RETURNS_SIZE)
+    {
+        bstate.error = BERROR_RUN;
+        return true;
+    }
+
+    prog_t *next = bmem_prog_next_line(bstate.pc);
+    bstate.pc = bmem_prog_get_line(bstate.number);
+    bstate.running = bstate.pc != 0;
+
+    if (!bstate.pc)
+    {
+        bstate.error = BERROR_RUN;
+        return true;
+    }
+
+    returns[bstate.sp++].line_no = next ? next->line_no : 0;
+
     return true;
 }
 
@@ -1082,6 +1111,16 @@ static bool eval_return()
 
     if (!bstate.do_eval)
         return true;
+
+    if (bstate.sp < 1)
+    {
+        bstate.error = BERROR_RUN;
+        return true;
+    }
+
+    uint16_t line_no = returns[--bstate.sp].line_no;
+    bstate.pc = bmem_prog_get_line(line_no);
+    bstate.running = bstate.pc != 0;
 
     return true;
 }
@@ -1101,7 +1140,7 @@ static void eval_load()
 
     bstate.running = false;
     bstate.pc = 0;
-    loops_clear();
+    running_state_clear();
     bstate.error = bastos_load(bstate.string.chars);
 }
 
@@ -1115,13 +1154,13 @@ static void eval_erase()
 
 static void eval_clear()
 {
-    loops_clear();
+    running_state_clear();
     bmem_vars_clear();
 }
 
 static void eval_new()
 {
-    loops_clear();
+    running_state_clear();
     bmem_prog_new();
 }
 

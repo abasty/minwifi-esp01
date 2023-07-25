@@ -114,8 +114,13 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.3% (used 33048 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473404 bytes from 958448 bytes)
 ---
-Implemented GOSUB/RETURN syntax
+f675ae7 Implemented GOSUB/RETURN syntax
 Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.3% (used 33048 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473436 bytes from 958448 bytes)
+---
+Implemented GOSUB/RETURN eval
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.4% (used 33112 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473564 bytes from 958448 bytes)
 ---
