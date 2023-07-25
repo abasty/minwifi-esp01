@@ -1061,6 +1061,31 @@ static bool eval_goto()
     return true;
 }
 
+static bool eval_gosub()
+{
+    if (!eval_token(TOKEN_KEYWORD_GOSUB))
+        return false;
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    if (!bstate.do_eval)
+        return true;
+
+    return true;
+}
+
+static bool eval_return()
+{
+    if (!eval_token(TOKEN_KEYWORD_RETURN))
+        return false;
+
+    if (!bstate.do_eval)
+        return true;
+
+    return true;
+}
+
 static void eval_save()
 {
     if (bstate.string.chars == 0)
@@ -1236,6 +1261,8 @@ static bool eval_instruction()
 #ifndef OTA_ONLY
         ||
         eval_goto() ||
+        eval_gosub() ||
+        eval_return() ||
         eval_let() ||
         eval_list()
 #endif
@@ -1325,7 +1352,7 @@ static bool eval_for()
     loop->for_line = bstate.prog;
     loop->limit = limit;
     loop->step = step;
-    // TODO: Search for next and run next? See in emulator
+    // TODO: Search for next and run next? Check in emulator
 
     return true;
 }
