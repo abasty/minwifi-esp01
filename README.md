@@ -36,10 +36,13 @@
 * [x] IF, THEN, GOTO
 * [x] FOR, NEXT
 * [x] GOSUB, RETURN
+* [ ] REM, LEN
+* [ ] Dans `test` : pouvoir lire un fichier `.bas` sur la ligne d'entrée et
+  l'envoyer à `bastos_send_keys`. Ce serait bien aussi de pouvoir construire un
+  disque à distance (pour l'envoyer par OTA ou le falsher directement)
 * [ ] EVAL / EVAL$
 * [ ] PLOT / UNPLOT / SCREEN$(l,c) ?
 * [ ] Tableaux (DIM)
-* [ ] REM
 * [ ] DOWNLOAD / UPLOAD
 * [ ] TELNET / TELNET WS
 * [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?

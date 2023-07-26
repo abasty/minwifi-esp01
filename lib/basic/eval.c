@@ -693,10 +693,11 @@ static bool eval_string_term()
 
     if (eval_expr(TOKEN_NUMBER))
     {
-        if (bstate.number < 1)
-            return false;
-
         start = bstate.number;
+        if (start < 1)
+        {
+            start = 1;
+        }
         end = start;
     }
 
@@ -704,9 +705,6 @@ static bool eval_string_term()
     {
         if (eval_expr(TOKEN_NUMBER))
         {
-            if (bstate.number < 1)
-                return false;
-
             end = bstate.number;
         }
         else
