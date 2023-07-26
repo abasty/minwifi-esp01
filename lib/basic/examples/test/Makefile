@@ -75,6 +75,11 @@ remake:	clean $(BIN)/$(EXE)
 run: $(BIN)/$(EXE)
 	./$(BIN)/$(EXE)
 
+# memcheck the program
+.PHONY: memcheck
+memcheck: $(BIN)/$(EXE)
+	valgrind --leak-check=full --show-leak-kinds=all $(BIN)/$(EXE)
+
 # remove previous build and objects
 .PHONY: clean
 clean:

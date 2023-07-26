@@ -81,8 +81,8 @@ void bcat()
         if (strcmp(".", namelist[n]->d_name) && strcmp("..", namelist[n]->d_name))
         {
             printf("%s\n", namelist[n]->d_name);
-            free(namelist[n]);
         }
+        free(namelist[n]);
     }
     free(namelist);
 }
@@ -245,7 +245,7 @@ finalize:
     while (cont)
     {
         int c = getch();
-        if (c != 0 && c != 3 && c != 1)
+        if (c != 0 && c != 24 && c != 1)
         {
             char *keys = (char *) &c;
             bastos_send_keys(keys, 1);
@@ -258,6 +258,8 @@ finalize:
             }
         }
         bastos_loop();
-        cont = c != 3;
+        cont = c != 24;
     }
+
+    bmem_prog_new();
 }
