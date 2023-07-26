@@ -55,19 +55,16 @@ static void string_set(string_t *string, char *chars, bool allocated)
 
 static void string_normalize(string_t *string)
 {
-    if (!string->chars)
+    if (string->chars && *string->chars)
+        return;
+
+    if (string->allocated)
     {
-        string->allocated = false;
+        free(string->chars);
     }
-    else if (*string->chars == 0)
-    {
-        if (string->allocated)
-        {
-            free(string->chars);
-            string->allocated = false;
-        }
-        string->chars = 0;
-    }
+
+    string->allocated = false;
+    string->chars = 0;
 }
 
 static void string_move(string_t *from, string_t *to)
