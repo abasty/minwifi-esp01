@@ -36,6 +36,9 @@
 * [x] IF, THEN, GOTO
 * [x] FOR, NEXT
 * [x] GOSUB, RETURN
+* [ ] Optimisation BIO (une seule structure, 1 fonction number (int), 2/3 params
+  (union as_void_ptr, as_char_ptr, as_int, as_float), 1 result (union like
+  param) => static / extern
 * [ ] REM, LEN
 * [ ] Dans `test` : pouvoir lire un fichier `.bas` sur la ligne d'entrée et
   l'envoyer à `bastos_send_keys`. Ce serait bien aussi de pouvoir construire un
