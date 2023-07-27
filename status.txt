@@ -124,3 +124,8 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.4% (used 33112 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473564 bytes from 958448 bytes)
 ---
+Introduced bst_io_argv_t & bst_io_f -54
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.4% (used 33132 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473512 bytes from 958448 bytes)
+---

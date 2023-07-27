@@ -1161,17 +1161,17 @@ static void eval_new()
 
 static void eval_reset()
 {
-    bio->bio_f0(BIO_F0_RESET);
+    bastos_io_0(B_IO_RESET);
 }
 
 static void eval_cls()
 {
-    bio->bio_f0(BIO_F0_CLS);
+    bastos_io_0(B_IO_CLS);
 }
 
 static void eval_cat()
 {
-    bio->bio_f0(BIO_F0_CAT);
+    bastos_io_0(B_IO_CAT);
 }
 
 static bool eval_tty()
@@ -1184,28 +1184,30 @@ static bool eval_tty()
     if (!eval_expr(TOKEN_NUMBER))
         return false;
 
-    uint16_t arg1 = bstate.number;
-    uint16_t arg2 = 0;
+    bastos_io_argv[1].as_int = bstate.number;
 
-    switch (fn)
+    if (fn == TOKEN_KEYWORD_AT)
     {
-    case TOKEN_KEYWORD_AT:
         if (!eval_token(','))
             return false;
         if (!eval_expr(TOKEN_NUMBER))
             return false;
-        arg2 = bstate.number;
-        break;
-
-    case TOKEN_KEYWORD_INK:
-    case TOKEN_KEYWORD_PAPER:
-        break;
+        bastos_io_argv[0].as_int = B_IO_AT;
+        bastos_io_argv[2].as_int = bstate.number;
     }
-
-    if (bstate.do_eval)
+    else if (fn == TOKEN_KEYWORD_INK)
     {
-        bio->bio_f0(fn + (arg1 << 24) + (arg2 << 16));
+        bastos_io_argv[0].as_int = B_IO_INK;
+    } else
+    {
+        bastos_io_argv[0].as_int = B_IO_PAPER;
     }
+
+    if (!bstate.do_eval)
+        return true;
+
+    bastos_io();
+
     return true;
 }
 
