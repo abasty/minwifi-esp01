@@ -123,18 +123,18 @@ static int bopen(const char *pathname, int flags)
     return 0;
 }
 
-extern "C" int bclose(int fd)
+static int bclose(int fd)
 {
     bastos_file0.close();
     return 0;
 }
 
-extern "C" int bwrite(int fd, const void *buf, int count)
+static int bwrite(int fd, const void *buf, int count)
 {
     return bastos_file0.write((const uint8_t *) buf, count);
 }
 
-extern "C" int bread(int fd, void *buf, int count)
+static int bread(int fd, void *buf, int count)
 {
     return bastos_file0.read((uint8_t *) buf, count);
 }
@@ -195,12 +195,6 @@ static void color(uint8_t color, uint8_t foreground)
 #endif
 }
 
-bastos_io_t io = {
-    .bclose = bclose,
-    .bwrite = bwrite,
-    .bread = bread,
-};
-
 extern "C" int biocop(void)
 {
     int fn = bastos_io_argv[0].as_int;
@@ -222,7 +216,7 @@ extern "C" int biocop(void)
         return 0;
 
     case B_IO_RESET:
-        //breset();
+        breset();
         return 0;
 
     case B_IO_AT:
@@ -252,6 +246,14 @@ extern "C" int biocop(void)
     case B_IO_OPEN:
         return bopen(bastos_io_argv[1].as_string, bastos_io_argv[2].as_int);
 
+    case B_IO_CLOSE:
+        return bclose(bastos_io_argv[1].as_int);
+
+    case B_IO_READ:
+        return bread(bastos_io_argv[1].as_int, bastos_io_argv[2].as_ptr, bastos_io_argv[3].as_int);
+
+    case B_IO_WRITE:
+        return bwrite(bastos_io_argv[1].as_int, bastos_io_argv[2].as_ptr, bastos_io_argv[3].as_int);
     }
     return 0;
 }
@@ -360,7 +362,7 @@ void setup()
 
     // Initialize file system
     LittleFS.begin();
-    bastos_init(&io, biocop);
+    bastos_init(biocop);
 
     // connect Wifi if configuration available
     setup_wifi();

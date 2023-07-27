@@ -33,7 +33,6 @@
 #include "berror.h"
 #include "bio.h"
 
-extern bastos_io_t *bio;
 extern const char *keywords;
 
 uint8_t token_buffer[TOKEN_LINE_SIZE];

@@ -107,12 +107,6 @@ static void color(uint8_t color, uint8_t foreground)
     printf("\033" "[%dm", (foreground ? 30 : 40) + color);
 }
 
-bastos_io_t io = {
-    .bclose = bclose,
-    .bwrite = bwrite,
-    .bread = bread,
-};
-
 int biocop(void)
 {
     int fn = bastos_io_argv[0].as_int;
@@ -163,6 +157,15 @@ int biocop(void)
 
     case B_IO_OPEN:
         return bopen(bastos_io_argv[1].as_string, bastos_io_argv[2].as_int);
+
+    case B_IO_CLOSE:
+        return bclose(bastos_io_argv[1].as_int);
+
+    case B_IO_READ:
+        return bread(bastos_io_argv[1].as_int, bastos_io_argv[2].as_ptr, bastos_io_argv[3].as_int);
+
+    case B_IO_WRITE:
+        return bwrite(bastos_io_argv[1].as_int, bastos_io_argv[2].as_ptr, bastos_io_argv[3].as_int);
     }
     return 0;
 }
@@ -224,7 +227,7 @@ int main(int argc, char *argv[])
 
     chdir(BASTOS_DISK_PATH);
 
-    bastos_init(&io, biocop);
+    bastos_init(biocop);
 
     int err = bastos_load("config$$$");
     if (err != BERROR_NONE)

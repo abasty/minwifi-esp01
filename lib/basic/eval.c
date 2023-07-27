@@ -182,8 +182,6 @@ return_t returns[EVAL_RETURNS_SIZE] = {0};
 
 eval_state_t bstate;
 
-extern bastos_io_t *bio;
-
 extern ds_btree_t prog_tree;
 extern ds_btree_t var_tree;
 

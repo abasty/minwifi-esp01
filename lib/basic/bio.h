@@ -57,10 +57,10 @@ extern "C"
 #define B_IO_PRINT_INTEGER  9
 #define B_IO_ERASE          10
 #define B_IO_OPEN           11
+#define B_IO_CLOSE          12
+#define B_IO_READ           13
+#define B_IO_WRITE          14
 
-typedef int bclose_t(int fd);
-typedef int bwrite_t(int fd, const void *buf, int count);
-typedef int bread_t(int fd, void *buf, int count);
 
 typedef union {
     uint8_t as_uint8;
@@ -72,12 +72,6 @@ typedef union {
 } bst_io_argv_t;
 
 typedef int bst_io_f(void);
-
-typedef struct {
-    bclose_t *bclose;
-    bwrite_t *bwrite;
-    bread_t *bread;
-} bastos_io_t;
 
 extern bst_io_argv_t bastos_io_argv[];
 extern bst_io_f *bastos_io;
@@ -93,6 +87,31 @@ static inline int bio_open(const char *pathname, int flags)
     bastos_io_argv[0].as_int = B_IO_OPEN;
     bastos_io_argv[1].as_string = (char *)pathname;
     bastos_io_argv[2].as_int = flags;
+    return bastos_io();
+}
+
+static inline int bio_close(int fd)
+{
+    bastos_io_argv[0].as_int = B_IO_CLOSE;
+    bastos_io_argv[1].as_int = fd;
+    return bastos_io();
+}
+
+static inline int bio_read(int fd, void *buf, int count)
+{
+    bastos_io_argv[0].as_int = B_IO_READ;
+    bastos_io_argv[1].as_int = fd;
+    bastos_io_argv[2].as_ptr = buf;
+    bastos_io_argv[3].as_int = count;
+    return bastos_io();
+}
+
+static inline int bio_write(int fd, void *buf, int count)
+{
+    bastos_io_argv[0].as_int = B_IO_WRITE;
+    bastos_io_argv[1].as_int = fd;
+    bastos_io_argv[2].as_ptr = buf;
+    bastos_io_argv[3].as_int = count;
     return bastos_io();
 }
 
@@ -125,7 +144,7 @@ static inline int bio_erase(const char *pathname)
     return bastos_io();
 }
 
-void bastos_init(bastos_io_t *_io, bst_io_f *_basto_io);
+void bastos_init(bst_io_f *_basto_io);
 
 size_t bastos_send_keys(const char *keys, size_t n);
 void bastos_loop();
