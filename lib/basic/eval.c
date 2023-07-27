@@ -237,6 +237,7 @@ uint8_t instr0[] = {
     TOKEN_KEYWORD_STOP,
     TOKEN_KEYWORD_CONT,
     TOKEN_KEYWORD_RUN,
+    TOKEN_KEYWORD_RETURN,
     0,
 };
 
@@ -1099,25 +1100,17 @@ static bool eval_gosub()
     return true;
 }
 
-static bool eval_return()
+static void eval_return()
 {
-    if (!eval_token(TOKEN_KEYWORD_RETURN))
-        return false;
-
-    if (!bstate.do_eval)
-        return true;
-
     if (bstate.sp < 1)
     {
         bstate.error = BERROR_RUN;
-        return true;
+        return;
     }
 
     uint16_t line_no = returns[--bstate.sp].line_no;
     bstate.pc = bmem_prog_get_line(line_no);
     bstate.running = bstate.pc != 0;
-
-    return true;
 }
 
 static void eval_save()
@@ -1235,6 +1228,11 @@ EVAL:
         eval_erase();
         return true;
     }
+    if (instr == TOKEN_KEYWORD_RETURN)
+    {
+        eval_return();
+        return true;
+    }
     if (instr == TOKEN_KEYWORD_SAVE)
     {
         eval_save();
@@ -1299,7 +1297,6 @@ static bool eval_instruction()
         ||
         eval_goto() ||
         eval_gosub() ||
-        eval_return() ||
         eval_let() ||
         eval_list()
 #endif
