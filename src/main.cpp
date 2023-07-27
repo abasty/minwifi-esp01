@@ -59,7 +59,7 @@ bool fkey = false;
 bool minitelMode;
 
 
-extern "C" int print_float(float f)
+static inline int print_float(float f)
 {
 #ifndef MINITEL
     if (wifiClient)
@@ -68,7 +68,7 @@ extern "C" int print_float(float f)
     return Serial.printf("%g", f);
 }
 
-extern "C" int print_string(const char *s)
+static inline int print_string(const char *s)
 {
 #ifndef MINITEL
     if (wifiClient)
@@ -77,7 +77,7 @@ extern "C" int print_string(const char *s)
     return Serial.printf("%s", s);
 }
 
-extern "C" int print_integer(const char *format, int i)
+static inline int print_integer(const char *format, int i)
 {
 #ifndef MINITEL
     if (wifiClient)
@@ -110,7 +110,7 @@ static inline void del()
 
 File bastos_file0;
 
-extern "C" int bopen(const char *pathname, int flags)
+static inline int bopen(const char *pathname, int flags)
 {
     const char *access = "r";
     if (flags & B_CREAT)
@@ -123,18 +123,18 @@ extern "C" int bopen(const char *pathname, int flags)
     return 0;
 }
 
-extern "C" int bclose(int fd)
+static inline int bclose(int fd)
 {
     bastos_file0.close();
     return 0;
 }
 
-extern "C" int bwrite(int fd, const void *buf, int count)
+static inline int bwrite(int fd, const void *buf, int count)
 {
     return bastos_file0.write((const uint8_t *) buf, count);
 }
 
-extern "C" int bread(int fd, void *buf, int count)
+static inline int bread(int fd, void *buf, int count)
 {
     return bastos_file0.read((uint8_t *) buf, count);
 }
@@ -156,7 +156,7 @@ static inline void bcat()
     print_integer("%u\r\n", info.totalBytes);
 }
 
-extern "C" int berase(const char *pathname)
+static inline int berase(const char *pathname)
 {
     bool ret = LittleFS.remove(pathname);
     if (ret)
@@ -169,7 +169,7 @@ static inline void breset()
     ESP.restart();
 }
 
-static void GotoXY(uint8_t c, uint8_t l)
+static inline void GotoXY(uint8_t c, uint8_t l)
 {
 #ifndef MINITEL
     if (wifiClient)
@@ -182,7 +182,7 @@ static void GotoXY(uint8_t c, uint8_t l)
 #endif
 }
 
-static void color(uint8_t color, uint8_t foreground)
+static inline void color(uint8_t color, uint8_t foreground)
 {
 #ifndef MINITEL
     if (wifiClient)
@@ -195,12 +195,8 @@ static void color(uint8_t color, uint8_t foreground)
 #endif
 }
 
-static void bio_f0()
+static inline void *bio_f0(int fn, int x, int y)
 {
-    int fn = bastos_io_argv[0].as_int;
-    int x = bastos_io_argv[2].as_int;
-    int y = bastos_io_argv[1].as_int;
-
     switch (fn)
     {
     case B_IO_CAT:
@@ -231,26 +227,20 @@ static void bio_f0()
         color(y, 0);
         break;
     }
+
+    return 0;
 }
 
 bastos_io_t io = {
     .print_string = print_string,
     .print_float = print_float,
-
     .print_integer = print_integer,
     .bopen = bopen,
-
     .bclose = bclose,
-
     .bwrite = bwrite,
     .bread = bread,
+    .function0 = bio_f0,
 };
-
-void *biocop(void)
-{
-    bio_f0();
-    return 0;
-}
 
 static void initMinitel(bool clear)
 {
@@ -356,7 +346,7 @@ void setup()
 
     // Initialize file system
     LittleFS.begin();
-    bastos_init(&io, biocop);
+    bastos_init(&io);
 
     // connect Wifi if configuration available
     setup_wifi();

@@ -35,18 +35,17 @@
 
 bastos_io_t *bio = 0;
 
-bst_io_argv_t bastos_io_argv[4] = {0};
-bst_io_f *bastos_io = 0;
+// bst_io_argv_t bastos_io_argv[4] = {0};
+// function0_t *function0_io = 0;
 
 uint8_t io_buffer[IO_BUFFER_SIZE];
 char *io_buffer_char = (char *)io_buffer;
 
 extern uint8_t token_buffer[TOKEN_LINE_SIZE];
 
-void bastos_init(bastos_io_t *_io, bst_io_f *_basto_io)
+void bastos_init(bastos_io_t *_io)
 {
     bio = _io;
-    bastos_io = _basto_io;
     *io_buffer = 0;
     bmem_init();
 }
@@ -77,7 +76,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
             {
                 dst--;
                 *dst = 0;
-                bastos_io_0(B_IO_DEL);
+                bio->function0(B_IO_DEL, 0, 0);
             }
         }
         else

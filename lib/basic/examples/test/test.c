@@ -107,12 +107,8 @@ static void color(uint8_t color, uint8_t foreground)
     printf("\033" "[%dm", (foreground ? 30 : 40) + color);
 }
 
-static void bio_f0()
+void *bio_f0(int fn, int x, int y)
 {
-    uint8_t fn = bastos_io_argv[0].as_int;
-    uint8_t y = bastos_io_argv[1].as_int;
-    uint8_t x = bastos_io_argv[2].as_int;
-
     switch (fn)
     {
     case B_IO_CAT:
@@ -130,6 +126,7 @@ static void bio_f0()
     case B_IO_RESET:
         //breset();
         break;
+
     case B_IO_AT:
         GotoXY(x, y);
         break;
@@ -142,6 +139,8 @@ static void bio_f0()
         color(y, 0);
         break;
     }
+
+    return 0;
 }
 
 bastos_io_t io = {
@@ -150,19 +149,14 @@ bastos_io_t io = {
 
     .print_integer = print_integer,
     .bopen = bopen,
-    .erase = berase,
 
     .bclose = bclose,
 
     .bwrite = bwrite,
     .bread = bread,
-};
 
-void *biocop(void)
-{
-    bio_f0();
-    return 0;
-}
+    .function0 = bio_f0,
+};
 
 #if 0
 extern char *keywords;
@@ -221,7 +215,7 @@ int main(int argc, char *argv[])
 
     chdir(BASTOS_DISK_PATH);
 
-    bastos_init(&io, biocop);
+    bastos_init(&io);
 
     int err = bastos_load("config$$$");
     if (err != BERROR_NONE)

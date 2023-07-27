@@ -55,56 +55,27 @@ extern "C"
 
 typedef int print_string_t(const char *s);
 typedef int print_float_t(float f);
-
 typedef int print_format_integer_t(const char *format, int i);
 typedef int bopen_t(const char *pathname, int flags);
-
 typedef int bclose_t(int fd);
-
 typedef int bwrite_t(int fd, const void *buf, int count);
 typedef int bread_t(int fd, void *buf, int count);
-
 typedef int erase_t(const char *pathname);
+typedef void *function0_t(int fn, int x, int y);
 
-typedef void B_IO_t(uint32_t fn);
-
-typedef union {
-    uint8_t as_uint8;
-    int as_int;
-    uint32_t as_uint32;
-    float as_float;
-    char* as_string;
-    void* as_ptr;
-} bst_io_argv_t;
-
-typedef void *bst_io_f(void);
-
-#define bastos_io_0(fn) do { bastos_io_argv[0].as_uint32 = fn; bastos_io(); } while(0)
-
-typedef struct
-{
+typedef struct {
     print_string_t *print_string;
     print_float_t *print_float;
-
     print_format_integer_t *print_integer;
     bopen_t *bopen;
-
     bclose_t *bclose;
-
     bwrite_t *bwrite;
     bread_t *bread;
-
     erase_t *erase;
-
-//    B_IO_t *B_IO;
-
-//    bst_io_f *call;
+    function0_t *function0;
 } bastos_io_t;
 
-extern bst_io_argv_t bastos_io_argv[];
-extern bst_io_f *bastos_io;
-
-void bastos_init(bastos_io_t *_io, bst_io_f *_basto_io);
+void bastos_init(bastos_io_t *_io);
 
 size_t bastos_send_keys(const char *keys, size_t n);
 void bastos_loop();
