@@ -59,7 +59,7 @@ bool fkey = false;
 bool minitelMode;
 
 
-extern "C" int print_float(float f)
+static int print_float(float f)
 {
 #ifndef MINITEL
     if (wifiClient)
@@ -68,7 +68,7 @@ extern "C" int print_float(float f)
     return Serial.printf("%g", f);
 }
 
-extern "C" int print_string(const char *s)
+static int print_string(const char *s)
 {
 #ifndef MINITEL
     if (wifiClient)
@@ -195,48 +195,7 @@ static void color(uint8_t color, uint8_t foreground)
 #endif
 }
 
-static void bio_f0()
-{
-    int fn = bastos_io_argv[0].as_int;
-    int x = bastos_io_argv[2].as_int;
-    int y = bastos_io_argv[1].as_int;
-
-    switch (fn)
-    {
-    case B_IO_CAT:
-        bcat();
-        break;
-
-    case B_IO_CLS:
-        cls();
-        break;
-
-    case B_IO_DEL:
-        del();
-        break;
-
-    case B_IO_RESET:
-        breset();
-        break;
-
-    case B_IO_AT:
-        GotoXY(x, y);
-        break;
-
-    case B_IO_INK:
-        color(y, 1);
-        break;
-
-    case B_IO_PAPER:
-        color(y, 0);
-        break;
-    }
-}
-
 bastos_io_t io = {
-    .print_string = print_string,
-    .print_float = print_float,
-
     .print_integer = print_integer,
     .bopen = bopen,
 
@@ -246,9 +205,44 @@ bastos_io_t io = {
     .bread = bread,
 };
 
-void *biocop(void)
+int biocop(void)
 {
-    bio_f0();
+    switch (bastos_io_argv[0].as_int)
+    {
+    case B_IO_CAT:
+        bcat();
+        return 0;
+
+    case B_IO_CLS:
+        cls();
+        return 0;
+
+    case B_IO_DEL:
+        del();
+        return 0;
+
+    case B_IO_RESET:
+        //breset();
+        return 0;
+
+    case B_IO_AT:
+        GotoXY(bastos_io_argv[2].as_int, bastos_io_argv[1].as_int);
+        return 0;
+
+    case B_IO_INK:
+        color(bastos_io_argv[1].as_int, 1);
+        return 0;
+
+    case B_IO_PAPER:
+        color(bastos_io_argv[1].as_int, 0);
+        return 0;
+
+    case B_IO_PRINT_STRING:
+        return print_string(bastos_io_argv[1].as_string);
+
+    case B_IO_PRINT_FLOAT:
+        return print_float(bastos_io_argv[1].as_float);
+    }
     return 0;
 }
 

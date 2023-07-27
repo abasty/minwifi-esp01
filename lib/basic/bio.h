@@ -45,15 +45,16 @@ extern "C"
 #define B_TRUNC   01000
 #define B_APPEND  02000
 
-#define B_IO_CAT        0
-#define B_IO_CLS        1
-#define B_IO_RESET      2
-#define B_IO_DEL        3
-#define B_IO_AT         4
-#define B_IO_INK        5
-#define B_IO_PAPER      6
+#define B_IO_CAT            0
+#define B_IO_CLS            1
+#define B_IO_RESET          2
+#define B_IO_DEL            3
+#define B_IO_AT             4
+#define B_IO_INK            5
+#define B_IO_PAPER          6
+#define B_IO_PRINT_STRING   7
+#define B_IO_PRINT_FLOAT    8
 
-typedef int print_string_t(const char *s);
 typedef int print_float_t(float f);
 
 typedef int print_format_integer_t(const char *format, int i);
@@ -66,8 +67,6 @@ typedef int bread_t(int fd, void *buf, int count);
 
 typedef int erase_t(const char *pathname);
 
-typedef void B_IO_t(uint32_t fn);
-
 typedef union {
     uint8_t as_uint8;
     int as_int;
@@ -77,15 +76,10 @@ typedef union {
     void* as_ptr;
 } bst_io_argv_t;
 
-typedef void *bst_io_f(void);
-
-#define bastos_io_0(fn) do { bastos_io_argv[0].as_uint32 = fn; bastos_io(); } while(0)
+typedef int bst_io_f(void);
 
 typedef struct
 {
-    print_string_t *print_string;
-    print_float_t *print_float;
-
     print_format_integer_t *print_integer;
     bopen_t *bopen;
 
@@ -95,14 +89,30 @@ typedef struct
     bread_t *bread;
 
     erase_t *erase;
-
-//    B_IO_t *B_IO;
-
-//    bst_io_f *call;
 } bastos_io_t;
 
 extern bst_io_argv_t bastos_io_argv[];
 extern bst_io_f *bastos_io;
+
+static inline void bio_fn(int fn)
+{
+    bastos_io_argv[0].as_int = fn;
+    bastos_io();
+}
+
+static inline int bio_print_string(char *string)
+{
+    bastos_io_argv[0].as_int = B_IO_PRINT_STRING;
+    bastos_io_argv[1].as_string = string;
+    return bastos_io();
+}
+
+static inline int bio_print_float(float f)
+{
+    bastos_io_argv[0].as_int = B_IO_PRINT_FLOAT;
+    bastos_io_argv[1].as_float = f;
+    return bastos_io();
+}
 
 void bastos_init(bastos_io_t *_io, bst_io_f *_basto_io);
 

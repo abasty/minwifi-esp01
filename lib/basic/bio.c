@@ -69,7 +69,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
         {
             *dst++ = '\n';
             src++;
-            bio->print_string("\r\n");
+            bio_print_string("\r\n");
         }
         else if (*src == 127)
         {
@@ -77,7 +77,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
             {
                 dst--;
                 *dst = 0;
-                bastos_io_0(B_IO_DEL);
+                bio_fn(B_IO_DEL);
             }
         }
         else
@@ -86,7 +86,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
             *dst++ = *src++;
             *dst = 0;
             size++;
-            bio->print_string((char *) c);
+            bio_print_string((char *) c);
         }
         size = dst - io_buffer;
         n--;
@@ -379,7 +379,7 @@ void bastos_loop()
         eval_prog_next();
         if (!eval_running())
         {
-            bio->print_string("Ready\r\n");
+            bio_print_string("Ready\r\n");
         }
         return;
     }

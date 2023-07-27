@@ -846,7 +846,7 @@ static bool eval_input()
     {
         if (bstate.do_eval)
         {
-            bio->print_string(bstate.string.chars);
+            bio_print_string(bstate.string.chars);
         }
 
         if (!eval_token(','))
@@ -897,11 +897,11 @@ static bool eval_print()
             {
                 if (bstate.token == TOKEN_NUMBER)
                 {
-                    bio->print_float(bstate.number);
+                    bio_print_float(bstate.number);
                 }
                 else // TOKEN_STRING
                 {
-                    bio->print_string(bstate.string.chars ? bstate.string.chars : "");
+                    bio_print_string(bstate.string.chars ? bstate.string.chars : "");
                 }
             }
         }
@@ -913,7 +913,7 @@ static bool eval_print()
         {
             if (bstate.do_eval)
             {
-                bio->print_string(" ");
+                bio_print_string(" ");
             }
 
         }
@@ -931,7 +931,7 @@ static bool eval_print()
     {
         if (ln)
         {
-            bio->print_string("\r\n");
+            bio_print_string("\r\n");
         }
     }
 
@@ -971,9 +971,9 @@ static bool eval_list()
                 char c[2];
                 c[0] = bstate.pc == prog ? '>' : ' ';
                 c[1] = 0;
-                bio->print_string(c);
-                bio->print_string(untokenize(prog->line));
-                bio->print_string("\r\n");
+                bio_print_string(c);
+                bio_print_string(untokenize(prog->line));
+                bio_print_string("\r\n");
                 n--;
             }
             prog = bmem_prog_next_line(prog);
@@ -1161,17 +1161,17 @@ static void eval_new()
 
 static void eval_reset()
 {
-    bastos_io_0(B_IO_RESET);
+    bio_fn(B_IO_RESET);
 }
 
 static void eval_cls()
 {
-    bastos_io_0(B_IO_CLS);
+    bio_fn(B_IO_CLS);
 }
 
 static void eval_cat()
 {
-    bastos_io_0(B_IO_CAT);
+    bio_fn(B_IO_CAT);
 }
 
 static bool eval_tty()

@@ -85,7 +85,7 @@ static const char *untokenize_keyword(tokenizer_state_t *state, const char *keyw
     {
         c = *keyword_char++;
         char char_str[2] = {c & ~KEYWORD_END_TAG, 0};
-        bio->print_string(char_str);
+        bio_print_string(char_str);
     } while ((c & KEYWORD_END_TAG) == 0);
 
     return keyword;
@@ -213,25 +213,25 @@ char *untokenize(uint8_t *input)
                 token == (TOKEN_KEYWORD_STEP & ~TOKEN_KEYWORD) ||
                 token == (TOKEN_KEYWORD_THEN & ~TOKEN_KEYWORD))
             {
-                bio->print_string(" ");
+                bio_print_string(" ");
             }
             untokenize_keyword(&state, keywords);
             if (*state.read_ptr != '(' && token != (TOKEN_KEYWORD_PI & ~TOKEN_KEYWORD) && token != (TOKEN_KEYWORD_RND & ~TOKEN_KEYWORD))
             {
-                bio->print_string(" ");
+                bio_print_string(" ");
             }
         }
         else if (token == TOKEN_NUMBER)
         {
             float value = token_number_get_value(&state);
-            bio->print_float(value);
+            bio_print_float(value);
         }
         else if (token == TOKEN_STRING)
         {
             char *value = token_string_get_value(&state);
-            bio->print_string("\"");
-            bio->print_string(value);
-            bio->print_string("\"");
+            bio_print_string("\"");
+            bio_print_string(value);
+            bio_print_string("\"");
         }
         else if (token == TOKEN_VARIABLE_NUMBER || token == TOKEN_VARIABLE_STRING)
         {
@@ -240,30 +240,30 @@ char *untokenize(uint8_t *input)
             {
                 *char_str = (char) *state.read_ptr++;
                 *char_str |= 32;
-                bio->print_string(char_str);
+                bio_print_string(char_str);
             }
             state.read_ptr++;
             if (token == TOKEN_VARIABLE_STRING)
             {
-                bio->print_string("$");
+                bio_print_string("$");
             }
         }
         else if (token == TOKEN_COMPARE_NE)
         {
-            bio->print_string("<>");
+            bio_print_string("<>");
         }
         else if (token == TOKEN_COMPARE_LE)
         {
-            bio->print_string("<=");
+            bio_print_string("<=");
         }
         else if (token == TOKEN_COMPARE_GE)
         {
-            bio->print_string(">=");
+            bio_print_string(">=");
         }
         else
         {
             char token_str[2] = {token, 0};
-            bio->print_string(token_str);
+            bio_print_string(token_str);
         }
     }
 
