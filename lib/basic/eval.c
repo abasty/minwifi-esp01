@@ -291,17 +291,36 @@ static bool eval_string_expr();
 static bool eval_factor();
 static bool eval_expr(uint8_t type_token);
 
-static bool eval_code()
+uint8_t len_code_functions[] = {
+    TOKEN_KEYWORD_CODE,
+    TOKEN_KEYWORD_LEN,
+    0,
+};
+
+static bool eval_len_code()
 {
-    if (eval_token(TOKEN_KEYWORD_CODE) && eval_string_expr())
+    uint8_t token;
+
+    if ((token = eval_token_one_of((char*) len_code_functions)) == 0 || !eval_string_expr())
+        return false;
+
+    if (!bstate.do_eval)
+        return true;
+
+    if (!bstate.string.chars)
     {
-        if (bstate.do_eval)
-        {
-            bstate.number = bstate.string.chars ? *bstate.string.chars : 0;
-        }
+        bstate.number = 0;
         return true;
     }
-    return false;
+
+    if (token == TOKEN_KEYWORD_LEN)
+    {
+        bstate.number = strlen(bstate.string.chars);
+        return true;
+    }
+
+    bstate.number = *bstate.string.chars;
+    return true;
 }
 
 static bool eval_number()
@@ -421,7 +440,7 @@ static bool eval_factor()
     bool result =
         eval_number() ||
         eval_function() ||
-        eval_code() ||
+        eval_len_code() ||
         (eval_token('(') && eval_expr(TOKEN_NUMBER) && eval_token(')'));
     return result;
 }

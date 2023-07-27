@@ -60,6 +60,7 @@ step
 stop
 cont
 then
+len
 EOF
 
 # Do not sort to preserver save/load compatibility
