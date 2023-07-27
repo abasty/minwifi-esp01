@@ -160,7 +160,7 @@ int biocop(void)
         return print_float(bastos_io_argv[1].as_float);
 
     case B_IO_PRINT_INTEGER:
-        return print_integer(bastos_io_argv[1].as_string, bastos_io_argv[1].as_int);
+        return print_integer(bastos_io_argv[1].as_string, bastos_io_argv[2].as_int);
     }
     return 0;
 }

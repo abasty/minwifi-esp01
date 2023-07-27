@@ -206,7 +206,11 @@ bastos_io_t io = {
 
 int biocop(void)
 {
-    switch (bastos_io_argv[0].as_int)
+    int fn = bastos_io_argv[0].as_int;
+    int y = bastos_io_argv[1].as_int;
+    int x = bastos_io_argv[2].as_int;
+
+    switch (fn)
     {
     case B_IO_CAT:
         bcat();
@@ -225,15 +229,15 @@ int biocop(void)
         return 0;
 
     case B_IO_AT:
-        GotoXY(bastos_io_argv[2].as_int, bastos_io_argv[1].as_int);
+        GotoXY(x, y);
         return 0;
 
     case B_IO_INK:
-        color(bastos_io_argv[1].as_int, 1);
+        color(y, 1);
         return 0;
 
     case B_IO_PAPER:
-        color(bastos_io_argv[1].as_int, 0);
+        color(y, 0);
         return 0;
 
     case B_IO_PRINT_STRING:
@@ -243,8 +247,7 @@ int biocop(void)
         return print_float(bastos_io_argv[1].as_float);
 
     case B_IO_PRINT_INTEGER:
-        return print_integer(bastos_io_argv[1].as_string, bastos_io_argv[1].as_int);
-
+        return print_integer(bastos_io_argv[1].as_string, bastos_io_argv[2].as_int);
     }
     return 0;
 }
