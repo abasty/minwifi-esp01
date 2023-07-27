@@ -56,11 +56,9 @@ extern "C"
 #define B_IO_PRINT_FLOAT    8
 #define B_IO_PRINT_INTEGER  9
 #define B_IO_ERASE          10
-
-typedef int bopen_t(const char *pathname, int flags);
+#define B_IO_OPEN           11
 
 typedef int bclose_t(int fd);
-
 typedef int bwrite_t(int fd, const void *buf, int count);
 typedef int bread_t(int fd, void *buf, int count);
 
@@ -76,7 +74,6 @@ typedef union {
 typedef int bst_io_f(void);
 
 typedef struct {
-    bopen_t *bopen;
     bclose_t *bclose;
     bwrite_t *bwrite;
     bread_t *bread;
@@ -89,6 +86,14 @@ static inline void bio_fn(int fn)
 {
     bastos_io_argv[0].as_int = fn;
     bastos_io();
+}
+
+static inline int bio_open(const char *pathname, int flags)
+{
+    bastos_io_argv[0].as_int = B_IO_OPEN;
+    bastos_io_argv[1].as_string = (char *)pathname;
+    bastos_io_argv[2].as_int = flags;
+    return bastos_io();
 }
 
 static inline int bio_print_string(char *string)

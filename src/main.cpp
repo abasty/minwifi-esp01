@@ -86,7 +86,7 @@ static int print_integer(const char *format, int i)
     return Serial.printf(format, i);
 }
 
-static inline void cls()
+static void cls()
 {
 #ifndef MINITEL
     if (wifiClient)
@@ -99,7 +99,7 @@ static inline void cls()
 #endif
 }
 
-static inline void del()
+static void del()
 {
 #ifndef MINITEL
     if (wifiClient)
@@ -110,7 +110,7 @@ static inline void del()
 
 File bastos_file0;
 
-extern "C" int bopen(const char *pathname, int flags)
+static int bopen(const char *pathname, int flags)
 {
     const char *access = "r";
     if (flags & B_CREAT)
@@ -139,7 +139,7 @@ extern "C" int bread(int fd, void *buf, int count)
     return bastos_file0.read((uint8_t *) buf, count);
 }
 
-static inline void bcat()
+static void bcat()
 {
     Dir dir = LittleFS.openDir("/");
     while (dir.next())
@@ -164,7 +164,7 @@ static int berase(const char *pathname)
     return -1;
 }
 
-static inline void breset()
+static void breset()
 {
     ESP.restart();
 }
@@ -196,13 +196,12 @@ static void color(uint8_t color, uint8_t foreground)
 }
 
 bastos_io_t io = {
-    .bopen = bopen,
     .bclose = bclose,
     .bwrite = bwrite,
     .bread = bread,
 };
 
-int biocop(void)
+extern "C" int biocop(void)
 {
     int fn = bastos_io_argv[0].as_int;
     int y = bastos_io_argv[1].as_int;
@@ -249,6 +248,9 @@ int biocop(void)
 
     case B_IO_ERASE:
         return berase(bastos_io_argv[1].as_string);
+
+    case B_IO_OPEN:
+        return bopen(bastos_io_argv[1].as_string, bastos_io_argv[2].as_int);
 
     }
     return 0;

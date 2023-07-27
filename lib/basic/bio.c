@@ -183,7 +183,7 @@ bool bastos_running()
 
 int8_t bastos_save(const char *name)
 {
-    int fd = bio->bopen(name, B_CREAT | B_RDWR);
+    int fd = bio_open(name, B_CREAT | B_RDWR);
     // save prog
     prog_t *line = bmem_prog_first_line();
     while (line)
@@ -228,7 +228,7 @@ int8_t bastos_save(const char *name)
 int8_t bastos_load(const char *name)
 {
     int8_t err = BERROR_NONE;
-    int fd = bio->bopen(name, B_RDONLY);
+    int fd = bio_open(name, B_RDONLY);
 
     if (fd < 0)
         return BERROR_IO;
