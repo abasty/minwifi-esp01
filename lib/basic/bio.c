@@ -170,7 +170,7 @@ finalize:
     // Handle error
     if (err != BERROR_NONE)
     {
-        bio->print_integer("Error %d\r\n", (int)-err);
+        bio_print_integer("Error %d\r\n", (int)-err);
     }
 
     return err;

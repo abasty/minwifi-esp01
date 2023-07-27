@@ -77,7 +77,7 @@ static int print_string(const char *s)
     return Serial.printf("%s", s);
 }
 
-extern "C" int print_integer(const char *format, int i)
+static int print_integer(const char *format, int i)
 {
 #ifndef MINITEL
     if (wifiClient)
@@ -196,7 +196,6 @@ static void color(uint8_t color, uint8_t foreground)
 }
 
 bastos_io_t io = {
-    .print_integer = print_integer,
     .bopen = bopen,
 
     .bclose = bclose,
@@ -242,6 +241,10 @@ int biocop(void)
 
     case B_IO_PRINT_FLOAT:
         return print_float(bastos_io_argv[1].as_float);
+
+    case B_IO_PRINT_INTEGER:
+        return print_integer(bastos_io_argv[1].as_string, bastos_io_argv[1].as_int);
+
     }
     return 0;
 }

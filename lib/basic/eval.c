@@ -960,14 +960,14 @@ static bool eval_list()
 
     if (bstate.do_eval)
     {
-        bio->print_integer("lines/vars: %d/", prog_tree.count);
-        bio->print_integer("%d\r\n", var_tree.count);
+        bio_print_integer("lines/vars: %d/", prog_tree.count);
+        bio_print_integer("%d\r\n", var_tree.count);
         prog_t *prog = bmem_prog_first_line();
         while (prog && n >= 1)
         {
             if (prog->line_no >= start)
             {
-                bio->print_integer("%4d", (int) prog->line_no);
+                bio_print_integer("%4d", (int) prog->line_no);
                 char c[2];
                 c[0] = bstate.pc == prog ? '>' : ' ';
                 c[1] = 0;
@@ -1009,7 +1009,7 @@ int8_t eval_prog_next()
 
     if (err != BERROR_NONE && bstate.pc != 0)
     {
-        bio->print_integer("On line %d: ", bstate.pc->line_no);
+        bio_print_integer("On line %d: ", bstate.pc->line_no);
     }
 
     bstate.pc = 0;

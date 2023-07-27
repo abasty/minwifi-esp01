@@ -35,7 +35,7 @@ static int print_string(const char *s)
     return n;
 }
 
-int print_integer(const char *format, int32_t i)
+static int print_integer(const char *format, int32_t i)
 {
     return printf(format, i);
 }
@@ -108,7 +108,6 @@ static void color(uint8_t color, uint8_t foreground)
 }
 
 bastos_io_t io = {
-    .print_integer = print_integer,
     .bopen = bopen,
     .erase = berase,
 
@@ -159,6 +158,9 @@ int biocop(void)
 
     case B_IO_PRINT_FLOAT:
         return print_float(bastos_io_argv[1].as_float);
+
+    case B_IO_PRINT_INTEGER:
+        return print_integer(bastos_io_argv[1].as_string, bastos_io_argv[1].as_int);
     }
     return 0;
 }

@@ -54,10 +54,10 @@ extern "C"
 #define B_IO_PAPER          6
 #define B_IO_PRINT_STRING   7
 #define B_IO_PRINT_FLOAT    8
+#define B_IO_PRINT_INTEGER  9
 
 typedef int print_float_t(float f);
 
-typedef int print_format_integer_t(const char *format, int i);
 typedef int bopen_t(const char *pathname, int flags);
 
 typedef int bclose_t(int fd);
@@ -80,7 +80,6 @@ typedef int bst_io_f(void);
 
 typedef struct
 {
-    print_format_integer_t *print_integer;
     bopen_t *bopen;
 
     bclose_t *bclose;
@@ -111,6 +110,14 @@ static inline int bio_print_float(float f)
 {
     bastos_io_argv[0].as_int = B_IO_PRINT_FLOAT;
     bastos_io_argv[1].as_float = f;
+    return bastos_io();
+}
+
+static inline int bio_print_integer(char *format, int i)
+{
+    bastos_io_argv[0].as_int = B_IO_PRINT_INTEGER;
+    bastos_io_argv[1].as_string = format;
+    bastos_io_argv[2].as_int = i;
     return bastos_io();
 }
 
