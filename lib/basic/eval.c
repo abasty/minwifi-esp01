@@ -248,6 +248,12 @@ uint8_t instr1s[] = {
     0,
 };
 
+uint8_t instr1n[] = {
+    TOKEN_KEYWORD_GOSUB,
+    TOKEN_KEYWORD_GOTO,
+    0,
+};
+
 static void running_state_clear()
 {
     bstate.sp = 0;
@@ -1047,42 +1053,23 @@ static void eval_run()
     bstate.running = true;
 }
 
-static bool eval_goto()
+static void eval_goto()
 {
-    if (!eval_token(TOKEN_KEYWORD_GOTO))
-        return false;
-
-    if (!eval_expr(TOKEN_NUMBER))
-        return false;
-
-    if (!bstate.do_eval)
-        return true;
-
     bstate.pc = bmem_prog_get_line(bstate.number);
     bstate.running = bstate.pc != 0;
 
-    if (!bstate.pc)
-    {
-        bstate.error = BERROR_RUN;
-    }
-    return true;
+    if (bstate.pc)
+        return;
+
+    bstate.error = BERROR_RUN;
 }
 
-static bool eval_gosub()
+static void eval_gosub()
 {
-    if (!eval_token(TOKEN_KEYWORD_GOSUB))
-        return false;
-
-    if (!eval_expr(TOKEN_NUMBER))
-        return false;
-
-    if (!bstate.do_eval)
-        return true;
-
     if (bstate.sp >= EVAL_RETURNS_SIZE)
     {
         bstate.error = BERROR_RUN;
-        return true;
+        return;
     }
 
     prog_t *next = bmem_prog_next_line(bstate.pc);
@@ -1092,12 +1079,10 @@ static bool eval_gosub()
     if (!bstate.pc)
     {
         bstate.error = BERROR_RUN;
-        return true;
+        return;
     }
 
     returns[bstate.sp++].line_no = next ? next->line_no : 0;
-
-    return true;
 }
 
 static void eval_return()
@@ -1217,20 +1202,29 @@ static bool eval_simple_instruction()
     if ((instr =  eval_token_one_of((char *)instr1s)) && eval_string_expr())
         goto EVAL;
 
+    // 1 number instructions
+    if ((instr =  eval_token_one_of((char *)instr1n)) && eval_expr(TOKEN_NUMBER))
+        goto EVAL;
+
     return false;
 
 EVAL:
     if (!bstate.do_eval)
         return true;
 
+    if (instr == TOKEN_KEYWORD_GOTO)
+    {
+        eval_goto();
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_GOSUB)
+    {
+        eval_gosub();
+        return true;
+    }
     if (instr == TOKEN_KEYWORD_ERASE)
     {
         eval_erase();
-        return true;
-    }
-    if (instr == TOKEN_KEYWORD_RETURN)
-    {
-        eval_return();
         return true;
     }
     if (instr == TOKEN_KEYWORD_SAVE)
@@ -1241,6 +1235,11 @@ EVAL:
     if (instr == TOKEN_KEYWORD_LOAD)
     {
         eval_load();
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_RETURN)
+    {
+        eval_return();
         return true;
     }
     if (instr == TOKEN_KEYWORD_CLEAR)
@@ -1295,8 +1294,6 @@ static bool eval_instruction()
         eval_tty()
 #ifndef OTA_ONLY
         ||
-        eval_goto() ||
-        eval_gosub() ||
         eval_let() ||
         eval_list()
 #endif
