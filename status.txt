@@ -134,8 +134,18 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.4% (used 33124 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473520 bytes from 958448 bytes)
 ---
-Added print_integer
+6e173d4 Added print_integer
 Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.4% (used 33120 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473548 bytes from 958448 bytes)
+---
+6e173d4 Added print_integer
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.4% (used 33116 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473560 bytes from 958448 bytes)
+---
+6e173d4 Added print_integer
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.4% (used 33116 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473592 bytes from 958448 bytes)
 ---

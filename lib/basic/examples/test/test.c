@@ -109,10 +109,7 @@ static void color(uint8_t color, uint8_t foreground)
 
 bastos_io_t io = {
     .bopen = bopen,
-    .erase = berase,
-
     .bclose = bclose,
-
     .bwrite = bwrite,
     .bread = bread,
 };
@@ -161,6 +158,10 @@ int biocop(void)
 
     case B_IO_PRINT_INTEGER:
         return print_integer(bastos_io_argv[1].as_string, bastos_io_argv[2].as_int);
+
+    case B_IO_ERASE:
+        return berase(bastos_io_argv[1].as_string);
+
     }
     return 0;
 }

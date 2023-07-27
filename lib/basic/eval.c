@@ -1141,7 +1141,7 @@ static void eval_load()
 
 static void eval_erase()
 {
-    if (bio->erase(bstate.string.chars) != 0)
+    if (bio_erase(bstate.string.chars) != 0)
     {
         bstate.error = BERROR_IO;
     }
