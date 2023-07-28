@@ -36,18 +36,21 @@
 * [x] IF, THEN, GOTO
 * [x] FOR, NEXT
 * [x] GOSUB, RETURN
+* [x] REM, LEN
+* [ ] Optim tout dans le même .c pour les static
+* [ ] Mem : bloc pour prog, bloc pour vars, que des listes (avec ptr/index sur
+  16 bits),
 * [ ] Optimisation BIO (une seule structure, 1 fonction number (int), 2/3 params
   (union as_void_ptr, as_char_ptr, as_int, as_float), 1 result (union like
   param) => static / extern
-* [ ] REM, LEN
+* [ ] Tableaux (DIM)
+* [ ] EVAL / EVAL$
+* [ ] PLOT / UNPLOT / SCREEN$(l,c) ?
+* [ ] DOWNLOAD / UPLOAD
+* [ ] TELNET / TELNET WS
 * [ ] Dans `test` : pouvoir lire un fichier `.bas` sur la ligne d'entrée et
   l'envoyer à `bastos_send_keys`. Ce serait bien aussi de pouvoir construire un
   disque à distance (pour l'envoyer par OTA ou le falsher directement)
-* [ ] EVAL / EVAL$
-* [ ] PLOT / UNPLOT / SCREEN$(l,c) ?
-* [ ] Tableaux (DIM)
-* [ ] DOWNLOAD / UPLOAD
-* [ ] TELNET / TELNET WS
 * [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
   * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
 * [ ] Ajouter edit, integration "edit_min" ?
