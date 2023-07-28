@@ -49,4 +49,5 @@ const char *keywords =
     "CON""\xd4"
     "THE""\xce"
     "LE""\xce"
+    "RE""\xcd"
 ;

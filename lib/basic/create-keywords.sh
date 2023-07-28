@@ -61,6 +61,7 @@ stop
 cont
 then
 len
+rem
 EOF
 
 # Do not sort to preserver save/load compatibility

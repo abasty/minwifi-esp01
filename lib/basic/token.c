@@ -208,15 +208,17 @@ char *untokenize(uint8_t *input)
     {
         if ((token & TOKEN_KEYWORD) != 0)
         {
-            token &= ~TOKEN_KEYWORD;
-            if (token == (TOKEN_KEYWORD_TO & ~TOKEN_KEYWORD) ||
-                token == (TOKEN_KEYWORD_STEP & ~TOKEN_KEYWORD) ||
-                token == (TOKEN_KEYWORD_THEN & ~TOKEN_KEYWORD))
+            if (token == TOKEN_KEYWORD_TO || token == TOKEN_KEYWORD_STEP || token == TOKEN_KEYWORD_THEN)
             {
                 bio->print_string(" ");
             }
             untokenize_keyword(&state, keywords);
-            if (*state.read_ptr != '(' && token != (TOKEN_KEYWORD_PI & ~TOKEN_KEYWORD) && token != (TOKEN_KEYWORD_RND & ~TOKEN_KEYWORD))
+            if (token == TOKEN_KEYWORD_REM)
+            {
+                bio->print_string((char *)state.read_ptr);
+                state.read_ptr += strlen((char *)state.read_ptr);
+            }
+            else if (*state.read_ptr != '(' && token != TOKEN_KEYWORD_PI && token != TOKEN_KEYWORD_RND)
             {
                 bio->print_string(" ");
             }
@@ -278,10 +280,16 @@ int8_t tokenize(tokenizer_state_t *state, char *input)
 
     uint8_t c;
     uint8_t token_count = 0;
+    uint8_t instr_keyword = 0;
     int8_t err = 0;
 
     while ((c = *state->read_ptr))
     {
+        if (instr_keyword == TOKEN_KEYWORD_REM)
+        {
+            while ((*state->write_ptr++ = *state->read_ptr++)) {};
+            continue;
+        }
         // first char => type
         if (c == ' ')
         {
@@ -299,6 +307,7 @@ int8_t tokenize(tokenizer_state_t *state, char *input)
             err = tokenize_number(state);
             if (err == 0 && token_count == 0)
             {
+                // line number
                 uint8_t *read_ptr = state->read_ptr;
                 state->read_ptr = token_buffer;
                 token_get_next(state);
@@ -310,6 +319,10 @@ int8_t tokenize(tokenizer_state_t *state, char *input)
         else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
         {
             err = tokenize_keyword(state, keywords);
+            if (err == 0 && instr_keyword == 0)
+            {
+                instr_keyword = *(state->write_ptr - 1);
+            }
         }
         else if (c == '=' || c == '<' || c == '>')
         {

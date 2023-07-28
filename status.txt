@@ -144,3 +144,8 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.4% (used 33124 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473528 bytes from 958448 bytes)
 ---
+Implemented REM (+112 !!!!)
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.4% (used 33124 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473640 bytes from 958448 bytes)
+---

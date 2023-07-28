@@ -1304,6 +1304,16 @@ EVAL:
     return false;
 }
 
+static bool eval_rem()
+{
+    if (!eval_token(TOKEN_KEYWORD_REM))
+        return false;
+
+    bstate.read_ptr = bstate.prog->line + bstate.prog->len;
+
+    return true;
+}
+
 static bool eval_instruction()
 {
     return
@@ -1313,6 +1323,7 @@ static bool eval_instruction()
         eval_tty()
 #ifndef OTA_ONLY
         ||
+        eval_rem() ||
         eval_let() ||
         eval_list()
 #endif
