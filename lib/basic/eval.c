@@ -221,6 +221,7 @@ char tty_codes[] = {
     TOKEN_KEYWORD_AT,
     TOKEN_KEYWORD_INK,
     TOKEN_KEYWORD_PAPER,
+    TOKEN_KEYWORD_CURSOR,
     0,
 };
 
@@ -705,28 +706,12 @@ static bool eval_string_var()
     return true;
 }
 
-static bool eval_string_cursor()
-{
-    if (!eval_token(TOKEN_KEYWORD_CURSOR))
-        return false;
-
-    if (!eval_term())
-        return false;
-
-    if (!bstate.do_eval)
-        return true;
-
-    string_set(&bstate.string, bstate.number == 0 ? COFF : CON, false);
-    return true;
-}
-
 static bool eval_string_term()
 {
     bool result =
         eval_string_const() ||
         eval_string_var() ||
         eval_string_chr() ||
-        eval_string_cursor() ||
         eval_string_tty() ||
         eval_string_str() ||
         (eval_token('(') && eval_string_expr() && eval_token(')'));
@@ -961,7 +946,7 @@ static bool eval_print(bool implicit)
                 }
             }
         }
-        else if (eval_string_cursor() || eval_string_tty())
+        else if (eval_string_tty())
         {
             if (bstate.do_eval)
             {
@@ -1230,9 +1215,14 @@ static bool eval_string_tty()
     else if (fn == TOKEN_KEYWORD_INK)
     {
         snprintf(codes, CODE_SEQUENCE_MAX_SIZE, INK, arg1 + INK_DELTA);
-  } else
+    }
+    else if (fn == TOKEN_KEYWORD_PAPER)
     {
         snprintf(codes, CODE_SEQUENCE_MAX_SIZE, PAPER, arg1 + PAPER_DELTA);
+    }
+    else if (fn == TOKEN_KEYWORD_CURSOR)
+    {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s", arg1 ? CON : COFF);
     }
 
     if (!bstate.do_eval)

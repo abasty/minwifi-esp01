@@ -155,8 +155,13 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473872 bytes from 958448 bytes)
 ---
-Moved tty instructions to string functions
+85ec2cc Moved tty instructions to string functions
 Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473936 bytes from 958448 bytes)
+---
+Moved CURSOR to eval_string_tty
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473872 bytes from 958448 bytes)
 ---
