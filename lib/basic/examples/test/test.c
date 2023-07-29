@@ -100,7 +100,7 @@ int bread(int fd, void *buf, int count)
 
 #include <dirent.h>
 
-void bcat()
+static void bcat()
 {
     struct dirent **namelist;
     int n = scandir(BASTOS_DISK_PATH, &namelist, NULL, NULL);
@@ -120,20 +120,18 @@ int berase(const char *pathname)
     return unlink(pathname);
 }
 
-void *bio_f0(int fn, int x, int y)
+static inline void bio_f0(uint8_t fn)
 {
-    switch (fn)
+    if (fn == TOKEN_KEYWORD_CAT)
     {
-    case B_IO_CAT:
         bcat();
-        break;
-
-    case B_IO_RESET:
-        //breset();
-        break;
+        return;
     }
-
-    return 0;
+    if (fn == TOKEN_KEYWORD_RESET)
+    {
+        //breset();
+        return;
+    }
 }
 
 bastos_io_t io = {

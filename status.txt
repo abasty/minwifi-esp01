@@ -175,7 +175,12 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473744 bytes from 958448 bytes)
 ---
-Removed external del function
+04453cb Removed external del function
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473712 bytes from 958448 bytes)
+---
+Code cleaning: removed B_IO_* constants
 Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473712 bytes from 958448 bytes)

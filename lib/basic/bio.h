@@ -45,9 +45,6 @@ extern "C"
 #define B_TRUNC   01000
 #define B_APPEND  02000
 
-#define B_IO_CAT        0
-#define B_IO_RESET      2
-
 typedef int print_string_t(const char *s);
 typedef int print_float_t(float f);
 typedef int print_format_integer_t(const char *format, int i);
@@ -56,7 +53,7 @@ typedef int bclose_t(int fd);
 typedef int bwrite_t(int fd, const void *buf, int count);
 typedef int bread_t(int fd, void *buf, int count);
 typedef int erase_t(const char *pathname);
-typedef void *function0_t(int fn, int x, int y);
+typedef void function0_t(uint8_t fn);
 
 typedef struct {
     print_string_t *print_string;

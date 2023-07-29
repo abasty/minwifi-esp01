@@ -132,20 +132,18 @@ static inline void breset()
     ESP.restart();
 }
 
-static inline void *bio_f0(int fn, int x, int y)
+static inline void bio_f0(uint8_t fn)
 {
-    switch (fn)
+    if (fn == TOKEN_KEYWORD_CAT)
     {
-    case B_IO_CAT:
         bcat();
-        break;
-
-    case B_IO_RESET:
-        breset();
-        break;
+        return;
     }
-
-    return 0;
+    if (fn == TOKEN_KEYWORD_RESET)
+    {
+        breset();
+        return;
+    }
 }
 
 bastos_io_t io = {

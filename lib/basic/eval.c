@@ -1174,16 +1174,6 @@ static void eval_new()
     bmem_prog_new();
 }
 
-static void eval_reset()
-{
-    bio->function0(B_IO_RESET, 0, 0);
-}
-
-static void eval_cat()
-{
-    bio->function0(B_IO_CAT, 0, 0);
-}
-
 static bool eval_string_tty()
 {
     if (!eval_token_one_of(tty_codes))
@@ -1312,14 +1302,9 @@ EVAL:
         eval_new();
         return true;
     }
-    if (instr == TOKEN_KEYWORD_CAT)
+    if (instr == TOKEN_KEYWORD_RESET || instr == TOKEN_KEYWORD_CAT)
     {
-        eval_cat();
-        return true;
-    }
-    if (instr == TOKEN_KEYWORD_RESET)
-    {
-        eval_reset();
+        bio->function0(instr);
         return true;
     }
     if (instr == TOKEN_KEYWORD_STOP)
