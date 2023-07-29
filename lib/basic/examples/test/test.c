@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <poll.h>
+#include <signal.h>
 
 #include "ds_common.h"
 #include "ds_btree.h"
@@ -22,6 +23,40 @@
 
 #define BASTOS_DISK_PATH "/home/alain/Projects/minwifi-esp01/lib/basic/examples/disk"
 
+struct sigaction old_action;
+struct termios old, new;
+
+void term_init()
+{
+    tcgetattr(0, &old);
+    new = old;
+    new.c_lflag &= ~ICANON;
+    new.c_lflag &= ~ECHO;
+    tcsetattr(0, TCSANOW, &new);
+}
+
+void term_done()
+{
+    tcsetattr(0, TCSANOW, &old);
+}
+
+void sigint_handler(int sig_no)
+{
+    term_done();
+    sigaction(SIGINT, &old_action, NULL);
+    kill(0, SIGINT);
+}
+
+char getch()
+{
+    struct pollfd input[1] = {{fd: 0, events: POLLIN}};
+    char ch = 0;
+    if (poll(input, 1, 1) == 1)
+    {
+        read(0, &ch, 1);
+    }
+    return ch;
+}
 
 int print_float(float f)
 {
@@ -158,49 +193,6 @@ bastos_io_t io = {
     .function0 = bio_f0,
 };
 
-#if 0
-extern char *keywords;
-
-#define KEYWORD_MAX_LENGTH ((uint8_t)16)
-void keyword_print_all(const char *keyword_char)
-{
-    char keyword[KEYWORD_MAX_LENGTH + 1];
-
-    char *current_keyword_char = keyword;
-    uint8_t index = 0;
-    while (*keyword_char)
-    {
-        *current_keyword_char++ = *keyword_char & ~KEYWORD_END_TAG;
-        if ((*keyword_char & KEYWORD_END_TAG) != 0)
-        {
-            *current_keyword_char = 0;
-            current_keyword_char = keyword;
-            printf("%d: %s\n", index, keyword);
-            index++;
-        }
-        keyword_char++;
-    }
-    printf("\n");
-}
-
-#endif
-
-int getch()
-{
-    struct termios old, new;
-    tcgetattr(0, &old);
-    new = old;
-    new.c_lflag &= ~ICANON;
-    new.c_lflag &= false ? ECHO : ~ECHO;
-    tcsetattr(0, TCSANOW, &new);
-    struct pollfd input[1] = {{fd: 0, events: POLLIN}};
-    int ch = 0;
-    if (poll(input, 1, 1) == 1)
-        ch = getchar();
-    tcsetattr(0, TCSANOW, &old);
-    return ch;
-}
-
 #define config_prog \
     "1CLS\n" \
     "2PRINT\"* WiFi parameters *\"\n" \
@@ -212,6 +204,12 @@ int main(int argc, char *argv[])
 {
     bool cont = true;
     var_t *var = 0;
+    struct sigaction action = {0};
+
+    term_init();
+
+    action.sa_handler = &sigint_handler;
+    sigaction(SIGINT, &action, &old_action);
 
     chdir(BASTOS_DISK_PATH);
 
@@ -262,4 +260,5 @@ finalize:
     }
 
     bmem_prog_new();
+    term_done();
 }
