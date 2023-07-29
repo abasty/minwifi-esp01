@@ -38,11 +38,12 @@
 * [x] GOSUB, RETURN
 * [x] REM, LEN
 * [ ] DIM
-* [ ] Toutes les fonctions qui produisent des codes de commandes => fonctions
-  qui renvoient des chaines de caractères (au début .h minitel). Print integer
-  et print float => interne à bastos (voir str$), plus qu'une seule commande
-  print. On doit pouvoir faire : let a$=cls + at 10,10 + ink 4 + paper 3 + "
-  *DEMO* ". il faut aussi un filtre "minitel to ansi"
+* [x] Toutes les fonctions qui produisent des codes de commandes => fonctions
+  qui renvoient des chaines de caractères (au début .h minitel). On doit pouvoir
+  faire : let a$=cls + at 10,10 + ink 4 + paper 3 + " *DEMO* ".
+* [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
+  seule commande print.
+* [ ] Filtre "minitel to ansi"
 * [ ] Optim tout dans le même .c pour les static
 * [ ] Mem : bloc pour prog, bloc pour vars, que des listes (avec ptr/index sur
   16 bits),
