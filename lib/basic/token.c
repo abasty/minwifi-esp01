@@ -208,7 +208,7 @@ char *untokenize(uint8_t *input)
     {
         if ((token & TOKEN_KEYWORD) != 0)
         {
-            if (token == TOKEN_KEYWORD_TO || token == TOKEN_KEYWORD_STEP || token == TOKEN_KEYWORD_THEN)
+            if (token == TOKEN_KEYWORD_TO || token == TOKEN_KEYWORD_STEP || token == TOKEN_KEYWORD_THEN || token == TOKEN_KEYWORD_OR || token == TOKEN_KEYWORD_AND)
             {
                 bio->print_string(" ");
             }
