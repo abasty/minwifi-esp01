@@ -26,9 +26,20 @@
 #ifndef TTY_MINITEL_H
 #define TTY_MINITEL_H
 
-// Cuseur ON
+#define CODE_SEQUENCE_MAX_SIZE 8
+
 #define CON "\x11"
 #define COFF "\x14"
+
+#define CUR "\x1F%c%c"
+#define CUR_DELTA_V 64
+#define CUR_DELTA_H 64
+
+#define INK "\x1B%c"
+#define INK_DELTA 0x40
+
+#define PAPER "\x1B%c"
+#define PAPER_DELTA 0x50
 
 // Protocole
 #define PRO1 "\x1B\x39"

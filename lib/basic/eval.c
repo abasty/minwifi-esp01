@@ -49,7 +49,7 @@ typedef struct
 } string_t;
 
 static inline void eval_input_mode(bool mode);
-static bool eval_tty();
+static bool eval_string_tty();
 
 static void string_set(string_t *string, char *chars, bool allocated)
 {
@@ -727,6 +727,7 @@ static bool eval_string_term()
         eval_string_var() ||
         eval_string_chr() ||
         eval_string_cursor() ||
+        eval_string_tty() ||
         eval_string_str() ||
         (eval_token('(') && eval_string_expr() && eval_token(')'));
 
@@ -960,16 +961,12 @@ static bool eval_print(bool implicit)
                 }
             }
         }
-        else if (eval_string_cursor())
+        else if (eval_string_cursor() || eval_string_tty())
         {
             if (bstate.do_eval)
             {
                 bio->print_string(bstate.string.chars ? bstate.string.chars : "");
             }
-        }
-        else if (eval_tty())
-        {
-            //
         }
         else if (eval_token(','))
         {
@@ -1207,41 +1204,41 @@ static void eval_cat()
     bio->function0(B_IO_CAT, 0, 0);
 }
 
-static bool eval_tty()
+static bool eval_string_tty()
 {
     if (!eval_token_one_of(tty_codes))
         return false;
 
     uint8_t fn = bstate.token;
 
-    if (!eval_expr(TOKEN_NUMBER))
+    if (!eval_term())
         return false;
 
-    int y = bstate.number;
-    int x = 0;
+    uint8_t arg1 = bstate.number;
+    uint8_t arg2 = 0;
+    char codes[CODE_SEQUENCE_MAX_SIZE];
 
     if (fn == TOKEN_KEYWORD_AT)
     {
         if (!eval_token(','))
             return false;
-        if (!eval_expr(TOKEN_NUMBER))
+        if (!eval_term())
             return false;
-        fn = B_IO_AT;
-        x = bstate.number;
+        arg2 = bstate.number;
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CUR, arg1 + CUR_DELTA_V, arg2 + CUR_DELTA_H);
     }
     else if (fn == TOKEN_KEYWORD_INK)
     {
-        fn = B_IO_INK;
-    } else
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, INK, arg1 + INK_DELTA);
+  } else
     {
-        fn = B_IO_PAPER;
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, PAPER, arg1 + PAPER_DELTA);
     }
 
     if (!bstate.do_eval)
         return true;
 
-    bio->function0(fn, x, y);
-
+    string_set(&bstate.string, strdup(codes), true);
     return true;
 }
 
@@ -1264,9 +1261,8 @@ static bool eval_simple_instruction()
     if ((eval_token(TOKEN_KEYWORD_CURSOR)))
         return eval_print(true);
 
-    // tty instructions
-    if (!eval_term())
-        return false;
+    if (eval_token_one_of(tty_codes))
+        return eval_print(true);
 
     return false;
 
@@ -1362,8 +1358,7 @@ static bool eval_instruction()
     return
         eval_print(false) ||
         eval_input() ||
-        eval_simple_instruction() ||
-        eval_tty()
+        eval_simple_instruction()
 #ifndef OTA_ONLY
         ||
         eval_rem() ||
