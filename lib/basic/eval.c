@@ -699,12 +699,30 @@ static bool eval_string_var()
     return true;
 }
 
+#include "minitel.h"
+
+static bool eval_string_cursor()
+{
+    if (!eval_token(TOKEN_KEYWORD_CURSOR))
+        return false;
+
+    if (!eval_term())
+        return false;
+
+    if (!bstate.do_eval)
+        return true;
+
+    string_set(&bstate.string, bstate.number == 0 ? COFF : CON, false);
+    return true;
+}
+
 static bool eval_string_term()
 {
     bool result =
         eval_string_const() ||
         eval_string_var() ||
         eval_string_chr() ||
+        eval_string_cursor() ||
         eval_string_str() ||
         (eval_token('(') && eval_string_expr() && eval_token(')'));
 
@@ -907,10 +925,16 @@ static bool eval_input()
     return true;
 }
 
-static bool eval_print()
+static bool eval_print(bool implicit)
 {
-    if (!eval_token(TOKEN_KEYWORD_PRINT))
+    if (!implicit && !eval_token(TOKEN_KEYWORD_PRINT))
         return false;
+
+    if (implicit)
+    {
+        // rewind to tty / string token
+        bstate.read_ptr--;
+    }
 
     bool result = true;
     bool ln = true;
@@ -930,6 +954,13 @@ static bool eval_print()
                 {
                     bio->print_string(bstate.string.chars ? bstate.string.chars : "");
                 }
+            }
+        }
+        else if (eval_string_cursor())
+        {
+            if (bstate.do_eval)
+            {
+                bio->print_string(bstate.string.chars ? bstate.string.chars : "");
             }
         }
         else if (eval_tty())
@@ -1226,6 +1257,13 @@ static bool eval_simple_instruction()
     if ((instr =  eval_token_one_of((char *)instr1n)) && eval_expr(TOKEN_NUMBER))
         goto EVAL;
 
+    if ((eval_token(TOKEN_KEYWORD_CURSOR)))
+        return eval_print(true);
+
+    // tty instructions
+    if (!eval_term())
+        return false;
+
     return false;
 
 EVAL:
@@ -1318,7 +1356,7 @@ static bool eval_rem()
 static bool eval_instruction()
 {
     return
-        eval_print() ||
+        eval_print(false) ||
         eval_input() ||
         eval_simple_instruction() ||
         eval_tty()

@@ -149,3 +149,8 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.4% (used 33124 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473640 bytes from 958448 bytes)
 ---
+Added CURSOR tty instr/str function
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.4% (used 33136 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473876 bytes from 958448 bytes)
+---

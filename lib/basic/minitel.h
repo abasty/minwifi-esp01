@@ -27,8 +27,10 @@
 #define minitel_h
 
 // Cuseur ON
-#define CON "\x11"
-#define COFF "\x14"
+// #define CON "\x11"
+// #define COFF "\x14"
+#define CON "A"
+#define COFF "Z"
 
 // Protocole
 #define PRO1 "\x1B\x39"

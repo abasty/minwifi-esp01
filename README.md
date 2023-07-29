@@ -94,6 +94,7 @@ Libraries
 
 # Liens
 
+* <https://minitel.cquest.org/miedit-page.html>
 * <https://www.museeminitel.fr/>
 * <https://www.minitel.org/>
 * <http://pficheux.free.fr/xtel/>
