@@ -37,6 +37,12 @@
 * [x] FOR, NEXT
 * [x] GOSUB, RETURN
 * [x] REM, LEN
+* [ ] DIM
+* [ ] Toutes les fonctions qui produisent des codes de commandes => fonctions
+  qui renvoient des chaines de caractères (au début .h minitel). Print integer
+  et print float => interne à bastos (voir str$), plus qu'une seule commande
+  print. On doit pouvoir faire : let a$=cls + at 10,10 + ink 4 + paper 3 + "
+  *DEMO* ". il faut aussi un filtre "minitel to ansi"
 * [ ] Optim tout dans le même .c pour les static
 * [ ] Mem : bloc pour prog, bloc pour vars, que des listes (avec ptr/index sur
   16 bits),
@@ -96,7 +102,12 @@ Libraries
 * Basic ZX81 : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/appxc.html>
 * Sinclair Basic : <https://en.wikipedia.org/wiki/Sinclair_BASIC>
 * Code minitel : <http://millevaches.hydraule.org/info/minitel/specs/codes.htm>
-* Python minitel avec fonctions et code : <https://github.com/Zigazou/PyMinitel/blob/master/minitel/Minitel.py>
+* Python minitel avec fonctions et code :
+  <https://github.com/Zigazou/PyMinitel/blob/master/minitel/Minitel.py>
+
+# Progs
+
+* (spectrum à porter sur zx81) : https://zxbasic.readthedocs.io/en/docs/examples/snake.bas/
 
 # Prise péri informatique
 
