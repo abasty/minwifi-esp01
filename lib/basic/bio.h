@@ -46,12 +46,8 @@ extern "C"
 #define B_APPEND  02000
 
 #define B_IO_CAT        0
-#define B_IO_CLS        1
 #define B_IO_RESET      2
 #define B_IO_DEL        3
-#define B_IO_AT         4
-#define B_IO_INK        5
-#define B_IO_PAPER      6
 
 typedef int print_string_t(const char *s);
 typedef int print_float_t(float f);

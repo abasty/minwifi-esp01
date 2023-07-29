@@ -75,13 +75,6 @@ int print_integer(const char *format, int32_t i)
     return printf(format, i);
 }
 
-void cls()
-{
-    printf("%s", "\033[2J"
-                 "\033[H");
-    fflush(stdout);
-}
-
 int bopen(const char *pathname, int flags)
 {
     if ((flags & O_CREAT) != 0)
@@ -132,16 +125,6 @@ void del()
     print_string("\x08 \x08");
 }
 
-static inline void GotoXY(uint16_t c, uint16_t l)
-{
-    printf("\x1B" "[%d;%dH", l, c);
-}
-
-static void color(uint8_t color, uint8_t foreground)
-{
-    printf("\033" "[%dm", (foreground ? 30 : 40) + color);
-}
-
 void *bio_f0(int fn, int x, int y)
 {
     switch (fn)
@@ -150,28 +133,12 @@ void *bio_f0(int fn, int x, int y)
         bcat();
         break;
 
-    case B_IO_CLS:
-        cls();
-        break;
-
     case B_IO_DEL:
         del();
         break;
 
     case B_IO_RESET:
         //breset();
-        break;
-
-    case B_IO_AT:
-        GotoXY(x, y);
-        break;
-
-    case B_IO_INK:
-        color(y, 1);
-        break;
-
-    case B_IO_PAPER:
-        color(y, 0);
         break;
     }
 

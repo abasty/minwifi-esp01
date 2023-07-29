@@ -29,7 +29,11 @@
 #include <WebSocketsClient.h>
 #include <LittleFS.h>
 
-#include "minitel.h"
+#ifdef MINITEL
+#include "tty-minitel.h"
+#else
+#include "tty-vt100.h"
+#endif
 
 #include "berror.h"
 #include "bmemory.h"
@@ -45,12 +49,6 @@ int ledPin = 13;
 
 #define COMMAND_IP_PORT 23
 
-#ifndef MINITEL
-WiFiClient *wifiClient = 0;
-// wifi server
-WiFiServer *wifiServer = 0;
-#endif
-
 // Minitel server TCP/IP connexion
 WiFiClient tcpMinitelConnexion;
 WebSocketsClient webSocket;
@@ -58,53 +56,23 @@ bool _3611 = false;
 bool fkey = false;
 bool minitelMode;
 
-
 static inline int print_float(float f)
 {
-#ifndef MINITEL
-    if (wifiClient)
-        wifiClient->printf("%g", f);
-#endif
     return Serial.printf("%g", f);
 }
 
 static inline int print_string(const char *s)
 {
-#ifndef MINITEL
-    if (wifiClient)
-        wifiClient->printf("%s", s);
-#endif
     return Serial.printf("%s", s);
 }
 
 static inline int print_integer(const char *format, int i)
 {
-#ifndef MINITEL
-    if (wifiClient)
-        wifiClient->printf(format, i);
-#endif
     return Serial.printf(format, i);
-}
-
-static inline void cls()
-{
-#ifndef MINITEL
-    if (wifiClient)
-        wifiClient->print("\033[2J" "\033[H");
-#endif
-#ifdef MINITEL
-    Serial.print("\x0C");
-#else
-    Serial.print("\033[2J" "\033[H");
-#endif
 }
 
 static inline void del()
 {
-#ifndef MINITEL
-    if (wifiClient)
-        wifiClient->print("\x08 \x08");
-#endif
     Serial.print("\x08 \x08");
 }
 
@@ -169,32 +137,6 @@ static inline void breset()
     ESP.restart();
 }
 
-static inline void GotoXY(uint8_t c, uint8_t l)
-{
-#ifndef MINITEL
-    if (wifiClient)
-        wifiClient->printf("\x1B" "[%d;%dH", l, c);
-#endif
-#ifdef MINITEL
-    Serial.printf("\x1F%c%c", l + 0x40, c + 0x40);
-#else
-    Serial.printf("\x1B" "[%d;%dH", l, c);
-#endif
-}
-
-static inline void color(uint8_t color, uint8_t foreground)
-{
-#ifndef MINITEL
-    if (wifiClient)
-        wifiClient->printf("\033" "[%dm", (foreground ? 30 : 40) + color);
-#endif
-#ifdef MINITEL
-    Serial.printf("\x1B" "%c", color + (foreground ? 0x40 : 0x50));
-#else
-    Serial.printf("\033" "[%dm", (foreground ? 30 : 40) + color);
-#endif
-}
-
 static inline void *bio_f0(int fn, int x, int y)
 {
     switch (fn)
@@ -203,28 +145,12 @@ static inline void *bio_f0(int fn, int x, int y)
         bcat();
         break;
 
-    case B_IO_CLS:
-        cls();
-        break;
-
     case B_IO_DEL:
         del();
         break;
 
     case B_IO_RESET:
         breset();
-        break;
-
-    case B_IO_AT:
-        GotoXY(x, y);
-        break;
-
-    case B_IO_INK:
-        color(y, 1);
-        break;
-
-    case B_IO_PAPER:
-        color(y, 0);
         break;
     }
 
@@ -242,7 +168,7 @@ bastos_io_t io = {
     .function0 = bio_f0,
 };
 
-static void initMinitel(bool clear)
+static void init_minitel(bool clear)
 {
     // Empty Serial buffer
     while (Serial && Serial.available() > 0) {
@@ -250,14 +176,12 @@ static void initMinitel(bool clear)
         Serial.readBytes(buffer, 32);
     }
     Serial.flush();
-    if (clear) {
-        cls();
-    }
 #ifdef MINITEL
     Serial.print((char *)P_ACK_OFF_PRISE);
     Serial.print((char *)P_LOCAL_ECHO_OFF);
     Serial.print((char *)P_ROULEAU);
     Serial.print((char *)CON);
+    Serial.print((char *)"\x0C");
 #endif
 }
 
@@ -341,8 +265,7 @@ void setup()
 #endif
 
     Serial.flush();
-    cls();
-    Serial.println("Loading and connecting.");
+    Serial.println(CLS "Loading and connecting.");
 
     // Initialize file system
     LittleFS.begin();
@@ -363,14 +286,8 @@ void setup()
 
     ArduinoOTA.begin();
 
-#ifndef MINITEL
-    // Launch traces server
-    wifiServer = new WiFiServer(COMMAND_IP_PORT);
-    wifiServer->begin();
-#endif
-
     Serial.setTimeout(0);
-    initMinitel(false);
+    init_minitel(false);
 }
 
 void loop()
@@ -378,27 +295,6 @@ void loop()
     ArduinoOTA.handle();
 
     digitalWrite(ledPin, HIGH);
-
-#ifndef MINITEL
-    // Accept TCP shell connections
-    if (wifiServer->hasClient()) {
-        // Delete active connection if any and accept new one
-        // TODO: It leaks when a new session is accepted and one is active, do not know why....
-        if (wifiClient) {
-            delete wifiClient;
-        }
-        wifiClient = new WiFiClient(wifiServer->available());
-    }
-
-    // Handle commands from WiFi Client
-    if (wifiClient && wifiClient->available() > 0) {
-        // read client data
-        char buffer[32];
-        size_t n = wifiClient->read(buffer, 32);
-        // wifiShell->handle((char *)buffer, n);
-        bastos_send_keys(buffer, n);
-    }
-#endif
 
     // Forward Minitel server incoming data to serial output
     if (tcpMinitelConnexion && tcpMinitelConnexion.available() > 0) {
@@ -419,7 +315,7 @@ void loop()
     // if (minitelMode && (!tcpMinitelConnexion || !tcpMinitelConnexion.connected())) {
     //     minitelMode = false;
     //     tcpMinitelConnexion.stop();
-    //     initMinitel(true);
+    //     init_minitel(true);
     // }
 
     // Handle Serial input
