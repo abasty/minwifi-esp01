@@ -256,6 +256,7 @@ uint8_t instr1n[] = {
 
 static void running_state_clear()
 {
+    bstate.pc = 0;
     bstate.sp = 0;
     memset(loops, 0, sizeof(loops));
 }
