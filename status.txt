@@ -165,3 +165,8 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473872 bytes from 958448 bytes)
 ---
+Moved CLS to eval_string_tty
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473856 bytes from 958448 bytes)
+---

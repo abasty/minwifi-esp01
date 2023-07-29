@@ -222,6 +222,7 @@ char tty_codes[] = {
     TOKEN_KEYWORD_INK,
     TOKEN_KEYWORD_PAPER,
     TOKEN_KEYWORD_CURSOR,
+    TOKEN_KEYWORD_CLS,
     0,
 };
 
@@ -239,7 +240,6 @@ uint8_t instr0[] = {
     TOKEN_KEYWORD_CLEAR,
     TOKEN_KEYWORD_NEW,
     TOKEN_KEYWORD_CAT,
-    TOKEN_KEYWORD_CLS,
     TOKEN_KEYWORD_RESET,
     TOKEN_KEYWORD_STOP,
     TOKEN_KEYWORD_CONT,
@@ -1179,11 +1179,6 @@ static void eval_reset()
     bio->function0(B_IO_RESET, 0, 0);
 }
 
-static void eval_cls()
-{
-    bio->function0(B_IO_CLS, 0, 0);
-}
-
 static void eval_cat()
 {
     bio->function0(B_IO_CAT, 0, 0);
@@ -1195,36 +1190,48 @@ static bool eval_string_tty()
         return false;
 
     uint8_t fn = bstate.token;
+    char codes[CODE_SEQUENCE_MAX_SIZE];
+    *codes = 0;
+
+    // 0 arg
+    if (fn == TOKEN_KEYWORD_CLS)
+    {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CLS);
+        goto EVAL;
+    }
 
     if (!eval_term())
         return false;
 
+    // 1 arg
     uint8_t arg1 = bstate.number;
-    uint8_t arg2 = 0;
-    char codes[CODE_SEQUENCE_MAX_SIZE];
-
-    if (fn == TOKEN_KEYWORD_AT)
-    {
-        if (!eval_token(','))
-            return false;
-        if (!eval_term())
-            return false;
-        arg2 = bstate.number;
-        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CUR, arg1 + CUR_DELTA_V, arg2 + CUR_DELTA_H);
-    }
-    else if (fn == TOKEN_KEYWORD_INK)
+    if (fn == TOKEN_KEYWORD_INK)
     {
         snprintf(codes, CODE_SEQUENCE_MAX_SIZE, INK, arg1 + INK_DELTA);
+        goto EVAL;
     }
-    else if (fn == TOKEN_KEYWORD_PAPER)
+    if (fn == TOKEN_KEYWORD_PAPER)
     {
         snprintf(codes, CODE_SEQUENCE_MAX_SIZE, PAPER, arg1 + PAPER_DELTA);
+        goto EVAL;
     }
-    else if (fn == TOKEN_KEYWORD_CURSOR)
+    if (fn == TOKEN_KEYWORD_CURSOR)
     {
         snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s", arg1 ? CON : COFF);
+        goto EVAL;
     }
 
+    // 2 args
+    if (!eval_token(','))
+        return false;
+
+    if (!eval_term())
+        return false;
+
+    uint8_t arg2 = bstate.number;
+    snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CUR, arg1 + CUR_DELTA_V, arg2 + CUR_DELTA_H);
+
+EVAL:
     if (!bstate.do_eval)
         return true;
 
@@ -1308,11 +1315,6 @@ EVAL:
     if (instr == TOKEN_KEYWORD_CAT)
     {
         eval_cat();
-        return true;
-    }
-    if (instr == TOKEN_KEYWORD_CLS)
-    {
-        eval_cls();
         return true;
     }
     if (instr == TOKEN_KEYWORD_RESET)

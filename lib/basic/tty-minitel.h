@@ -28,6 +28,8 @@
 
 #define CODE_SEQUENCE_MAX_SIZE 8
 
+#define CLS "\x0C"
+
 #define CON "\x11"
 #define COFF "\x14"
 
