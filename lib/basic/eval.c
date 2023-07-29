@@ -29,6 +29,12 @@
 #include <string.h>
 #include <math.h>
 
+#ifdef MINITEL
+#include "tty-minitel.h"
+#else
+#include "tty-vt100.h"
+#endif
+
 #include "berror.h"
 #include "bmemory.h"
 #include "token.h"
@@ -699,8 +705,6 @@ static bool eval_string_var()
     return true;
 }
 
-#include "minitel.h"
-
 static bool eval_string_cursor()
 {
     if (!eval_token(TOKEN_KEYWORD_CURSOR))
@@ -987,7 +991,7 @@ static bool eval_print(bool implicit)
 
     if (result && bstate.do_eval)
     {
-        if (ln)
+        if (ln && !implicit)
         {
             bio->print_string("\r\n");
         }

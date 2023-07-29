@@ -23,14 +23,12 @@
  * SOFTWARE.
  */
 
-#ifndef minitel_h
-#define minitel_h
+#ifndef TTY_MINITEL_H
+#define TTY_MINITEL_H
 
 // Cuseur ON
-// #define CON "\x11"
-// #define COFF "\x14"
-#define CON "A"
-#define COFF "Z"
+#define CON "\x11"
+#define COFF "\x14"
 
 // Protocole
 #define PRO1 "\x1B\x39"
@@ -54,4 +52,4 @@
 
 #define P_ROULEAU PRO2 "\x69\x43"
 
-#endif // minitel_h
+#endif // TTY_MINITEL_H
