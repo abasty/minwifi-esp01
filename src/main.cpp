@@ -71,11 +71,6 @@ static inline int print_integer(const char *format, int i)
     return Serial.printf(format, i);
 }
 
-static inline void del()
-{
-    Serial.print("\x08 \x08");
-}
-
 File bastos_file0;
 
 static inline int bopen(const char *pathname, int flags)
@@ -143,10 +138,6 @@ static inline void *bio_f0(int fn, int x, int y)
     {
     case B_IO_CAT:
         bcat();
-        break;
-
-    case B_IO_DEL:
-        del();
         break;
 
     case B_IO_RESET:

@@ -3,6 +3,8 @@
 
 #define CODE_SEQUENCE_MAX_SIZE 32
 
+#define DEL "\x08 \x08"
+
 #define CLS "\x1B[2J\x1B[H"
 
 #define CON "\x1B[?25h"

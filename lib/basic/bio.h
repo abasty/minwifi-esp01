@@ -47,7 +47,6 @@ extern "C"
 
 #define B_IO_CAT        0
 #define B_IO_RESET      2
-#define B_IO_DEL        3
 
 typedef int print_string_t(const char *s);
 typedef int print_float_t(float f);

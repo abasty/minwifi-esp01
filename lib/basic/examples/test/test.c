@@ -120,21 +120,12 @@ int berase(const char *pathname)
     return unlink(pathname);
 }
 
-void del()
-{
-    print_string("\x08 \x08");
-}
-
 void *bio_f0(int fn, int x, int y)
 {
     switch (fn)
     {
     case B_IO_CAT:
         bcat();
-        break;
-
-    case B_IO_DEL:
-        del();
         break;
 
     case B_IO_RESET:
