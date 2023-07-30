@@ -50,3 +50,4 @@
 #define TOKEN_KEYWORD_THEN ((uint8_t) (48 | 0b10000000))
 #define TOKEN_KEYWORD_LEN ((uint8_t) (49 | 0b10000000))
 #define TOKEN_KEYWORD_REM ((uint8_t) (50 | 0b10000000))
+#define TOKEN_KEYWORD_CURSOR ((uint8_t) (51 | 0b10000000))

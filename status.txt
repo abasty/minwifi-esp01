@@ -149,3 +149,44 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.4% (used 33124 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473640 bytes from 958448 bytes)
 ---
+Added CURSOR tty instr/str function
+c79254c Fixed implicit PRINT. Added VT100 header
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473872 bytes from 958448 bytes)
+---
+85ec2cc Moved tty instructions to string functions
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473936 bytes from 958448 bytes)
+---
+Moved CURSOR to eval_string_tty
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473872 bytes from 958448 bytes)
+---
+Moved CLS to eval_string_tty
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473856 bytes from 958448 bytes)
+---
+Removed external tty functions
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473744 bytes from 958448 bytes)
+---
+04453cb Removed external del function
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473712 bytes from 958448 bytes)
+---
+Code cleaning: removed B_IO_* constants
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473712 bytes from 958448 bytes)
+---
+Removed dupplicate TOKEN_KEYWORD_CURSOR
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473696 bytes from 958448 bytes)
+---

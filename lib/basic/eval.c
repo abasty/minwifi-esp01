@@ -29,6 +29,12 @@
 #include <string.h>
 #include <math.h>
 
+#ifdef MINITEL
+#include "tty-minitel.h"
+#else
+#include "tty-vt100.h"
+#endif
+
 #include "berror.h"
 #include "bmemory.h"
 #include "token.h"
@@ -43,7 +49,7 @@ typedef struct
 } string_t;
 
 static inline void eval_input_mode(bool mode);
-static bool eval_tty();
+static bool eval_string_tty();
 
 static void string_set(string_t *string, char *chars, bool allocated)
 {
@@ -215,6 +221,8 @@ char tty_codes[] = {
     TOKEN_KEYWORD_AT,
     TOKEN_KEYWORD_INK,
     TOKEN_KEYWORD_PAPER,
+    TOKEN_KEYWORD_CURSOR,
+    TOKEN_KEYWORD_CLS,
     0,
 };
 
@@ -232,7 +240,6 @@ uint8_t instr0[] = {
     TOKEN_KEYWORD_CLEAR,
     TOKEN_KEYWORD_NEW,
     TOKEN_KEYWORD_CAT,
-    TOKEN_KEYWORD_CLS,
     TOKEN_KEYWORD_RESET,
     TOKEN_KEYWORD_STOP,
     TOKEN_KEYWORD_CONT,
@@ -705,6 +712,7 @@ static bool eval_string_term()
         eval_string_const() ||
         eval_string_var() ||
         eval_string_chr() ||
+        eval_string_tty() ||
         eval_string_str() ||
         (eval_token('(') && eval_string_expr() && eval_token(')'));
 
@@ -907,10 +915,16 @@ static bool eval_input()
     return true;
 }
 
-static bool eval_print()
+static bool eval_print(bool implicit)
 {
-    if (!eval_token(TOKEN_KEYWORD_PRINT))
+    if (!implicit && !eval_token(TOKEN_KEYWORD_PRINT))
         return false;
+
+    if (implicit)
+    {
+        // rewind to tty / string token
+        bstate.read_ptr--;
+    }
 
     bool result = true;
     bool ln = true;
@@ -932,9 +946,12 @@ static bool eval_print()
                 }
             }
         }
-        else if (eval_tty())
+        else if (eval_string_tty())
         {
-            //
+            if (bstate.do_eval)
+            {
+                bio->print_string(bstate.string.chars ? bstate.string.chars : "");
+            }
         }
         else if (eval_token(','))
         {
@@ -956,7 +973,7 @@ static bool eval_print()
 
     if (result && bstate.do_eval)
     {
-        if (ln)
+        if (ln && !implicit)
         {
             bio->print_string("\r\n");
         }
@@ -1157,56 +1174,58 @@ static void eval_new()
     bmem_prog_new();
 }
 
-static void eval_reset()
-{
-    bio->function0(B_IO_RESET, 0, 0);
-}
-
-static void eval_cls()
-{
-    bio->function0(B_IO_CLS, 0, 0);
-}
-
-static void eval_cat()
-{
-    bio->function0(B_IO_CAT, 0, 0);
-}
-
-static bool eval_tty()
+static bool eval_string_tty()
 {
     if (!eval_token_one_of(tty_codes))
         return false;
 
     uint8_t fn = bstate.token;
+    char codes[CODE_SEQUENCE_MAX_SIZE];
+    *codes = 0;
 
-    if (!eval_expr(TOKEN_NUMBER))
+    // 0 arg
+    if (fn == TOKEN_KEYWORD_CLS)
+    {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CLS);
+        goto EVAL;
+    }
+
+    if (!eval_term())
         return false;
 
-    int y = bstate.number;
-    int x = 0;
-
-    if (fn == TOKEN_KEYWORD_AT)
+    // 1 arg
+    uint8_t arg1 = bstate.number;
+    if (fn == TOKEN_KEYWORD_INK)
     {
-        if (!eval_token(','))
-            return false;
-        if (!eval_expr(TOKEN_NUMBER))
-            return false;
-        fn = B_IO_AT;
-        x = bstate.number;
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, INK, arg1 + INK_DELTA);
+        goto EVAL;
     }
-    else if (fn == TOKEN_KEYWORD_INK)
+    if (fn == TOKEN_KEYWORD_PAPER)
     {
-        fn = B_IO_INK;
-    } else
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, PAPER, arg1 + PAPER_DELTA);
+        goto EVAL;
+    }
+    if (fn == TOKEN_KEYWORD_CURSOR)
     {
-        fn = B_IO_PAPER;
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s", arg1 ? CON : COFF);
+        goto EVAL;
     }
 
+    // 2 args
+    if (!eval_token(','))
+        return false;
+
+    if (!eval_term())
+        return false;
+
+    uint8_t arg2 = bstate.number;
+    snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CUR, arg1 + CUR_DELTA_V, arg2 + CUR_DELTA_H);
+
+EVAL:
     if (!bstate.do_eval)
         return true;
 
-    bio->function0(fn, x, y);
-
+    string_set(&bstate.string, strdup(codes), true);
     return true;
 }
 
@@ -1225,6 +1244,9 @@ static bool eval_simple_instruction()
     // 1 number instructions
     if ((instr =  eval_token_one_of((char *)instr1n)) && eval_expr(TOKEN_NUMBER))
         goto EVAL;
+
+    if (eval_token_one_of(tty_codes))
+        return eval_print(true);
 
     return false;
 
@@ -1277,19 +1299,9 @@ EVAL:
         eval_new();
         return true;
     }
-    if (instr == TOKEN_KEYWORD_CAT)
+    if (instr == TOKEN_KEYWORD_RESET || instr == TOKEN_KEYWORD_CAT)
     {
-        eval_cat();
-        return true;
-    }
-    if (instr == TOKEN_KEYWORD_CLS)
-    {
-        eval_cls();
-        return true;
-    }
-    if (instr == TOKEN_KEYWORD_RESET)
-    {
-        eval_reset();
+        bio->function0(instr);
         return true;
     }
     if (instr == TOKEN_KEYWORD_STOP)
@@ -1318,10 +1330,9 @@ static bool eval_rem()
 static bool eval_instruction()
 {
     return
-        eval_print() ||
+        eval_print(false) ||
         eval_input() ||
-        eval_simple_instruction() ||
-        eval_tty()
+        eval_simple_instruction()
 #ifndef OTA_ONLY
         ||
         eval_rem() ||

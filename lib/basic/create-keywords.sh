@@ -62,6 +62,7 @@ cont
 then
 len
 rem
+cursor
 EOF
 
 # Do not sort to preserver save/load compatibility

@@ -27,6 +27,12 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef MINITEL
+#include "tty-minitel.h"
+#else
+#include "tty-vt100.h"
+#endif
+
 #include "berror.h"
 #include "bmemory.h"
 #include "token.h"
@@ -76,7 +82,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
             {
                 dst--;
                 *dst = 0;
-                bio->function0(B_IO_DEL, 0, 0);
+                bio->print_string(DEL);
             }
         }
         else
