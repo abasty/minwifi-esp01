@@ -6,6 +6,6 @@
 *.pdf
 lib/basic/examples/test/bin/**
 lib/basic/examples/test/obj/**
-*.bst
-config$$$
 lib/basic/examples/bison/**
+lib/basic/examples/disk/**
+data/config$$$

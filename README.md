@@ -159,6 +159,8 @@ $ astyle --style=1tbs -s4 src/*
 
 # OTA
 
+## Mise à jour du firmware
+
 Procédure qui ne marche pas :
 
 * Flash par USB serial => SW reboot de l'ESP
@@ -169,6 +171,18 @@ Il faut **absolument** faire un HW reset de l'ESP :
 * Flash par USB serial => SW reboot de l'ESP
 * Débrancher / Rebrancher l'ESP => HW reboot
 * FOTA fonctionne
+
+## Mise à jour du filesystem
+
+Il faut fixer "Upload Filesystem Image OTA" :
+<https://github.com/platformio/platform-espressif8266/issues/263>
+
+Appliquer le patch sur :
+`/home/alain/.platformio/platforms/espressif8266/builder/main.py`
+
+```python
+ 311  if "uploadfsota" in COMMAND_LINE_TARGETS:
+```
 
 # Shell sur port TCP 23
 
