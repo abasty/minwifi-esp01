@@ -1065,6 +1065,7 @@ int8_t eval_prog_next()
 void eval_stop()
 {
     bstate.running = false;
+    eval_input_mode(false);
 }
 
 void eval_cont()

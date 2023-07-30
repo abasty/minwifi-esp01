@@ -324,6 +324,7 @@ void loop()
                             key = 0x7F;
                         } else if (key == 0x59) { // CX/FIN
                             key = 3;
+                            Serial.print(P_DECONNEXION);
                         } else { // ENVOI
                             key = '\r';
                         }
@@ -336,7 +337,6 @@ void loop()
                     else
                     {
                         bastos_stop();
-                        print_string("Stop\r\n");
                     }
                 }
 #else

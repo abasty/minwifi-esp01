@@ -67,4 +67,7 @@
 
 #define P_ROULEAU PRO2 "\x69\x43"
 
+// Déconnexion
+#define P_DECONNEXION PRO1 "\x67"
+
 #endif // TTY_MINITEL_H
