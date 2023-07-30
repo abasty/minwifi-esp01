@@ -190,3 +190,8 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473696 bytes from 958448 bytes)
 ---
+Added bastos_stop() on Cx/Fin
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.5% (used 33140 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473784 bytes from 958448 bytes)
+---

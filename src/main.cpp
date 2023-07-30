@@ -314,19 +314,30 @@ void loop()
         if (n > 0) {
             if (!_3611) {
 #ifdef MINITEL
+                // print_integer("%02x ", key);
                 if (key == 0x13) {
                     fkey = true;
                 }
                 else {
                     if (fkey) {
-                        if (key == 'G') { // CORRECTION
+                        if (key == 0x47) { // CORRECTION
                             key = 0x7F;
+                        } else if (key == 0x59) { // CX/FIN
+                            key = 3;
                         } else { // ENVOI
                             key = '\r';
                         }
                         fkey = false;
                     }
-                    bastos_send_keys((char *)&key, 1);
+                    if (key != 3)
+                    {
+                        bastos_send_keys((char *)&key, 1);
+                    }
+                    else
+                    {
+                        bastos_stop();
+                        print_string("Stop\r\n");
+                    }
                 }
 #else
                 bastos_send_keys((char *)&key, 1);
