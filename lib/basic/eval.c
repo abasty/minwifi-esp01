@@ -1245,9 +1245,6 @@ static bool eval_simple_instruction()
     if ((instr =  eval_token_one_of((char *)instr1n)) && eval_expr(TOKEN_NUMBER))
         goto EVAL;
 
-    if ((eval_token(TOKEN_KEYWORD_CURSOR)))
-        return eval_print(true);
-
     if (eval_token_one_of(tty_codes))
         return eval_print(true);
 
