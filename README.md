@@ -155,13 +155,15 @@ Sur la DIN, 3 fils souples papa :
 * RX : Rouge
 * 0v : Noir
 
-## Connexion PC
+## Connexion PC avec FTDI
 
 ```
 $ ls /dev/ttyUSB*
 /dev/ttyUSB0
 $ /home/alain/.platformio/packages/tool-esptoolpy/esptool.py --chip esp8266 --port /dev/ttyUSB0 write_flash --flash_size detect 0x0 0x00000_blank1m.bin
 ```
+
+*** ATTENTION AU 3.3v DU FTDI ***
 
 *** LA PROGRAMMATION DOIT SE FAIRE AVEC `board_build.flash_mode = dout` ***
 
@@ -206,6 +208,8 @@ board_build.filesystem = littlefs
 
 
 ## Connexion Minitel
+
+![Liaison sonoff minitel](sonoff-minitel.jpg)
 
 # Target PlatformIO
 
