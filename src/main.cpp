@@ -170,7 +170,7 @@ static void init_minitel(bool clear)
     Serial.print((char *)P_LOCAL_ECHO_OFF);
     Serial.print((char *)P_ROULEAU);
     Serial.print((char *)CON);
-    Serial.print((char *)"\x0C");
+    if (clear) Serial.print((char *) CLS);
 #endif
 }
 
@@ -277,6 +277,11 @@ void setup()
 
     Serial.setTimeout(0);
     init_minitel(false);
+
+/*    Serial.print("\x1b\x3a\x6b\x76");
+    Serial.flush();
+    Serial.end();
+    Serial.begin(4800, SERIAL_7E1); */
 }
 
 void loop()
