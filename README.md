@@ -37,7 +37,12 @@
 * [x] FOR, NEXT
 * [x] GOSUB, RETURN
 * [x] REM, LEN
+* [ ] tty : init string, fast, autoexec => config$$$
 * [ ] DIM
+* [ ] Slice on left value
+* [ ] TAB, REPC, SCROLL UP/DOWN
+* [ ] Optim : gérer la mémoire comme le ZX (un seul bloc :
+  <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/chap27.html>)
 * [x] Toutes les fonctions qui produisent des codes de commandes => fonctions
   qui renvoient des chaines de caractères (au début .h minitel). On doit pouvoir
   faire : let a$=cls + at 10,10 + ink 4 + paper 3 + " *DEMO* ".
