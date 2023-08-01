@@ -95,20 +95,32 @@ Libraries
 
 # Liens
 
+## ZX
+
+* <http://problemkaputt.de/zx.htm>
+* ZX81 memory map : <https://problemkaputt.de/zxdocs.htm#zx80zx81>
+* ZX81 memory map : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/chap27.html>
+* ZX emulator : <https://fuse-emulator.sourceforge.net/>
+* Basic ZX81 : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/appxc.html>
+* Sinclair Basic : <https://en.wikipedia.org/wiki/Sinclair_BASIC>
+
+## VT100
+
+* Codes VT100 : <https://espterm.github.io/docs/VT100%20escape%20codes.html>
+
+## Minitel
+
 * <https://minitel.cquest.org/miedit-page.html>
 * <https://www.museeminitel.fr/>
 * <https://www.minitel.org/>
 * <http://pficheux.free.fr/xtel/>
-* <https://www.tindie.com/products/iodeo/minitel-esp32-dev-board/>
 * <https://forum.museeminitel.fr/t/minitel-esp32-carte-peri-informatique-wifi-ble/711/42>
-* Basic ZX81 : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/appxc.html>
-* Sinclair Basic : <https://en.wikipedia.org/wiki/Sinclair_BASIC>
+* <https://www.tindie.com/products/iodeo/minitel-esp32-dev-board/>
 * Code minitel : <http://millevaches.hydraule.org/info/minitel/specs/codes.htm>
-* Code VT100 : <https://espterm.github.io/docs/VT100%20escape%20codes.html>
 * Python minitel avec fonctions et code :
   <https://github.com/Zigazou/PyMinitel/blob/master/minitel/Minitel.py>
 
-# Progs
+## Progs
 
 * (spectrum à porter sur zx81) : https://zxbasic.readthedocs.io/en/docs/examples/snake.bas/
 
