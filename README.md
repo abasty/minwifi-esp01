@@ -37,6 +37,7 @@
 * [x] FOR, NEXT
 * [x] GOSUB, RETURN
 * [x] REM, LEN
+* [ ] Régler le pb du nom mDNS de l'ESP quand il vient d'être flashé par USB serial
 * [ ] tty : init string, fast, autoexec => config$$$
 * [ ] DIM
 * [ ] Slice on left value
@@ -159,7 +160,26 @@ Sur la DIN, 3 fils souples papa :
 ```
 $ ls /dev/ttyUSB*
 /dev/ttyUSB0
+$ /home/alain/.platformio/packages/tool-esptoolpy/esptool.py --chip esp8266 --port /dev/ttyUSB0 write_flash --flash_size detect 0x0 0x00000_blank1m.bin
 ```
+
+*** LA PROGRAMMATION DOIT SE FAIRE AVEC `board_build.flash_mode = dout` ***
+
+```
+[env:esp01_1m]
+platform = espressif8266
+board = esp01_1m
+framework = arduino
+upload_speed = 230400
+monitor_speed = 115200
+monitor_echo = no
+monitor_raw = yes
+board_build.flash_mode = dout
+board_build.ldscript = eagle.flash.1m64.ld
+lib_deps = links2004/WebSockets@^2.3.7
+board_build.filesystem = littlefs
+```
+
 
 > Programming the ESP01s (Sonoff)
 >
@@ -286,7 +306,8 @@ Donc il suffit d'utiliser la lib WebSocket pour ESP8266 et le tour est joué.
 # Pour l'article
 
 * pio dans vscode (menus)
-* sinon il faut avoir pio en ligne de commande : `source ~/.platformio/penv/bin/activate`
+* sinon il faut avoir pio en ligne de commande : `source
+  ~/.platformio/penv/bin/activate`
 
 ```
 $ pio run --list-targets
