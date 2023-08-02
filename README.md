@@ -37,6 +37,7 @@
 * [x] FOR, NEXT
 * [x] GOSUB, RETURN
 * [x] REM, LEN
+* [ ] Régler le pb du nom mDNS de l'ESP quand il vient d'être flashé par USB serial
 * [ ] tty : init string, fast, autoexec => config$$$
 * [ ] DIM
 * [ ] Slice on left value
@@ -115,7 +116,7 @@ Libraries
 
 ## Minitel
 
-* <https://minitel.cquest.org/miedit-page.html>
+* <https://minitel.cquest.org/miedit-page.html>, <https://medium.com/@cq94/computel-de-retour-1340d00ea79e>
 * <https://www.museeminitel.fr/>
 * <https://www.minitel.org/>
 * <http://pficheux.free.fr/xtel/>
@@ -129,7 +130,9 @@ Libraries
 
 * (spectrum à porter sur zx81) : https://zxbasic.readthedocs.io/en/docs/examples/snake.bas/
 
-# Prise péri informatique
+# Hardware
+
+## Prise péri informatique
 
 ```
 TX -     - RX
@@ -151,6 +154,62 @@ Sur la DIN, 3 fils souples papa :
 * TX : Marron
 * RX : Rouge
 * 0v : Noir
+
+## Connexion PC avec FTDI
+
+```
+$ ls /dev/ttyUSB*
+/dev/ttyUSB0
+$ /home/alain/.platformio/packages/tool-esptoolpy/esptool.py --chip esp8266 --port /dev/ttyUSB0 write_flash --flash_size detect 0x0 0x00000_blank1m.bin
+```
+
+*** ATTENTION AU 3.3v DU FTDI ***
+
+*** LA PROGRAMMATION DOIT SE FAIRE AVEC `board_build.flash_mode = dout` ***
+
+```
+[env:esp01_1m]
+platform = espressif8266
+board = esp01_1m
+framework = arduino
+upload_speed = 230400
+monitor_speed = 115200
+monitor_echo = no
+monitor_raw = yes
+board_build.flash_mode = dout
+board_build.ldscript = eagle.flash.1m64.ld
+lib_deps = links2004/WebSockets@^2.3.7
+board_build.filesystem = littlefs
+```
+
+
+> Programming the ESP01s (Sonoff)
+>
+> With the Sonoff circuit completed and IoT Cloud configurations done, let's try
+> to upload the sketch to the device.To upload the Arduino sketch to this
+> device, follow the steps below:
+>
+> 1. Open the sketch tab in the IoT Cloud
+> 2. Make sure that your USB to Serial converter is connected properly
+>    (otherwise go back to the start of this tutorial).
+> 3. Press and hold the reset button onboard the PCB (see image below), and
+>    connect the USB >Serial converter to your computer.
+> 4. The LED on the Sonoff Basic should now be OFF . If it is red or blinking
+>    blue, try to disconnect and connect again (while holding the reset button).
+> 5. The ESP01s should now be in bootloader mode, and the port should be
+>    detected in the dropdown of available boards in the SKETCH tab in the IoT
+>    Cloud.
+> 6. Click on the upload button. The uploading process will take a while, DO NOT
+>    DISCONNECT until it is finished.When it has finished uploading, it will
+>    take some time for the ESP device to connect to the WiFi network, and to
+>    the IoT cloud.
+>
+> You can open the Serial Monitor for information regarding your connection.
+
+
+## Connexion Minitel
+
+![Liaison sonoff minitel](sonoff-minitel.jpg)
 
 # Target PlatformIO
 
@@ -251,7 +310,8 @@ Donc il suffit d'utiliser la lib WebSocket pour ESP8266 et le tour est joué.
 # Pour l'article
 
 * pio dans vscode (menus)
-* sinon il faut avoir pio en ligne de commande : `source ~/.platformio/penv/bin/activate`
+* sinon il faut avoir pio en ligne de commande : `source
+  ~/.platformio/penv/bin/activate`
 
 ```
 $ pio run --list-targets
