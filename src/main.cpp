@@ -44,8 +44,9 @@
 // 13:	LED
 // 14:	EXTRA GPIO
 
-int relayPin = 12;
-int ledPin = 13;
+const int buttonPin = 0;
+const int relayPin = 12;
+const int ledPin = 13;
 
 #define COMMAND_IP_PORT 23
 
@@ -157,20 +158,40 @@ bastos_io_t io = {
     .function0 = bio_f0,
 };
 
-static void init_minitel(bool clear)
+static void serial_flush()
 {
+    Serial.setTimeout(0);
     // Empty Serial buffer
     while (Serial && Serial.available() > 0) {
         uint8_t buffer[32];
         Serial.readBytes(buffer, 32);
     }
     Serial.flush();
+}
+
+static void setup_serial()
+{
+        // Initialize serial
+    #ifdef MINITEL
+        Serial.begin(1200, SERIAL_7E1);
+    #else
+        Serial.begin(115200);
+    #endif
+    serial_flush();
+
 #ifdef MINITEL
-    Serial.print((char *)P_ACK_OFF_PRISE);
-    Serial.print((char *)P_LOCAL_ECHO_OFF);
-    Serial.print((char *)P_ROULEAU);
-    Serial.print((char *)CON);
-    if (clear) Serial.print((char *) CLS);
+    Serial.print(P_ACK_OFF_PRISE);
+    Serial.print(P_PRISE_4800);
+    delay(1000);
+    Serial.end();
+
+    Serial.begin(4800, SERIAL_7E1);
+    serial_flush();
+
+    Serial.print(P_LOCAL_ECHO_OFF);
+    Serial.print(P_ROULEAU);
+    Serial.print(CON);
+    Serial.print(CLS);
 #endif
 }
 
@@ -242,53 +263,35 @@ finalize:
 
 void setup()
 {
-    // Initialize Sonoff pins
+    // Setup sonoff pins
     pinMode(relayPin, OUTPUT);
-    digitalWrite(relayPin, HIGH);
+    pinMode(ledPin, OUTPUT);
+    digitalWrite(relayPin, HIGH);   // On R2, light the red led (relay state)
+    digitalWrite(ledPin, HIGH);     // On R2, light the blue led (red + blue => purple)
 
-    // Initialize serial
-#ifdef MINITEL
-    Serial.begin(1200, SERIAL_7E1);
-#else
-    Serial.begin(115200);
-#endif
+    setup_serial();
 
-    Serial.flush();
-    Serial.println(CLS "Loading and connecting.");
-
-    // Initialize file system
+    // Setup file system
     LittleFS.begin();
     bastos_init(&io);
 
-    // connect Wifi if configuration available
+    // Setup WiFi
     setup_wifi();
 
-    // Initialize OTA
+    // Setup OTA
     ArduinoOTA.setPort(8266);
-
 #ifdef MINITEL
     // Hostname
     ArduinoOTA.setHostname("esp-minitel");
 #else
     ArduinoOTA.setHostname("esp-minitel-dev");
 #endif
-
     ArduinoOTA.begin();
-
-    Serial.setTimeout(0);
-    init_minitel(false);
-
-/*    Serial.print("\x1b\x3a\x6b\x76");
-    Serial.flush();
-    Serial.end();
-    Serial.begin(4800, SERIAL_7E1); */
 }
 
 void loop()
 {
     ArduinoOTA.handle();
-
-    digitalWrite(ledPin, HIGH);
 
     // Forward Minitel server incoming data to serial output
     if (tcpMinitelConnexion && tcpMinitelConnexion.available() > 0) {

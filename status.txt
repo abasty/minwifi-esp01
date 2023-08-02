@@ -205,3 +205,8 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.4% (used 33136 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473780 bytes from 958448 bytes)
 ---
+Minitel switch to 4800bds
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.4% (used 33116 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473784 bytes from 958448 bytes)
+---
