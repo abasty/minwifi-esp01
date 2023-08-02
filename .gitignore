@@ -3,7 +3,7 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
-*.pdf
+Minitel.pdf
 lib/basic/examples/test/bin/**
 lib/basic/examples/test/obj/**
 lib/basic/examples/bison/**
