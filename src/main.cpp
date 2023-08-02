@@ -157,20 +157,39 @@ bastos_io_t io = {
     .function0 = bio_f0,
 };
 
-static void init_minitel(bool clear)
+static void serial_flush()
 {
+    Serial.setTimeout(0);
     // Empty Serial buffer
     while (Serial && Serial.available() > 0) {
         uint8_t buffer[32];
         Serial.readBytes(buffer, 32);
     }
     Serial.flush();
+}
+
+static void setup_serial()
+{
+        // Initialize serial
+    #ifdef MINITEL
+        Serial.begin(1200, SERIAL_7E1);
+    #else
+        Serial.begin(115200);
+    #endif
+    serial_flush();
+
 #ifdef MINITEL
-    Serial.print((char *)P_ACK_OFF_PRISE);
-    Serial.print((char *)P_LOCAL_ECHO_OFF);
-    Serial.print((char *)P_ROULEAU);
-    Serial.print((char *)CON);
-    if (clear) Serial.print((char *) CLS);
+    Serial.print(P_ACK_OFF_PRISE);
+    Serial.print(P_PRISE_4800);
+    Serial.end();
+
+    Serial.begin(4800, SERIAL_7E1);
+    serial_flush();
+
+    Serial.print(P_LOCAL_ECHO_OFF);
+    Serial.print(P_ROULEAU);
+    Serial.print(CON);
+    Serial.print(CLS);
 #endif
 }
 
@@ -246,15 +265,7 @@ void setup()
     pinMode(relayPin, OUTPUT);
     digitalWrite(relayPin, HIGH);
 
-    // Initialize serial
-#ifdef MINITEL
-    Serial.begin(1200, SERIAL_7E1);
-#else
-    Serial.begin(115200);
-#endif
-
-    Serial.flush();
-    Serial.println(CLS "Loading and connecting.");
+    setup_serial();
 
     // Initialize file system
     LittleFS.begin();
@@ -275,13 +286,7 @@ void setup()
 
     ArduinoOTA.begin();
 
-    Serial.setTimeout(0);
-    init_minitel(false);
-
-/*    Serial.print("\x1b\x3a\x6b\x76");
-    Serial.flush();
-    Serial.end();
-    Serial.begin(4800, SERIAL_7E1); */
+    setup_serial();
 }
 
 void loop()

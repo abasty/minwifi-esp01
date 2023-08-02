@@ -61,7 +61,7 @@
 // Non retour d'acquitement sur prise
 #define P_ACK_OFF_PRISE PRO2 P_NON_RETOUR_ACQUITEMENT P_PRISE_TX
 
-// Echo ON en mode local
+// Echo ON/OFF en mode local
 #define P_LOCAL_ECHO_ON PRO3 P_ON P_MODEM_RX P_CLAVIER_TX
 #define P_LOCAL_ECHO_OFF PRO3 P_OFF P_MODEM_RX P_CLAVIER_TX
 
@@ -69,5 +69,8 @@
 
 // Déconnexion
 #define P_DECONNEXION PRO1 "\x67"
+
+// Serial 4800bds
+#define P_PRISE_4800 PRO2 "\x6B\x76"
 
 #endif // TTY_MINITEL_H
