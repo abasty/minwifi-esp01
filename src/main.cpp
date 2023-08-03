@@ -171,27 +171,24 @@ static void serial_flush()
 
 static void setup_serial()
 {
-        // Initialize serial
-    #ifdef MINITEL
-        Serial.begin(1200, SERIAL_7E1);
-    #else
-        Serial.begin(115200);
-    #endif
-    serial_flush();
-
 #ifdef MINITEL
-    Serial.print(P_ACK_OFF_PRISE);
-    Serial.print(P_PRISE_4800);
-    delay(1000);
+    // Wont't work if Minitel is already 4800 (garbage)
+    Serial.begin(1200, SERIAL_7E1);
+    serial_flush();
+    Serial.print(P_ACK_OFF_PRISE P_PRISE_4800);
+    delay(500);
     Serial.end();
 
+    // Won't work on Minitel 1
     Serial.begin(4800, SERIAL_7E1);
     serial_flush();
 
-    Serial.print(P_LOCAL_ECHO_OFF);
-    Serial.print(P_ROULEAU);
-    Serial.print(CON);
-    Serial.print(CLS);
+    // TODO : Rely on Fnct P + 1200/3000/4800/9600
+
+    Serial.print(P_LOCAL_ECHO_OFF P_ROULEAU CLS CON);
+#else
+    Serial.begin(115200);
+    serial_flush();
 #endif
 }
 
