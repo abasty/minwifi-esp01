@@ -37,9 +37,12 @@
 * [x] FOR, NEXT
 * [x] GOSUB, RETURN
 * [x] REM, LEN
+* [ ] TO en opérande gauche LET A$(1 TO 2) = "AB"
+* [ ] CR/LF sur ESP
+* [ ] DIM
+* [ ] Support Suite / Retour / Sommaire (TAB ou PGDN / SHIFT TAB ou PGDUP/ HOME)
 * [ ] Régler le pb du nom mDNS de l'ESP quand il vient d'être flashé par USB serial
 * [ ] tty : init string, fast, autoexec => config$$$
-* [ ] DIM
 * [ ] Slice on left value
 * [ ] TAB, REPC, SCROLL UP/DOWN
 * [ ] Optim : gérer la mémoire comme le ZX (un seul bloc :
