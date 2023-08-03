@@ -155,6 +155,7 @@ bastos_io_t io = {
     .bclose = bclose,
     .bwrite = bwrite,
     .bread = bread,
+    .erase = berase,
     .function0 = bio_f0,
 };
 
