@@ -186,7 +186,7 @@ static void setup_serial()
 
     // TODO : Rely on Fnct P + 1200/3000/4800/9600
 
-    Serial.print(P_LOCAL_ECHO_OFF P_ROULEAU CLS CON);
+    Serial.print(COFF P_LOCAL_ECHO_OFF P_ROULEAU CLS);
 #else
     Serial.begin(115200);
     serial_flush();
@@ -210,36 +210,55 @@ static void setup_wifi()
     WiFi.persistent(false);
     WiFi.mode(WIFI_STA);
 
+#ifdef MINITEL
+    print_string("\x1f\x40\x41" CLEOL BLINK INV "W");
+#else
+    print_string("Connecting");
+#endif
+
     int err = bastos_load("config$$$");
     if (err != BERROR_NONE)
-        goto finalize;
+        goto config_new;
 
     var = bmem_var_find("\021WSSID");
     if (!var)
-        goto finalize;
+        goto config_run;
     wssid = var->string;
 
     var = bmem_var_find("\021WSECRET");
     if (!var)
-        goto finalize;
+        goto config_run;
     wsecret = var->string;
 
     WiFi.begin(wssid, wsecret);
 
+#ifdef MINITEL
+    print_string("\x1f\x40\x41" CLEOL BLINK INV "W");
+#else
     print_string("Connecting");
+#endif
+
     while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000) {
         delay(500);
+#ifndef MINITEL
         print_string(".");
-    }
-    print_string("\r\n");
-    if (WiFi.status() != WL_CONNECTED)
-        goto finalize;
-
-    print_string("WiFi connected with IP: ");
-    Serial.print(WiFi.localIP());
-#if COMMAND_IP_PORT != 23
-    Serial.printf(" %u", COMMAND_IP_PORT);
 #endif
+    }
+
+#ifdef MINITEL
+    print_string("\x1f\x40\x41" CLEOL);
+#else
+    print_string("\r\n");
+#endif
+
+    if (WiFi.status() != WL_CONNECTED)
+        goto config_run;
+
+#ifndef MINITEL
+    print_string("WiFi connected with IP: ");
+#endif
+
+    Serial.print(WiFi.localIP());
     print_string("\r\n");
 
     if (LittleFS.exists("format$$$"))
@@ -252,10 +271,17 @@ static void setup_wifi()
     bmem_prog_new();
     return;
 
-finalize:
-    Serial.println("Connection failed.");
+config_new:
     bmem_prog_new();
     bastos_send_keys(config_prog, strlen(config_prog));
+
+config_run:
+#ifdef MINITEL
+    print_string("\x1f\x40\x41" CLEOL CLS);
+#else
+    print_string("WiFi connection failed\r\n");
+#endif
+    // TODO: Add a send_keys w/o edit / echo
     bastos_send_keys("RUN\n", 4);
 }
 
@@ -277,7 +303,7 @@ void setup()
     setup_wifi();
 
     // Setup OTA
-    ArduinoOTA.setPort(8266);
+    // ArduinoOTA.setPort(8266);
 #ifdef MINITEL
     // Hostname
     ArduinoOTA.setHostname("esp-minitel");
@@ -285,6 +311,8 @@ void setup()
     ArduinoOTA.setHostname("esp-minitel-dev");
 #endif
     ArduinoOTA.begin();
+
+    print_string(CON);
 }
 
 void loop()

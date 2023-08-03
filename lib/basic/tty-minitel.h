@@ -31,6 +31,7 @@
 #define DEL "\x08 \x08"
 
 #define CLS "\x0C"
+#define CLEOL "\x18"
 
 #define CON "\x11"
 #define COFF "\x14"
@@ -38,6 +39,9 @@
 #define CUR "\x1F%c%c"
 #define CUR_DELTA_V 64
 #define CUR_DELTA_H 64
+
+#define INV "\x1B\x5D"
+#define BLINK "\x1B\x48"
 
 #define INK "\x1B%c"
 #define INK_DELTA 0x40

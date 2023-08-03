@@ -215,3 +215,8 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.4% (used 33116 bytes from 81920 bytes)
 Flash: [=====     ]  49.4% (used 473736 bytes from 958448 bytes)
 ---
+Minitel like WiFi status
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.4% (used 33084 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473672 bytes from 958448 bytes)
+---
