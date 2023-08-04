@@ -340,6 +340,7 @@ void loop()
     if (Serial && Serial.available() > 0) {
         uint8_t key;
         size_t n = Serial.readBytes(&key, 1);
+        // Serial.printf("%02x ", key);
         if (n > 0) {
             if (!_3611) {
 #ifdef MINITEL
@@ -369,6 +370,9 @@ void loop()
                     }
                 }
 #else
+                if (key == 0x08) {
+                    key = 0x7F;
+                }
                 bastos_send_keys((char *)&key, 1);
 #endif
             } else {

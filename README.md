@@ -37,8 +37,8 @@
 * [x] FOR, NEXT
 * [x] GOSUB, RETURN
 * [x] REM, LEN
+* [x] CR/LF , DEL, sur ESP01-1M
 * [ ] TO en opérande gauche LET A$(1 TO 2) = "AB"
-* [ ] CR/LF sur ESP
 * [ ] DIM
 * [ ] Support Suite / Retour / Sommaire (TAB ou PGDN / SHIFT TAB ou PGDUP/ HOME)
 * [ ] Régler le pb du nom mDNS de l'ESP quand il vient d'être flashé par USB serial
