@@ -130,6 +130,10 @@ static inline int berase(const char *pathname)
 
 static inline void breset()
 {
+#ifdef MINITEL
+    Serial.print(P_ACK_OFF_PRISE P_PRISE_1200);
+    delay(250);
+#endif
     ESP.restart();
 }
 
@@ -143,6 +147,16 @@ static inline void bio_f0(uint8_t fn)
     if (fn == TOKEN_KEYWORD_RESET)
     {
         breset();
+        return;
+    }
+    if (fn == TOKEN_KEYWORD_FAST || fn == TOKEN_KEYWORD_SLOW)
+    {
+#ifdef MINITEL
+        Serial.print(fn == TOKEN_KEYWORD_FAST ? P_PRISE_4800 : P_PRISE_1200);
+        delay(500);
+        Serial.end();
+        Serial.begin(fn == TOKEN_KEYWORD_FAST ? 4800 : 1200, SERIAL_7E1);
+#endif
         return;
     }
 }
@@ -173,20 +187,10 @@ static void serial_flush()
 static void setup_serial()
 {
 #ifdef MINITEL
-    // Wont't work if Minitel is already 4800 (garbage)
     Serial.begin(1200, SERIAL_7E1);
     serial_flush();
-    Serial.print(P_ACK_OFF_PRISE P_PRISE_4800);
-    delay(500);
-    Serial.end();
-
-    // Won't work on Minitel 1
-    Serial.begin(4800, SERIAL_7E1);
-    serial_flush();
-
-    // TODO : Rely on Fnct P + 1200/3000/4800/9600
-
-    Serial.print(COFF P_LOCAL_ECHO_OFF P_ROULEAU CLS);
+    delay(1000);
+    Serial.print(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU CLS);
 #else
     Serial.begin(115200);
     serial_flush();
@@ -344,34 +348,26 @@ void loop()
         if (n > 0) {
             if (!_3611) {
 #ifdef MINITEL
-                // print_integer("%02x ", key);
                 if (key == 0x13) {
                     fkey = true;
-                }
-                else {
+                } else {
                     if (fkey) {
                         if (key == 0x47) { // CORRECTION
                             key = 0x7F;
-                        } else if (key == 0x59) { // CX/FIN
+                        } else if (key == 0x45) { // ANNULATION
                             key = 3;
-                            Serial.print(P_DECONNEXION);
                         } else { // ENVOI
                             key = '\r';
                         }
                         fkey = false;
                     }
-                    if (key != 3)
-                    {
-                        bastos_send_keys((char *)&key, 1);
-                    }
-                    else
-                    {
-                        bastos_stop();
-                    }
+                    bastos_send_keys((char *)&key, 1);
                 }
 #else
                 if (key == 0x08) {
                     key = 0x7F;
+                } else if (key == 0x1b) {
+                    key = 3;
                 }
                 bastos_send_keys((char *)&key, 1);
 #endif

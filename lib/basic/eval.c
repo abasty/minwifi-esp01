@@ -245,6 +245,8 @@ uint8_t instr0[] = {
     TOKEN_KEYWORD_CONT,
     TOKEN_KEYWORD_RUN,
     TOKEN_KEYWORD_RETURN,
+    TOKEN_KEYWORD_FAST,
+    TOKEN_KEYWORD_SLOW,
     0,
 };
 
@@ -1300,7 +1302,7 @@ EVAL:
         eval_new();
         return true;
     }
-    if (instr == TOKEN_KEYWORD_RESET || instr == TOKEN_KEYWORD_CAT)
+    if (instr == TOKEN_KEYWORD_RESET || instr == TOKEN_KEYWORD_CAT || instr == TOKEN_KEYWORD_FAST || instr == TOKEN_KEYWORD_SLOW)
     {
         bio->function0(instr);
         return true;

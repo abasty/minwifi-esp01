@@ -63,6 +63,8 @@ then
 len
 rem
 cursor
+fast
+slow
 EOF
 
 # Do not sort to preserver save/load compatibility

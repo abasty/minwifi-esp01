@@ -70,7 +70,13 @@ size_t bastos_send_keys(const char *keys, size_t n)
     size_t size = dst - io_buffer;
     while (size < IO_BUFFER_SIZE - 1 && *src && n > 0)
     {
-        if (*src == '\r')
+        if (*src == 3)
+        {
+            bastos_stop();
+            *io_buffer = 0;
+            return 1;
+        }
+        else if (*src == '\r')
         {
             *dst++ = '\n';
             src++;

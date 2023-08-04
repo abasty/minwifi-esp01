@@ -51,4 +51,6 @@ const char *keywords =
     "LE""\xce"
     "RE""\xcd"
     "CURSO""\xd2"
+    "FAS""\xd4"
+    "SLO""\xd7"
 ;

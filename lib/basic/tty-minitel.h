@@ -75,6 +75,7 @@
 #define P_DECONNEXION PRO1 "\x67"
 
 // Serial 4800bds
+#define P_PRISE_1200 PRO2 "\x6B\x64"
 #define P_PRISE_4800 PRO2 "\x6B\x76"
 
 #endif // TTY_MINITEL_H
