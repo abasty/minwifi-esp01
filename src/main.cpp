@@ -190,6 +190,7 @@ static void setup_serial()
 #else
     Serial.begin(115200);
     serial_flush();
+    delay(250);
 #endif
 }
 
@@ -213,7 +214,7 @@ static void setup_wifi()
 #ifdef MINITEL
     print_string("\x1f\x40\x41" CLEOL BLINK INV "W");
 #else
-    print_string("Connecting");
+    print_string(CLS "Connecting");
 #endif
 
     int err = bastos_load("config$$$");
@@ -231,12 +232,6 @@ static void setup_wifi()
     wsecret = var->string;
 
     WiFi.begin(wssid, wsecret);
-
-#ifdef MINITEL
-    print_string("\x1f\x40\x41" CLEOL BLINK INV "W");
-#else
-    print_string("Connecting");
-#endif
 
     while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000) {
         delay(500);
