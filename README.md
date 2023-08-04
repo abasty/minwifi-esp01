@@ -104,6 +104,11 @@ Libraries
 
 # Liens
 
+## 8266 / 8285
+
+* Flash : <https://nodemcu.readthedocs.io/en/latest/flash/>
+* 8266 / 8285 diff + flash + example : <https://itead.cc/diy-kits-guides/using-esp8266-esp8285-to-blink-an-led/#:~:text=Differences%20between%20ESP8285%20and%20ESP8266&text=ESP8285%20integrates%201MB%20Flash%20in,work%20even%20after%20successfully%20download.>
+
 ## ZX
 
 * <http://problemkaputt.de/zx.htm>
