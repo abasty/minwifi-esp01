@@ -53,4 +53,5 @@ const char *keywords =
     "CURSO""\xd2"
     "FAS""\xd4"
     "SLO""\xd7"
+    "DI""\xcd"
 ;

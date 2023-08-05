@@ -65,6 +65,7 @@ rem
 cursor
 fast
 slow
+dim
 EOF
 
 # Do not sort to preserver save/load compatibility

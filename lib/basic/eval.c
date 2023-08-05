@@ -803,6 +803,58 @@ static bool eval_variable_ref()
     return true;
 }
 
+static bool eval_dim()
+{
+    if (!eval_token(TOKEN_KEYWORD_DIM))
+        return false;
+
+    if (!eval_variable_ref())
+        return false;
+
+    if (!eval_token('('))
+        return false;
+
+    uint8_t dim = 0;
+    uint32_t size = 1;
+
+    while (eval_float_expr())
+    {
+        if (bstate.do_eval)
+        {
+            if (dim == UINT8_MAX)
+            {
+                bstate.error = BERROR_RANGE;
+                return true;
+            }
+            if (bstate.number < 1 || bstate.number > 16384)
+            {
+                bstate.error = BERROR_RANGE;
+                return true;
+            }
+            size *= bstate.number;
+        }
+
+        dim++;
+
+        if (!eval_token(','))
+            break;
+    }
+
+    if (!eval_token(')'))
+        return false;
+
+    if (dim == 0)
+        return false;
+
+    if (bstate.do_eval)
+    {
+        // TODO: declare variable and create space for the array
+        bio->print_integer("DIM: %d\r\n", (int) dim);
+    }
+
+    return true;
+}
+
 static bool eval_let()
 {
     uint16_t start = 1;
@@ -1403,6 +1455,7 @@ static bool eval_instruction()
         ||
         eval_rem() ||
         eval_let() ||
+        eval_dim() ||
         eval_list()
 #endif
         ;
