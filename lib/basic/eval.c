@@ -812,11 +812,11 @@ static bool eval_let()
     if (!eval_token(TOKEN_KEYWORD_LET))
         return false;
 
-    char *name = bstate.var_ref;
-    uint8_t token = *((uint8_t *)name);
-
     if (!eval_variable_ref())
         return false;
+
+    char *name = bstate.var_ref;
+    uint8_t token = *((uint8_t *)name);
 
     if (token == TOKEN_VARIABLE_STRING && eval_token('('))
     {
