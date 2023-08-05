@@ -805,17 +805,47 @@ static bool eval_variable_ref()
 
 static bool eval_let()
 {
+    uint16_t start = 1;
+    uint16_t end = UINT16_MAX;
+    bool range = false;
+
     if (!eval_token(TOKEN_KEYWORD_LET))
-        return false;
-
-    if (!eval_variable_ref())
-        return false;
-
-    if (!eval_token('='))
         return false;
 
     char *name = bstate.var_ref;
     uint8_t token = *((uint8_t *)name);
+
+    if (!eval_variable_ref())
+        return false;
+
+    if (token == TOKEN_VARIABLE_STRING && eval_token('('))
+    {
+        if (eval_expr(TOKEN_NUMBER))
+        {
+            start = bstate.number;
+            end = start;
+        }
+
+        if (eval_token(TOKEN_KEYWORD_TO))
+        {
+            if (eval_expr(TOKEN_NUMBER))
+            {
+                end = bstate.number;
+            }
+            else
+            {
+                end = UINT16_MAX;
+            }
+        }
+
+        if (!eval_token(')'))
+            return false;
+
+        range = true;
+    }
+
+    if (!eval_token('='))
+        return false;
 
     if (token == TOKEN_VARIABLE_NUMBER)
     {
@@ -836,8 +866,41 @@ static bool eval_let()
 
         if (bstate.do_eval)
         {
-            if (bmem_var_string_set(name, bstate.string.chars) == 0)
-                return false;
+            if (range)
+            {
+                var_t *var = bmem_var_find(name);
+                uint16_t len = strlen(var->string);
+                if (!var->string || len == 0)
+                    return true;
+                if (start <= 0)
+                    return true;
+                if (start > len)
+                    return true;
+                if (end < start)
+                    return true;
+                if (end > len)
+                    end = len;
+                uint8_t *src = (uint8_t*) bstate.string.chars;
+                uint8_t *dst = (uint8_t*) var->string + start - 1;
+                uint16_t n = end - start + 1;
+                while (n)
+                {
+                    if (src && *src)
+                    {
+                        *dst++ = *src++;
+                    }
+                    else
+                    {
+                        *dst++ = ' ';
+                    }
+                    n--;
+                }
+            }
+            else
+            {
+                if (bmem_var_string_set(name, bstate.string.chars) == 0)
+                    return false;
+            }
         }
         return true;
     }
