@@ -115,7 +115,7 @@ Libraries
 * ZX81 memory map : <https://problemkaputt.de/zxdocs.htm#zx80zx81>
 * ZX81 memory map : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/chap27.html>
 * ZX emulator : <https://fuse-emulator.sourceforge.net/>
-* Basic ZX81 : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/appxc.html>
+* Livre sur le Basic ZX81 (original) : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr>
 * Sinclair Basic : <https://en.wikipedia.org/wiki/Sinclair_BASIC>
 
 ## VT100
