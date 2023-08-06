@@ -35,8 +35,6 @@
 #include "tty-vt100.h"
 #endif
 
-#include "berror.h"
-#include "bmemory.h"
 #include "bio.h"
 
 // 0:	BUTTON

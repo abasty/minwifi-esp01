@@ -71,7 +71,7 @@ static void bmem_var_unset(var_t *var)
     free(var);
 }
 
-void bmem_vars_clear()
+static void bmem_vars_clear()
 {
     while (var_tree.root)
     {
@@ -101,7 +101,7 @@ static var_t *bmem_var_get_or_new(const char *name)
     return var;
 }
 
-var_t *bmem_var_string_set(const char *name, char *value)
+static var_t *bmem_var_string_set(const char *name, char *value)
 {
     var_t *var = bmem_var_get_or_new(name);
     if (var == 0)
@@ -122,7 +122,7 @@ var_t *bmem_var_string_set(const char *name, char *value)
     return var;
 }
 
-var_t *bmem_var_number_set(const char *name, float value)
+static var_t *bmem_var_number_set(const char *name, float value)
 {
     var_t *var = bmem_var_get_or_new(name);
     if (var == 0)
@@ -145,7 +145,7 @@ void bmem_prog_new()
     }
 }
 
-void bmem_prog_line_free(prog_t *prog)
+static void bmem_prog_line_free(prog_t *prog)
 {
     if (prog->line_no != 0)
     {
@@ -156,7 +156,7 @@ void bmem_prog_line_free(prog_t *prog)
     free(prog);
 }
 
-prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
+static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
 {
 
     if (len == 0 && line_no == 0)
@@ -211,7 +211,7 @@ static void bmem_prog_node_push(ds_btree_item_t *node)
     }
 }
 
-prog_t *bmem_prog_first_line()
+static prog_t *bmem_prog_first_line()
 {
     if (prog_list.root == 0)
     {
@@ -224,7 +224,7 @@ prog_t *bmem_prog_first_line()
     return (prog_t *)(DS_OBJECT_OF(&prog_list, prog_list.root));
 }
 
-prog_t *bmem_prog_next_line(prog_t *prog)
+static prog_t *bmem_prog_next_line(prog_t *prog)
 {
     if (!prog)
         return 0;
@@ -235,7 +235,7 @@ prog_t *bmem_prog_next_line(prog_t *prog)
     return (prog_t *) (DS_OBJECT_OF(&prog_list, prog->list.next));
 }
 
-prog_t *bmem_prog_get_line(uint16_t line_no)
+static prog_t *bmem_prog_get_line(uint16_t line_no)
 {
     prog_t search = {
         .line_no = line_no,
@@ -259,7 +259,7 @@ static void bmem_var_node_push(ds_btree_item_t *node)
     }
 }
 
-var_t *bmem_var_first()
+static var_t *bmem_var_first()
 {
     var_list.root = 0;
     bmem_var_node_push(var_tree.root);
@@ -270,7 +270,7 @@ var_t *bmem_var_first()
     return (var_t *)(DS_OBJECT_OF(&var_list, var_list.root));
 }
 
-var_t *bmem_var_next(var_t *var)
+static var_t *bmem_var_next(var_t *var)
 {
     if (!var)
         return 0;
@@ -281,7 +281,7 @@ var_t *bmem_var_next(var_t *var)
     return (var_t *) (DS_OBJECT_OF(&var_list, var->list.next));
 }
 
-void bmem_init()
+static void bmem_init()
 {
     ds_btree_init(&prog_tree, offsetof(prog_t, tree), bmem_prog_cmp);
     ds_btree_init(&var_tree, offsetof(var_t, tree), bmem_vars_cmp);

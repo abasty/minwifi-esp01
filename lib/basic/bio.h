@@ -30,6 +30,10 @@
 #include <stddef.h>
 
 #include "keywords.h"
+#include "berror.h"
+
+#include "ds_btree.h"
+#include "ds_lifo.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -67,6 +71,25 @@ typedef struct {
     function0_t *function0;
 } bastos_io_t;
 
+typedef struct {
+    ds_btree_item_t tree;
+    ds_lifo_item_t list;
+    uint16_t line_no;
+    uint16_t len;
+    uint8_t *line;
+} prog_t;
+
+typedef struct {
+    ds_btree_item_t tree;
+    ds_lifo_item_t list;
+    char *name;
+    union {
+        void *value;
+        float number;
+        char *string;
+    };
+} var_t;
+
 void bastos_init(bastos_io_t *_io);
 
 size_t bastos_send_keys(const char *keys, size_t n);
@@ -76,6 +99,9 @@ void bastos_stop();
 
 int8_t bastos_save(const char *name);
 int8_t bastos_load(const char *name);
+
+void bmem_prog_new();
+var_t *bmem_var_find(const char *name);
 
 #ifdef __cplusplus
 }

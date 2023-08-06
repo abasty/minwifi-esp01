@@ -28,52 +28,19 @@
 
 #include <stdint.h>
 
-#include "ds_btree.h"
-#include "ds_lifo.h"
+#include "bio.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+static void bmem_init();
+static void bmem_prog_line_free(prog_t *prog);
+static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len);
+static prog_t *bmem_prog_first_line();
+static prog_t *bmem_prog_next_line(prog_t *prog);
+static prog_t *bmem_prog_get_line(uint16_t line_no);
 
-typedef struct {
-    ds_btree_item_t tree;
-    ds_lifo_item_t list;
-    uint16_t line_no;
-    uint16_t len;
-    uint8_t *line;
-} prog_t;
-
-typedef struct {
-    ds_btree_item_t tree;
-    ds_lifo_item_t list;
-    char *name;
-    union {
-        void *value;
-        float number;
-        char *string;
-    };
-} var_t;
-
-
-void bmem_init();
-
-void bmem_prog_new();
-void bmem_prog_line_free(prog_t *prog);
-prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len);
-prog_t *bmem_prog_first_line();
-prog_t *bmem_prog_next_line(prog_t *prog);
-prog_t *bmem_prog_get_line(uint16_t line_no);
-
-void bmem_vars_clear();
-var_t *bmem_var_string_set(const char *name, char *value);
-var_t *bmem_var_number_set(const char *name, float value);
-var_t *bmem_var_find(const char *name);
-var_t *bmem_var_first();
-var_t *bmem_var_next(var_t *var);
-
-
-#ifdef __cplusplus
-}
-#endif
+static void bmem_vars_clear();
+static var_t *bmem_var_string_set(const char *name, char *value);
+static var_t *bmem_var_number_set(const char *name, float value);
+static var_t *bmem_var_first();
+static var_t *bmem_var_next(var_t *var);
 
 #endif // __BMEMORY_H__

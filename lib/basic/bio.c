@@ -39,6 +39,11 @@
 #include "eval.h"
 #include "bio.h"
 
+#include "ds_btree.c-static"
+#include "token.c-static"
+#include "bmemory.c-static"
+#include "eval.c-static"
+
 bastos_io_t *bio = 0;
 
 // bst_io_argv_t bastos_io_argv[4] = {0};

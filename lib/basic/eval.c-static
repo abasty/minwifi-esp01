@@ -42,12 +42,6 @@
 #include "eval.h"
 #include "bio.h"
 
-typedef struct
-{
-    char *chars;
-    bool allocated;
-} string_t;
-
 static inline void eval_input_mode(bool mode);
 static bool eval_string_tty();
 
@@ -162,24 +156,6 @@ typedef struct
 {
     uint16_t line_no;
 } return_t;
-
-typedef struct
-{
-    prog_t *pc;
-    prog_t *prog;
-    char *var_ref;
-    var_t *input_var;
-    float number;
-    uint8_t *read_ptr;
-    uint8_t token;
-    uint8_t input_var_token;
-    int8_t error;
-    bool do_eval;
-    bool running;
-    bool inputting;
-    int sp;
-    string_t string;
-} eval_state_t;
 
 loop_t loops[26] = {0};
 
@@ -296,10 +272,6 @@ static uint8_t eval_token_one_of(const char *set)
     bstate.read_ptr++;
     return c;
 }
-
-static bool eval_string_expr();
-static bool eval_factor();
-static bool eval_expr(uint8_t type_token);
 
 uint8_t len_code_functions[] = {
     TOKEN_KEYWORD_CODE,
@@ -1179,23 +1151,23 @@ int8_t eval_prog_next()
     return err;
 }
 
-void eval_stop()
+static inline bool eval_running()
+{
+    return bstate.running;
+}
+
+static void eval_stop()
 {
     bstate.running = false;
     eval_input_mode(false);
 }
 
-void eval_cont()
+static void eval_cont()
 {
     bstate.running = bstate.pc != 0;
 }
 
-bool eval_running()
-{
-    return bstate.running;
-}
-
-bool eval_inputting()
+static bool eval_inputting()
 {
     return bstate.inputting;
 }

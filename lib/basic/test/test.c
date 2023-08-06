@@ -12,13 +12,6 @@
 #include <poll.h>
 #include <signal.h>
 
-#include "ds_common.h"
-#include "ds_btree.h"
-
-#include "berror.h"
-#include "bmemory.h"
-#include "token.h"
-#include "keywords.h"
 #include "bio.h"
 
 struct sigaction old_action;
