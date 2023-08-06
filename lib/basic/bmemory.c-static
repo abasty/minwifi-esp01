@@ -38,6 +38,11 @@ ds_lifo_t prog_list;
 ds_btree_t var_tree;
 ds_lifo_t var_list;
 
+static bvar_t *bmem_var_new(bvar_t *template, char *name)
+{
+
+}
+
 static int bmem_prog_cmp(void *_prog1, void *_prog2)
 {
     prog_t *prog1 = (prog_t *)_prog1;
