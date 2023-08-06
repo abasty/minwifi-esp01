@@ -783,6 +783,9 @@ static bool eval_dim()
     if (!eval_variable_ref())
         return false;
 
+    // char *name = bstate.var_ref;
+    // uint8_t token = name[0];
+
     if (!eval_token('('))
         return false;
 
@@ -818,11 +821,13 @@ static bool eval_dim()
     if (dim == 0)
         return false;
 
-    if (bstate.do_eval)
-    {
-        // TODO: declare variable and create space for the array
-        bio->print_integer("DIM: %d\r\n", (int) dim);
-    }
+    if (!bstate.do_eval)
+        return true;
+
+
+
+    // TODO: declare variable and create space for the array
+    bio->print_integer("DIM: %d\r\n", (int) dim);
 
     return true;
 }
@@ -1564,7 +1569,7 @@ static bool eval_next()
     return true;
 }
 
-int8_t eval_prog(prog_t *prog, bool do_eval)
+static int8_t eval_prog(prog_t *prog, bool do_eval)
 {
     // Init evaluator state
     bstate.do_eval = do_eval;
