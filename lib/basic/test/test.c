@@ -21,8 +21,6 @@
 #include "keywords.h"
 #include "bio.h"
 
-#define BASTOS_DISK_PATH "/home/alain/Projects/minwifi-esp01/lib/basic/examples/disk"
-
 struct sigaction old_action;
 struct termios old, new;
 
@@ -103,7 +101,7 @@ int bread(int fd, void *buf, int count)
 static void bcat()
 {
     struct dirent **namelist;
-    int n = scandir(BASTOS_DISK_PATH, &namelist, NULL, NULL);
+    int n = scandir(".", &namelist, NULL, NULL);
     while (n--)
     {
         if (strcmp(".", namelist[n]->d_name) && strcmp("..", namelist[n]->d_name))
@@ -162,15 +160,12 @@ int main(int argc, char *argv[])
     var_t *var = 0;
     struct sigaction action = {0};
 
-    printf("%s\n", argv[0]);
-    exit(0);
-
     term_init();
 
     action.sa_handler = &sigint_handler;
     sigaction(SIGINT, &action, &old_action);
 
-    chdir(BASTOS_DISK_PATH);
+    chdir("disk");
 
     bastos_init(&io);
 

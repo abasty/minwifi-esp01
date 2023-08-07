@@ -16,7 +16,7 @@ CFLAGS = -O0 -g
 # C++ flags
 CXXFLAGS =
 # Preprocessor flags
-CPPFLAGS = -Wall -Werror -I ../..
+CPPFLAGS = -Wall -Werror -I ..
 # dependency-generation flags
 DEPFLAGS = -MMD -MP
 # linker flags
@@ -27,7 +27,7 @@ LDLIBS = -lm
 # build directories
 BIN = bin
 OBJ = obj
-SRC = ../..
+SRC = ..
 
 SOURCES := $(wildcard $(SRC)/*.c ./*.c)
 
