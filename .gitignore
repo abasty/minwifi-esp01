@@ -4,8 +4,7 @@
 .vscode/launch.json
 .vscode/ipch
 Minitel.pdf
-lib/basic/examples/test/bin/**
-lib/basic/examples/test/obj/**
-lib/basic/examples/bison/**
-lib/basic/examples/disk/**
+lib/basic/test/bin/**
+lib/basic/test/obj/**
+lib/basic/test/disk/**
 data/config$$$

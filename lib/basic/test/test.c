@@ -162,6 +162,9 @@ int main(int argc, char *argv[])
     var_t *var = 0;
     struct sigaction action = {0};
 
+    printf("%s\n", argv[0]);
+    exit(0);
+
     term_init();
 
     action.sa_handler = &sigint_handler;
