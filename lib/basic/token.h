@@ -39,6 +39,7 @@
 #define TOKEN_VARIABLE_STRING   ((uint8_t) 0b00010001)
 #define TOKEN_ARRAY_NUMBER      ((uint8_t) 0b00011000)
 #define TOKEN_ARRAY_STRING      ((uint8_t) 0b00011001)
+#define TOKEN_ARRAY_FLAG        ((uint8_t) 0b00001000)
 
 #define TOKEN_COMPARE_EQ        ((uint8_t) '=')
 #define TOKEN_COMPARE_LT        ((uint8_t) '<')

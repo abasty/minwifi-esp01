@@ -30,6 +30,16 @@
 
 #include "bio.h"
 
+#define BASTOS_MEMORY_SIZE (16 * 1024)
+#define BASTOS_MEMORY_ALIGN (sizeof(uint32_t))
+
+typedef struct {
+    size_t size;
+    uint8_t *prog_end;
+    uint8_t *vars_start;
+    uint8_t *bytes;
+} bmem_t;
+
 static void bmem_init();
 static void bmem_prog_line_free(prog_t *prog);
 static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len);

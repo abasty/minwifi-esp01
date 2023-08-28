@@ -28,6 +28,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 #include "keywords.h"
 #include "berror.h"
@@ -89,18 +90,6 @@ typedef struct {
         char *string;
     };
 } var_t;
-
-// total size in bytes of a var
-// 1 float: sizeof(new_var_t) + sizeof(float) + (len(name) +  Len(name) % 4)
-// 1 string: sizeof(new_var_t) + (len(string) + 1) + (len(name) +  Len(name) % 4)
-// # floats: sizeof(new_var_t) + dim_count * 4 + P(dims) * 4 + (len(name) +  Len(name) % 4)
-//     A(n = P(i0, i1, ...)): numbers[n + #dims]
-// # strings: sizeof(new_var_t) + dim_count * 4 + P(dims) * 1 + (len(name) +  Len(name) % 4)
-//     A$(n = P(i0, i1, ...)): bytes[n + #dims]
-
-// P() = ((i0 - 1) * dims[1] + (i1 - 1)) * dims[2] + ...
-
-
 
 typedef struct {
     uint8_t token;
