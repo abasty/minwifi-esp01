@@ -11,11 +11,11 @@
                 "base": "$gcc",
                 "fileLocation": [
                     "relative",
-                    "${workspaceFolder}/lib/basic/examples/test"
+                    "${workspaceFolder}/lib/basic/test"
                 ]
             },
             "options": {
-                "cwd": "${workspaceFolder}/lib/basic/examples/test",
+                "cwd": "${workspaceFolder}/lib/basic/test",
             },
             "group": {
                 "kind": "build",
@@ -27,7 +27,7 @@
             "type": "shell",
             "command": "make clean",
             "options": {
-                "cwd": "${workspaceFolder}/lib/basic/examples/test"
+                "cwd": "${workspaceFolder}/lib/basic/test"
             },
             "group": {
                 "kind": "build",
