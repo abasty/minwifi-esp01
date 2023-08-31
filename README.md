@@ -115,8 +115,9 @@ Libraries
 * ZX81 memory map : <https://problemkaputt.de/zxdocs.htm#zx80zx81>
 * ZX81 memory map : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/chap27.html>
 * ZX emulator : <https://fuse-emulator.sourceforge.net/>
-* Livre sur le Basic ZX81 (original) : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr>
+* Basic ZX81 : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/appxc.html>
 * Sinclair Basic : <https://en.wikipedia.org/wiki/Sinclair_BASIC>
+* Prog spectrum à porter sur zx81 : https://zxbasic.readthedocs.io/en/docs/examples/snake.bas/
 
 ## VT100
 
@@ -133,10 +134,6 @@ Libraries
 * Code minitel : <http://millevaches.hydraule.org/info/minitel/specs/codes.htm>
 * Python minitel avec fonctions et code :
   <https://github.com/Zigazou/PyMinitel/blob/master/minitel/Minitel.py>
-
-## Progs
-
-* (spectrum à porter sur zx81) : https://zxbasic.readthedocs.io/en/docs/examples/snake.bas/
 
 # Hardware
 
