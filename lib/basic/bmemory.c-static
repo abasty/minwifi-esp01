@@ -57,7 +57,7 @@ static bvar_t *bmem_var_alloc(bmem_t *mem, uint16_t size)
         return 0;
 
     mem->vars_start -= psize;
-    return mem->vars_start;
+    return (bvar_t *)mem->vars_start;
 }
 
 static int bmem_strlen(char *str)
@@ -73,43 +73,65 @@ static int bmem_strlen(char *str)
     return n;
 }
 
-static int bmem_cells_count(bvar_t *array)
+static int bmem_cells_count(int cell_size, uint8_t dim_count, uint32_t *dims)
 {
-    int cells = 1;
-    for (int i = 0; i < array->dim_count; i++)
+    int size = cell_size;
+    for (int i = 0; i < dim_count; i++)
     {
-        cells *= array->dims[i];
+        size *= dims[i];
     }
-    return cells;
+    return size;
 }
 
-static bvar_t *bmem_var_new(bvar_t *t, char *name)
+static int bmem_compute_var_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims)
 {
-    int size = sizeof(bvar_t) + bmem_strlen(name) + 1;
-    switch (t->token)
+    int size = 0;
+    switch (token)
     {
     case TOKEN_VARIABLE_NUMBER:
-        size += sizeof(float);
+        size = sizeof(float);
         break;
     case TOKEN_VARIABLE_STRING:
-        size += bmem_strlen(t->bytes) + 1;
+        size = dim_count + 1;
         break;
     case TOKEN_ARRAY_NUMBER:
-        size += sizeof(float) * bmem_cells_count(t);
+        size = bmem_cells_count(sizeof(float), dim_count, dims);
         break;
     case TOKEN_ARRAY_STRING:
-        // Add terminal zero?
-        size += bmem_cells_count(t);
+        size = bmem_cells_count(1, dim_count, dims);
         break;
     }
-    t->name_ofs = size;
-    // "pad" size to align allocs?
-    bvar_t *var = bmem_var_alloc(&bmem, size);
+    return size;
+}
+
+// TODO: check if name is already used
+static bvar_t *bmem_var_new(char *name, uint8_t token, uint8_t dim_count, uint32_t *dims)
+{
+    int name_size = bmem_strlen(name) + 1;
+    int data_size = bmem_compute_var_data_size(token, dim_count, dims);
+
+    // Allocate var
+    bvar_t *var = bmem_var_alloc(&bmem, sizeof(bvar_t) + data_size + name_size);
     if (!var)
         return 0;
 
-    *var = *t;
+    // Init var
+    var->token = token;
+    var->name_ofs = data_size;
+    if (dims)
+    {
+        memcpy(var->dims, dims, dim_count * sizeof(uint32_t));
+        var->dim_count = dim_count;
+    }
+    else
+    {
+        var->dim_count = 0;
+    }
 
+    // Copy name
+    memcpy(var->bytes + var->name_ofs, name, name_size);
+
+    return var;
 }
 
 static int bmem_prog_cmp(void *_prog1, void *_prog2)
@@ -355,15 +377,32 @@ static var_t *bmem_var_next(var_t *var)
     return (var_t *) (DS_OBJECT_OF(&var_list, var->list.next));
 }
 
+#include <stdio.h>
+
 static void bmem_init()
 {
     ds_btree_init(&prog_tree, offsetof(prog_t, tree), bmem_prog_cmp);
     ds_btree_init(&var_tree, offsetof(var_t, tree), bmem_vars_cmp);
     ds_lifo_init(&prog_list, offsetof(prog_t, list));
     ds_lifo_init(&var_list, offsetof(var_t, list));
+}
 
+
+#define STRING_1 "Hello world!"
+
+void bmem_test()
+{
+    // Init memory
     bmem.size = BASTOS_MEMORY_SIZE;
     bmem.bytes = (uint8_t *) malloc(bmem.size);
     bmem.prog_end = 0;
-    bmem.vars_start = bmem.size;
+    bmem.vars_start = bmem.bytes + bmem.size;
+
+    // Example 1: simple number variable
+    bvar_t *var = bmem_var_new("toto", TOKEN_VARIABLE_NUMBER, 0, 0);
+    var->numbers[0] = 37.2;
+
+    // Example 2: simple string variable
+    var = bmem_var_new("titi", TOKEN_VARIABLE_STRING, bmem_strlen(STRING_1), 0);
+    strcpy((char *) (var->bytes), STRING_1);
 }

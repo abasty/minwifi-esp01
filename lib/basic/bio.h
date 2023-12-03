@@ -116,6 +116,8 @@ int8_t bastos_load(const char *name);
 void bmem_prog_new();
 var_t *bmem_var_find(const char *name);
 
+void bmem_test();
+
 #ifdef __cplusplus
 }
 #endif
