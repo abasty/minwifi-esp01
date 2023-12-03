@@ -57,6 +57,7 @@ static bvar_t *bmem_var_alloc(bmem_t *mem, uint16_t size)
         return 0;
 
     mem->vars_start -= psize;
+    memset(mem->vars_start, 0, psize);
     return (bvar_t *)mem->vars_start;
 }
 
@@ -109,18 +110,20 @@ static bvar_t *bmem_var_new(char *name, uint8_t token, uint8_t dim_count, uint32
 {
     int name_size = bmem_strlen(name) + 1;
     int data_size = bmem_compute_var_data_size(token, dim_count, dims);
+    int dims_size = dims ? dim_count * sizeof(uint32_t) : 0;
 
     // Allocate var
-    bvar_t *var = bmem_var_alloc(&bmem, sizeof(bvar_t) + data_size + name_size);
+    bvar_t *var = bmem_var_alloc(&bmem, sizeof(bvar_t) + dims_size + data_size + name_size);
     if (!var)
         return 0;
 
     // Init var
     var->token = token;
-    var->name_ofs = data_size;
+    var->name_ofs = data_size + dims_size;
+
     if (dims)
     {
-        memcpy(var->dims, dims, dim_count * sizeof(uint32_t));
+        memcpy(var->dims, dims, dims_size);
         var->dim_count = dim_count;
     }
     else
@@ -405,4 +408,26 @@ void bmem_test()
     // Example 2: simple string variable
     var = bmem_var_new("titi", TOKEN_VARIABLE_STRING, bmem_strlen(STRING_1), 0);
     strcpy((char *) (var->bytes), STRING_1);
+
+    // Example 3: 1D array of numbers
+    uint32_t dims[1] = { 3 };
+    var = bmem_var_new("tata", TOKEN_ARRAY_NUMBER, 1, dims);
+    // Offset of the 1st element in the numbers (32 bits) array
+    int offset = var->dim_count;
+    for (size_t i = 0; i < dims[0]; i++)
+    {
+        var->numbers[i + offset] = (i + 1) * 13;
+    }
+
+    // Example 4: 2D array of strings
+    uint32_t dims2[2] = { 6, 5 + 1 };
+    var = bmem_var_new("tutu", TOKEN_ARRAY_STRING, 2, dims2);
+    // Offset of the 1st element in the bytes array
+    offset = var->dim_count * sizeof(uint32_t);
+    char *src[] = { "zero", "one", "two", "three", "four", "five" };
+    for (size_t i = 0; i < dims2[0]; i++)
+    {
+        char* dst = (char *) &var->bytes[i * dims2[1] + offset];
+        strncpy(dst, src[i], dims2[1]);
+    }
 }
