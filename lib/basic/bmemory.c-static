@@ -74,7 +74,7 @@ static int bmem_strlen(char *str)
     return n;
 }
 
-static int bmem_cells_count(int cell_size, uint8_t dim_count, uint32_t *dims)
+static int bmem_array_size(int cell_size, uint8_t dim_count, uint32_t *dims)
 {
     int size = cell_size;
     for (int i = 0; i < dim_count; i++)
@@ -84,7 +84,7 @@ static int bmem_cells_count(int cell_size, uint8_t dim_count, uint32_t *dims)
     return size;
 }
 
-static int bmem_compute_var_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims)
+static int bmem_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims)
 {
     int size = 0;
     switch (token)
@@ -96,10 +96,10 @@ static int bmem_compute_var_data_size(uint8_t token, uint8_t dim_count, uint32_t
         size = dim_count + 1;
         break;
     case TOKEN_ARRAY_NUMBER:
-        size = bmem_cells_count(sizeof(float), dim_count, dims);
+        size = bmem_array_size(sizeof(float), dim_count, dims);
         break;
     case TOKEN_ARRAY_STRING:
-        size = bmem_cells_count(1, dim_count, dims);
+        size = bmem_array_size(1, dim_count, dims);
         break;
     }
     return size;
@@ -109,7 +109,7 @@ static int bmem_compute_var_data_size(uint8_t token, uint8_t dim_count, uint32_t
 static bvar_t *bmem_var_new(char *name, uint8_t token, uint8_t dim_count, uint32_t *dims)
 {
     int name_size = bmem_strlen(name) + 1;
-    int data_size = bmem_compute_var_data_size(token, dim_count, dims);
+    int data_size = bmem_data_size(token, dim_count, dims);
     int dims_size = dims ? dim_count * sizeof(uint32_t) : 0;
 
     // Allocate var
@@ -121,6 +121,7 @@ static bvar_t *bmem_var_new(char *name, uint8_t token, uint8_t dim_count, uint32
     var->token = token;
     var->name_ofs = data_size + dims_size;
 
+    // Copy dims
     if (dims)
     {
         memcpy(var->dims, dims, dims_size);
