@@ -33,6 +33,11 @@
 #define BASTOS_MEMORY_SIZE (16 * 1024)
 #define BASTOS_MEMORY_ALIGN (sizeof(uint32_t))
 
+static inline int bmem_align4(int size)
+{
+    return (size + BASTOS_MEMORY_ALIGN - 1) & ~(BASTOS_MEMORY_ALIGN - 1);
+}
+
 typedef struct {
     size_t size;
     uint8_t *prog_end;
@@ -50,7 +55,7 @@ static prog_t *bmem_prog_get_line(uint16_t line_no);
 static void bmem_vars_clear();
 static var_t *bmem_var_string_set(const char *name, char *value);
 static var_t *bmem_var_number_set(const char *name, float value);
-static bvar_t *bmem_var_first(bmem_t *mem);
-static bvar_t *bmem_var_next(bmem_t *mem, bvar_t *var);
+static var_t *bmem_var_first(bmem_t *mem);
+static var_t *bmem_var_next(bmem_t *mem, var_t *var);
 
 #endif // __BMEMORY_H__

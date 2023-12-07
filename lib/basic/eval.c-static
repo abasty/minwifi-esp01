@@ -167,7 +167,6 @@ eval_state_t bstate;
 extern bastos_io_t *bio;
 
 extern ds_btree_t prog_tree;
-extern ds_btree_t var_tree;
 
 uint8_t functions[] = {
     TOKEN_KEYWORD_ABS,
@@ -333,7 +332,7 @@ static bool eval_number()
             var_t *var = bmem_var_find((char *)bstate.read_ptr - 1);
             if (var)
             {
-                value = var->number;
+                value = var->numbers[0];
             }
             else
             {
@@ -910,6 +909,7 @@ static bool eval_let()
                 if (end > len)
                     end = len;
                 uint8_t *src = (uint8_t*) bstate.string.chars;
+                // FIXME: this is not correct, we should use the string_t functions
                 uint8_t *dst = (uint8_t*) var->string + start - 1;
                 uint16_t n = end - start + 1;
                 while (n)
@@ -951,14 +951,14 @@ int8_t eval_input_store(char *io_string)
         if (end_ptr - io_string != strlen(io_string))
             return BERROR_SYNTAX;
 
-        if (bmem_var_number_set(bstate.input_var->name, value) == 0)
+        if (bmem_var_number_set(name_of_var(bstate.input_var), value) == 0)
             return BERROR_MEMORY;
 
         return BERROR_NONE;
     }
     else if (bstate.input_var_token == TOKEN_VARIABLE_STRING)
     {
-        if (bmem_var_string_set(bstate.input_var->name, io_string) == 0)
+        if (bmem_var_string_set(name_of_var(bstate.input_var), io_string) == 0)
             return BERROR_MEMORY;
 
         return BERROR_NONE;
@@ -1099,7 +1099,8 @@ static bool eval_list()
     if (bstate.do_eval)
     {
         bio->print_integer("lines/vars: %d/", prog_tree.count);
-        bio->print_integer("%d\r\n", var_tree.count);
+        // FIXME: count vars
+        // bio->print_integer("%d\r\n", var_tree.count);
         prog_t *prog = bmem_prog_first_line();
         while (prog && n >= 1)
         {
@@ -1558,8 +1559,8 @@ static bool eval_next()
         return true;
     }
 
-    var->number += loop->step;
-    float cmp = loop->step >= 0 ? loop->limit - var->number : var->number - loop->limit;
+    var->numbers[0] += loop->step;
+    float cmp = loop->step >= 0 ? loop->limit - var->numbers[0] : var->numbers[0] - loop->limit;
     bstate.pc = cmp >= 0 ? loop->for_line : bmem_prog_next_line(bstate.prog);
     if (cmp < 0)
     {

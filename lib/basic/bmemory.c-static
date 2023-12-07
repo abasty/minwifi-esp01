@@ -26,6 +26,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+
 
 #include "ds_common.h"
 #include "ds_btree.h"
@@ -35,33 +37,32 @@
 
 ds_btree_t prog_tree;
 ds_lifo_t prog_list;
-ds_btree_t var_tree;
-ds_lifo_t var_list;
 
 bmem_t bmem;
 
 // total size in bytes of a var
-// 1 float: sizeof(bvar_t) + sizeof(float) + (len(name) +  Len(name) % 4)
-// 1 string: sizeof(bvar_t) + (len(string) + 1) + (len(name) +  Len(name) % 4)
-// # floats: sizeof(bvar_t) + dim_count * 4 + P(dims) * 4 + (len(name) +  Len(name) % 4)
+// 1 float: sizeof(var_t) + sizeof(float) + (len(name) +  Len(name) % 4)
+// 1 string: sizeof(var_t) + (len(string) + 1) + (len(name) +  Len(name) % 4)
+// # floats: sizeof(var_t) + dim_count * 4 + P(dims) * 4 + (len(name) +  Len(name) % 4)
 //     A(n = P(i0, i1, ...)): numbers[n + #dims]
-// # strings: sizeof(bvar_t) + dim_count * 4 + P(dims) * 1 + (len(name) +  Len(name) % 4)
+// # strings: sizeof(var_t) + dim_count * 4 + P(dims) * 1 + (len(name) +  Len(name) % 4)
 //     A$(n = P(i0, i1, ...)): bytes[n + #dims]
 
 // P() = ((i0 - 1) * dims[1] + (i1 - 1)) * dims[2] + ...
 
-static bvar_t *bmem_var_alloc(bmem_t *mem, uint16_t size)
+static var_t *bmem_var_alloc(bmem_t *mem, uint16_t size)
 {
-    size_t psize = size + size % BASTOS_MEMORY_ALIGN;
+    int psize = bmem_align4(size);
+    // printf("Allocating %d bytes\n", psize);
     if (mem->vars_start - mem->prog_end < psize)
         return 0;
 
     mem->vars_start -= psize;
     memset(mem->vars_start, 0, psize);
-    return (bvar_t *)mem->vars_start;
+    return (var_t *)mem->vars_start;
 }
 
-static int bmem_strlen(char *str)
+static int bmem_strlen(const char *str)
 {
     if (!str)
         return 0;
@@ -105,15 +106,14 @@ static int bmem_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims)
     return size;
 }
 
-// TODO: check if name is already used
-static bvar_t *bmem_var_new(char *name, uint8_t token, uint8_t dim_count, uint32_t *dims)
+static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, uint32_t *dims)
 {
     int name_size = bmem_strlen(name) + 1;
     int data_size = bmem_data_size(token, dim_count, dims);
     int dims_size = dims ? dim_count * sizeof(uint32_t) : 0;
 
     // Allocate var
-    bvar_t *var = bmem_var_alloc(&bmem, sizeof(bvar_t) + dims_size + data_size + name_size);
+    var_t *var = bmem_var_alloc(&bmem, sizeof(var_t) + dims_size + data_size + name_size);
     if (!var)
         return 0;
 
@@ -138,97 +138,87 @@ static bvar_t *bmem_var_new(char *name, uint8_t token, uint8_t dim_count, uint32
     return var;
 }
 
-static int bmem_prog_cmp(void *_prog1, void *_prog2)
+static int bmem_var_size(var_t *var)
 {
-    prog_t *prog1 = (prog_t *)_prog1;
-    prog_t *prog2 = (prog_t *)_prog2;
-    return prog1->line_no - prog2->line_no;
-}
-
-static int bmem_vars_cmp(void *_var1, void *_var2)
-{
-    var_t *var1 = (var_t *)_var1;
-    var_t *var2 = (var_t *)_var2;
-    return strcmp(var1->name, var2->name);
+    return bmem_align4(sizeof(var_t) + var->name_ofs + bmem_strlen((char *) (var->bytes + var->name_ofs)) + 1);
 }
 
 var_t *bmem_var_find(const char *name)
 {
-    var_t search = {
-        .name = (char *) name,
-    };
-    return ds_btree_find(&var_tree, &search);
+    var_t *var = bmem_var_first(&bmem);
+    while (var)
+    {
+        if (strcmp((char *) (var->bytes + var->name_ofs), name) == 0)
+            return var;
+        var = bmem_var_next(&bmem, var);
+    }
+    return 0;
+}
+
+static var_t *bmem_var_first(bmem_t *mem)
+{
+    return (var_t *) mem->vars_start;
+}
+
+static var_t *bmem_var_next(bmem_t *mem, var_t *var)
+{
+    int size = bmem_var_size(var);
+    var_t *next = (var_t *) ((uint8_t *) var + size);
+    if ((uint8_t *) next - mem->bytes >= mem->size)
+        return 0;
+    return next;
 }
 
 static void bmem_var_unset(var_t *var)
 {
-    ds_btree_remove_object(&var_tree, var);
-    if (var->name && *var->name == TOKEN_VARIABLE_STRING)
-    {
-        free(var->string);
-    }
-    free(var->name);
-    free(var);
+    int size = bmem_var_size(var);
+    memmove(bmem.vars_start + size, bmem.vars_start, (uint8_t *) var - bmem.vars_start);
+    bmem.vars_start += size;
 }
 
 static void bmem_vars_clear()
 {
-    while (var_tree.root)
-    {
-        bmem_var_unset((var_t *)DS_OBJECT_OF(&var_tree, var_tree.root));
-    }
-}
-
-static var_t *bmem_var_get_or_new(const char *name)
-{
-    var_t *var = bmem_var_find(name);
-    if (var == 0)
-    {
-        var = (var_t *)malloc(sizeof(var_t));
-        if (var == 0)
-            return 0;
-        size_t n = strlen(name) + 1;
-        var->name = (char *)malloc(n);
-        if (var->name == 0)
-        {
-            free(var);
-            return 0;
-        }
-        strcpy(var->name, name);
-        var->value = 0;
-        ds_btree_insert(&var_tree, var);
-    }
-    return var;
+    bmem.vars_start = bmem.bytes + bmem.size;
 }
 
 static var_t *bmem_var_string_set(const char *name, char *value)
 {
-    var_t *var = bmem_var_get_or_new(name);
+    var_t *var = bmem_var_find(name);
+
+    if (var != 0)
+    {
+        bmem_var_unset(var);
+    }
+
+    var = bmem_var_new(name, TOKEN_VARIABLE_STRING, bmem_strlen(value), 0);
     if (var == 0)
         return 0;
-    if (var->string != 0)
-    {
-        free(var->string);
-        var->string = 0;
-    }
-    if (value != 0)
-    {
-        var->string = (char *)malloc(strlen(value) + 1);
-        if (var->string != 0)
-        {
-            strcpy(var->string, value);
-        }
-    }
+
+    strcpy(var->string, value);
+
     return var;
 }
 
 static var_t *bmem_var_number_set(const char *name, float value)
 {
-    var_t *var = bmem_var_get_or_new(name);
+    var_t *var = bmem_var_find(name);
+    if (var == 0)
+    {
+        var = bmem_var_new(name, TOKEN_VARIABLE_NUMBER, 0, 0);
+    }
+
     if (var == 0)
         return 0;
-    var->number = value;
+
+    var->numbers[0] = value;
     return var;
+}
+
+static int bmem_prog_cmp(void *_prog1, void *_prog2)
+{
+    prog_t *prog1 = (prog_t *)_prog1;
+    prog_t *prog2 = (prog_t *)_prog2;
+    return prog1->line_no - prog2->line_no;
 }
 
 static inline void bmem_invalidate_prog_list()
@@ -349,34 +339,11 @@ static prog_t *bmem_prog_get_line(uint16_t line_no)
     return ds_btree_find(&prog_tree, &search);
 }
 
-static bvar_t *bmem_var_first(bmem_t *mem)
-{
-    return (bvar_t *) mem->vars_start;
-}
-
-
-static bvar_t *bmem_var_next(bmem_t *mem, bvar_t *var)
-{
-    int size = sizeof(bvar_t) + var->name_ofs + bmem_strlen((char *) (var->bytes + var->name_ofs)) + 1;
-    size += size % BASTOS_MEMORY_ALIGN;
-    bvar_t *next = (bvar_t *) ((uint8_t *) var + size);
-    if ((uint8_t *) next - mem->bytes >= mem->size)
-        return 0;
-    return next;
-}
-
-#include <stdio.h>
-
 static void bmem_init()
 {
     ds_btree_init(&prog_tree, offsetof(prog_t, tree), bmem_prog_cmp);
-    ds_btree_init(&var_tree, offsetof(var_t, tree), bmem_vars_cmp);
     ds_lifo_init(&prog_list, offsetof(prog_t, list));
-    ds_lifo_init(&var_list, offsetof(var_t, list));
 }
-
-
-#define STRING_1 "Hello world!"
 
 void bmem_test()
 {
@@ -387,40 +354,78 @@ void bmem_test()
     bmem.vars_start = bmem.bytes + bmem.size;
 
     // Example 1: simple number variable
-    bvar_t *var = bmem_var_new("toto", TOKEN_VARIABLE_NUMBER, 0, 0);
-    var->numbers[0] = 37.2;
+    printf("Example 1: simple number variable\n");
+    var_t *var = bmem_var_number_set("toto", 37.2);
+    printf("toto = %g\n", var->numbers[0]);
 
     // Example 2: simple string variable
-    var = bmem_var_new("titi", TOKEN_VARIABLE_STRING, bmem_strlen(STRING_1), 0);
-    strcpy((char *) (var->bytes), STRING_1);
+    printf("Example 2: simple string variable\n");
+    var = bmem_var_string_set("titi", "Hello world!");
+    printf("titi = %s\n", var->string);
 
     // Example 3: 1D array of numbers
+    printf("Example 3: 1D array of numbers\n");
     uint32_t dims[1] = { 3 };
     var = bmem_var_new("tata", TOKEN_ARRAY_NUMBER, 1, dims);
     // Offset of the 1st element in the numbers (32 bits) array
     int offset = var->dim_count;
-    for (size_t i = 0; i < dims[0]; i++)
+    for (int i = 0; i < dims[0]; i++)
     {
         var->numbers[i + offset] = (i + 1) * 13;
     }
+    for (int i = 0; i < dims[0]; i++)
+    {
+        printf("tata[%d] = %g\n", i, var->numbers[i + offset]);
+    }
 
     // Example 4: 6 strings of 5 chars
+    printf("Example 4: 6 strings of 5 chars\n");
     uint32_t dims2[2] = { 6, 5 + 1 };
     var = bmem_var_new("tutu", TOKEN_ARRAY_STRING, 2, dims2);
     // Offset of the 1st element in the bytes array
     offset = var->dim_count * sizeof(uint32_t);
     char *src[] = { "zero", "one", "two", "three", "four", "five" };
-    for (size_t i = 0; i < dims2[0]; i++)
+    for (int i = 0; i < dims2[0]; i++)
     {
         char* dst = (char *) &var->bytes[i * dims2[1] + offset];
         strncpy(dst, src[i], dims2[1]);
     }
+    for (int i = 0; i < dims2[0]; i++)
+    {
+        char* dst = (char *) &var->bytes[i * dims2[1] + offset];
+        printf("tutu[%d] = %s\n", i, dst);
+    }
 
     // Iterate over all variables
-    bvar_t *v = bmem_var_first(&bmem);
+    printf("Iterate over all variables\n");
+    var_t *v = bmem_var_first(&bmem);
     while (v)
     {
-        printf("Var: %s\n", (char *) (v->bytes + v->name_ofs));
+        printf("%s\n", (char *) (v->bytes + v->name_ofs));
+        v = bmem_var_next(&bmem, v);
+    }
+
+    // Remove "tata" variable
+    printf("Remove tata variable\n");
+    var = bmem_var_find("tata");
+    bmem_var_unset(var);
+    // Test if "tata" is still there
+    var = bmem_var_find("tata");
+    if (var)
+    {
+        printf("Error: tata is still there\n");
+    }
+    else
+    {
+        printf("tata is gone\n");
+    }
+
+    // Iterate over all variables
+    printf("Iterate over all variables\n");
+    v = bmem_var_first(&bmem);
+    while (v)
+    {
+        printf("%s\n", (char *) (v->bytes + v->name_ofs));
         v = bmem_var_next(&bmem, v);
     }
 }

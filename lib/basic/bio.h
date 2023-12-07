@@ -81,17 +81,6 @@ typedef struct {
 } prog_t;
 
 typedef struct {
-    ds_btree_item_t tree;
-    ds_lifo_item_t list;
-    char *name;
-    union {
-        void *value;
-        float number;
-        char *string;
-    };
-} var_t;
-
-typedef struct {
     uint8_t token;
     uint8_t dim_count;    // 0 for simple vars
     uint16_t name_ofs;    // Offset of the var name in var.bytes array
@@ -99,9 +88,14 @@ typedef struct {
         uint32_t dims[0]; // size of each dimension. Do not exists in simple vars
         float numbers[0]; // 1st element at numbers[dim_count], sizeof(float) == sizeof(uint32_t)
         uint8_t bytes[0]; // 1st element at bytes[dim_count * size_of(uint32_t)]
+        char string[0];   // Single string for simple vars
     };
-    // names: bytes[]
-} bvar_t;
+} var_t;
+
+static inline char *name_of_var(var_t *var)
+{
+    return (char *)var->bytes + var->name_ofs;
+}
 
 void bastos_init(bastos_io_t *_io);
 
