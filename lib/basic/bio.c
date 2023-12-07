@@ -215,28 +215,28 @@ int8_t bastos_save(const char *name)
     bio->bwrite(fd, &zero, sizeof(zero));
 
     // save vars
-    var_t *var = bmem_var_first();
-    while (var)
-    {
-        uint16_t len = strlen(var->name);
-        bio->bwrite(fd, &len, sizeof(len));
-        bio->bwrite(fd, var->name, len);
-        uint8_t token = var->name[0];
-        if (token == TOKEN_VARIABLE_STRING)
-        {
-            len = var->string ? strlen(var->string) : 0;
-            bio->bwrite(fd, &len, sizeof(len));
-            if (len > 0)
-            {
-                bio->bwrite(fd, var->string, len);
-            }
-        }
-        else if (token == TOKEN_VARIABLE_NUMBER)
-        {
-            bio->bwrite(fd, &var->number, sizeof(var->number));
-        }
-        var = bmem_var_next(var);
-    }
+    // var_t *var = bmem_var_first();
+    // while (var)
+    // {
+    //     uint16_t len = strlen(var->name);
+    //     bio->bwrite(fd, &len, sizeof(len));
+    //     bio->bwrite(fd, var->name, len);
+    //     uint8_t token = var->name[0];
+    //     if (token == TOKEN_VARIABLE_STRING)
+    //     {
+    //         len = var->string ? strlen(var->string) : 0;
+    //         bio->bwrite(fd, &len, sizeof(len));
+    //         if (len > 0)
+    //         {
+    //             bio->bwrite(fd, var->string, len);
+    //         }
+    //     }
+    //     else if (token == TOKEN_VARIABLE_NUMBER)
+    //     {
+    //         bio->bwrite(fd, &var->number, sizeof(var->number));
+    //     }
+    //     var = bmem_var_next(var);
+    // }
     bio->bclose(fd);
     return 0;
 }

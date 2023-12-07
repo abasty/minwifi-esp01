@@ -349,36 +349,20 @@ static prog_t *bmem_prog_get_line(uint16_t line_no)
     return ds_btree_find(&prog_tree, &search);
 }
 
-static void bmem_var_node_push(ds_btree_item_t *node)
+static bvar_t *bmem_var_first(bmem_t *mem)
 {
-    if (node)
-    {
-        bmem_var_node_push(node->right);
-        ds_lifo_push(&var_list, DS_OBJECT_OF(&var_tree, node));
-        bmem_var_node_push(node->left);
-    }
+    return (bvar_t *) mem->vars_start;
 }
 
-static var_t *bmem_var_first()
+
+static bvar_t *bmem_var_next(bmem_t *mem, bvar_t *var)
 {
-    var_list.root = 0;
-    bmem_var_node_push(var_tree.root);
-
-    if (var_list.root == 0)
+    int size = sizeof(bvar_t) + var->name_ofs + bmem_strlen((char *) (var->bytes + var->name_ofs)) + 1;
+    size += size % BASTOS_MEMORY_ALIGN;
+    bvar_t *next = (bvar_t *) ((uint8_t *) var + size);
+    if ((uint8_t *) next - mem->bytes >= mem->size)
         return 0;
-
-    return (var_t *)(DS_OBJECT_OF(&var_list, var_list.root));
-}
-
-static var_t *bmem_var_next(var_t *var)
-{
-    if (!var)
-        return 0;
-
-    if (!(var->list.next))
-        return 0;
-
-    return (var_t *) (DS_OBJECT_OF(&var_list, var->list.next));
+    return next;
 }
 
 #include <stdio.h>
@@ -420,7 +404,7 @@ void bmem_test()
         var->numbers[i + offset] = (i + 1) * 13;
     }
 
-    // Example 4: 2D array of strings
+    // Example 4: 6 strings of 5 chars
     uint32_t dims2[2] = { 6, 5 + 1 };
     var = bmem_var_new("tutu", TOKEN_ARRAY_STRING, 2, dims2);
     // Offset of the 1st element in the bytes array
@@ -430,5 +414,13 @@ void bmem_test()
     {
         char* dst = (char *) &var->bytes[i * dims2[1] + offset];
         strncpy(dst, src[i], dims2[1]);
+    }
+
+    // Iterate over all variables
+    bvar_t *v = bmem_var_first(&bmem);
+    while (v)
+    {
+        printf("Var: %s\n", (char *) (v->bytes + v->name_ofs));
+        v = bmem_var_next(&bmem, v);
     }
 }

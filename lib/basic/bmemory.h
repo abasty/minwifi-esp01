@@ -50,7 +50,7 @@ static prog_t *bmem_prog_get_line(uint16_t line_no);
 static void bmem_vars_clear();
 static var_t *bmem_var_string_set(const char *name, char *value);
 static var_t *bmem_var_number_set(const char *name, float value);
-static var_t *bmem_var_first();
-static var_t *bmem_var_next(var_t *var);
+static bvar_t *bmem_var_first(bmem_t *mem);
+static bvar_t *bmem_var_next(bmem_t *mem, bvar_t *var);
 
 #endif // __BMEMORY_H__
