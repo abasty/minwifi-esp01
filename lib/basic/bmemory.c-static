@@ -341,10 +341,11 @@ static prog_t *bmem_prog_get_line(uint16_t line_no)
     return ds_btree_find(&prog_tree, &search);
 }
 
-static void bmem_init()
+static void bmem_init(uint8_t *mem)
 {
     // Init memory
-    bmem = malloc(BASTOS_MEMORY_SIZE);
+    bmem = (bmem_t *) mem;
+    memset(bmem, 0, BASTOS_MEMORY_SIZE);
     bmem->prog_start = (uint8_t *) bmem + sizeof(bmem_t);
     bmem->prog_end = bmem->prog_start;
     bmem_vars_clear();
@@ -358,7 +359,7 @@ static void bmem_init()
 void bmem_test()
 {
     // Init memory
-    bmem_init();
+    bmem_init(malloc(BASTOS_MEMORY_SIZE));
 
     // print free memory
     printf("Free memory: %zd bytes\n", bmem->vars_start - bmem->prog_end);

@@ -59,7 +59,7 @@ void bastos_init(bastos_io_t *_io)
 {
     bio = _io;
     *io_buffer = 0;
-    bmem_init();
+    bmem_init(malloc(BASTOS_MEMORY_SIZE));
 }
 
 size_t bastos_send_keys(const char *keys, size_t n)

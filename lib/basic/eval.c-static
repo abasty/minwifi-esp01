@@ -45,23 +45,6 @@
 static inline void eval_input_mode(bool mode);
 static bool eval_string_tty();
 
-typedef struct
-{
-    float limit;
-    float step;
-    prog_t *for_line;
-} loop_t;
-
-typedef struct
-{
-    uint16_t line_no;
-} return_t;
-
-loop_t loops[26] = {0};
-
-#define EVAL_RETURNS_SIZE 32
-return_t returns[EVAL_RETURNS_SIZE] = {0};
-
 extern bastos_io_t *bio;
 
 extern ds_btree_t prog_tree;
@@ -140,7 +123,7 @@ static void running_state_clear()
 {
     bmem->bstate.pc = 0;
     bmem->bstate.sp = 0;
-    memset(loops, 0, sizeof(loops));
+    memset(bmem->loops, 0, sizeof(bmem->loops));
 }
 
 static bool eval_token(uint8_t c)
@@ -1113,7 +1096,7 @@ static void eval_gosub()
         return;
     }
 
-    returns[bmem->bstate.sp++].line_no = next ? next->line_no : 0;
+    bmem->returns[bmem->bstate.sp++].line_no = next ? next->line_no : 0;
 }
 
 static void eval_return()
@@ -1124,7 +1107,7 @@ static void eval_return()
         return;
     }
 
-    uint16_t line_no = returns[--bmem->bstate.sp].line_no;
+    uint16_t line_no = bmem->returns[--bmem->bstate.sp].line_no;
     bmem->bstate.pc = bmem_prog_get_line(line_no);
     bmem->bstate.running = bmem->bstate.pc != 0;
 }
@@ -1407,7 +1390,7 @@ static bool eval_for()
         return true;
     }
 
-    loop_t *loop = loops + loop_index;
+    loop_t *loop = bmem->loops + loop_index;
     if (loop->for_line != 0)
         return true;
 
@@ -1443,7 +1426,7 @@ static bool eval_next()
         return true;
     }
 
-    loop_t *loop = loops + loop_index;
+    loop_t *loop = bmem->loops + loop_index;
     if (loop->for_line == 0)
     {
         bmem->bstate.error = BERROR_RUN;
