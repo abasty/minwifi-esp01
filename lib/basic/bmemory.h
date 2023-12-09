@@ -39,10 +39,9 @@ static inline int bmem_align4(int size)
 }
 
 typedef struct {
-    size_t size;
+    uint8_t *prog_start;
     uint8_t *prog_end;
     uint8_t *vars_start;
-    uint8_t *bytes;
 } bmem_t;
 
 typedef struct
@@ -64,8 +63,8 @@ static prog_t *bmem_prog_get_line(uint16_t line_no);
 static void bmem_vars_clear();
 static var_t *bmem_var_string_set(const char *name, char *value);
 static var_t *bmem_var_number_set(const char *name, float value);
-static var_t *bmem_var_first(bmem_t *mem);
-static var_t *bmem_var_next(bmem_t *mem, var_t *var);
+static var_t *bmem_var_first();
+static var_t *bmem_var_next(var_t *var);
 
 // string related functions
 static void string_set(string_t *string, char *chars, bool allocated);

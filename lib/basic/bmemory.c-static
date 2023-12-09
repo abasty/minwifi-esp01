@@ -38,7 +38,7 @@
 ds_btree_t prog_tree;
 ds_lifo_t prog_list;
 
-bmem_t bmem;
+bmem_t *bmem;
 
 // total size in bytes of a var
 // 1 float: sizeof(var_t) + sizeof(float) + (len(name) +  Len(name) % 4)
@@ -50,16 +50,16 @@ bmem_t bmem;
 
 // P() = ((i0 - 1) * dims[1] + (i1 - 1)) * dims[2] + ...
 
-static var_t *bmem_var_alloc(bmem_t *mem, uint16_t size)
+static var_t *bmem_var_alloc(uint16_t size)
 {
     int psize = bmem_align4(size);
     // printf("Allocating %d bytes\n", psize);
-    if (mem->vars_start - mem->prog_end < psize)
+    if (bmem->vars_start - bmem->prog_end < psize)
         return 0;
 
-    mem->vars_start -= psize;
-    memset(mem->vars_start, 0, psize);
-    return (var_t *)mem->vars_start;
+    bmem->vars_start -= psize;
+    memset(bmem->vars_start, 0, psize);
+    return (var_t *)bmem->vars_start;
 }
 
 static int bmem_strlen(const char *str)
@@ -113,7 +113,7 @@ static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, u
     int dims_size = dims ? dim_count * sizeof(uint32_t) : 0;
 
     // Allocate var
-    var_t *var = bmem_var_alloc(&bmem, sizeof(var_t) + dims_size + data_size + name_size);
+    var_t *var = bmem_var_alloc(sizeof(var_t) + dims_size + data_size + name_size);
     if (!var)
         return 0;
 
@@ -145,26 +145,28 @@ static int bmem_var_size(var_t *var)
 
 var_t *bmem_var_find(const char *name)
 {
-    var_t *var = bmem_var_first(&bmem);
+    var_t *var = bmem_var_first();
     while (var)
     {
         if (strcmp((char *) (var->bytes + var->name_ofs), name) == 0)
             return var;
-        var = bmem_var_next(&bmem, var);
+        var = bmem_var_next(var);
     }
     return 0;
 }
 
-static var_t *bmem_var_first(bmem_t *mem)
+static var_t *bmem_var_first()
 {
-    return (var_t *) mem->vars_start;
+    if (bmem->vars_start == (uint8_t*) bmem + BASTOS_MEMORY_SIZE)
+        return 0;
+    return (var_t*)  bmem->vars_start;
 }
 
-static var_t *bmem_var_next(bmem_t *mem, var_t *var)
+static var_t *bmem_var_next(var_t *var)
 {
     int size = bmem_var_size(var);
     var_t *next = (var_t *) ((uint8_t *) var + size);
-    if ((uint8_t *) next - mem->bytes >= mem->size)
+    if ((uint8_t *) next - (uint8_t*) bmem >= BASTOS_MEMORY_SIZE)
         return 0;
     return next;
 }
@@ -172,13 +174,13 @@ static var_t *bmem_var_next(bmem_t *mem, var_t *var)
 static void bmem_var_unset(var_t *var)
 {
     int size = bmem_var_size(var);
-    memmove(bmem.vars_start + size, bmem.vars_start, (uint8_t *) var - bmem.vars_start);
-    bmem.vars_start += size;
+    memmove(bmem->vars_start + size, bmem->vars_start, (uint8_t *) var - bmem->vars_start);
+    bmem->vars_start += size;
 }
 
 static void bmem_vars_clear()
 {
-    bmem.vars_start = bmem.bytes + bmem.size;
+    bmem->vars_start = (uint8_t*) bmem + BASTOS_MEMORY_SIZE;
 }
 
 static var_t *bmem_var_string_set(const char *name, char *value)
@@ -342,10 +344,10 @@ static prog_t *bmem_prog_get_line(uint16_t line_no)
 static void bmem_init()
 {
     // Init memory
-    bmem.size = BASTOS_MEMORY_SIZE;
-    bmem.bytes = (uint8_t *) malloc(bmem.size);
-    bmem.prog_end = 0;
-    bmem.vars_start = bmem.bytes + bmem.size;
+    bmem = malloc(BASTOS_MEMORY_SIZE);
+    bmem->prog_start = (uint8_t *) bmem + sizeof(bmem_t);
+    bmem->prog_end = bmem->prog_end;
+    bmem_vars_clear();
 
     ds_btree_init(&prog_tree, offsetof(prog_t, tree), bmem_prog_cmp);
     ds_lifo_init(&prog_list, offsetof(prog_t, list));
@@ -354,10 +356,7 @@ static void bmem_init()
 void bmem_test()
 {
     // Init memory
-    bmem.size = BASTOS_MEMORY_SIZE;
-    bmem.bytes = (uint8_t *) malloc(bmem.size);
-    bmem.prog_end = 0;
-    bmem.vars_start = bmem.bytes + bmem.size;
+    bmem_init();
 
     // Example 1: simple number variable
     printf("Example 1: simple number variable\n");
@@ -404,11 +403,11 @@ void bmem_test()
 
     // Iterate over all variables
     printf("Iterate over all variables\n");
-    var_t *v = bmem_var_first(&bmem);
+    var_t *v = bmem_var_first();
     while (v)
     {
-        printf("%s\n", (char *) (v->bytes + v->name_ofs));
-        v = bmem_var_next(&bmem, v);
+        printf("'%s'\n", (char *) (v->bytes + v->name_ofs));
+        v = bmem_var_next(v);
     }
 
     // Remove "tata" variable
@@ -428,10 +427,10 @@ void bmem_test()
 
     // Iterate over all variables
     printf("Iterate over all variables\n");
-    v = bmem_var_first(&bmem);
+    v = bmem_var_first();
     while (v)
     {
-        printf("%s\n", (char *) (v->bytes + v->name_ofs));
-        v = bmem_var_next(&bmem, v);
+        printf("'%s'\n", (char *) (v->bytes + v->name_ofs));
+        v = bmem_var_next(v);
     }
 }
