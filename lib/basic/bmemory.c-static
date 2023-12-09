@@ -185,19 +185,25 @@ static void bmem_vars_clear()
 
 static var_t *bmem_var_string_set(const char *name, char *value)
 {
+    // Remove the variable if it already exists
     var_t *var = bmem_var_find(name);
-
     if (var != 0)
-    {
         bmem_var_unset(var);
-    }
 
-    var = bmem_var_new(name, TOKEN_VARIABLE_STRING, bmem_strlen(value), 0);
+    // Copy the name
+    // FIXME: create a temporary buffer in the bmem_t structure or in global
+    // memory
+    char tmp[32];
+    strncpy(tmp, name, sizeof(tmp) - 1);
+    tmp[sizeof(tmp) - 1] = 0;
+
+    // Create the variable and copy the value
+    var = bmem_var_new(tmp, TOKEN_VARIABLE_STRING, bmem_strlen(value), 0);
     if (var == 0)
-        return 0;
-
+        goto finalize;
     strcpy(var->string, value ? value : "");
 
+finalize:
     return var;
 }
 
@@ -419,7 +425,29 @@ void bmem_test()
     var_t *v = bmem_var_first();
     while (v)
     {
-        printf("'%s'\n", (char *) (v->bytes + v->name_ofs));
+        // print name and type of variable
+        printf("'%s' (%x)\n", name_of_var(v), v->token);
+        // check type vs name
+        if (strcmp(name_of_var(v), "toto") == 0)
+        {
+            assert(v->token == TOKEN_VARIABLE_NUMBER);
+        }
+        else if (strcmp(name_of_var(v), "titi") == 0)
+        {
+            assert(v->token == TOKEN_VARIABLE_STRING);
+        }
+        else if (strcmp(name_of_var(v), "tata") == 0)
+        {
+            assert(v->token == TOKEN_ARRAY_NUMBER);
+        }
+        else if (strcmp(name_of_var(v), "tutu") == 0)
+        {
+            assert(v->token == TOKEN_ARRAY_STRING);
+        }
+        else
+        {
+            printf("Error: unknown variable '%s'\n", name_of_var(v));
+        }
         v = bmem_var_next(v);
     }
 
@@ -443,7 +471,7 @@ void bmem_test()
     v = bmem_var_first();
     while (v)
     {
-        printf("'%s'\n", (char *) (v->bytes + v->name_ofs));
+        printf("'%s' (%x)\n", name_of_var(v), v->token);
         v = bmem_var_next(v);
     }
 }

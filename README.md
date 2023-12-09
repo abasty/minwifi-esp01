@@ -83,7 +83,7 @@
     * [x] Sous allocateur vars
     * [ ] Sous allocateur prog
     * [ ] Sous allocateur strings (calculs)
-    * [ ] var systèmes + bstate dans global memory
+    * [x] var systèmes + bstate dans global memory
   * [ ] Optimisation parser (règles et code générique)
   * [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
   * [x] Removed Wifi client and server from MINITEL build
