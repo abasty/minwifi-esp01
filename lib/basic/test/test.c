@@ -147,7 +147,7 @@ bastos_io_t io = {
     "5INPUT\"PASS: \",WSECRET$\n" \
     "6SAVE\"config$$$\"\n"
 
-int main2(int argc, char *argv[])
+int basic_main(int argc, char *argv[])
 {
     bool cont = true;
     var_t *var = 0;
@@ -214,6 +214,7 @@ finalize:
 
 int main()
 {
-    bmem_test();
+    basic_main(0, 0);
+    // bmem_test();
     return 0;
 }

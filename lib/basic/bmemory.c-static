@@ -341,6 +341,12 @@ static prog_t *bmem_prog_get_line(uint16_t line_no)
 
 static void bmem_init()
 {
+    // Init memory
+    bmem.size = BASTOS_MEMORY_SIZE;
+    bmem.bytes = (uint8_t *) malloc(bmem.size);
+    bmem.prog_end = 0;
+    bmem.vars_start = bmem.bytes + bmem.size;
+
     ds_btree_init(&prog_tree, offsetof(prog_t, tree), bmem_prog_cmp);
     ds_lifo_init(&prog_list, offsetof(prog_t, list));
 }

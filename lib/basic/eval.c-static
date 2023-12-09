@@ -1098,7 +1098,7 @@ static bool eval_list()
 
     if (bstate.do_eval)
     {
-        bio->print_integer("lines/vars: %d/", prog_tree.count);
+        bio->print_integer("lines: %d\r\n", prog_tree.count);
         // FIXME: count vars
         // bio->print_integer("%d\r\n", var_tree.count);
         prog_t *prog = bmem_prog_first_line();
