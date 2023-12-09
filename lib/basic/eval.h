@@ -33,12 +33,6 @@
 
 typedef struct
 {
-    char *chars;
-    bool allocated;
-} string_t;
-
-typedef struct
-{
     prog_t *pc;
     prog_t *prog;
     char *var_ref;

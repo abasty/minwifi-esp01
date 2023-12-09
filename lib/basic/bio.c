@@ -42,6 +42,7 @@
 #include "ds_btree.c-static"
 #include "token.c-static"
 #include "bmemory.c-static"
+#include "string.c-static"
 #include "eval.c-static"
 
 bastos_io_t *bio = 0;

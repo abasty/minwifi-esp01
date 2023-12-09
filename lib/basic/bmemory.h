@@ -45,17 +45,33 @@ typedef struct {
     uint8_t *bytes;
 } bmem_t;
 
+typedef struct
+{
+    char *chars;
+    bool allocated;
+} string_t;
+
 static void bmem_init();
+
+// prog related functions
 static void bmem_prog_line_free(prog_t *prog);
 static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len);
 static prog_t *bmem_prog_first_line();
 static prog_t *bmem_prog_next_line(prog_t *prog);
 static prog_t *bmem_prog_get_line(uint16_t line_no);
 
+// var related functions
 static void bmem_vars_clear();
 static var_t *bmem_var_string_set(const char *name, char *value);
 static var_t *bmem_var_number_set(const char *name, float value);
 static var_t *bmem_var_first(bmem_t *mem);
 static var_t *bmem_var_next(bmem_t *mem, var_t *var);
+
+// string related functions
+static void string_set(string_t *string, char *chars, bool allocated);
+static void string_normalize(string_t *string);
+static void string_move(string_t *from, string_t *to);
+static void string_slice(string_t *string, uint16_t start, uint16_t end);
+static void string_concat(string_t *string1, string_t *string2);
 
 #endif // __BMEMORY_H__
