@@ -420,6 +420,28 @@ void bmem_test()
         assert(strcmp(dst, src[i]) == 0);
     }
 
+    // Example 5: 2D array of numbers
+    printf("Example 5: 2D array of numbers\n");
+    uint32_t dims3[2] = { 3, 4 };
+    var = bmem_var_new("tata2D", TOKEN_ARRAY_NUMBER, 2, dims3);
+    // Offset of the 1st element in the numbers (32 bits) array
+    offset = var->dim_count;
+    for (int i = 0; i < dims3[0]; i++)
+    {
+        for (int j = 0; j < dims3[1]; j++)
+        {
+            var->numbers[i * dims3[1] + j + offset] = (i + 1) * (j + 1) * 13;
+        }
+    }
+    for (int i = 0; i < dims3[0]; i++)
+    {
+        for (int j = 0; j < dims3[1]; j++)
+        {
+            printf("tata2D[%d][%d] = %g\n", i, j, var->numbers[i * dims3[1] + j + offset]);
+            assert(var->numbers[i * dims3[1] + j + offset] == (i + 1) * (j + 1) * 13);
+        }
+    }
+
     // Iterate over all variables
     printf("Iterate over all variables\n");
     var_t *v = bmem_var_first();
@@ -465,13 +487,18 @@ void bmem_test()
     {
         printf("tata is gone\n");
     }
+    assert(var == 0);
 
-    // Iterate over all variables
-    printf("Iterate over all variables\n");
+    // Iterate over all variables and count them
+    printf("Iterate over all variables and count them\n");
+    int count = 0;
     v = bmem_var_first();
     while (v)
     {
         printf("'%s' (%x)\n", name_of_var(v), v->token);
+        count++;
         v = bmem_var_next(v);
     }
+    printf("There are %d variables\n", count);
+    assert(count == 4);
 }
