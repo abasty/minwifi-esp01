@@ -83,12 +83,13 @@ typedef struct {
     uint8_t *prog_start;
     uint8_t *prog_end;
     uint8_t *vars_start;
+    uint8_t *vars_end;
     eval_state_t bstate;
     loop_t loops['Z' - 'A' + 1];
     return_t returns[EVAL_RETURNS_SIZE];
 } bmem_t;
 
-static void bmem_init();
+static void bmem_init(uint8_t *mem, uint16_t size);
 
 // prog related functions
 static void bmem_prog_line_free(prog_t *prog);

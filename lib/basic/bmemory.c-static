@@ -157,16 +157,16 @@ var_t *bmem_var_find(const char *name)
 
 static var_t *bmem_var_first()
 {
-    if (bmem->vars_start == (uint8_t*) bmem + BASTOS_MEMORY_SIZE)
+    if (bmem->vars_start == bmem->vars_end)
         return 0;
-    return (var_t*)  bmem->vars_start;
+    return (var_t*) bmem->vars_start;
 }
 
 static var_t *bmem_var_next(var_t *var)
 {
     int size = bmem_var_size(var);
     var_t *next = (var_t *) ((uint8_t *) var + size);
-    if ((uint8_t *) next - (uint8_t*) bmem >= BASTOS_MEMORY_SIZE)
+    if ((uint8_t *) next >= bmem->vars_end)
         return 0;
     return next;
 }
@@ -180,7 +180,7 @@ static void bmem_var_unset(var_t *var)
 
 static void bmem_vars_clear()
 {
-    bmem->vars_start = (uint8_t*) bmem + BASTOS_MEMORY_SIZE;
+    bmem->vars_start = bmem->vars_end;
 }
 
 static var_t *bmem_var_string_set(const char *name, char *value)
@@ -341,13 +341,14 @@ static prog_t *bmem_prog_get_line(uint16_t line_no)
     return ds_btree_find(&prog_tree, &search);
 }
 
-static void bmem_init(uint8_t *mem)
+static void bmem_init(uint8_t *mem, uint16_t size)
 {
     // Init memory
     bmem = (bmem_t *) mem;
-    memset(bmem, 0, BASTOS_MEMORY_SIZE);
+    memset(bmem, 0, size);
     bmem->prog_start = (uint8_t *) bmem + sizeof(bmem_t);
     bmem->prog_end = bmem->prog_start;
+    bmem->vars_end = (uint8_t *) bmem + size;
     bmem_vars_clear();
 
     ds_btree_init(&prog_tree, offsetof(prog_t, tree), bmem_prog_cmp);
@@ -359,7 +360,7 @@ static void bmem_init(uint8_t *mem)
 void bmem_test()
 {
     // Init memory
-    bmem_init(malloc(BASTOS_MEMORY_SIZE));
+    bmem_init(malloc(BASTOS_MEMORY_SIZE), BASTOS_MEMORY_SIZE);
 
     // print free memory
     printf("Free memory: %zd bytes\n", bmem->vars_start - bmem->prog_end);
