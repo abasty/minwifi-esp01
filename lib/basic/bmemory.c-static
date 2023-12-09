@@ -363,15 +363,26 @@ static void bmem_init(uint8_t *mem, uint16_t size)
 
 #include <assert.h>
 
+void print_sizes()
+{
+    printf("----\n");
+    // print free memory
+    printf("Free memory: %zd bytes\n", bmem->vars_start - bmem->prog_end);
+    // print system variables size
+    printf("System variables size: %zd bytes\n", bmem->prog_start - (uint8_t *) bmem);
+    // print variables size
+    printf("Variables size: %zd bytes\n", bmem->vars_end - bmem->vars_start);
+    // print prog size
+    printf("Prog size: %zd bytes\n", bmem->prog_end - bmem->prog_start);
+    printf("----\n");
+}
+
 void bmem_test()
 {
     // Init memory
     bmem_init(malloc(BASTOS_MEMORY_SIZE), BASTOS_MEMORY_SIZE);
 
-    // print free memory
-    printf("Free memory: %zd bytes\n", bmem->vars_start - bmem->prog_end);
-    // print system variables size
-    printf("System variables size: %zd bytes\n", bmem->prog_start - (uint8_t *) bmem);
+    print_sizes();
 
     // Example 1: simple number variable
     printf("Example 1: simple number variable\n");
@@ -442,6 +453,31 @@ void bmem_test()
         }
     }
 
+    // Example 6: 3D array of 10 chars strings
+    printf("Example 6: 3D array of 10 chars strings\n");
+    uint32_t dims4[3] = { 2, 3, 10 + 1 };
+    var = bmem_var_new("tutu3D", TOKEN_ARRAY_STRING, 3, dims4);
+    // Offset of the 1st element in the bytes array
+    offset = var->dim_count * sizeof(uint32_t);
+    char *src2[] = { "zero", "one", "two", "three", "four", "five" };
+    for (int i = 0; i < dims4[0]; i++)
+    {
+        for (int j = 0; j < dims4[1]; j++)
+        {
+            char* dst = (char *) &var->bytes[(i * dims4[1] + j) * dims4[2] + offset];
+            strncpy(dst, src2[i * dims4[1] + j], dims4[2]);
+        }
+    }
+    for (int i = 0; i < dims4[0]; i++)
+    {
+        for (int j = 0; j < dims4[1]; j++)
+        {
+            char* dst = (char *) &var->bytes[(i * dims4[1] + j) * dims4[2] + offset];
+            printf("tutu3D[%d][%d] = %s\n", i, j, dst);
+            assert(strcmp(dst, src2[i * dims4[1] + j]) == 0);
+        }
+    }
+
     // Iterate over all variables
     printf("Iterate over all variables\n");
     var_t *v = bmem_var_first();
@@ -466,12 +502,22 @@ void bmem_test()
         {
             assert(v->token == TOKEN_ARRAY_STRING);
         }
+        else if (strcmp(name_of_var(v), "tata2D") == 0)
+        {
+            assert(v->token == TOKEN_ARRAY_NUMBER);
+        }
+        else if (strcmp(name_of_var(v), "tutu3D") == 0)
+        {
+            assert(v->token == TOKEN_ARRAY_STRING);
+        }
         else
         {
             printf("Error: unknown variable '%s'\n", name_of_var(v));
         }
         v = bmem_var_next(v);
     }
+
+    print_sizes();
 
     // Remove "tata" variable
     printf("Remove tata variable\n");
@@ -500,5 +546,25 @@ void bmem_test()
         v = bmem_var_next(v);
     }
     printf("There are %d variables\n", count);
-    assert(count == 4);
+    assert(count == 5);
+
+    print_sizes();
+
+    // Remove all variables
+    printf("Remove all variables\n");
+    bmem_vars_clear();
+    // Iterate over all variables and count them
+    printf("Iterate over all variables and count them\n");
+    count = 0;
+    v = bmem_var_first();
+    while (v)
+    {
+        printf("'%s' (%x)\n", name_of_var(v), v->token);
+        count++;
+        v = bmem_var_next(v);
+    }
+    printf("There are %d variables\n", count);
+    assert(count == 0);
+
+    print_sizes();
 }
