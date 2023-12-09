@@ -31,24 +31,6 @@
 #include "bmemory.h"
 #include "token.h"
 
-typedef struct
-{
-    prog_t *pc;
-    prog_t *prog;
-    char *var_ref;
-    var_t *input_var;
-    float number;
-    uint8_t *read_ptr;
-    uint8_t token;
-    uint8_t input_var_token;
-    int8_t error;
-    bool do_eval;
-    bool running;
-    bool inputting;
-    int sp;
-    string_t string;
-} eval_state_t;
-
 static int8_t eval_prog(prog_t *prog, bool do_eval);
 static bool eval_running();
 static bool eval_inputting();
@@ -59,7 +41,5 @@ static int8_t eval_prog_next();
 static bool eval_string_expr();
 static bool eval_factor();
 static bool eval_expr(uint8_t type_token);
-
-extern eval_state_t bstate;
 
 #endif // __EVAL_H__

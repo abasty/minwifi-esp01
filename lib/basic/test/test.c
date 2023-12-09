@@ -214,7 +214,7 @@ finalize:
 
 int main()
 {
+    bmem_test();
     basic_main(0, 0);
-    // bmem_test();
     return 0;
 }

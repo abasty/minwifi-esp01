@@ -196,7 +196,7 @@ static var_t *bmem_var_string_set(const char *name, char *value)
     if (var == 0)
         return 0;
 
-    strcpy(var->string, value);
+    strcpy(var->string, value ? value : "");
 
     return var;
 }
@@ -346,27 +346,36 @@ static void bmem_init()
     // Init memory
     bmem = malloc(BASTOS_MEMORY_SIZE);
     bmem->prog_start = (uint8_t *) bmem + sizeof(bmem_t);
-    bmem->prog_end = bmem->prog_end;
+    bmem->prog_end = bmem->prog_start;
     bmem_vars_clear();
 
     ds_btree_init(&prog_tree, offsetof(prog_t, tree), bmem_prog_cmp);
     ds_lifo_init(&prog_list, offsetof(prog_t, list));
 }
 
+#include <assert.h>
+
 void bmem_test()
 {
     // Init memory
     bmem_init();
 
+    // print free memory
+    printf("Free memory: %zd bytes\n", bmem->vars_start - bmem->prog_end);
+    // print system variables size
+    printf("System variables size: %zd bytes\n", bmem->prog_start - (uint8_t *) bmem);
+
     // Example 1: simple number variable
     printf("Example 1: simple number variable\n");
-    var_t *var = bmem_var_number_set("toto", 37.2);
+    var_t *var = bmem_var_number_set("toto", 37.2f);
     printf("toto = %g\n", var->numbers[0]);
+    assert(var->numbers[0] == 37.2f);
 
     // Example 2: simple string variable
     printf("Example 2: simple string variable\n");
     var = bmem_var_string_set("titi", "Hello world!");
     printf("titi = %s\n", var->string);
+    assert(strcmp(var->string, "Hello world!") == 0);
 
     // Example 3: 1D array of numbers
     printf("Example 3: 1D array of numbers\n");
@@ -381,6 +390,7 @@ void bmem_test()
     for (int i = 0; i < dims[0]; i++)
     {
         printf("tata[%d] = %g\n", i, var->numbers[i + offset]);
+        assert(var->numbers[i + offset] == (i + 1) * 13);
     }
 
     // Example 4: 6 strings of 5 chars
@@ -399,6 +409,7 @@ void bmem_test()
     {
         char* dst = (char *) &var->bytes[i * dims2[1] + offset];
         printf("tutu[%d] = %s\n", i, dst);
+        assert(strcmp(dst, src[i]) == 0);
     }
 
     // Iterate over all variables

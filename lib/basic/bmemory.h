@@ -29,6 +29,7 @@
 #include <stdint.h>
 
 #include "bio.h"
+#include "eval.h"
 
 #define BASTOS_MEMORY_SIZE (16 * 1024)
 #define BASTOS_MEMORY_ALIGN (sizeof(uint32_t))
@@ -38,17 +39,38 @@ static inline int bmem_align4(int size)
     return (size + BASTOS_MEMORY_ALIGN - 1) & ~(BASTOS_MEMORY_ALIGN - 1);
 }
 
-typedef struct {
-    uint8_t *prog_start;
-    uint8_t *prog_end;
-    uint8_t *vars_start;
-} bmem_t;
-
 typedef struct
 {
     char *chars;
     bool allocated;
 } string_t;
+
+// Bastos evaluation state
+typedef struct
+{
+    prog_t *pc;
+    prog_t *prog;
+    char *var_ref;
+    var_t *input_var;
+    float number;
+    uint8_t *read_ptr;
+    uint8_t token;
+    uint8_t input_var_token;
+    int8_t error;
+    bool do_eval;
+    bool running;
+    bool inputting;
+    int sp;
+    string_t string;
+} eval_state_t;
+
+// Bastos low memory system variables
+typedef struct {
+    uint8_t *prog_start;
+    uint8_t *prog_end;
+    uint8_t *vars_start;
+    eval_state_t bstate;
+} bmem_t;
 
 static void bmem_init();
 
