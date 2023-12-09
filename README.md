@@ -77,8 +77,13 @@
   * [ ] Pouvoir sauvegarder uniquement les variables (config manager, "SAVE VARS")
   * [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
 * [ ] **OPTIMISATIONS** (valable aussi pour la version OTA only)
-  * [ ] Rapporter tout le basic sauf l'API bastos dans un seul fichier et static
+  * [x] Rapporter tout le basic sauf l'API bastos dans un seul fichier et static
     functions (notamment memory)
+  * [ ] Global Memory Management
+    * [x] Sous allocateur vars
+    * [ ] Sous allocateur prog
+    * [ ] Sous allocateur strings (calculs)
+    * [ ] var systèmes + bstate dans global memory
   * [ ] Optimisation parser (règles et code générique)
   * [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
   * [x] Removed Wifi client and server from MINITEL build
