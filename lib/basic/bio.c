@@ -39,7 +39,6 @@
 #include "eval.h"
 #include "bio.h"
 
-#include "ds_btree.c-static"
 #include "token.c-static"
 #include "bmemory.c-static"
 #include "string.c-static"

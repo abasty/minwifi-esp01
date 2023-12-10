@@ -33,9 +33,6 @@
 #include "keywords.h"
 #include "berror.h"
 
-#include "ds_btree.h"
-#include "ds_lifo.h"
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -73,11 +70,9 @@ typedef struct {
 } bastos_io_t;
 
 typedef struct {
-    ds_btree_item_t tree;
-    ds_lifo_item_t list;
     uint16_t line_no;
     uint16_t len;
-    uint8_t *line;
+    uint8_t line[0];
 } prog_t;
 
 typedef struct {

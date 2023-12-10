@@ -28,15 +28,8 @@
 #include <string.h>
 #include <stdio.h>
 
-
-#include "ds_common.h"
-#include "ds_btree.h"
-#include "ds_lifo.h"
 #include "bmemory.h"
 #include "token.h"
-
-ds_btree_t prog_tree;
-ds_lifo_t prog_list;
 
 bmem_t *bmem;
 
@@ -222,104 +215,84 @@ static var_t *bmem_var_number_set(const char *name, float value)
     return var;
 }
 
-static int bmem_prog_cmp(void *_prog1, void *_prog2)
-{
-    prog_t *prog1 = (prog_t *)_prog1;
-    prog_t *prog2 = (prog_t *)_prog2;
-    return prog1->line_no - prog2->line_no;
-}
-
-static inline void bmem_invalidate_prog_list()
-{
-    prog_list.root = 0;
-}
-
 void bmem_prog_new()
 {
     bmem_vars_clear();
-    while (prog_tree.root)
-    {
-        bmem_prog_line_free((prog_t *)DS_OBJECT_OF(&prog_tree, prog_tree.root));
-    }
+    bmem->prog_end = bmem->prog_start;
 }
 
 static void bmem_prog_line_free(prog_t *prog)
 {
-    if (prog->line_no != 0)
-    {
-        bmem_invalidate_prog_list();
-        ds_btree_remove_object(&prog_tree, prog);
-    }
-    free(prog->line);
-    free(prog);
+    if (!prog || prog->line_no == 0)
+        return;
+    int size = bmem_align4(sizeof(prog_t) + prog->len + 1);
+    memmove(prog, (uint8_t *) prog + size, bmem->prog_end - ((uint8_t *) prog + size));
+    bmem->prog_end -= size;
 }
 
 static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
 {
+    // When line_no == 0, line must be cleared but not inserted in the current
+    // program. This is used to directly execute a program instruction without
+    // storing it in the program memory.
 
+    // Nothing to do if line is empty and line number is zero
     if (len == 0 && line_no == 0)
         return 0;
 
-    bmem_invalidate_prog_list();
+    // Get the line if exists or the next line if the line does not exist
+    prog_t *prog = bmem_prog_get_line_or_next(line_no);
 
-    prog_t search = {
-        .line_no = line_no,
-    };
-
-    prog_t *prog = ds_btree_find(&prog_tree, &search);
-    if (prog != 0)
+    // Remove the line if it already exists
+    if (prog != 0 && prog->line_no == line_no)
     {
         bmem_prog_line_free(prog);
     }
 
+    // Nothing to do more if line is empty
     if (len == 0)
         return 0;
 
-    prog = (prog_t *)malloc(sizeof(prog_t));
-    if (prog == 0)
+    // Compute size of the new line
+    int size = bmem_align4(sizeof(prog_t) + len + 1);
+
+    // Test if there is enough memory
+    if (bmem->vars_start - bmem->prog_end < size)
         return 0;
 
-    prog->line = (uint8_t *)malloc(len + 1);
-    if (prog->line == 0)
+    // Find where to insert the new line
+    if (prog == 0 || line_no == 0)
     {
-        free(prog);
-        return 0;
+        // Insert at the end
+        prog = (prog_t *) bmem->prog_end;
+    }
+    else
+    {
+        // Insert before "next" line
+        memmove((uint8_t *) prog + size, prog, bmem->prog_end - (uint8_t *) prog);
     }
 
-    memcpy(prog->line, line, len);
-    prog->line[len] = 0;
-    prog->len = len;
+    // Update prog_end if line number != 0
+    if (line_no != 0)
+    {
+        bmem->prog_end += size;
+    }
+
+    // Init the new line with the given values
     prog->line_no = line_no;
+    prog->len = len;
+    memcpy(prog->line, line, len);
 
-    if (line_no > 0)
-    {
-        ds_btree_insert(&prog_tree, prog);
-    }
+    // Add a null byte at the end of the line
+    prog->line[len] = 0;
 
+    // Return the new line
     return prog;
-}
-
-static void bmem_prog_node_push(ds_btree_item_t *node)
-{
-    if (node)
-    {
-        bmem_prog_node_push(node->right);
-        ds_lifo_push(&prog_list, DS_OBJECT_OF(&prog_tree, node));
-        bmem_prog_node_push(node->left);
-    }
 }
 
 static prog_t *bmem_prog_first_line()
 {
-    if (prog_list.root == 0)
-    {
-        bmem_prog_node_push(prog_tree.root);
-    }
-
-    if (prog_list.root == 0)
-        return 0;
-
-    return (prog_t *)(DS_OBJECT_OF(&prog_list, prog_list.root));
+    return (prog_t *) bmem->prog_start;
 }
 
 static prog_t *bmem_prog_next_line(prog_t *prog)
@@ -327,24 +300,24 @@ static prog_t *bmem_prog_next_line(prog_t *prog)
     if (!prog)
         return 0;
 
-    if (!(prog->list.next))
+    int size = bmem_align4(sizeof(prog_t) + prog->len + 1);
+    prog_t *next = (prog_t *) ((uint8_t *) prog + size);
+    if ((uint8_t *) next >= bmem->prog_end)
         return 0;
 
-    return (prog_t *) (DS_OBJECT_OF(&prog_list, prog->list.next));
+    return next;
 }
 
-static prog_t *bmem_prog_get_line(uint16_t line_no)
+static prog_t *bmem_prog_get_line_or_next(uint16_t line_no)
 {
-    prog_t search = {
-        .line_no = line_no,
-    };
-
-    if (prog_list.root == 0)
+    prog_t *prog = bmem_prog_first_line();
+    while (prog)
     {
-        bmem_prog_node_push(prog_tree.root);
+        if (prog->line_no >= line_no)
+            return prog;
+        prog = bmem_prog_next_line(prog);
     }
-
-    return ds_btree_find(&prog_tree, &search);
+    return 0;
 }
 
 static void bmem_init(uint8_t *mem, uint16_t size)
@@ -353,12 +326,8 @@ static void bmem_init(uint8_t *mem, uint16_t size)
     bmem = (bmem_t *) mem;
     memset(bmem, 0, size);
     bmem->prog_start = (uint8_t *) bmem + sizeof(bmem_t);
-    bmem->prog_end = bmem->prog_start;
     bmem->vars_end = (uint8_t *) bmem + size;
-    bmem_vars_clear();
-
-    ds_btree_init(&prog_tree, offsetof(prog_t, tree), bmem_prog_cmp);
-    ds_lifo_init(&prog_list, offsetof(prog_t, list));
+    bmem_prog_new();
 }
 
 #include <assert.h>

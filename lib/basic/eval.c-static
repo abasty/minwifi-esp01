@@ -46,8 +46,6 @@ static inline void eval_input_mode(bool mode);
 static bool eval_string_tty();
 
 extern bastos_io_t *bio;
-
-extern ds_btree_t prog_tree;
 extern bmem_t *bmem;
 
 uint8_t functions[] = {
@@ -980,8 +978,8 @@ static bool eval_list()
 
     if (bmem->bstate.do_eval)
     {
-        bio->print_integer("lines: %d\r\n", prog_tree.count);
-        // FIXME: count vars
+        // FIXME: count vars & prog lines
+        // bio->print_integer("lines: %d\r\n", prog_tree.count);
         // bio->print_integer("%d\r\n", var_tree.count);
         prog_t *prog = bmem_prog_first_line();
         while (prog && n >= 1)
@@ -1070,7 +1068,7 @@ static void eval_run()
 
 static void eval_goto()
 {
-    bmem->bstate.pc = bmem_prog_get_line(bmem->bstate.number);
+    bmem->bstate.pc = bmem_prog_get_line_or_next(bmem->bstate.number);
     bmem->bstate.running = bmem->bstate.pc != 0;
 
     if (bmem->bstate.pc)
@@ -1088,7 +1086,7 @@ static void eval_gosub()
     }
 
     prog_t *next = bmem_prog_next_line(bmem->bstate.pc);
-    bmem->bstate.pc = bmem_prog_get_line(bmem->bstate.number);
+    bmem->bstate.pc = bmem_prog_get_line_or_next(bmem->bstate.number);
     bmem->bstate.running = bmem->bstate.pc != 0;
 
     if (!bmem->bstate.pc)
@@ -1109,7 +1107,7 @@ static void eval_return()
     }
 
     uint16_t line_no = bmem->returns[--bmem->bstate.sp].line_no;
-    bmem->bstate.pc = bmem_prog_get_line(line_no);
+    bmem->bstate.pc = bmem_prog_get_line_or_next(line_no);
     bmem->bstate.running = bmem->bstate.pc != 0;
 }
 

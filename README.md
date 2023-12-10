@@ -81,9 +81,10 @@
     functions (notamment memory)
   * [ ] Global Memory Management
     * [x] Sous allocateur vars
-    * [ ] Sous allocateur prog
+    * [x] Sous allocateur prog
     * [ ] Sous allocateur strings (calculs)
     * [x] var systèmes + bstate dans global memory
+    * [ ] buffer IO / buffer tokens
   * [ ] Optimisation parser (règles et code générique)
   * [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
   * [x] Removed Wifi client and server from MINITEL build
