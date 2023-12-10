@@ -292,6 +292,8 @@ static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
 
 static prog_t *bmem_prog_first_line()
 {
+    if (bmem->prog_start == bmem->prog_end)
+        return 0;
     return (prog_t *) bmem->prog_start;
 }
 
