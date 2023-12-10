@@ -48,6 +48,7 @@ static bool eval_string_tty();
 extern bastos_io_t *bio;
 
 extern ds_btree_t prog_tree;
+extern bmem_t *bmem;
 
 uint8_t functions[] = {
     TOKEN_KEYWORD_ABS,
@@ -779,7 +780,7 @@ static bool eval_let()
             {
                 var_t *var = bmem_var_find(name);
                 uint16_t len = strlen(var->string);
-                if (!var->string || len == 0)
+                if (len == 0)
                     return true;
                 if (start <= 0)
                     return true;
