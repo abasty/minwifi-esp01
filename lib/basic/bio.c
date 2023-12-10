@@ -201,18 +201,11 @@ int8_t bastos_save(const char *name)
 {
     int fd = bio->bopen(name, B_CREAT | B_RDWR);
     // save prog
-    prog_t *line = bmem_prog_first_line();
-    while (line)
-    {
-        bio->bwrite(fd, &line->line_no, sizeof(line->line_no));
-        bio->bwrite(fd, &line->len, sizeof(line->len));
-        bio->bwrite(fd, line->line, line->len);
-        line = bmem_prog_next_line(line);
-    }
-
-    // write "end of prog"
-    uint32_t zero = 0;
-    bio->bwrite(fd, &zero, sizeof(zero));
+    // Write prog totoal size
+    uint16_t prog_size = bmem->prog_end - bmem->prog_start;
+    bio->bwrite(fd, &prog_size, sizeof(prog_size));
+    // Write prog
+    bio->bwrite(fd, bmem->prog_start, prog_size);
 
     // save vars
     // Write vars total size
@@ -239,56 +232,24 @@ int8_t bastos_load(const char *name)
     int bread;
 
     // load prog
-    while (err == BERROR_NONE)
+    uint16_t prog_size;
+    bread = bio->bread(fd, &prog_size, sizeof(prog_size));
+    if (bread != sizeof(prog_size))
     {
-        uint16_t line_no;
-        uint16_t len;
-
-        bread = bio->bread(fd, &line_no, sizeof(line_no));
-        if (bread != sizeof(line_no) && bread != 0)
-        {
-            err = BERROR_IO;
-            break;
-        }
-        if (bread == 0)
-            break;
-
-        bread = bio->bread(fd, &len, sizeof(len));
-        if (bread != sizeof(line_no))
-        {
-            err = BERROR_IO;
-            break;
-        }
-
-        // End of prog
-        if (line_no == 0 && len == 0)
-            break;
-
-        if (line_no == 0 || len == 0 || len >= TOKEN_LINE_SIZE)
-        {
-            err = BERROR_IO;
-            break;
-        }
-        if (bio->bread(fd, token_buffer, len) != len)
-        {
-            err = BERROR_IO;
-            break;
-        }
-
-        prog_t *prog = bmem_prog_line_new(line_no, token_buffer, len);
-        if (prog == 0)
-        {
-            err = BERROR_MEMORY;
-            break;
-        }
-
-        err = eval_prog(prog, false);
-        if (err != BERROR_NONE)
-        {
-            bmem_prog_line_free(prog);
-            break;
-        }
+        err = BERROR_IO;
+        goto finalize;
     }
+    if (prog_size >= bmem->vars_start - bmem->prog_start)
+    {
+        err = BERROR_IO;
+        goto finalize;
+    }
+    if (bio->bread(fd, bmem->prog_start, prog_size) != prog_size)
+    {
+        err = BERROR_IO;
+        goto finalize;
+    }
+    bmem->prog_end = bmem->prog_start + prog_size;
 
     // load vars
     uint16_t vars_size;
