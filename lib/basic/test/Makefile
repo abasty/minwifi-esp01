@@ -83,9 +83,8 @@ memcheck: $(BIN)/$(EXE)
 # remove previous build and objects
 .PHONY: clean
 clean:
-	$(RM) $(OBJECTS)
-	$(RM) $(DEPENDS)
-	$(RM) $(BIN)/$(EXE)
+	$(RM) -rf $(BIN)
+	$(RM) -rf $(OBJ)
 
 # remove everything except source
 .PHONY: reset

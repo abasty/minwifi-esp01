@@ -131,6 +131,7 @@ bastos_io_t io = {
 
     .print_integer = print_integer,
     .bopen = bopen,
+    .erase = berase,
 
     .bclose = bclose,
 
