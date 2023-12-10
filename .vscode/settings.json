@@ -4,8 +4,10 @@
         "!cpp"
     ],
     "files.associations": {
+        "*.c-static": "c",
         "token.h": "c",
         "berror.h": "c",
-        "*.inc": "c"
+        "*.inc": "c",
+        "bmemory.h": "c"
     }
 }
