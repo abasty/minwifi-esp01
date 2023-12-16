@@ -297,6 +297,7 @@ int8_t bastos_load(const char *name)
 
 finalize:
     bio->bclose(fd);
+    bmem->bstate.read_ptr = 0;
     return err;
 }
 

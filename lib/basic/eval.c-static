@@ -1465,7 +1465,7 @@ static int8_t eval_prog(prog_t *prog, bool do_eval)
     bool eval = eval_instruction() || eval_if() || eval_for() || eval_next();
 
     // Syntax check end of line.
-    eval = eval && *bmem->bstate.read_ptr == 0;
+    eval = eval && (bmem->bstate.read_ptr == 0 || *bmem->bstate.read_ptr == 0);
 
     // Free evaluator state
     string_set(&bmem->bstate.string, 0, false);
