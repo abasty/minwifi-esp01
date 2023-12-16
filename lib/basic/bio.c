@@ -268,6 +268,7 @@ int8_t bastos_load(const char *name)
     if (bio->bread(fd, bmem->vars_start, vars_size) != vars_size)
     {
         err = BERROR_IO;
+        bmem_vars_clear();
         goto finalize;
     }
 
