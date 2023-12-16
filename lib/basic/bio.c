@@ -171,8 +171,12 @@ int8_t bastos_input()
     // If line number is 0, evaluate and remove
     if (prog->line_no == 0)
     {
+        bool is_load = prog->line[0] == TOKEN_KEYWORD_LOAD;
         err = eval_prog(prog, true);
-        bmem_prog_line_free(prog);
+        if (!is_load)
+        {
+            bmem_prog_line_free(prog);
+        }
     }
 
 finalize:
@@ -200,22 +204,42 @@ bool bastos_running()
 int8_t bastos_save(const char *name)
 {
     int fd = bio->bopen(name, B_CREAT | B_RDWR);
+    if (fd < 0) {
+        goto err;
+    }
+
     // save prog
-    // Write prog totoal size
+    // Write prog total size
     uint16_t prog_size = bmem->prog_end - bmem->prog_start;
-    bio->bwrite(fd, &prog_size, sizeof(prog_size));
+    if (bio->bwrite(fd, &prog_size, sizeof(prog_size)) < 0) {
+        goto err;
+    }
+
     // Write prog
-    bio->bwrite(fd, bmem->prog_start, prog_size);
+    if (bio->bwrite(fd, bmem->prog_start, prog_size) < 0) {
+        goto err;
+    }
 
     // save vars
     // Write vars total size
     uint16_t vars_size = bmem->vars_end - bmem->vars_start;
-    bio->bwrite(fd, &vars_size, sizeof(vars_size));
+    if (bio->bwrite(fd, &vars_size, sizeof(vars_size)) < 0) {
+        goto err;
+    }
+
     // Write vars
-    bio->bwrite(fd, bmem->vars_start, vars_size);
+    if (bio->bwrite(fd, bmem->vars_start, vars_size) < 0) {
+        goto err;
+    }
 
     bio->bclose(fd);
     return 0;
+
+err:
+    if (fd >= 0) {
+        bio->bclose(fd);
+    }
+    return -1;
 }
 
 int8_t bastos_load(const char *name)
@@ -227,7 +251,6 @@ int8_t bastos_load(const char *name)
         return BERROR_IO;
 
     bmem_prog_new();
-    bmem_vars_clear();
 
     int bread;
 
