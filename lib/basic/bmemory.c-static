@@ -43,6 +43,7 @@ bmem_t *bmem;
 
 // P() = ((i0 - 1) * dims[1] + (i1 - 1)) * dims[2] + ...
 
+// Allocate a variable in the memory, set memory to 0 and return the variable
 static var_t *bmem_var_alloc(uint16_t size)
 {
     int psize = bmem_align4(size);
@@ -55,6 +56,7 @@ static var_t *bmem_var_alloc(uint16_t size)
     return (var_t *)bmem->vars_start;
 }
 
+// Compute the size of a string
 static int bmem_strlen(const char *str)
 {
     if (!str)
@@ -68,6 +70,7 @@ static int bmem_strlen(const char *str)
     return n;
 }
 
+// Compute the size of an array
 static int bmem_array_size(int cell_size, uint8_t dim_count, uint32_t *dims)
 {
     int size = cell_size;
@@ -78,6 +81,7 @@ static int bmem_array_size(int cell_size, uint8_t dim_count, uint32_t *dims)
     return size;
 }
 
+// Compute the size of the data of a variable
 static int bmem_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims)
 {
     int size = 0;
@@ -99,6 +103,7 @@ static int bmem_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims)
     return size;
 }
 
+// Create a new variable and copy the name
 static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, uint32_t *dims)
 {
     int name_size = bmem_strlen(name) + 1;
@@ -131,11 +136,13 @@ static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, u
     return var;
 }
 
+// Return the size of a variable
 static int bmem_var_size(var_t *var)
 {
     return bmem_align4(sizeof(var_t) + var->name_ofs + bmem_strlen((char *) (var->bytes + var->name_ofs)) + 1);
 }
 
+// Find a variable by name
 var_t *bmem_var_find(const char *name)
 {
     var_t *var = bmem_var_first();
@@ -148,6 +155,7 @@ var_t *bmem_var_find(const char *name)
     return 0;
 }
 
+// Return the first variable
 static var_t *bmem_var_first()
 {
     if (bmem->vars_start == bmem->vars_end)
@@ -155,6 +163,7 @@ static var_t *bmem_var_first()
     return (var_t*) bmem->vars_start;
 }
 
+// Return the next variable
 static var_t *bmem_var_next(var_t *var)
 {
     int size = bmem_var_size(var);
@@ -164,6 +173,7 @@ static var_t *bmem_var_next(var_t *var)
     return next;
 }
 
+// Unset a variable
 static void bmem_var_unset(var_t *var)
 {
     int size = bmem_var_size(var);
@@ -171,11 +181,13 @@ static void bmem_var_unset(var_t *var)
     bmem->vars_start += size;
 }
 
+// Clear all variables
 static void bmem_vars_clear()
 {
     bmem->vars_start = bmem->vars_end;
 }
 
+// Create a new string variable
 static var_t *bmem_var_string_set(const char *name, char *value)
 {
     // Remove the variable if it already exists
@@ -200,6 +212,7 @@ finalize:
     return var;
 }
 
+// Create a new number variable
 static var_t *bmem_var_number_set(const char *name, float value)
 {
     var_t *var = bmem_var_find(name);
@@ -215,12 +228,14 @@ static var_t *bmem_var_number_set(const char *name, float value)
     return var;
 }
 
+// Clear the program and the variables memory
 void bmem_prog_new()
 {
     bmem_vars_clear();
     bmem->prog_end = bmem->prog_start;
 }
 
+// Free a program line
 static void bmem_prog_line_free(prog_t *prog)
 {
     if (!prog || prog->line_no == 0)
@@ -230,10 +245,12 @@ static void bmem_prog_line_free(prog_t *prog)
     bmem->prog_end -= size;
 }
 
+// Create a new program line
 static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
 {
-    // When line_no == 0, line must be cleared but not inserted in the current
-    // program. This is used to directly execute a program instruction without
+    // When line_no == 0, the new line is inserted at the end of the program, at
+    // the prog_end address. The line is not really inserted in the program. It
+    // is a temporary line that is used to execute a program instruction without
     // storing it in the program memory.
 
     // Nothing to do if line is empty and line number is zero
@@ -263,7 +280,7 @@ static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
     // Find where to insert the new line
     if (prog == 0 || line_no == 0)
     {
-        // Insert at the end
+        // Insert at the end of the program
         prog = (prog_t *) bmem->prog_end;
     }
     else
@@ -272,7 +289,10 @@ static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
         memmove((uint8_t *) prog + size, prog, bmem->prog_end - (uint8_t *) prog);
     }
 
-    // Update prog_end if line number != 0
+    // If the line is inserted at the end of the program, update the prog_end
+    // only if the line number is not zero. In the zero case, the line is a
+    // temporary line that is used to execute a program instruction without
+    // storing it in the program memory.
     if (line_no != 0)
     {
         bmem->prog_end += size;
@@ -290,6 +310,7 @@ static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
     return prog;
 }
 
+// Return the first program line
 static prog_t *bmem_prog_first_line()
 {
     if (bmem->prog_start == bmem->prog_end)
@@ -297,6 +318,7 @@ static prog_t *bmem_prog_first_line()
     return (prog_t *) bmem->prog_start;
 }
 
+// Return the next program line
 static prog_t *bmem_prog_next_line(prog_t *prog)
 {
     if (!prog)
@@ -310,6 +332,8 @@ static prog_t *bmem_prog_next_line(prog_t *prog)
     return next;
 }
 
+// Return the program line with the given line number or the next line if the
+// line does not exist
 static prog_t *bmem_prog_get_line_or_next(uint16_t line_no)
 {
     prog_t *prog = bmem_prog_first_line();
@@ -322,6 +346,7 @@ static prog_t *bmem_prog_get_line_or_next(uint16_t line_no)
     return 0;
 }
 
+// Initialize the memory
 static void bmem_init(uint8_t *mem, uint16_t size)
 {
     // Init memory
