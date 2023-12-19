@@ -250,3 +250,8 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.8% (used 32604 bytes from 81920 bytes)
 Flash: [=====     ]  49.3% (used 472920 bytes from 958448 bytes)
 ---
+6c9f5cd Moved token buffer to bstate as a prog_buffer_t (flash: -144 / data: -256)
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.5% (used 32348 bytes from 81920 bytes)
+Flash: [=====     ]  49.3% (used 472776 bytes from 958448 bytes)
+---
