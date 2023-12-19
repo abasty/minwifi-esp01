@@ -52,7 +52,7 @@ bastos_io_t *bio = 0;
 uint8_t io_buffer[IO_BUFFER_SIZE];
 char *io_buffer_char = (char *)io_buffer;
 
-extern uint8_t token_buffer[TOKEN_LINE_SIZE];
+extern uint8_t *token_buffer;
 
 void bastos_init(bastos_io_t *_io)
 {
@@ -273,6 +273,7 @@ int8_t bastos_load(const char *name)
         goto finalize;
     }
     bmem->prog_end = bmem->prog_start + prog_size;
+    bmem_strings_clear();
 
     // load vars
     uint16_t vars_size;

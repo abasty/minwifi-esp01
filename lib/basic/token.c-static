@@ -36,7 +36,8 @@
 extern bastos_io_t *bio;
 extern const char *keywords;
 
-uint8_t token_buffer[TOKEN_LINE_SIZE];
+prog_t *token_prog = 0;
+uint8_t *token_buffer = 0;
 
 static uint8_t token_get_next(tokenizer_state_t *state);
 static float token_number_get_value(tokenizer_state_t *state);

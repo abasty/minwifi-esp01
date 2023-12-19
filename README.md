@@ -82,9 +82,10 @@
   * [ ] Global Memory Management
     * [x] Sous allocateur vars
     * [x] Sous allocateur prog
-    * [ ] Sous allocateur strings (calculs)
+    * [x] Sous allocateur strings (calculs)
     * [x] var systèmes + bstate dans global memory
-    * [ ] buffer IO / buffer tokens
+    * [ ] buffer IO
+    * [ ] buffer tokens : directement après
   * [ ] Optimisation parser (règles et code générique)
   * [x] New memory model : ~~Transformation tree -> list (parcours GRD, etc) à mettre dans ds~~
   * [x] Removed Wifi client and server from MINITEL build

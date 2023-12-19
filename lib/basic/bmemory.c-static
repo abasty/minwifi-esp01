@@ -43,12 +43,31 @@ bmem_t *bmem;
 
 // P() = ((i0 - 1) * dims[1] + (i1 - 1)) * dims[2] + ...
 
+// Clear all strings
+static void bmem_strings_clear()
+{
+    bmem->strings_end = bmem->prog_end;
+}
+
+// Allocate a string in the memory, set memory to 0 and return the string
+static char *bmem_string_alloc(uint16_t size)
+{
+    size = bmem_align4(size);
+    if (bmem->vars_start - bmem->strings_end < size)
+        return 0;
+
+    char *str = (char *) bmem->strings_end;
+    bmem->strings_end += size;
+    memset(str, 0, size);
+    return str;
+}
+
 // Allocate a variable in the memory, set memory to 0 and return the variable
 static var_t *bmem_var_alloc(uint16_t size)
 {
     int psize = bmem_align4(size);
     // printf("Allocating %d bytes\n", psize);
-    if (bmem->vars_start - bmem->prog_end < psize)
+    if (bmem->vars_start - bmem->strings_end < psize)
         return 0;
 
     bmem->vars_start -= psize;
@@ -233,6 +252,7 @@ void bmem_prog_new()
 {
     bmem_vars_clear();
     bmem->prog_end = bmem->prog_start;
+    bmem_strings_clear();
 }
 
 // Free a program line
@@ -278,7 +298,11 @@ static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
         return 0;
 
     // Find where to insert the new line
-    if (prog == 0 || line_no == 0)
+    if (line_no == 0)
+    {
+        prog = (prog_t *) token_prog;
+    }
+    else if (prog == 0)
     {
         // Insert at the end of the program
         prog = (prog_t *) bmem->prog_end;
@@ -296,12 +320,17 @@ static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
     if (line_no != 0)
     {
         bmem->prog_end += size;
+        bmem_strings_clear();
     }
 
     // Init the new line with the given values
     prog->line_no = line_no;
     prog->len = len;
-    memcpy(prog->line, line, len);
+
+    if (line_no != 0)
+    {
+        memcpy(prog->line, line, len);
+    }
 
     // Add a null byte at the end of the line
     prog->line[len] = 0;
@@ -355,6 +384,8 @@ static void bmem_init(uint8_t *mem, uint16_t size)
     bmem->prog_start = (uint8_t *) bmem + sizeof(bmem_t);
     bmem->vars_end = (uint8_t *) bmem + size;
     bmem_prog_new();
+    token_prog = malloc(sizeof(prog_t) + TOKEN_LINE_SIZE);
+    token_buffer = token_prog->line;
 }
 
 #include <assert.h>

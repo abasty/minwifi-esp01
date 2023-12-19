@@ -8,6 +8,11 @@
         "token.h": "c",
         "berror.h": "c",
         "*.inc": "c",
-        "bmemory.h": "c"
+        "bmemory.h": "c",
+        "array": "c",
+        "string_view": "c",
+        "initializer_list": "c",
+        "ranges": "c",
+        "utility": "c"
     }
 }

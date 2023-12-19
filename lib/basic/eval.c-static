@@ -492,14 +492,14 @@ static bool eval_string_chr()
 
     if (bmem->bstate.do_eval)
     {
-        char *str = (char *)malloc(2);
+        char *str = bmem_string_alloc(2);
         if (!str)
             return false;
 
         str[0] = (char)((uint8_t)(truncf(bmem->bstate.number)));
         str[1] = 0;
 
-        string_set(&bmem->bstate.string, str, true);
+        string_set(&bmem->bstate.string, str);
     }
 
     return true;
@@ -517,12 +517,12 @@ static bool eval_string_str()
     {
         char dummy[2];
         int n = snprintf(dummy, 2, "%g", bmem->bstate.number);
-        char *str = (char *)malloc(n + 1);
+        char *str = bmem_string_alloc(n + 1);
         if (!str)
             return false;
 
         sprintf(str, "%g", bmem->bstate.number);
-        string_set(&bmem->bstate.string, str, true);
+        string_set(&bmem->bstate.string, str);
     }
 
     return true;
@@ -533,7 +533,7 @@ static bool eval_string_const()
     if (!eval_token(TOKEN_STRING))
         return false;
 
-    string_set(&bmem->bstate.string, (char *)(bmem->bstate.read_ptr), false);
+    string_set(&bmem->bstate.string, (char *)(bmem->bstate.read_ptr));
     while(*bmem->bstate.read_ptr++);
     return true;
 }
@@ -548,11 +548,11 @@ static bool eval_string_var()
         var_t *var = bmem_var_find((char *)bmem->bstate.read_ptr - 1);
         if (var)
         {
-            string_set(&bmem->bstate.string, var->string, false);
+            string_set(&bmem->bstate.string, var->string);
         }
         else
         {
-            string_set(&bmem->bstate.string, 0, false);
+            string_set(&bmem->bstate.string, 0);
         }
     }
     while(*bmem->bstate.read_ptr++);
@@ -633,7 +633,7 @@ static bool eval_string_expr()
         }
         if (bmem->bstate.do_eval)
         {
-            string_set(&bmem->bstate.string, string1.chars, string1.allocated);
+            string_set(&bmem->bstate.string, string1.chars);
         }
         bmem->bstate.token = TOKEN_STRING;
     }
@@ -1201,7 +1201,7 @@ EVAL:
     if (!bmem->bstate.do_eval)
         return true;
 
-    string_set(&bmem->bstate.string, strdup(codes), true);
+    string_set(&bmem->bstate.string, strdup(codes));
     return true;
 }
 
@@ -1456,7 +1456,6 @@ static int8_t eval_prog(prog_t *prog, bool do_eval)
     bmem->bstate.do_eval = do_eval;
     bmem->bstate.read_ptr = prog->line;
     bmem->bstate.token = 0;
-    bmem->bstate.string.allocated = 0;
     bmem->bstate.string.chars = 0;
     bmem->bstate.error = BERROR_NONE;
     bmem->bstate.prog = prog;
@@ -1468,7 +1467,8 @@ static int8_t eval_prog(prog_t *prog, bool do_eval)
     eval = eval && (bmem->bstate.read_ptr == 0 || *bmem->bstate.read_ptr == 0);
 
     // Free evaluator state
-    string_set(&bmem->bstate.string, 0, false);
+    string_set(&bmem->bstate.string, 0);
+    bmem_strings_clear();
 
     // Handle syntax error
     if (!eval && bmem->bstate.error == BERROR_NONE)

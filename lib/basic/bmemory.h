@@ -44,7 +44,6 @@ static inline int bmem_align4(int size)
 typedef struct
 {
     char *chars;
-    bool allocated;
 } string_t;
 
 typedef struct
@@ -82,6 +81,7 @@ typedef struct
 typedef struct {
     uint8_t *prog_start;
     uint8_t *prog_end;
+    uint8_t *strings_end;
     uint8_t *vars_start;
     uint8_t *vars_end;
     eval_state_t bstate;
@@ -106,10 +106,14 @@ static var_t *bmem_var_first();
 static var_t *bmem_var_next(var_t *var);
 
 // string related functions
-static void string_set(string_t *string, char *chars, bool allocated);
+static char *bmem_string_alloc(uint16_t size);
+static void bmem_strings_clear();
+
+static void string_set(string_t *string, char *chars);
 static void string_normalize(string_t *string);
 static void string_move(string_t *from, string_t *to);
 static void string_slice(string_t *string, uint16_t start, uint16_t end);
 static void string_concat(string_t *string1, string_t *string2);
+
 
 #endif // __BMEMORY_H__

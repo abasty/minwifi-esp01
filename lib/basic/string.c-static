@@ -5,12 +5,9 @@
 
 #include "bmemory.h"
 
-static void string_set(string_t *string, char *chars, bool allocated)
+static void string_set(string_t *string, char *chars)
 {
-    if (string->allocated && string->chars != chars)
-        free(string->chars);
     string->chars = chars;
-    string->allocated = allocated;
 }
 
 static void string_normalize(string_t *string)
@@ -18,12 +15,6 @@ static void string_normalize(string_t *string)
     if (string->chars && *string->chars)
         return;
 
-    if (string->allocated)
-    {
-        free(string->chars);
-    }
-
-    string->allocated = false;
     string->chars = 0;
 }
 
@@ -31,7 +22,6 @@ static void string_move(string_t *from, string_t *to)
 {
     *to = *from;
     from->chars = 0;
-    from->allocated = false;
     string_normalize(to);
 }
 
@@ -51,7 +41,7 @@ static void string_slice(string_t *string, uint16_t start, uint16_t end)
 
     if (start > end || start > len)
     {
-        string_set(string, 0, false);
+        string_set(string, 0);
         return;
     }
 
@@ -61,11 +51,11 @@ static void string_slice(string_t *string, uint16_t start, uint16_t end)
     }
 
     uint16_t slice_len = end - start + 1;
-    char *slice = (char *)malloc(slice_len + 1);
+    char *slice = bmem_string_alloc(slice_len + 1);
 
     if (!slice)
     {
-        string_set(string, 0, false);
+        string_set(string, 0);
         return;
     }
 
@@ -79,7 +69,7 @@ static void string_slice(string_t *string, uint16_t start, uint16_t end)
     }
     *dst = 0;
 
-    string_set(string, slice, true);
+    string_set(string, slice);
 }
 
 static void string_concat(string_t *string1, string_t *string2)
@@ -91,16 +81,16 @@ static void string_concat(string_t *string1, string_t *string2)
 
     if (!string1->chars)
     {
-        string_set(string1, string2->chars, string2->allocated);
+        string_set(string1, string2->chars);
         return;
     }
 
-    char *concat = (char *)malloc(strlen(string1->chars) + strlen(string2->chars) + 1);
+    char *concat = bmem_string_alloc(strlen(string1->chars) + strlen(string2->chars) + 1);
     char *dst = concat;
     char *src = string1->chars;
     while (*src) *dst++ = *src++;
     src = string2->chars;
     while (*src) *dst++ = *src++;
     *dst = 0;
-    string_set(string1, concat, true);
+    string_set(string1, concat);
 }
