@@ -45,7 +45,7 @@
 * [ ] tty : init string, fast, autoexec => config$$$
 * [ ] Slice on left value
 * [ ] TAB, REPC, SCROLL UP/DOWN
-* [ ] Optim : gérer la mémoire comme le ZX (un seul bloc :
+* [x] Optim : gérer la mémoire comme le ZX (un seul bloc :
   <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/chap27.html>)
 * [x] Toutes les fonctions qui produisent des codes de commandes => fonctions
   qui renvoient des chaines de caractères (au début .h minitel). On doit pouvoir
@@ -53,8 +53,8 @@
 * [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
   seule commande print.
 * [ ] Filtre "minitel to ansi"
-* [ ] Optim tout dans le même .c pour les static
-* [ ] Mem : bloc pour prog, bloc pour vars, que des listes (avec ptr/index sur
+* [x] Optim tout dans le même .c pour les static
+* [x] Mem : bloc pour prog, bloc pour vars, que des listes (avec ptr/index sur
   16 bits),
 * [ ] Optimisation BIO (une seule structure, 1 fonction number (int), 2/3 params
   (union as_void_ptr, as_char_ptr, as_int, as_float), 1 result (union like
@@ -86,7 +86,7 @@
     * [x] var systèmes + bstate dans global memory
     * [ ] buffer IO / buffer tokens
   * [ ] Optimisation parser (règles et code générique)
-  * [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
+  * [x] New memory model : ~~Transformation tree -> list (parcours GRD, etc) à mettre dans ds~~
   * [x] Removed Wifi client and server from MINITEL build
   * [x] N'optimise pas : Unifier load / save methods (read_uint16, read_len_mem0)
   * [x] Unifier FFI (bio.*) : un genre de callback fourre tout à la `ioctl` ?
