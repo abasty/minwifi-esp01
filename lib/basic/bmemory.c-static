@@ -300,7 +300,7 @@ static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
     // Find where to insert the new line
     if (line_no == 0)
     {
-        prog = (prog_t *) token_prog;
+        prog = (prog_t *) &bmem->bstate.token_buffer;
     }
     else if (prog == 0)
     {
@@ -384,8 +384,6 @@ static void bmem_init(uint8_t *mem, uint16_t size)
     bmem->prog_start = (uint8_t *) bmem + sizeof(bmem_t);
     bmem->vars_end = (uint8_t *) bmem + size;
     bmem_prog_new();
-    token_prog = malloc(sizeof(prog_t) + TOKEN_LINE_SIZE);
-    token_buffer = token_prog->line;
 }
 
 #include <assert.h>

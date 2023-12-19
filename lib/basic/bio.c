@@ -52,8 +52,6 @@ bastos_io_t *bio = 0;
 uint8_t io_buffer[IO_BUFFER_SIZE];
 char *io_buffer_char = (char *)io_buffer;
 
-extern uint8_t *token_buffer;
-
 void bastos_init(bastos_io_t *_io)
 {
     bio = _io;

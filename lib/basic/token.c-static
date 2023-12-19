@@ -35,9 +35,7 @@
 
 extern bastos_io_t *bio;
 extern const char *keywords;
-
-prog_t *token_prog = 0;
-uint8_t *token_buffer = 0;
+extern bmem_t *bmem;
 
 static uint8_t token_get_next(tokenizer_state_t *state);
 static float token_number_get_value(tokenizer_state_t *state);
@@ -199,6 +197,7 @@ char *untokenize(uint8_t *input)
 {
     tokenizer_state_t state;
 
+    uint8_t *token_buffer = bmem->bstate.token_buffer.line;
     *token_buffer = 0;
     state.write_ptr = token_buffer;
     state.read_ptr = (uint8_t *)input;
@@ -275,6 +274,7 @@ char *untokenize(uint8_t *input)
 
 int8_t tokenize(tokenizer_state_t *state, char *input)
 {
+    uint8_t *token_buffer = bmem->bstate.token_buffer.line;
     state->read_ptr = (uint8_t *)input;
     state->write_ptr = token_buffer;
     state->line_no = 0;

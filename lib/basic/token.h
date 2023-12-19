@@ -28,8 +28,6 @@
 
 #include <stdint.h>
 
-#define TOKEN_LINE_SIZE         (256)
-
 #define KEYWORD_END_TAG         ((uint8_t)  0b10000000)
 
 #define TOKEN_KEYWORD           ((uint8_t) 0b10000000)

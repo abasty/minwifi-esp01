@@ -75,6 +75,7 @@ typedef struct
     bool inputting;
     int sp;
     string_t string;
+    prog_buffer_t token_buffer;
 } eval_state_t;
 
 // Bastos low memory system variables

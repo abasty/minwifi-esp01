@@ -38,7 +38,8 @@ extern "C"
 {
 #endif
 
-#define IO_BUFFER_SIZE (256)
+#define IO_BUFFER_SIZE  (256)
+#define TOKEN_LINE_SIZE (256)
 
 #define B_RDONLY  00
 #define B_WRONLY  01
@@ -74,6 +75,12 @@ typedef struct {
     uint16_t len;
     uint8_t line[0];
 } prog_t;
+
+typedef struct {
+    uint16_t line_no;
+    uint16_t len;
+    uint8_t line[TOKEN_LINE_SIZE];
+} prog_buffer_t;
 
 typedef struct {
     uint8_t token;
