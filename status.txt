@@ -260,8 +260,13 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.5% (used 32344 bytes from 81920 bytes)
 Flash: [=====     ]  49.3% (used 472772 bytes from 958448 bytes)
 ---
-Removed string_t (char *)
+dfba761 Removed string_t (char *)
 Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.5% (used 32344 bytes from 81920 bytes)
 Flash: [=====     ]  49.3% (used 472740 bytes from 958448 bytes)
+---
+Removed bmem_strlen, string_set, strdup
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.5% (used 32344 bytes from 81920 bytes)
+Flash: [=====     ]  49.3% (used 472756 bytes from 958448 bytes)
 ---

@@ -5,11 +5,6 @@
 
 #include "bmemory.h"
 
-static void string_set(char **string, char *chars)
-{
-    *string = chars;
-}
-
 static void string_slice(char **string, uint16_t start, uint16_t end)
 {
     if (!*string)

@@ -75,20 +75,6 @@ static var_t *bmem_var_alloc(uint16_t size)
     return (var_t *)bmem->vars_start;
 }
 
-// Compute the size of a string
-static int bmem_strlen(const char *str)
-{
-    if (!str)
-        return 0;
-
-    int n = 0;
-    while (*str++)
-    {
-        n++;
-    }
-    return n;
-}
-
 // Compute the size of an array
 static int bmem_array_size(int cell_size, uint8_t dim_count, uint32_t *dims)
 {
@@ -125,7 +111,7 @@ static int bmem_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims)
 // Create a new variable and copy the name
 static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, uint32_t *dims)
 {
-    int name_size = bmem_strlen(name) + 1;
+    int name_size = strlen(name) + 1;
     int data_size = bmem_data_size(token, dim_count, dims);
     int dims_size = dims ? dim_count * sizeof(uint32_t) : 0;
 
@@ -158,7 +144,7 @@ static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, u
 // Return the size of a variable
 static int bmem_var_size(var_t *var)
 {
-    return bmem_align4(sizeof(var_t) + var->name_ofs + bmem_strlen((char *) (var->bytes + var->name_ofs)) + 1);
+    return bmem_align4(sizeof(var_t) + var->name_ofs + strlen((char *) (var->bytes + var->name_ofs)) + 1);
 }
 
 // Find a variable by name
@@ -222,7 +208,7 @@ static var_t *bmem_var_string_set(const char *name, char *value)
     tmp[sizeof(tmp) - 1] = 0;
 
     // Create the variable and copy the value
-    var = bmem_var_new(tmp, TOKEN_VARIABLE_STRING, bmem_strlen(value), 0);
+    var = bmem_var_new(tmp, TOKEN_VARIABLE_STRING, strlen(value), 0);
     if (var == 0)
         goto finalize;
     strcpy(var->string, value ? value : "");

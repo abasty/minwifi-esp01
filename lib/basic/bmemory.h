@@ -105,7 +105,6 @@ static var_t *bmem_var_next(var_t *var);
 static char *bmem_string_alloc(uint16_t size);
 static void bmem_strings_clear();
 
-static void string_set(char **string, char *chars);
 static void string_slice(char **string, uint16_t start, uint16_t end);
 static void string_concat(char **string1, char *string2);
 

@@ -490,14 +490,12 @@ static bool eval_string_chr()
 
     if (bmem->bstate.do_eval)
     {
-        char *str = bmem_string_alloc(2);
-        if (!str)
+        bmem->bstate.string = bmem_string_alloc(2);
+        if (!bmem->bstate.string)
             return false;
 
-        str[0] = (char)((uint8_t)(truncf(bmem->bstate.number)));
-        str[1] = 0;
-
-        string_set(&bmem->bstate.string, str);
+        bmem->bstate.string[0] = (char)((uint8_t)(truncf(bmem->bstate.number)));
+        bmem->bstate.string[1] = 0;
     }
 
     return true;
@@ -513,14 +511,11 @@ static bool eval_string_str()
 
     if (bmem->bstate.do_eval)
     {
-        char dummy[2];
-        int n = snprintf(dummy, 2, "%g", bmem->bstate.number);
-        char *str = bmem_string_alloc(n + 1);
-        if (!str)
+        bmem->bstate.string = bmem_string_alloc(16);
+        if (!bmem->bstate.string)
             return false;
 
-        sprintf(str, "%g", bmem->bstate.number);
-        string_set(&bmem->bstate.string, str);
+        sprintf(bmem->bstate.string, "%g", bmem->bstate.number);
     }
 
     return true;
@@ -531,7 +526,7 @@ static bool eval_string_const()
     if (!eval_token(TOKEN_STRING))
         return false;
 
-    string_set(&bmem->bstate.string, (char *)(bmem->bstate.read_ptr));
+    bmem->bstate.string = (char *) bmem->bstate.read_ptr;
     while(*bmem->bstate.read_ptr++);
     return true;
 }
@@ -546,11 +541,11 @@ static bool eval_string_var()
         var_t *var = bmem_var_find((char *)bmem->bstate.read_ptr - 1);
         if (var)
         {
-            string_set(&bmem->bstate.string, var->string);
+            bmem->bstate.string = var->string;
         }
         else
         {
-            string_set(&bmem->bstate.string, 0);
+            bmem->bstate.string = 0;
         }
     }
     while(*bmem->bstate.read_ptr++);
@@ -1198,7 +1193,18 @@ EVAL:
     if (!bmem->bstate.do_eval)
         return true;
 
-    string_set(&bmem->bstate.string, strdup(codes));
+    uint8_t len = strlen(codes);
+    bmem->bstate.string = bmem_string_alloc(len + 1);
+    if (!bmem->bstate.string)
+        return false;
+
+    // Copy codes to string
+    for (uint8_t i = 0; i < len; i++)
+    {
+        bmem->bstate.string[i] = codes[i];
+    }
+    bmem->bstate.string[len] = 0;
+
     return true;
 }
 
@@ -1464,7 +1470,7 @@ static int8_t eval_prog(prog_t *prog, bool do_eval)
     eval = eval && (bmem->bstate.read_ptr == 0 || *bmem->bstate.read_ptr == 0);
 
     // Free evaluator state
-    string_set(&bmem->bstate.string, 0);
+    bmem->bstate.string = 0;
     bmem_strings_clear();
 
     // Handle syntax error
