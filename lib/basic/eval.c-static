@@ -870,7 +870,7 @@ static bool eval_input()
         }
         else if (bmem->bstate.input_var_token == TOKEN_VARIABLE_STRING)
         {
-            bmem->bstate.input_var = bmem_var_string_set(bmem->bstate.var_ref, 0);
+            bmem->bstate.input_var = bmem_var_string_set(bmem->bstate.var_ref, "");
         }
         if (bmem->bstate.input_var == 0)
             return false;
