@@ -168,7 +168,7 @@ static bool eval_len_code()
     if (!bmem->bstate.do_eval)
         return true;
 
-    if (!bmem->bstate.string.chars)
+    if (!bmem->bstate.string)
     {
         bmem->bstate.number = 0;
         return true;
@@ -176,11 +176,11 @@ static bool eval_len_code()
 
     if (token == TOKEN_KEYWORD_LEN)
     {
-        bmem->bstate.number = strlen(bmem->bstate.string.chars);
+        bmem->bstate.number = strlen(bmem->bstate.string);
         return true;
     }
 
-    bmem->bstate.number = *bmem->bstate.string.chars;
+    bmem->bstate.number = *bmem->bstate.string;
     return true;
 }
 
@@ -408,14 +408,12 @@ static bool eval_compare_expr()
         }
         else // type_token == TOKEN_STRING
         {
-            string_t string1;
-            string_move(&bmem->bstate.string, &string1);
+            char *string1 = bmem->bstate.string;
 
             if (!eval_string_expr())
                 return false;
 
-            result = strcmp(string1.chars ? string1.chars : "", bmem->bstate.string.chars ? bmem->bstate.string.chars : "");
-
+            result = strcmp(string1 ? string1 : "", bmem->bstate.string ? bmem->bstate.string : "");
         }
         switch (op)
         {
@@ -617,8 +615,7 @@ static bool eval_string_expr()
     bool result = true;
     if ((result = eval_string_term()))
     {
-        string_t string1;
-        string_move(&bmem->bstate.string, &string1);
+        char *string1 = bmem->bstate.string;
 
         while(eval_token('+'))
         {
@@ -628,12 +625,12 @@ static bool eval_string_expr()
 
             if (bmem->bstate.do_eval)
             {
-                string_concat(&string1, &bmem->bstate.string);
+                string_concat(&string1, bmem->bstate.string);
             }
         }
         if (bmem->bstate.do_eval)
         {
-            string_set(&bmem->bstate.string, string1.chars);
+            bmem->bstate.string = string1;
         }
         bmem->bstate.token = TOKEN_STRING;
     }
@@ -788,8 +785,8 @@ static bool eval_let()
                     return true;
                 if (end > len)
                     end = len;
-                uint8_t *src = (uint8_t*) bmem->bstate.string.chars;
-                // FIXME: this is not correct, we should use the string_t functions
+                uint8_t *src = (uint8_t*) bmem->bstate.string;
+                // FIXME: this is not correct, we should use the char *functions
                 uint8_t *dst = (uint8_t*) var->string + start - 1;
                 uint16_t n = end - start + 1;
                 while (n)
@@ -807,7 +804,7 @@ static bool eval_let()
             }
             else
             {
-                if (bmem_var_string_set(name, bmem->bstate.string.chars) == 0)
+                if (bmem_var_string_set(name, bmem->bstate.string) == 0)
                     return false;
             }
         }
@@ -855,7 +852,7 @@ static bool eval_input()
     {
         if (bmem->bstate.do_eval)
         {
-            bio->print_string(bmem->bstate.string.chars);
+            bio->print_string(bmem->bstate.string);
         }
 
         if (!eval_token(','))
@@ -916,7 +913,7 @@ static bool eval_print(bool implicit)
                 }
                 else // TOKEN_STRING
                 {
-                    bio->print_string(bmem->bstate.string.chars ? bmem->bstate.string.chars : "");
+                    bio->print_string(bmem->bstate.string ? bmem->bstate.string : "");
                 }
             }
         }
@@ -924,7 +921,7 @@ static bool eval_print(bool implicit)
         {
             if (bmem->bstate.do_eval)
             {
-                bio->print_string(bmem->bstate.string.chars ? bmem->bstate.string.chars : "");
+                bio->print_string(bmem->bstate.string ? bmem->bstate.string : "");
             }
         }
         else if (eval_token(','))
@@ -1113,26 +1110,26 @@ static void eval_return()
 
 static void eval_save()
 {
-    if (bmem->bstate.string.chars == 0)
+    if (bmem->bstate.string == 0)
         return;
 
-    bastos_save(bmem->bstate.string.chars);
+    bastos_save(bmem->bstate.string);
 }
 
 static void eval_load()
 {
-    if (bmem->bstate.string.chars == 0)
+    if (bmem->bstate.string == 0)
         return;
 
     bmem->bstate.running = false;
     bmem->bstate.pc = 0;
     running_state_clear();
-    bmem->bstate.error = bastos_load(bmem->bstate.string.chars);
+    bmem->bstate.error = bastos_load(bmem->bstate.string);
 }
 
 static void eval_erase()
 {
-    if (bio->erase(bmem->bstate.string.chars) != 0)
+    if (bio->erase(bmem->bstate.string) != 0)
     {
         bmem->bstate.error = BERROR_IO;
     }
@@ -1456,7 +1453,7 @@ static int8_t eval_prog(prog_t *prog, bool do_eval)
     bmem->bstate.do_eval = do_eval;
     bmem->bstate.read_ptr = prog->line;
     bmem->bstate.token = 0;
-    bmem->bstate.string.chars = 0;
+    bmem->bstate.string = 0;
     bmem->bstate.error = BERROR_NONE;
     bmem->bstate.prog = prog;
 
