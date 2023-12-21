@@ -39,6 +39,7 @@
 #include "eval.h"
 #include "bio.h"
 
+#include "keywords.c-static"
 #include "token.c-static"
 #include "bmemory.c-static"
 #include "string.c-static"

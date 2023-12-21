@@ -1,4 +1,4 @@
-const char *keywords =
+static const char *keywords =
     "AB""\xd3"
     "AC""\xd3"
     "AS""\xce"
