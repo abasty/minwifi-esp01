@@ -50,13 +50,10 @@ bastos_io_t *bio = 0;
 // bst_io_argv_t bastos_io_argv[4] = {0};
 // function0_t *function0_io = 0;
 
-uint8_t io_buffer[IO_BUFFER_SIZE];
-char *io_buffer_char = (char *)io_buffer;
-
 void bastos_init(bastos_io_t *_io)
 {
     bio = _io;
-    *io_buffer = 0;
+    *bmem->io_buffer = 0;
     bmem_init(malloc(BASTOS_MEMORY_SIZE), BASTOS_MEMORY_SIZE);
 }
 
@@ -64,20 +61,20 @@ size_t bastos_send_keys(const char *keys, size_t n)
 {
     size_t m = 0;
     uint8_t *src = (uint8_t *)keys;
-    uint8_t *dst = io_buffer;
+    uint8_t *dst = bmem->io_buffer;
 
     // Find the terminal 0 in io buffer
     for (; *dst; dst++)
         ;
 
     // Copy keys at the end of io buffer
-    size_t size = dst - io_buffer;
+    size_t size = dst - bmem->io_buffer;
     while (size < IO_BUFFER_SIZE - 1 && *src && n > 0)
     {
         if (*src == 3)
         {
             bastos_stop();
-            *io_buffer = 0;
+            *bmem->io_buffer = 0;
             return 1;
         }
         else if (*src == '\r')
@@ -88,7 +85,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
         }
         else if (*src == 127)
         {
-            if (dst - io_buffer >= 1 && *(dst - 1) != '\n')
+            if (dst - bmem->io_buffer >= 1 && *(dst - 1) != '\n')
             {
                 dst--;
                 *dst = 0;
@@ -103,7 +100,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
             size++;
             bio->print_string((char *) c);
         }
-        size = dst - io_buffer;
+        size = dst - bmem->io_buffer;
         n--;
         m++;
     }
@@ -117,7 +114,7 @@ int8_t bastos_input()
     int8_t err = BERROR_NONE;
 
     // Find first command end
-    uint8_t *next = io_buffer;
+    uint8_t *next = bmem->io_buffer;
     while (*next && *next != '\n')
     {
         next++;
@@ -132,18 +129,18 @@ int8_t bastos_input()
 
     // Prepare move of the next commands to buffer start
     uint8_t *src = next;
-    uint8_t *dst = io_buffer;
+    uint8_t *dst = bmem->io_buffer;
 
     // Manage INPUT command
     if (eval_inputting())
     {
-        err = eval_input_store((char *) io_buffer);
+        err = eval_input_store((char *) bmem->io_buffer);
         goto finalize;
     }
 
     // Tokenize command and handle tokenize error case
     tokenizer_state_t line;
-    err = tokenize(&line, io_buffer_char);
+    err = tokenize(&line, (char *) bmem->io_buffer);
     if (err < 0)
         goto finalize;
 

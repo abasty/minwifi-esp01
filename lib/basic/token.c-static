@@ -29,12 +29,12 @@
 #include <stdlib.h>
 
 #include "keywords.h"
+#include "bmemory.h"
 #include "token.h"
 #include "berror.h"
 #include "bio.h"
 
 extern bastos_io_t *bio;
-extern const char *keywords;
 extern bmem_t *bmem;
 
 static uint8_t token_get_next(tokenizer_state_t *state);

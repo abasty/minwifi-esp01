@@ -33,13 +33,15 @@
 
 #define BASTOS_MEMORY_SIZE (16 * 1024)
 #define BASTOS_MEMORY_ALIGN (sizeof(uint32_t))
+#define IO_BUFFER_SIZE  (128)
+#define TOKEN_LINE_SIZE (128)
+#define EVAL_RETURNS_SIZE (32)
 
-#define EVAL_RETURNS_SIZE 32
-
-static inline int bmem_align4(int size)
-{
-    return (size + BASTOS_MEMORY_ALIGN - 1) & ~(BASTOS_MEMORY_ALIGN - 1);
-}
+typedef struct {
+    uint16_t line_no;
+    uint16_t len;
+    uint8_t line[TOKEN_LINE_SIZE];
+} prog_buffer_t;
 
 typedef struct
 {
@@ -83,6 +85,7 @@ typedef struct {
     eval_state_t bstate;
     loop_t loops['Z' - 'A' + 1];
     return_t returns[EVAL_RETURNS_SIZE];
+    uint8_t io_buffer[IO_BUFFER_SIZE];
 } bmem_t;
 
 static void bmem_init(uint8_t *mem, uint16_t size);
@@ -108,5 +111,9 @@ static void bmem_strings_clear();
 static void string_slice(char **string, uint16_t start, uint16_t end);
 static void string_concat(char **string1, char *string2);
 
+static inline int bmem_align4(int size)
+{
+    return (size + BASTOS_MEMORY_ALIGN - 1) & ~(BASTOS_MEMORY_ALIGN - 1);
+}
 
 #endif // __BMEMORY_H__
