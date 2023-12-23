@@ -45,7 +45,7 @@
 * [ ] tty : init string, fast, autoexec => config$$$
 * [ ] Slice on left value
 * [ ] TAB, REPC, SCROLL UP/DOWN
-* [ ] Optim : gérer la mémoire comme le ZX (un seul bloc :
+* [x] Optim : gérer la mémoire comme le ZX (un seul bloc :
   <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/chap27.html>)
 * [x] Toutes les fonctions qui produisent des codes de commandes => fonctions
   qui renvoient des chaines de caractères (au début .h minitel). On doit pouvoir
@@ -53,8 +53,8 @@
 * [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
   seule commande print.
 * [ ] Filtre "minitel to ansi"
-* [ ] Optim tout dans le même .c pour les static
-* [ ] Mem : bloc pour prog, bloc pour vars, que des listes (avec ptr/index sur
+* [x] Optim tout dans le même .c pour les static
+* [x] Mem : bloc pour prog, bloc pour vars, que des listes (avec ptr/index sur
   16 bits),
 * [ ] Optimisation BIO (une seule structure, 1 fonction number (int), 2/3 params
   (union as_void_ptr, as_char_ptr, as_int, as_float), 1 result (union like
@@ -77,10 +77,17 @@
   * [ ] Pouvoir sauvegarder uniquement les variables (config manager, "SAVE VARS")
   * [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
 * [ ] **OPTIMISATIONS** (valable aussi pour la version OTA only)
-  * [ ] Rapporter tout le basic sauf l'API bastos dans un seul fichier et static
+  * [x] Rapporter tout le basic sauf l'API bastos dans un seul fichier et static
     functions (notamment memory)
+  * [x] Global Memory Management
+    * [x] Sous allocateur vars
+    * [x] Sous allocateur prog
+    * [x] Sous allocateur strings (calculs)
+    * [x] var systèmes + bstate dans global memory
+    * [x] buffer IO
+    * [x] buffer tokens : dans bstate, c'est un prog_t
   * [ ] Optimisation parser (règles et code générique)
-  * [ ] Transformation tree -> list (parcours GRD, etc) à mettre dans ds
+  * [x] New memory model : ~~Transformation tree -> list (parcours GRD, etc) à mettre dans ds~~
   * [x] Removed Wifi client and server from MINITEL build
   * [x] N'optimise pas : Unifier load / save methods (read_uint16, read_len_mem0)
   * [x] Unifier FFI (bio.*) : un genre de callback fourre tout à la `ioctl` ?
@@ -115,8 +122,9 @@ Libraries
 * ZX81 memory map : <https://problemkaputt.de/zxdocs.htm#zx80zx81>
 * ZX81 memory map : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/chap27.html>
 * ZX emulator : <https://fuse-emulator.sourceforge.net/>
-* Livre sur le Basic ZX81 (original) : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr>
+* Basic ZX81 : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/appxc.html>
 * Sinclair Basic : <https://en.wikipedia.org/wiki/Sinclair_BASIC>
+* Prog spectrum à porter sur zx81 : https://zxbasic.readthedocs.io/en/docs/examples/snake.bas/
 
 ## VT100
 
@@ -133,10 +141,6 @@ Libraries
 * Code minitel : <http://millevaches.hydraule.org/info/minitel/specs/codes.htm>
 * Python minitel avec fonctions et code :
   <https://github.com/Zigazou/PyMinitel/blob/master/minitel/Minitel.py>
-
-## Progs
-
-* (spectrum à porter sur zx81) : https://zxbasic.readthedocs.io/en/docs/examples/snake.bas/
 
 # Hardware
 

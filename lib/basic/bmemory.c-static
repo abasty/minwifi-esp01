@@ -1,0 +1,584 @@
+/*
+ * Copyright © 2023 Alain Basty
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+#include "bmemory.h"
+#include "token.h"
+
+bmem_t *bmem;
+
+// total size in bytes of a var
+// 1 float: sizeof(var_t) + sizeof(float) + (len(name) +  Len(name) % 4)
+// 1 string: sizeof(var_t) + (len(string) + 1) + (len(name) +  Len(name) % 4)
+// # floats: sizeof(var_t) + dim_count * 4 + P(dims) * 4 + (len(name) +  Len(name) % 4)
+//     A(n = P(i0, i1, ...)): numbers[n + #dims]
+// # strings: sizeof(var_t) + dim_count * 4 + P(dims) * 1 + (len(name) +  Len(name) % 4)
+//     A$(n = P(i0, i1, ...)): bytes[n + #dims]
+
+// P() = ((i0 - 1) * dims[1] + (i1 - 1)) * dims[2] + ...
+
+// Clear all strings
+static void bmem_strings_clear()
+{
+    bmem->strings_end = bmem->prog_end;
+}
+
+// Allocate a string in the memory, set memory to 0 and return the string
+static char *bmem_string_alloc(uint16_t size)
+{
+    size = bmem_align4(size);
+    if (bmem->vars_start - bmem->strings_end < size)
+        return 0;
+
+    char *str = (char *) bmem->strings_end;
+    bmem->strings_end += size;
+    memset(str, 0, size);
+    return str;
+}
+
+// Allocate a variable in the memory, set memory to 0 and return the variable
+static var_t *bmem_var_alloc(uint16_t size)
+{
+    int psize = bmem_align4(size);
+    // printf("Allocating %d bytes\n", psize);
+    if (bmem->vars_start - bmem->strings_end < psize)
+        return 0;
+
+    bmem->vars_start -= psize;
+    memset(bmem->vars_start, 0, psize);
+    return (var_t *)bmem->vars_start;
+}
+
+// Compute the size of an array
+static int bmem_array_size(int cell_size, uint8_t dim_count, uint32_t *dims)
+{
+    int size = cell_size;
+    for (int i = 0; i < dim_count; i++)
+    {
+        size *= dims[i];
+    }
+    return size;
+}
+
+// Compute the size of the data of a variable
+static int bmem_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims)
+{
+    int size = 0;
+    switch (token)
+    {
+    case TOKEN_VARIABLE_NUMBER:
+        size = sizeof(float);
+        break;
+    case TOKEN_VARIABLE_STRING:
+        size = dim_count + 1;
+        break;
+    case TOKEN_ARRAY_NUMBER:
+        size = bmem_array_size(sizeof(float), dim_count, dims);
+        break;
+    case TOKEN_ARRAY_STRING:
+        size = bmem_array_size(1, dim_count, dims);
+        break;
+    }
+    return size;
+}
+
+// Create a new variable and copy the name
+static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, uint32_t *dims)
+{
+    int name_size = strlen(name) + 1;
+    int data_size = bmem_data_size(token, dim_count, dims);
+    int dims_size = dims ? dim_count * sizeof(uint32_t) : 0;
+
+    // Allocate var
+    var_t *var = bmem_var_alloc(sizeof(var_t) + dims_size + data_size + name_size);
+    if (!var)
+        return 0;
+
+    // Init var
+    var->token = token;
+    var->name_ofs = data_size + dims_size;
+
+    // Copy dims
+    if (dims)
+    {
+        memcpy(var->dims, dims, dims_size);
+        var->dim_count = dim_count;
+    }
+    else
+    {
+        var->dim_count = 0;
+    }
+
+    // Copy name
+    memcpy(var->bytes + var->name_ofs, name, name_size);
+
+    return var;
+}
+
+// Return the size of a variable
+static int bmem_var_size(var_t *var)
+{
+    return bmem_align4(sizeof(var_t) + var->name_ofs + strlen((char *) (var->bytes + var->name_ofs)) + 1);
+}
+
+// Find a variable by name
+var_t *bmem_var_find(const char *name)
+{
+    var_t *var = bmem_var_first();
+    while (var)
+    {
+        if (strcmp((char *) (var->bytes + var->name_ofs), name) == 0)
+            return var;
+        var = bmem_var_next(var);
+    }
+    return 0;
+}
+
+// Return the first variable
+static var_t *bmem_var_first()
+{
+    if (bmem->vars_start == bmem->vars_end)
+        return 0;
+    return (var_t*) bmem->vars_start;
+}
+
+// Return the next variable
+static var_t *bmem_var_next(var_t *var)
+{
+    int size = bmem_var_size(var);
+    var_t *next = (var_t *) ((uint8_t *) var + size);
+    if ((uint8_t *) next >= bmem->vars_end)
+        return 0;
+    return next;
+}
+
+// Unset a variable
+static void bmem_var_unset(var_t *var)
+{
+    int size = bmem_var_size(var);
+    memmove(bmem->vars_start + size, bmem->vars_start, (uint8_t *) var - bmem->vars_start);
+    bmem->vars_start += size;
+}
+
+// Clear all variables
+static void bmem_vars_clear()
+{
+    bmem->vars_start = bmem->vars_end;
+}
+
+// Create a new string variable
+static var_t *bmem_var_string_set(const char *name, char *value)
+{
+    // Remove the variable if it already exists
+    var_t *var = bmem_var_find(name);
+    if (var != 0)
+        bmem_var_unset(var);
+
+    // Copy the name
+    // FIXME: create a temporary buffer in the bmem_t structure or in global
+    // memory
+    char tmp[32];
+    strncpy(tmp, name, sizeof(tmp) - 1);
+    tmp[sizeof(tmp) - 1] = 0;
+
+    // Create the variable and copy the value
+    var = bmem_var_new(tmp, TOKEN_VARIABLE_STRING, strlen(value), 0);
+    if (var == 0)
+        goto finalize;
+    strcpy(var->string, value ? value : "");
+
+finalize:
+    return var;
+}
+
+// Create a new number variable
+static var_t *bmem_var_number_set(const char *name, float value)
+{
+    var_t *var = bmem_var_find(name);
+    if (var == 0)
+    {
+        var = bmem_var_new(name, TOKEN_VARIABLE_NUMBER, 0, 0);
+    }
+
+    if (var == 0)
+        return 0;
+
+    var->numbers[0] = value;
+    return var;
+}
+
+// Clear the program and the variables memory
+void bmem_prog_new()
+{
+    bmem_vars_clear();
+    bmem->prog_end = bmem->prog_start;
+    bmem_strings_clear();
+}
+
+// Free a program line
+static void bmem_prog_line_free(prog_t *prog)
+{
+    if (!prog || prog->line_no == 0)
+        return;
+    int size = bmem_align4(sizeof(prog_t) + prog->len + 1);
+    memmove(prog, (uint8_t *) prog + size, bmem->prog_end - ((uint8_t *) prog + size));
+    bmem->prog_end -= size;
+}
+
+// Create a new program line
+static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
+{
+    // When line_no == 0, the new line is inserted at the end of the program, at
+    // the prog_end address. The line is not really inserted in the program. It
+    // is a temporary line that is used to execute a program instruction without
+    // storing it in the program memory.
+
+    // Nothing to do if line is empty and line number is zero
+    if (len == 0 && line_no == 0)
+        return 0;
+
+    // Get the line if exists or the next line if the line does not exist
+    prog_t *prog = bmem_prog_get_line_or_next(line_no);
+
+    // Remove the line if it already exists
+    if (prog != 0 && prog->line_no == line_no)
+    {
+        bmem_prog_line_free(prog);
+    }
+
+    // Nothing to do more if line is empty
+    if (len == 0)
+        return 0;
+
+    // Compute size of the new line
+    int size = bmem_align4(sizeof(prog_t) + len + 1);
+
+    // Test if there is enough memory
+    if (bmem->vars_start - bmem->prog_end < size)
+        return 0;
+
+    // Find where to insert the new line
+    if (line_no == 0)
+    {
+        prog = (prog_t *) &bmem->bstate.token_buffer;
+    }
+    else if (prog == 0)
+    {
+        // Insert at the end of the program
+        prog = (prog_t *) bmem->prog_end;
+    }
+    else
+    {
+        // Insert before "next" line
+        memmove((uint8_t *) prog + size, prog, bmem->prog_end - (uint8_t *) prog);
+    }
+
+    // If the line is inserted at the end of the program, update the prog_end
+    // only if the line number is not zero. In the zero case, the line is a
+    // temporary line that is used to execute a program instruction without
+    // storing it in the program memory.
+    if (line_no != 0)
+    {
+        bmem->prog_end += size;
+        bmem_strings_clear();
+    }
+
+    // Init the new line with the given values
+    prog->line_no = line_no;
+    prog->len = len;
+
+    if (line_no != 0)
+    {
+        memcpy(prog->line, line, len);
+    }
+
+    // Add a null byte at the end of the line
+    prog->line[len] = 0;
+
+    // Return the new line
+    return prog;
+}
+
+// Return the first program line
+static prog_t *bmem_prog_first_line()
+{
+    if (bmem->prog_start == bmem->prog_end)
+        return 0;
+    return (prog_t *) bmem->prog_start;
+}
+
+// Return the next program line
+static prog_t *bmem_prog_next_line(prog_t *prog)
+{
+    if (!prog)
+        return 0;
+
+    int size = bmem_align4(sizeof(prog_t) + prog->len + 1);
+    prog_t *next = (prog_t *) ((uint8_t *) prog + size);
+    if ((uint8_t *) next >= bmem->prog_end)
+        return 0;
+
+    return next;
+}
+
+// Return the program line with the given line number or the next line if the
+// line does not exist
+static prog_t *bmem_prog_get_line_or_next(uint16_t line_no)
+{
+    prog_t *prog = bmem_prog_first_line();
+    while (prog)
+    {
+        if (prog->line_no >= line_no)
+            return prog;
+        prog = bmem_prog_next_line(prog);
+    }
+    return 0;
+}
+
+// Initialize the memory
+static void bmem_init(uint8_t *mem, uint16_t size)
+{
+    // Init memory
+    bmem = (bmem_t *) mem;
+    memset(bmem, 0, size);
+    bmem->prog_start = (uint8_t *) bmem + sizeof(bmem_t);
+    bmem->vars_end = (uint8_t *) bmem + size;
+    bmem_prog_new();
+}
+
+#include <assert.h>
+
+void print_sizes()
+{
+    printf("----\n");
+    // print free memory
+    printf("Free memory: %zd bytes\n", bmem->vars_start - bmem->prog_end);
+    // print system variables size
+    printf("System variables size: %zd bytes\n", bmem->prog_start - (uint8_t *) bmem);
+    // print variables size
+    printf("Variables size: %zd bytes\n", bmem->vars_end - bmem->vars_start);
+    // print prog size
+    printf("Prog size: %zd bytes\n", bmem->prog_end - bmem->prog_start);
+    printf("----\n");
+}
+
+#if 0
+
+void bmem_test()
+{
+    // Init memory
+    bmem_init(malloc(BASTOS_MEMORY_SIZE), BASTOS_MEMORY_SIZE);
+
+    print_sizes();
+
+    // Example 1: simple number variable
+    printf("Example 1: simple number variable\n");
+    var_t *var = bmem_var_number_set("toto", 37.2f);
+    printf("toto = %g\n", var->numbers[0]);
+    assert(var->numbers[0] == 37.2f);
+
+    // Example 2: simple string variable
+    printf("Example 2: simple string variable\n");
+    var = bmem_var_string_set("titi", "Hello world!");
+    printf("titi = %s\n", var->string);
+    assert(strcmp(var->string, "Hello world!") == 0);
+
+    // Example 3: 1D array of numbers
+    printf("Example 3: 1D array of numbers\n");
+    uint32_t dims[1] = { 3 };
+    var = bmem_var_new("tata", TOKEN_ARRAY_NUMBER, 1, dims);
+    // Offset of the 1st element in the numbers (32 bits) array
+    int offset = var->dim_count;
+    for (int i = 0; i < dims[0]; i++)
+    {
+        var->numbers[i + offset] = (i + 1) * 13;
+    }
+    for (int i = 0; i < dims[0]; i++)
+    {
+        printf("tata[%d] = %g\n", i, var->numbers[i + offset]);
+        assert(var->numbers[i + offset] == (i + 1) * 13);
+    }
+
+    // Example 4: 6 strings of 5 chars
+    printf("Example 4: 6 strings of 5 chars\n");
+    uint32_t dims2[2] = { 6, 5 + 1 };
+    var = bmem_var_new("tutu", TOKEN_ARRAY_STRING, 2, dims2);
+    // Offset of the 1st element in the bytes array
+    offset = var->dim_count * sizeof(uint32_t);
+    char *src[] = { "zero", "one", "two", "three", "four", "five" };
+    for (int i = 0; i < dims2[0]; i++)
+    {
+        char* dst = (char *) &var->bytes[i * dims2[1] + offset];
+        strncpy(dst, src[i], dims2[1]);
+    }
+    for (int i = 0; i < dims2[0]; i++)
+    {
+        char* dst = (char *) &var->bytes[i * dims2[1] + offset];
+        printf("tutu[%d] = %s\n", i, dst);
+        assert(strcmp(dst, src[i]) == 0);
+    }
+
+    // Example 5: 2D array of numbers
+    printf("Example 5: 2D array of numbers\n");
+    uint32_t dims3[2] = { 3, 4 };
+    var = bmem_var_new("tata2D", TOKEN_ARRAY_NUMBER, 2, dims3);
+    // Offset of the 1st element in the numbers (32 bits) array
+    offset = var->dim_count;
+    for (int i = 0; i < dims3[0]; i++)
+    {
+        for (int j = 0; j < dims3[1]; j++)
+        {
+            var->numbers[i * dims3[1] + j + offset] = (i + 1) * (j + 1) * 13;
+        }
+    }
+    for (int i = 0; i < dims3[0]; i++)
+    {
+        for (int j = 0; j < dims3[1]; j++)
+        {
+            printf("tata2D[%d][%d] = %g\n", i, j, var->numbers[i * dims3[1] + j + offset]);
+            assert(var->numbers[i * dims3[1] + j + offset] == (i + 1) * (j + 1) * 13);
+        }
+    }
+
+    // Example 6: 3D array of 10 chars strings
+    printf("Example 6: 3D array of 10 chars strings\n");
+    uint32_t dims4[3] = { 2, 3, 10 + 1 };
+    var = bmem_var_new("tutu3D", TOKEN_ARRAY_STRING, 3, dims4);
+    // Offset of the 1st element in the bytes array
+    offset = var->dim_count * sizeof(uint32_t);
+    char *src2[] = { "zero", "one", "two", "three", "four", "five" };
+    for (int i = 0; i < dims4[0]; i++)
+    {
+        for (int j = 0; j < dims4[1]; j++)
+        {
+            char* dst = (char *) &var->bytes[(i * dims4[1] + j) * dims4[2] + offset];
+            strncpy(dst, src2[i * dims4[1] + j], dims4[2]);
+        }
+    }
+    for (int i = 0; i < dims4[0]; i++)
+    {
+        for (int j = 0; j < dims4[1]; j++)
+        {
+            char* dst = (char *) &var->bytes[(i * dims4[1] + j) * dims4[2] + offset];
+            printf("tutu3D[%d][%d] = %s\n", i, j, dst);
+            assert(strcmp(dst, src2[i * dims4[1] + j]) == 0);
+        }
+    }
+
+    // Iterate over all variables
+    printf("Iterate over all variables\n");
+    var_t *v = bmem_var_first();
+    while (v)
+    {
+        // print name and type of variable
+        printf("'%s' (%x)\n", name_of_var(v), v->token);
+        // check type vs name
+        if (strcmp(name_of_var(v), "toto") == 0)
+        {
+            assert(v->token == TOKEN_VARIABLE_NUMBER);
+        }
+        else if (strcmp(name_of_var(v), "titi") == 0)
+        {
+            assert(v->token == TOKEN_VARIABLE_STRING);
+        }
+        else if (strcmp(name_of_var(v), "tata") == 0)
+        {
+            assert(v->token == TOKEN_ARRAY_NUMBER);
+        }
+        else if (strcmp(name_of_var(v), "tutu") == 0)
+        {
+            assert(v->token == TOKEN_ARRAY_STRING);
+        }
+        else if (strcmp(name_of_var(v), "tata2D") == 0)
+        {
+            assert(v->token == TOKEN_ARRAY_NUMBER);
+        }
+        else if (strcmp(name_of_var(v), "tutu3D") == 0)
+        {
+            assert(v->token == TOKEN_ARRAY_STRING);
+        }
+        else
+        {
+            printf("Error: unknown variable '%s'\n", name_of_var(v));
+        }
+        v = bmem_var_next(v);
+    }
+
+    print_sizes();
+
+    // Remove "tata" variable
+    printf("Remove tata variable\n");
+    var = bmem_var_find("tata");
+    bmem_var_unset(var);
+    // Test if "tata" is still there
+    var = bmem_var_find("tata");
+    if (var)
+    {
+        printf("Error: tata is still there\n");
+    }
+    else
+    {
+        printf("tata is gone\n");
+    }
+    assert(var == 0);
+
+    // Iterate over all variables and count them
+    printf("Iterate over all variables and count them\n");
+    int count = 0;
+    v = bmem_var_first();
+    while (v)
+    {
+        printf("'%s' (%x)\n", name_of_var(v), v->token);
+        count++;
+        v = bmem_var_next(v);
+    }
+    printf("There are %d variables\n", count);
+    assert(count == 5);
+
+    print_sizes();
+
+    // Remove all variables
+    printf("Remove all variables\n");
+    bmem_vars_clear();
+    // Iterate over all variables and count them
+    printf("Iterate over all variables and count them\n");
+    count = 0;
+    v = bmem_var_first();
+    while (v)
+    {
+        printf("'%s' (%x)\n", name_of_var(v), v->token);
+        count++;
+        v = bmem_var_next(v);
+    }
+    printf("There are %d variables\n", count);
+    assert(count == 0);
+
+    print_sizes();
+}
+#endif

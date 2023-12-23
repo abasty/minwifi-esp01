@@ -31,25 +31,15 @@
 #include "bmemory.h"
 #include "token.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+static int8_t eval_prog(prog_t *prog, bool do_eval);
+static bool eval_running();
+static bool eval_inputting();
+static void eval_stop();
+static int8_t eval_input_store(char *io_string);
+static int8_t eval_prog_next();
 
-typedef struct {
-    uint16_t line_no;
-    uint8_t *read_ptr;
-    uint8_t *write_ptr;
-} t_interpreter_state;
-
-int8_t eval_prog(prog_t *prog, bool do_eval);
-bool eval_running();
-bool eval_inputting();
-void eval_stop();
-int8_t eval_input_store(char *io_string);
-int8_t eval_prog_next();
-
-#ifdef __cplusplus
-}
-#endif
+static bool eval_string_expr();
+static bool eval_factor();
+static bool eval_expr(uint8_t type_token);
 
 #endif // __EVAL_H__

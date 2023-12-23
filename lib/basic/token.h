@@ -28,20 +28,16 @@
 
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define TOKEN_LINE_SIZE         (256)
-
 #define KEYWORD_END_TAG         ((uint8_t)  0b10000000)
-#define VARIABLE_STRING_TAG     ((uint32_t) 0x80000000)
 
 #define TOKEN_KEYWORD           ((uint8_t) 0b10000000)
 #define TOKEN_NUMBER            ((uint8_t) 0b01000000)
 #define TOKEN_STRING            ((uint8_t) 0b00100000)
 #define TOKEN_VARIABLE_NUMBER   ((uint8_t) 0b00010000)
 #define TOKEN_VARIABLE_STRING   ((uint8_t) 0b00010001)
+#define TOKEN_ARRAY_NUMBER      ((uint8_t) 0b00011000)
+#define TOKEN_ARRAY_STRING      ((uint8_t) 0b00011001)
+#define TOKEN_ARRAY_FLAG        ((uint8_t) 0b00001000)
 
 #define TOKEN_COMPARE_EQ        ((uint8_t) '=')
 #define TOKEN_COMPARE_LT        ((uint8_t) '<')
@@ -56,11 +52,7 @@ typedef struct {
     uint8_t *write_ptr;
 } tokenizer_state_t;
 
-int8_t tokenize(tokenizer_state_t *state, char *line);
-char *untokenize(uint8_t *input);
-
-#ifdef __cplusplus
-}
-#endif
+static int8_t tokenize(tokenizer_state_t *state, char *line);
+static char *untokenize(uint8_t *input);
 
 #endif // __TOKEN_H__

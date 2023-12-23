@@ -39,41 +39,42 @@
 #include "eval.h"
 #include "bio.h"
 
+#include "keywords.c-static"
+#include "token.c-static"
+#include "bmemory.c-static"
+#include "string.c-static"
+#include "eval.c-static"
+
 bastos_io_t *bio = 0;
 
 // bst_io_argv_t bastos_io_argv[4] = {0};
 // function0_t *function0_io = 0;
 
-uint8_t io_buffer[IO_BUFFER_SIZE];
-char *io_buffer_char = (char *)io_buffer;
-
-extern uint8_t token_buffer[TOKEN_LINE_SIZE];
-
 void bastos_init(bastos_io_t *_io)
 {
     bio = _io;
-    *io_buffer = 0;
-    bmem_init();
+    *bmem->io_buffer = 0;
+    bmem_init(malloc(BASTOS_MEMORY_SIZE), BASTOS_MEMORY_SIZE);
 }
 
 size_t bastos_send_keys(const char *keys, size_t n)
 {
     size_t m = 0;
     uint8_t *src = (uint8_t *)keys;
-    uint8_t *dst = io_buffer;
+    uint8_t *dst = bmem->io_buffer;
 
     // Find the terminal 0 in io buffer
     for (; *dst; dst++)
         ;
 
     // Copy keys at the end of io buffer
-    size_t size = dst - io_buffer;
+    size_t size = dst - bmem->io_buffer;
     while (size < IO_BUFFER_SIZE - 1 && *src && n > 0)
     {
         if (*src == 3)
         {
             bastos_stop();
-            *io_buffer = 0;
+            *bmem->io_buffer = 0;
             return 1;
         }
         else if (*src == '\r')
@@ -84,7 +85,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
         }
         else if (*src == 127)
         {
-            if (dst - io_buffer >= 1 && *(dst - 1) != '\n')
+            if (dst - bmem->io_buffer >= 1 && *(dst - 1) != '\n')
             {
                 dst--;
                 *dst = 0;
@@ -99,7 +100,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
             size++;
             bio->print_string((char *) c);
         }
-        size = dst - io_buffer;
+        size = dst - bmem->io_buffer;
         n--;
         m++;
     }
@@ -113,7 +114,7 @@ int8_t bastos_input()
     int8_t err = BERROR_NONE;
 
     // Find first command end
-    uint8_t *next = io_buffer;
+    uint8_t *next = bmem->io_buffer;
     while (*next && *next != '\n')
     {
         next++;
@@ -128,18 +129,18 @@ int8_t bastos_input()
 
     // Prepare move of the next commands to buffer start
     uint8_t *src = next;
-    uint8_t *dst = io_buffer;
+    uint8_t *dst = bmem->io_buffer;
 
     // Manage INPUT command
     if (eval_inputting())
     {
-        err = eval_input_store((char *) io_buffer);
+        err = eval_input_store((char *) bmem->io_buffer);
         goto finalize;
     }
 
     // Tokenize command and handle tokenize error case
     tokenizer_state_t line;
-    err = tokenize(&line, io_buffer_char);
+    err = tokenize(&line, (char *) bmem->io_buffer);
     if (err < 0)
         goto finalize;
 
@@ -166,8 +167,12 @@ int8_t bastos_input()
     // If line number is 0, evaluate and remove
     if (prog->line_no == 0)
     {
+        bool is_load = prog->line[0] == TOKEN_KEYWORD_LOAD;
         err = eval_prog(prog, true);
-        bmem_prog_line_free(prog);
+        if (!is_load)
+        {
+            bmem_prog_line_free(prog);
+        }
     }
 
 finalize:
@@ -195,45 +200,42 @@ bool bastos_running()
 int8_t bastos_save(const char *name)
 {
     int fd = bio->bopen(name, B_CREAT | B_RDWR);
-    // save prog
-    prog_t *line = bmem_prog_first_line();
-    while (line)
-    {
-        bio->bwrite(fd, &line->line_no, sizeof(line->line_no));
-        bio->bwrite(fd, &line->len, sizeof(line->len));
-        bio->bwrite(fd, line->line, line->len);
-        line = bmem_prog_next_line(line);
+    if (fd < 0) {
+        goto err;
     }
 
-    // write "end of prog"
-    uint32_t zero = 0;
-    bio->bwrite(fd, &zero, sizeof(zero));
+    // save prog
+    // Write prog total size
+    uint16_t prog_size = bmem->prog_end - bmem->prog_start;
+    if (bio->bwrite(fd, &prog_size, sizeof(prog_size)) < 0) {
+        goto err;
+    }
+
+    // Write prog
+    if (bio->bwrite(fd, bmem->prog_start, prog_size) < 0) {
+        goto err;
+    }
 
     // save vars
-    var_t *var = bmem_var_first();
-    while (var)
-    {
-        uint16_t len = strlen(var->name);
-        bio->bwrite(fd, &len, sizeof(len));
-        bio->bwrite(fd, var->name, len);
-        uint8_t token = var->name[0];
-        if (token == TOKEN_VARIABLE_STRING)
-        {
-            len = var->string ? strlen(var->string) : 0;
-            bio->bwrite(fd, &len, sizeof(len));
-            if (len > 0)
-            {
-                bio->bwrite(fd, var->string, len);
-            }
-        }
-        else if (token == TOKEN_VARIABLE_NUMBER)
-        {
-            bio->bwrite(fd, &var->number, sizeof(var->number));
-        }
-        var = bmem_var_next(var);
+    // Write vars total size
+    uint16_t vars_size = bmem->vars_end - bmem->vars_start;
+    if (bio->bwrite(fd, &vars_size, sizeof(vars_size)) < 0) {
+        goto err;
     }
+
+    // Write vars
+    if (bio->bwrite(fd, bmem->vars_start, vars_size) < 0) {
+        goto err;
+    }
+
     bio->bclose(fd);
     return 0;
+
+err:
+    if (fd >= 0) {
+        bio->bclose(fd);
+    }
+    return -1;
 }
 
 int8_t bastos_load(const char *name)
@@ -245,135 +247,54 @@ int8_t bastos_load(const char *name)
         return BERROR_IO;
 
     bmem_prog_new();
-    bmem_vars_clear();
 
     int bread;
 
     // load prog
-    while (err == BERROR_NONE)
+    uint16_t prog_size;
+    bread = bio->bread(fd, &prog_size, sizeof(prog_size));
+    if (bread != sizeof(prog_size))
     {
-        uint16_t line_no;
-        uint16_t len;
-
-        bread = bio->bread(fd, &line_no, sizeof(line_no));
-        if (bread != sizeof(line_no) && bread != 0)
-        {
-            err = BERROR_IO;
-            break;
-        }
-        if (bread == 0)
-            break;
-
-        bread = bio->bread(fd, &len, sizeof(len));
-        if (bread != sizeof(line_no))
-        {
-            err = BERROR_IO;
-            break;
-        }
-
-        // End of prog
-        if (line_no == 0 && len == 0)
-            break;
-
-        if (line_no == 0 || len == 0 || len >= TOKEN_LINE_SIZE)
-        {
-            err = BERROR_IO;
-            break;
-        }
-        if (bio->bread(fd, token_buffer, len) != len)
-        {
-            err = BERROR_IO;
-            break;
-        }
-
-        prog_t *prog = bmem_prog_line_new(line_no, token_buffer, len);
-        if (prog == 0)
-        {
-            err = BERROR_MEMORY;
-            break;
-        }
-
-        err = eval_prog(prog, false);
-        if (err != BERROR_NONE)
-        {
-            bmem_prog_line_free(prog);
-            break;
-        }
+        err = BERROR_IO;
+        goto finalize;
     }
+    if (prog_size >= bmem->vars_start - bmem->prog_start)
+    {
+        err = BERROR_IO;
+        goto finalize;
+    }
+    if (bio->bread(fd, bmem->prog_start, prog_size) != prog_size)
+    {
+        err = BERROR_IO;
+        goto finalize;
+    }
+    bmem->prog_end = bmem->prog_start + prog_size;
+    bmem_strings_clear();
 
     // load vars
-    while (err == BERROR_NONE)
+    uint16_t vars_size;
+    bread = bio->bread(fd, &vars_size, sizeof(vars_size));
+    if (bread != sizeof(vars_size))
     {
-        uint16_t len_name;
-        char name[TOKEN_LINE_SIZE];
-        var_t *var;
-
-        bread = bio->bread(fd, &len_name, sizeof(len_name));
-        if (bread == 0)
-            break;
-
-        if (bread != sizeof(len_name) || len_name < 1 || len_name > TOKEN_LINE_SIZE - 1)
-        {
-            err = BERROR_IO;
-            break;
-        }
-        bread = bio->bread(fd, name, len_name);
-        name[len_name] = 0;
-        uint8_t token = name[0];
-        if (token == TOKEN_VARIABLE_STRING)
-        {
-            uint16_t len;
-            bread = bio->bread(fd, &len, sizeof(len));
-            if (bread != sizeof(len))
-            {
-                err = BERROR_IO;
-                break;
-            }
-            char *string = (char *) malloc(len + 1);
-            if (!string)
-            {
-                err = BERROR_MEMORY;
-                break;
-            }
-            bread = bio->bread(fd, string, len);
-            if (bread != len)
-            {
-                err = BERROR_IO;
-                break;
-            }
-            string[len] = 0;
-            var = bmem_var_string_set(name, string);
-            free(string);
-            if (!var)
-            {
-                err = BERROR_MEMORY;
-                break;
-            }
-        }
-        else if (token == TOKEN_VARIABLE_NUMBER)
-        {
-            float number;
-            bread = bio->bread(fd, &number, sizeof(number));
-            if (bread != sizeof(number))
-            {
-                err = BERROR_IO;
-                break;
-            }
-            var = bmem_var_number_set(name, number);
-            if (!var)
-            {
-                err = BERROR_MEMORY;
-                break;
-            }
-        }
-        else
-        {
-            err = BERROR_IO;
-            break;
-        }
+        err = BERROR_IO;
+        goto finalize;
+    }
+    if (vars_size >= bmem->vars_end - bmem->prog_end)
+    {
+        err = BERROR_IO;
+        goto finalize;
+    }
+    bmem->vars_start = bmem->vars_end - vars_size;
+    if (bio->bread(fd, bmem->vars_start, vars_size) != vars_size)
+    {
+        err = BERROR_IO;
+        bmem_vars_clear();
+        goto finalize;
     }
 
+finalize:
     bio->bclose(fd);
+    bmem->bstate.read_ptr = 0;
     return err;
 }
 

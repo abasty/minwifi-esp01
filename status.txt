@@ -235,3 +235,48 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  40.4% (used 33104 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 473996 bytes from 958448 bytes)
 ---
+a02fbb7 Added DIM syntax (+156)
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.4% (used 33116 bytes from 81920 bytes)
+Flash: [=====     ]  49.5% (used 474152 bytes from 958448 bytes)
+---
+Moved to static (-256)
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  40.4% (used 33116 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473896 bytes from 958448 bytes)
+---
+c09de16 New memory model (flash: -976 / data: -512)
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.8% (used 32604 bytes from 81920 bytes)
+Flash: [=====     ]  49.3% (used 472920 bytes from 958448 bytes)
+---
+6c9f5cd Moved token buffer to bstate as a prog_buffer_t (flash: -144 / data: -256)
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.5% (used 32348 bytes from 81920 bytes)
+Flash: [=====     ]  49.3% (used 472776 bytes from 958448 bytes)
+---
+75fae78 Moved keywords to static
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.5% (used 32344 bytes from 81920 bytes)
+Flash: [=====     ]  49.3% (used 472772 bytes from 958448 bytes)
+---
+dfba761 Removed string_t (char *)
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.5% (used 32344 bytes from 81920 bytes)
+Flash: [=====     ]  49.3% (used 472740 bytes from 958448 bytes)
+---
+Removed bmem_strlen, string_set, strdup
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.5% (used 32344 bytes from 81920 bytes)
+Flash: [=====     ]  49.3% (used 472756 bytes from 958448 bytes)
+---
+c967e8e Removed TU
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.5% (used 32344 bytes from 81920 bytes)
+Flash: [=====     ]  49.3% (used 472596 bytes from 958448 bytes)
+---
+Moved io_buffer to bstate
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.2% (used 32084 bytes from 81920 bytes)
+Flash: [=====     ]  49.3% (used 472608 bytes from 958448 bytes)
+---

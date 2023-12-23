@@ -1,0 +1,80 @@
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+#include "bmemory.h"
+
+static void string_slice(char **string, uint16_t start, uint16_t end)
+{
+    if (!*string)
+        return;
+
+    if (!**string) {
+        *string = 0;
+        return;
+    }
+
+    uint16_t len = strlen(*string);
+
+    if (end == 0)
+    {
+        end = len;
+    }
+
+    if (start > end || start > len)
+    {
+        *string = 0;
+        return;
+    }
+
+    if (end > len || end == 0)
+    {
+        end = len;
+    }
+
+    uint16_t slice_len = end - start + 1;
+    char *slice = bmem_string_alloc(slice_len + 1);
+
+    if (!slice)
+    {
+        *string = 0;
+        return;
+    }
+
+    char *src = *string + start - 1;
+    char *dst = slice;
+
+    while (slice_len > 0)
+    {
+        *dst++ = *src++;
+        slice_len--;
+    }
+    *dst = 0;
+
+    *string = slice;
+}
+
+static void string_concat(char **string1, char *string2)
+{
+    if (!string2 && !*string2)
+        string2 = 0;
+
+    if (!string2)
+        return;
+
+    if (!*string1)
+    {
+        *string1 = string2;
+        return;
+    }
+
+    char *concat = bmem_string_alloc(strlen(*string1) + strlen(string2) + 1);
+    char *dst = concat;
+    char *src = *string1;
+    while (*src) *dst++ = *src++;
+    src = string2;
+    while (*src) *dst++ = *src++;
+    *dst = 0;
+    *string1 = concat;
+}
