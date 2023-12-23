@@ -79,12 +79,12 @@
 * [ ] **OPTIMISATIONS** (valable aussi pour la version OTA only)
   * [x] Rapporter tout le basic sauf l'API bastos dans un seul fichier et static
     functions (notamment memory)
-  * [ ] Global Memory Management
+  * [x] Global Memory Management
     * [x] Sous allocateur vars
     * [x] Sous allocateur prog
     * [x] Sous allocateur strings (calculs)
     * [x] var systèmes + bstate dans global memory
-    * [ ] buffer IO
+    * [x] buffer IO
     * [x] buffer tokens : dans bstate, c'est un prog_t
   * [ ] Optimisation parser (règles et code générique)
   * [x] New memory model : ~~Transformation tree -> list (parcours GRD, etc) à mettre dans ds~~
