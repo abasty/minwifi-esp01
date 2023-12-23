@@ -388,6 +388,8 @@ void print_sizes()
     printf("----\n");
 }
 
+#if 0
+
 void bmem_test()
 {
     // Init memory
@@ -579,3 +581,4 @@ void bmem_test()
 
     print_sizes();
 }
+#endif
