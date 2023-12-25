@@ -36,6 +36,9 @@
 #define IO_BUFFER_SIZE  (128)
 #define TOKEN_LINE_SIZE (128)
 #define EVAL_RETURNS_SIZE (32)
+#define B_DIM_MAX (16)
+#define B_DIM_RANGE_FLAG (128)
+#define B_NAME_SIZE_MAX (16)
 
 typedef struct {
     uint16_t line_no;

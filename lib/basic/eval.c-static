@@ -646,6 +646,82 @@ static bool eval_variable_ref()
     return true;
 }
 
+static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims)
+{
+    if (!eval_token('('))
+        return false;
+
+    *dim_count = 0;
+
+    while (eval_float_expr() || eval_token(TOKEN_KEYWORD_TO))
+    {
+
+        if (bmem->bstate.token == TOKEN_KEYWORD_TO)
+        {
+            dims[*dim_count] = 1;
+            (*dim_count)++;
+            (*dim_count) |= B_DIM_RANGE_FLAG;
+            break;
+        }
+
+        if ((*dim_count & ~B_DIM_RANGE_FLAG) >= B_DIM_MAX - 1)
+        {
+            bmem->bstate.error = BERROR_RANGE;
+            return false;
+        }
+
+        if (bmem->bstate.number < 1 || bmem->bstate.number >= BASTOS_MEMORY_SIZE)
+        {
+            bmem->bstate.error = BERROR_RANGE;
+            return false;
+        }
+
+        dims[*dim_count] = bmem->bstate.number;
+        (*dim_count)++;
+
+        if (eval_token(','))
+            continue;
+
+        if (eval_token(TOKEN_KEYWORD_TO))
+        {
+            (*dim_count) |= B_DIM_RANGE_FLAG;
+            break;
+        }
+
+        break;
+    }
+
+    if ((*dim_count & B_DIM_RANGE_FLAG) != 0)
+    {
+        if (eval_float_expr())
+        {
+            if (bmem->bstate.number < 1 || bmem->bstate.number >= BASTOS_MEMORY_SIZE)
+            {
+                bmem->bstate.error = BERROR_RANGE;
+                return false;
+            }
+            dims[*dim_count & ~B_DIM_RANGE_FLAG] = bmem->bstate.number;
+        }
+        else
+        {
+            dims[*dim_count & ~B_DIM_RANGE_FLAG] = BASTOS_MEMORY_SIZE;
+        }
+        (*dim_count)++;
+    }
+
+    if (!eval_token(')'))
+        return false;
+
+    // Normalize last dimension in case of unique string
+    if (token == TOKEN_VARIABLE_STRING && *dim_count == 1)
+    {
+        *dim_count = 2 | B_DIM_RANGE_FLAG;
+        dims[1] = dims[0];
+    }
+
+    return true;
+}
+
 static bool eval_dim()
 {
     if (!eval_token(TOKEN_KEYWORD_DIM))
@@ -654,61 +730,45 @@ static bool eval_dim()
     if (!eval_variable_ref())
         return false;
 
-    // char *name = bmem->bstate.var_ref;
-    // uint8_t token = name[0];
-
-    if (!eval_token('('))
-        return false;
+    char *name = bmem->bstate.var_ref;
+    name[0] |= TOKEN_ARRAY_FLAG;
+    uint8_t token = name[0];
 
     uint8_t dim = 0;
-    uint32_t size = 1;
+    uint32_t dims[B_DIM_MAX];
 
-    while (eval_float_expr())
-    {
-        if (bmem->bstate.do_eval)
-        {
-            if (dim == UINT8_MAX)
-            {
-                bmem->bstate.error = BERROR_RANGE;
-                return true;
-            }
-            if (bmem->bstate.number < 1 || bmem->bstate.number > 16384)
-            {
-                bmem->bstate.error = BERROR_RANGE;
-                return true;
-            }
-            size *= bmem->bstate.number;
-        }
-
-        dim++;
-
-        if (!eval_token(','))
-            break;
-    }
-
-    if (!eval_token(')'))
+    if (!eval_array_ref(token, &dim, dims))
         return false;
 
     if (dim == 0)
         return false;
 
+    if ((dim & B_DIM_RANGE_FLAG) != 0)
+        return false;
+
     if (!bmem->bstate.do_eval)
         return true;
 
+    // Copy name in tmp
+    char tmp[B_NAME_SIZE_MAX];
+    strncpy(tmp, name, B_NAME_SIZE_MAX - 1);
+    tmp[B_NAME_SIZE_MAX - 1] = 0;
 
+    // Remove existing variable
+    var_t *var = bmem_var_find(name);
+    if (var)
+        bmem_var_unset(var);
 
-    // TODO: declare variable and create space for the array
-    bio->print_integer("DIM: %d\r\n", (int) dim);
+    // Create variable
+    var = bmem_var_new(tmp, token, dim, dims);
+    if (!var)
+        bmem->bstate.error = BERROR_MEMORY;
 
     return true;
 }
 
 static bool eval_let()
 {
-    uint16_t start = 1;
-    uint16_t end = UINT16_MAX;
-    bool range = false;
-
     if (!eval_token(TOKEN_KEYWORD_LET))
         return false;
 
@@ -718,31 +778,10 @@ static bool eval_let()
     char *name = bmem->bstate.var_ref;
     uint8_t token = *((uint8_t *)name);
 
-    if (token == TOKEN_VARIABLE_STRING && eval_token('('))
-    {
-        if (eval_expr(TOKEN_NUMBER))
-        {
-            start = bmem->bstate.number;
-            end = start;
-        }
+    uint8_t dim = 0;
+    uint32_t dims[B_DIM_MAX];
 
-        if (eval_token(TOKEN_KEYWORD_TO))
-        {
-            if (eval_expr(TOKEN_NUMBER))
-            {
-                end = bmem->bstate.number;
-            }
-            else
-            {
-                end = UINT16_MAX;
-            }
-        }
-
-        if (!eval_token(')'))
-            return false;
-
-        range = true;
-    }
+    eval_array_ref(token, &dim, dims);
 
     if (!eval_token('='))
         return false;
@@ -766,41 +805,45 @@ static bool eval_let()
 
         if (bmem->bstate.do_eval)
         {
-            if (range)
+            if (dim == 0)
+                return bmem_var_string_set(name, bmem->bstate.string) != 0;
+
+            var_t *var = bmem_var_find(name);
+            if (!var)
             {
-                var_t *var = bmem_var_find(name);
-                uint16_t len = strlen(var->string);
-                if (len == 0)
-                    return true;
-                if (start <= 0)
-                    return true;
-                if (start > len)
-                    return true;
-                if (end < start)
-                    return true;
-                if (end > len)
-                    end = len;
-                uint8_t *src = (uint8_t*) bmem->bstate.string;
-                // FIXME: this is not correct, we should use the char *functions
-                uint8_t *dst = (uint8_t*) var->string + start - 1;
-                uint16_t n = end - start + 1;
-                while (n)
-                {
-                    if (src && *src)
-                    {
-                        *dst++ = *src++;
-                    }
-                    else
-                    {
-                        *dst++ = ' ';
-                    }
-                    n--;
-                }
+                bmem->bstate.error = BERROR_MEMORY;
+                return true;
             }
-            else
+
+            uint16_t len = strlen(var->string);
+            uint16_t start = dim & B_DIM_RANGE_FLAG ? dims[0] : 1;
+            uint16_t end = dim & B_DIM_RANGE_FLAG ? dims[1] : len;
+
+            if (len == 0)
+                return true;
+            if (start <= 0)
+                return true;
+            if (start > len)
+                return true;
+            if (end < start)
+                return true;
+            if (end > len)
+                end = len;
+
+            uint8_t *src = (uint8_t*) bmem->bstate.string;
+            uint8_t *dst = (uint8_t*) var->string + start - 1;
+            uint16_t n = end - start + 1;
+            while (n)
             {
-                if (bmem_var_string_set(name, bmem->bstate.string) == 0)
-                    return false;
+                if (src && *src)
+                {
+                    *dst++ = *src++;
+                }
+                else
+                {
+                    *dst++ = ' ';
+                }
+                n--;
             }
         }
         return true;

@@ -200,12 +200,10 @@ static var_t *bmem_var_string_set(const char *name, char *value)
     if (var != 0)
         bmem_var_unset(var);
 
-    // Copy the name
-    // FIXME: create a temporary buffer in the bmem_t structure or in global
-    // memory
-    char tmp[32];
-    strncpy(tmp, name, sizeof(tmp) - 1);
-    tmp[sizeof(tmp) - 1] = 0;
+    // Copy the name in tmp
+    char tmp[B_NAME_SIZE_MAX];
+    strncpy(tmp, name, B_NAME_SIZE_MAX - 1);
+    tmp[B_NAME_SIZE_MAX - 1] = 0;
 
     // Create the variable and copy the value
     var = bmem_var_new(tmp, TOKEN_VARIABLE_STRING, strlen(value), 0);

@@ -53,7 +53,6 @@ bastos_io_t *bio = 0;
 void bastos_init(bastos_io_t *_io)
 {
     bio = _io;
-    *bmem->io_buffer = 0;
     bmem_init(malloc(BASTOS_MEMORY_SIZE), BASTOS_MEMORY_SIZE);
 }
 
