@@ -731,7 +731,6 @@ static bool eval_dim()
         return false;
 
     char *name = bmem->bstate.var_ref;
-    name[0] |= TOKEN_ARRAY_FLAG;
     uint8_t token = name[0];
 
     uint8_t dim = 0;
@@ -751,11 +750,13 @@ static bool eval_dim()
 
     // Copy name in tmp
     char tmp[B_NAME_SIZE_MAX];
+    token |= TOKEN_ARRAY_FLAG;
     strncpy(tmp, name, B_NAME_SIZE_MAX - 1);
     tmp[B_NAME_SIZE_MAX - 1] = 0;
+    tmp[0] = token;
 
     // Remove existing variable
-    var_t *var = bmem_var_find(name);
+    var_t *var = bmem_var_find(tmp);
     if (var)
         bmem_var_unset(var);
 
