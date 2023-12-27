@@ -231,6 +231,32 @@ static var_t *bmem_var_number_set(const char *name, float value)
     return var;
 }
 
+static float *bmem_number_array_get_cell(const char *name, uint8_t dim_count, uint32_t *indexes)
+{
+    // Copy name in tmp
+    char tmp[B_NAME_SIZE_MAX];
+    strncpy(tmp, name, B_NAME_SIZE_MAX - 1);
+    tmp[B_NAME_SIZE_MAX - 1] = 0;
+    tmp[0] |= TOKEN_ARRAY_FLAG;
+
+    var_t *var = bmem_var_find(tmp);
+    if (var == 0)
+        return 0;
+
+    if (var->dim_count != dim_count)
+        return 0;
+
+    int offset = var->dim_count;
+    for (int i = 0; i < dim_count; i++)
+    {
+        if (indexes[i] > var->dims[i] || indexes[i] == 0)
+            return 0;
+        offset += (indexes[i] - 1) * (i < dim_count - 1 ? var->dims[i + 1] : 1);
+    }
+
+    return &var->numbers[offset];
+}
+
 // Clear the program and the variables memory
 void bmem_prog_new()
 {

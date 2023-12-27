@@ -664,18 +664,20 @@ static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims)
             break;
         }
 
-        if ((*dim_count & ~B_DIM_RANGE_FLAG) >= B_DIM_MAX - 1)
+        if (bmem->bstate.do_eval)
         {
-            bmem->bstate.error = BERROR_RANGE;
-            return false;
-        }
+            if ((*dim_count & ~B_DIM_RANGE_FLAG) >= B_DIM_MAX - 1)
+            {
+                bmem->bstate.error = BERROR_RANGE;
+                return false;
+            }
 
-        if (bmem->bstate.number < 1 || bmem->bstate.number >= BASTOS_MEMORY_SIZE)
-        {
-            bmem->bstate.error = BERROR_RANGE;
-            return false;
+            if (bmem->bstate.number < 1 || bmem->bstate.number >= BASTOS_MEMORY_SIZE)
+            {
+                bmem->bstate.error = BERROR_RANGE;
+                return false;
+            }
         }
-
         dims[*dim_count] = bmem->bstate.number;
         (*dim_count)++;
 
@@ -794,8 +796,18 @@ static bool eval_let()
 
         if (bmem->bstate.do_eval)
         {
-            if (bmem_var_number_set(name, bmem->bstate.number) == 0)
-                return false;
+            // Manage simple variable
+            if (dim == 0)
+                return bmem_var_number_set(name, bmem->bstate.number) != 0;
+
+            // Manage array
+            float *number = bmem_number_array_get_cell(name, dim, dims);
+            if (!number)
+            {
+                bmem->bstate.error = BERROR_RANGE;
+                return true;
+            }
+            *number = bmem->bstate.number;
         }
         return true;
     }
@@ -809,6 +821,7 @@ static bool eval_let()
             if (dim == 0)
                 return bmem_var_string_set(name, bmem->bstate.string) != 0;
 
+            // TODO: Manage array
             var_t *var = bmem_var_find(name);
             if (!var)
             {
