@@ -44,6 +44,8 @@
 
 static inline void eval_input_mode(bool mode);
 static bool eval_string_tty();
+static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims);
+
 
 extern bastos_io_t *bio;
 extern bmem_t *bmem;
@@ -207,19 +209,39 @@ static bool eval_number()
     }
     else if (eval_token(TOKEN_VARIABLE_NUMBER))
     {
+        char *name = (char *)bmem->bstate.read_ptr - 1;
+        bmem->bstate.read_ptr += strlen(name);
+
+        uint8_t dim = 0;
+        uint32_t dims[B_DIM_MAX];
+
+        eval_array_ref(TOKEN_VARIABLE_NUMBER, &dim, dims);
+
         if (bmem->bstate.do_eval)
         {
-            var_t *var = bmem_var_find((char *)bmem->bstate.read_ptr - 1);
-            if (var)
+            if (dim == 0)
             {
-                value = var->numbers[0];
+                var_t *var = bmem_var_find(name);
+                if (var)
+                {
+                    value = var->numbers[0];
+                }
+                else
+                {
+                    value = 0;
+                }
             }
             else
             {
-                value = 0;
+                float *number = bmem_number_array_get_cell(name, dim, dims);
+                if (!number)
+                {
+                    bmem->bstate.error = BERROR_RANGE;
+                    return false;
+                }
+                value = *number;
             }
         }
-        bmem->bstate.read_ptr += strlen((char *)bmem->bstate.read_ptr) + 1;
     }
     else
     {
