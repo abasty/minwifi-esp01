@@ -63,7 +63,7 @@ static char *bmem_string_alloc(uint16_t size)
 }
 
 // Allocate a variable in the memory, set memory to 0 and return the variable
-static var_t *bmem_var_alloc(uint16_t size)
+static var_t *bmem_var_alloc(uint8_t token, uint16_t size)
 {
     int psize = bmem_align4(size);
     // printf("Allocating %d bytes\n", psize);
@@ -71,7 +71,8 @@ static var_t *bmem_var_alloc(uint16_t size)
         return 0;
 
     bmem->vars_start -= psize;
-    memset(bmem->vars_start, 0, psize);
+    int empty = token == TOKEN_ARRAY_STRING ? ' ' : 0;
+    memset(bmem->vars_start, empty, psize);
     return (var_t *)bmem->vars_start;
 }
 
@@ -116,7 +117,7 @@ static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, u
     int dims_size = dims ? dim_count * sizeof(uint32_t) : 0;
 
     // Allocate var
-    var_t *var = bmem_var_alloc(sizeof(var_t) + dims_size + data_size + name_size);
+    var_t *var = bmem_var_alloc(token, sizeof(var_t) + dims_size + data_size + name_size);
     if (!var)
         return 0;
 
@@ -137,6 +138,15 @@ static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, u
 
     // Copy name
     memcpy(var->bytes + var->name_ofs, name, name_size);
+
+    if (token == TOKEN_ARRAY_STRING)
+    {
+        // Set null char in all string cells
+        int string_size = dims[dim_count - 1];
+        char *string = (char *) var->bytes + dims_size + string_size - 1;
+        for (; string < (char *) var->bytes + var->name_ofs; string += string_size)
+            *string = 0;
+    }
 
     return var;
 }
@@ -246,15 +256,88 @@ static float *bmem_number_array_get_cell(const char *name, uint8_t dim_count, ui
     if (var->dim_count != dim_count)
         return 0;
 
-    int offset = var->dim_count;
-    for (int i = 0; i < dim_count; i++)
+
+    uint16_t offset = 0;
+    for (uint8_t i = 1; i < var->dim_count; i++)
     {
-        if (indexes[i] > var->dims[i] || indexes[i] == 0)
+        uint16_t indice = indexes[i - 1] - 1;
+        if (indice >= var->dims[i - 1])
             return 0;
-        offset += (indexes[i] - 1) * (i < dim_count - 1 ? var->dims[i + 1] : 1);
+
+        offset = (offset + indice) * var->dims[i];
     }
+    offset += var->dim_count + indexes[var->dim_count - 1] - 1;
 
     return &var->numbers[offset];
+}
+
+static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, uint32_t *indexes)
+{
+    // Copy name in tmp
+    char tmp[B_NAME_SIZE_MAX];
+    strncpy(tmp, name, B_NAME_SIZE_MAX - 1);
+    tmp[B_NAME_SIZE_MAX - 1] = 0;
+
+    uint8_t dim_asked = *dim_count & ~B_DIM_RANGE_FLAG;
+
+    // Search simple string variable
+    var_t *var = bmem_var_find(name);
+    if (var)
+    {
+        if (dim_asked == 1)
+        {
+            indexes[1] = indexes[0];
+        }
+        else if (dim_asked != 2)
+        {
+            return 0;
+        }
+        *dim_count = 2;
+        return var->string;
+    }
+
+    // Search array string variable
+    tmp[0] |= TOKEN_ARRAY_FLAG;
+    var = bmem_var_find(tmp);
+    if (var == 0)
+        return 0;
+
+    // If asked dims is equal to var->dim_count - 1, the result is a slice of
+    // all chars of the string at given index
+    if (dim_asked == var->dim_count - 1)
+    {
+        indexes[dim_asked] = 1;
+        indexes[dim_asked + 1] = var->dims[dim_asked];
+    }
+    else if (dim_asked == var->dim_count)
+    {
+        // If asked dims is equal to var->dim_count, the result is a slice of one char
+        indexes[dim_asked] = indexes[dim_asked - 1];
+        dim_asked--;
+    }
+    else if (dim_asked == var->dim_count + 1)
+    {
+        // If asked dims is equal to var->dim_count + 1, the result is a slice
+        dim_asked -= 2;
+    }
+    else
+    {
+        return 0;
+    }
+
+    uint16_t offset = 0;
+    for (uint8_t i = 1; i < var->dim_count; i++)
+    {
+        uint16_t indice = indexes[i - 1] - 1;
+        if (indice >= var->dims[i - 1])
+            return 0;
+
+        offset = (offset + indice) * var->dims[i];
+    }
+    offset += var->dim_count * sizeof(uint32_t);
+
+    *dim_count = dim_asked + 2;
+    return (char *) &var->bytes[offset];
 }
 
 // Clear the program and the variables memory
@@ -396,6 +479,8 @@ static void bmem_init(uint8_t *mem, uint16_t size)
     bmem_prog_new();
 }
 
+#if 0
+
 #include <assert.h>
 
 void print_sizes()
@@ -411,8 +496,6 @@ void print_sizes()
     printf("Prog size: %zd bytes\n", bmem->prog_end - bmem->prog_start);
     printf("----\n");
 }
-
-#if 0
 
 void bmem_test()
 {

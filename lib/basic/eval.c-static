@@ -711,7 +711,6 @@ static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims)
             (*dim_count) |= B_DIM_RANGE_FLAG;
             break;
         }
-
         break;
     }
 
@@ -733,17 +732,7 @@ static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims)
         (*dim_count)++;
     }
 
-    if (!eval_token(')'))
-        return false;
-
-    // Normalize last dimension in case of unique string
-    if (token == TOKEN_VARIABLE_STRING && *dim_count == 1)
-    {
-        *dim_count = 2 | B_DIM_RANGE_FLAG;
-        dims[1] = dims[0];
-    }
-
-    return true;
+    return eval_token(')');
 }
 
 static bool eval_dim()
@@ -843,17 +832,17 @@ static bool eval_let()
             if (dim == 0)
                 return bmem_var_string_set(name, bmem->bstate.string) != 0;
 
-            // TODO: Manage array
-            var_t *var = bmem_var_find(name);
-            if (!var)
+            // Manage array and slice
+            char *string = bmem_string_array_get_cell(name, &dim, dims);
+            if (!string)
             {
-                bmem->bstate.error = BERROR_MEMORY;
+                bmem->bstate.error = BERROR_RANGE;
                 return true;
             }
 
-            uint16_t len = strlen(var->string);
-            uint16_t start = dim & B_DIM_RANGE_FLAG ? dims[0] : 1;
-            uint16_t end = dim & B_DIM_RANGE_FLAG ? dims[1] : len;
+            uint16_t len = strlen(string);
+            uint16_t start = dims[dim - 2];
+            uint16_t end = dims[dim - 1];
 
             if (len == 0)
                 return true;
@@ -867,7 +856,7 @@ static bool eval_let()
                 end = len;
 
             uint8_t *src = (uint8_t*) bmem->bstate.string;
-            uint8_t *dst = (uint8_t*) var->string + start - 1;
+            uint8_t *dst = (uint8_t*) string + start - 1;
             uint16_t n = end - start + 1;
             while (n)
             {

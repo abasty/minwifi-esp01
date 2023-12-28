@@ -280,3 +280,8 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.2% (used 32084 bytes from 81920 bytes)
 Flash: [=====     ]  49.3% (used 472608 bytes from 958448 bytes)
 ---
+Implemented bmem_string_array_get_cell
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.1% (used 32068 bytes from 81920 bytes)
+Flash: [=====     ]  49.4% (used 473464 bytes from 958448 bytes)
+---
