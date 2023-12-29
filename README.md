@@ -38,8 +38,8 @@
 * [x] GOSUB, RETURN
 * [x] REM, LEN
 * [x] CR/LF , DEL, sur ESP01-1M
-* [ ] TO en opérande gauche LET A$(1 TO 2) = "AB"
-* [ ] DIM
+* [x] TO en opérande gauche LET A$(1 TO 2) = "AB"
+* [x] DIM
 * [ ] Support Suite / Retour / Sommaire (TAB ou PGDN / SHIFT TAB ou PGDUP/ HOME)
 * [ ] Régler le pb du nom mDNS de l'ESP quand il vient d'être flashé par USB serial
 * [ ] tty : init string, fast, autoexec => config$$$
@@ -59,7 +59,7 @@
 * [ ] Optimisation BIO (une seule structure, 1 fonction number (int), 2/3 params
   (union as_void_ptr, as_char_ptr, as_int, as_float), 1 result (union like
   param) => static / extern
-* [ ] Tableaux (DIM)
+* [x] Tableaux (DIM)
 * [ ] EVAL / EVAL$
 * [ ] PLOT / UNPLOT / SCREEN$(l,c) ?
 * [ ] DOWNLOAD / UPLOAD
@@ -77,6 +77,7 @@
   * [ ] Pouvoir sauvegarder uniquement les variables (config manager, "SAVE VARS")
   * [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
 * [ ] **OPTIMISATIONS** (valable aussi pour la version OTA only)
+  * [ ] Optimisation accès tableau / variable (factorisation number / string, name)
   * [x] Rapporter tout le basic sauf l'API bastos dans un seul fichier et static
     functions (notamment memory)
   * [x] Global Memory Management
