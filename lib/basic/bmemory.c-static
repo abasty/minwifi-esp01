@@ -256,17 +256,16 @@ static float *bmem_number_array_get_cell(const char *name, uint8_t dim_count, ui
     if (var->dim_count != dim_count)
         return 0;
 
-
-    uint16_t offset = 0;
-    for (uint8_t i = 1; i < var->dim_count; i++)
-    {
-        uint16_t indice = indexes[i - 1] - 1;
-        if (indice >= var->dims[i - 1])
+    // check dims
+    for (uint8_t i = 0; i < dim_count; i++)
+        if (indexes[i] > var->dims[i])
             return 0;
 
-        offset = (offset + indice) * var->dims[i];
-    }
-    offset += var->dim_count + indexes[var->dim_count - 1] - 1;
+    uint16_t offset = 0;
+    for (uint8_t i = 0; i < dim_count - 1; i++)
+        offset = (offset + indexes[i] - 1) * var->dims[i + 1];
+    offset += indexes[dim_count - 1] - 1;
+    offset += dim_count;
 
     return &var->numbers[offset];
 }
@@ -329,15 +328,15 @@ static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, ui
         return 0;
     }
 
-    uint16_t offset = 0;
-    for (uint8_t i = 1; i < var->dim_count; i++)
-    {
-        uint16_t indice = indexes[i - 1] - 1;
-        if (indice >= var->dims[i - 1])
+    // check dims
+    uint8_t dim = var->dim_count - 1;
+    for (uint8_t i = 0; i < dim; i++)
+        if (indexes[i] > var->dims[i])
             return 0;
 
-        offset = (offset + indice) * var->dims[i];
-    }
+    uint16_t offset = 0;
+    for (uint8_t i = 0; i < dim; i++)
+        offset = (offset + indexes[i] - 1) * var->dims[i + 1];
     offset += var->dim_count * sizeof(uint32_t);
 
     *dim_count = dim_asked + 2;
