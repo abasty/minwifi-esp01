@@ -284,7 +284,11 @@ static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, ui
     var_t *var = bmem_var_find(name);
     if (var)
     {
-        if (dim_asked == 1)
+        if (dim_asked == 0)
+        {
+            return var->string;
+        }
+        else if (dim_asked == 1)
         {
             indexes[1] = indexes[0];
         }

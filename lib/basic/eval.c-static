@@ -558,19 +558,25 @@ static bool eval_string_var()
     if (!eval_token(TOKEN_VARIABLE_STRING))
         return false;
 
+    char *name = (char *)bmem->bstate.read_ptr - 1;
+    while(*bmem->bstate.read_ptr++);
+
+    uint8_t dim = 0;
+    uint32_t dims[B_DIM_MAX];
+
+    eval_array_ref(TOKEN_VARIABLE_STRING, &dim, dims);
+
     if (bmem->bstate.do_eval)
     {
-        var_t *var = bmem_var_find((char *)bmem->bstate.read_ptr - 1);
-        if (var)
+        bmem->bstate.string = bmem_string_array_get_cell(name, &dim, dims);
+        if (!bmem->bstate.string || dim < 2)
         {
-            bmem->bstate.string = var->string;
+            bmem->bstate.error = dim == 0 ? 0 : BERROR_RANGE;
+            return true;
         }
-        else
-        {
-            bmem->bstate.string = 0;
-        }
+
+        string_slice(&bmem->bstate.string, dims[dim - 2], dims[dim - 1]);
     }
-    while(*bmem->bstate.read_ptr++);
     return true;
 }
 
