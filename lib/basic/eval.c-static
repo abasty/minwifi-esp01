@@ -1104,7 +1104,7 @@ int8_t eval_prog_next()
         err = eval_prog(pc, true);
         if (err == BERROR_NONE)
         {
-            if (bmem->bstate.pc == pc)
+            if (bmem->bstate.pc == pc && (bmem->bstate.flags & B_GOTO_FLAG) == 0)
             {
                 // If executed line did not change PC then move PC to next line
                 bmem->bstate.pc = bmem_prog_next_line(bmem->bstate.pc);
@@ -1166,6 +1166,7 @@ static void eval_goto()
 {
     bmem->bstate.pc = bmem_prog_get_line_or_next(bmem->bstate.number);
     bmem->bstate.running = bmem->bstate.pc != 0;
+    bmem->bstate.flags |= B_GOTO_FLAG;
 
     if (bmem->bstate.pc)
         return;
@@ -1571,6 +1572,7 @@ static int8_t eval_prog(prog_t *prog, bool do_eval)
     bmem->bstate.string = 0;
     bmem->bstate.error = BERROR_NONE;
     bmem->bstate.prog = prog;
+    bmem->bstate.flags &= ~B_GOTO_FLAG;
 
     // Do syntax check or eval
     bool eval = eval_instruction() || eval_if() || eval_for() || eval_next();

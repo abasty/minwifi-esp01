@@ -58,6 +58,8 @@ typedef struct
     uint16_t line_no;
 } return_t;
 
+#define B_GOTO_FLAG (1 << 0)
+
 // Bastos evaluation state
 typedef struct
 {
@@ -71,6 +73,7 @@ typedef struct
     uint8_t input_var_token;
     int8_t error;
     char inkey;
+    uint8_t flags;
     bool do_eval;
     bool running;
     bool inputting;
