@@ -54,4 +54,5 @@ static const char *keywords =
     "FAS""\xd4"
     "SLO""\xd7"
     "DI""\xcd"
+    "FRE""\xc5"
 ;

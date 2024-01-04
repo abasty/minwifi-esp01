@@ -104,6 +104,7 @@ uint8_t instr0[] = {
     TOKEN_KEYWORD_RETURN,
     TOKEN_KEYWORD_FAST,
     TOKEN_KEYWORD_SLOW,
+    TOKEN_KEYWORD_FREE,
     0,
 };
 
@@ -1139,6 +1140,15 @@ static void eval_cont()
     bmem->bstate.running = bmem->bstate.pc != 0;
 }
 
+static void eval_free()
+{
+    bio->print_string ("       sys  prog  vars  free\r\n");
+    bio->print_integer("Mem: %5d ", bmem->prog_start - (uint8_t *)bmem);
+    bio->print_integer("%5d ", bmem->prog_end - bmem->prog_start);
+    bio->print_integer("%5d ", bmem->vars_end - bmem->vars_start);
+    bio->print_integer("%5d\r\n", bmem->vars_start - bmem->strings_end);
+}
+
 static bool eval_inputting()
 {
     return bmem->bstate.inputting;
@@ -1385,6 +1395,11 @@ EVAL:
     if (instr == TOKEN_KEYWORD_CONT)
     {
         eval_cont();
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_FREE)
+    {
+        eval_free();
         return true;
     }
     return false;

@@ -5,7 +5,7 @@ trap 'rm -rf -- "$TMPDIR"' EXIT
 
 KEYWORDS_FILE=${TMPDIR}/keywords
 
-KEYWORDS_C=keywords.c
+KEYWORDS_C=keywords.c-static
 KEYWORDS_H=keywords.h
 
 # Add keywords after existing ones to preserve load/save compatibility
@@ -66,6 +66,7 @@ cursor
 fast
 slow
 dim
+free
 EOF
 
 # Do not sort to preserver save/load compatibility
@@ -86,7 +87,7 @@ while IFS= read -r keyword; do
     ((index++))
 done < ${KEYWORDS_FILE}
 
-echo "const char *keywords =" >${KEYWORDS_C}
+echo "static const char *keywords =" >${KEYWORDS_C}
 index=0
 while IFS= read -r keyword; do
     u_key=${keyword^^}

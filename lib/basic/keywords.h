@@ -54,3 +54,4 @@
 #define TOKEN_KEYWORD_FAST ((uint8_t) (52 | 0b10000000))
 #define TOKEN_KEYWORD_SLOW ((uint8_t) (53 | 0b10000000))
 #define TOKEN_KEYWORD_DIM ((uint8_t) (54 | 0b10000000))
+#define TOKEN_KEYWORD_FREE ((uint8_t) (55 | 0b10000000))
