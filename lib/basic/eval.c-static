@@ -1252,7 +1252,7 @@ static bool eval_string_tty()
         goto EVAL;
     }
 
-    if (!eval_term())
+    if (!eval_float_expr())
         return false;
 
     // 1 arg
@@ -1277,7 +1277,7 @@ static bool eval_string_tty()
     if (!eval_token(','))
         return false;
 
-    if (!eval_term())
+    if (!eval_float_expr())
         return false;
 
     uint8_t arg2 = bmem->bstate.number;
