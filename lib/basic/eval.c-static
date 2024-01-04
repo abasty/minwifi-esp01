@@ -543,6 +543,25 @@ static bool eval_string_str()
     return true;
 }
 
+static bool eval_string_inkey()
+{
+    if (!eval_token(TOKEN_KEYWORD_INKEY))
+        return false;
+
+    if (bmem->bstate.do_eval)
+    {
+        bmem->bstate.string = bmem_string_alloc(2);
+        if (!bmem->bstate.string)
+            return false;
+
+        bmem->bstate.string[0] = bmem->bstate.inkey;
+        bmem->bstate.string[1] = 0;
+        bmem->bstate.inkey = 0;
+    }
+
+    return true;
+}
+
 static bool eval_string_const()
 {
     if (!eval_token(TOKEN_STRING))
@@ -588,6 +607,7 @@ static bool eval_string_term()
         eval_string_chr() ||
         eval_string_tty() ||
         eval_string_str() ||
+        eval_string_inkey() ||
         (eval_token('(') && eval_string_expr() && eval_token(')'));
 
     if (!result)

@@ -62,6 +62,13 @@ size_t bastos_send_keys(const char *keys, size_t n)
     uint8_t *src = (uint8_t *)keys;
     uint8_t *dst = bmem->io_buffer;
 
+    // If running and not inputting, store the key in inkey state
+    if (eval_running() && !eval_inputting())
+    {
+        bmem->bstate.inkey = (char ) *src;
+        return 1;
+    }
+
     // Find the terminal 0 in io buffer
     for (; *dst; dst++)
         ;

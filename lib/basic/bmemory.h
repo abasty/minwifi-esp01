@@ -70,6 +70,7 @@ typedef struct
     uint8_t token;
     uint8_t input_var_token;
     int8_t error;
+    char inkey;
     bool do_eval;
     bool running;
     bool inputting;
