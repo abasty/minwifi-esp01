@@ -1,7 +1,3 @@
-# BUGS
-
-* [x] Bug expression / condition / comparaison
-
 # TODO
 
 * [x] Passer tout en float
@@ -29,6 +25,9 @@
   ~~Uploader le config manager  directement sur la flash par OTA~~
 * [x] Ajouter "RESET"
 * [x] AT, INK, PAPER, CLS
+* [x] Toutes les fonctions qui produisent des codes de commandes => fonctions
+  qui renvoient des chaines de caractères (au début .h minitel). On doit pouvoir
+  faire : let a$=cls + at 10,10 + ink 4 + paper 3 + " *DEMO* ".
 * [x] Mettre en "echo" distant (pas d'echo local)
 * [x] Faire que les keywords aient le même ID (possible sans sort ?) afin
   d'assurer la compatibilité "binaire" des `*.bst`
@@ -40,28 +39,21 @@
 * [x] CR/LF , DEL, sur ESP01-1M
 * [x] TO en opérande gauche LET A$(1 TO 2) = "AB"
 * [x] DIM
+* [x] Tableaux (DIM)
+* [x] Slice on left value
+* [x] INKEY$
+* [ ] PLOT / UNPLOT / SCREEN$(l,c) ?
 * [ ] Support Suite / Retour / Sommaire (TAB ou PGDN / SHIFT TAB ou PGDUP/ HOME)
 * [ ] Régler le pb du nom mDNS de l'ESP quand il vient d'être flashé par USB serial
 * [ ] tty : init string, fast, autoexec => config$$$
-* [ ] Slice on left value
 * [ ] TAB, REPC, SCROLL UP/DOWN
-* [x] Optim : gérer la mémoire comme le ZX (un seul bloc :
-  <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/chap27.html>)
-* [x] Toutes les fonctions qui produisent des codes de commandes => fonctions
-  qui renvoient des chaines de caractères (au début .h minitel). On doit pouvoir
-  faire : let a$=cls + at 10,10 + ink 4 + paper 3 + " *DEMO* ".
 * [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
   seule commande print.
 * [ ] Filtre "minitel to ansi"
-* [x] Optim tout dans le même .c pour les static
-* [x] Mem : bloc pour prog, bloc pour vars, que des listes (avec ptr/index sur
-  16 bits),
 * [ ] Optimisation BIO (une seule structure, 1 fonction number (int), 2/3 params
   (union as_void_ptr, as_char_ptr, as_int, as_float), 1 result (union like
   param) => static / extern
-* [x] Tableaux (DIM)
 * [ ] EVAL / EVAL$
-* [ ] PLOT / UNPLOT / SCREEN$(l,c) ?
 * [ ] DOWNLOAD / UPLOAD
 * [ ] TELNET / TELNET WS
 * [ ] Dans `test` : pouvoir lire un fichier `.bas` sur la ligne d'entrée et
@@ -78,6 +70,9 @@
   * [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
 * [ ] **OPTIMISATIONS** (valable aussi pour la version OTA only)
   * [ ] Optimisation accès tableau / variable (factorisation number / string, name)
+  * [x] Optim tout dans le même .c pour les static
+  * [x] Mem : bloc pour prog, bloc pour vars, que des listes (avec ptr/index sur
+        16 bits),
   * [x] Rapporter tout le basic sauf l'API bastos dans un seul fichier et static
     functions (notamment memory)
   * [x] Global Memory Management
