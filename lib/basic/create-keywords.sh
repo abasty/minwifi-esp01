@@ -67,9 +67,19 @@ fast
 slow
 dim
 free
+rand
+pause
+tab
+scroll
+plot
+unplot
+test
+mode
+minitel
+telnet
 EOF
 
-# Do not sort to preserver save/load compatibility
+# Do not sort to preserve save/load compatibility
 # sort -o ${KEYWORDS_FILE}{,}
 
 function ord {

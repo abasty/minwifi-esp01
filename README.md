@@ -42,11 +42,19 @@
 * [x] Tableaux (DIM)
 * [x] Slice on left value
 * [x] INKEY$
-* [ ] PLOT / UNPLOT / SCREEN$(l,c) ?
+* [ ] PAUSE
+* [ ] TAB
+* [ ] PLOT / UNPLOT / TEST ?
+* [ ] RAND
+* [ ] SCROLL
+* [ ] MODE (mode écran)
+* [ ] RUN line, RUN "autorun.bst", RUN "program.bst", line
+* [ ] MINITEL, TELNET, url
+* [ ] EDIT line ?
 * [ ] Support Suite / Retour / Sommaire (TAB ou PGDN / SHIFT TAB ou PGDUP/ HOME)
-* [ ] Régler le pb du nom mDNS de l'ESP quand il vient d'être flashé par USB serial
+* [ ] Régler le pb du nom mDNS de l'ESP quand il vient d'être flashé par USB
+  serial
 * [ ] tty : init string, fast, autoexec => config$$$
-* [ ] TAB, REPC, SCROLL UP/DOWN
 * [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
   seule commande print.
 * [ ] Filtre "minitel to ansi"
