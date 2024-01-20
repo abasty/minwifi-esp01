@@ -77,6 +77,9 @@ test
 mode
 minitel
 telnet
+peek
+poke
+usr
 EOF
 
 # Do not sort to preserve save/load compatibility

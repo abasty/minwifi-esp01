@@ -45,6 +45,8 @@
 * [ ] PAUSE
 * [ ] TAB
 * [ ] PLOT / UNPLOT / TEST ?
+  * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
+  * [ ] Minitel, semi graphique
 * [ ] RAND
 * [ ] SCROLL
 * [ ] MODE (mode écran)
@@ -58,9 +60,9 @@
 * [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
   seule commande print.
 * [ ] Filtre "minitel to ansi"
-* [ ] Optimisation BIO (une seule structure, 1 fonction number (int), 2/3 params
-  (union as_void_ptr, as_char_ptr, as_int, as_float), 1 result (union like
-  param) => static / extern
+* [ ] Optimisation BIO (une seule structure), 1 fonction number (int), 2/3
+  params (union as_void_ptr, as_char_ptr, as_int, as_float), 1 result (union
+  like param) => static / extern
 * [ ] EVAL / EVAL$
 * [ ] DOWNLOAD / UPLOAD
 * [ ] TELNET / TELNET WS
