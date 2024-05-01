@@ -65,4 +65,8 @@ static const char *keywords =
     "MOD""\xc5"
     "MINITE""\xcc"
     "TELNE""\xd4"
+    "PEE""\xcb"
+    "POK""\xc5"
+    "US""\xd2"
+    "EVA""\xcc"
 ;

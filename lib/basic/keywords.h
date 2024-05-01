@@ -65,3 +65,7 @@
 #define TOKEN_KEYWORD_MODE ((uint8_t) (63 | 0b10000000))
 #define TOKEN_KEYWORD_MINITEL ((uint8_t) (64 | 0b10000000))
 #define TOKEN_KEYWORD_TELNET ((uint8_t) (65 | 0b10000000))
+#define TOKEN_KEYWORD_PEEK ((uint8_t) (66 | 0b10000000))
+#define TOKEN_KEYWORD_POKE ((uint8_t) (67 | 0b10000000))
+#define TOKEN_KEYWORD_USR ((uint8_t) (68 | 0b10000000))
+#define TOKEN_KEYWORD_EVAL ((uint8_t) (69 | 0b10000000))

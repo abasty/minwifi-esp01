@@ -80,6 +80,7 @@ telnet
 peek
 poke
 usr
+eval
 EOF
 
 # Do not sort to preserve save/load compatibility
