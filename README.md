@@ -1,5 +1,56 @@
 # TODO
 
+## Prioritaire
+
+* [ ] Gérer le bouton du Sonoff : ON / OFF Minitel + RESET
+* [ ] MODE, MINITEL, TELNET, <url>
+* [ ] Filtre "minitel to ansi" ou émulateur minitel (voir emumin et le traduire
+  en C). Intégrer l'émulateur dans le firmware => SCREEN$()
+* [ ] Porter Zboub
+* [ ] lire_min(), ecrire_min() => API serveur
+  * [ ] Faire un jeu (C sur flash ou telnet)
+
+## Autres
+
+* [ ] PAUSE
+* [ ] TAB
+* [ ] PLOT / UNPLOT / TEST ?
+  * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
+  * [ ] Minitel, semi graphique
+* [ ] RAND
+* [ ] SCROLL
+* [ ] MODE (mode écran)
+* [ ] RUN line, RUN "autorun.bst", RUN "program.bst", line
+* [ ] EVAL / EVAL$
+* [ ] DOWNLOAD / UPLOAD
+* [ ] TELNET / TELNET WS
+* [ ] Ajouter mode rouleau, mode 40/80, co, coff, echo
+* [ ] EDIT line ?
+* [ ] Support Suite / Retour / Sommaire (TAB ou PGDN / SHIFT TAB ou PGDUP/ HOME)
+* [ ] Régler le pb du nom mDNS de l'ESP quand il vient d'être flashé par USB
+  serial
+* [ ] tty : init string, fast, autoexec => config$$$
+* [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
+  seule commande print.
+* [ ] Optimisation BIO (une seule structure), 1 fonction number (int), 2/3
+  params (union as_void_ptr, as_char_ptr, as_int, as_float), 1 result (union
+  like param) => static / extern
+* [ ] Dans `test` : pouvoir lire un fichier `.bas` sur la ligne d'entrée et
+  l'envoyer à `bastos_send_keys`. Ce serait bien aussi de pouvoir construire un
+  disque à distance (pour l'envoyer par OTA ou le falsher directement)
+* [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
+  * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
+* [ ] Ajouter edit, integration "edit_min" ?
+* [ ] vitesse serial ()
+* [ ] **BUGS UI / AMELIORATIONS**
+  * [ ] `Error 1` quand on se logue : utiliser `nc` pas telnet
+  * [ ] Pouvoir sauvegarder uniquement les variables (config manager, "SAVE VARS")
+  * [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
+* [ ] **OPTIMISATIONS** (valable aussi pour la version OTA only)
+  * [ ] Optimisation accès tableau / variable (factorisation number / string, name)
+
+# Done
+
 * [x] Passer tout en float
 * [x] Coder `eval_factor`
 * [x] Code `( expr )` dans factor ?
@@ -42,44 +93,7 @@
 * [x] Tableaux (DIM)
 * [x] Slice on left value
 * [x] INKEY$
-* [ ] PAUSE
-* [ ] TAB
-* [ ] PLOT / UNPLOT / TEST ?
-  * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
-  * [ ] Minitel, semi graphique
-* [ ] RAND
-* [ ] SCROLL
-* [ ] MODE (mode écran)
-* [ ] RUN line, RUN "autorun.bst", RUN "program.bst", line
-* [ ] MINITEL, TELNET, url
-* [ ] EDIT line ?
-* [ ] Support Suite / Retour / Sommaire (TAB ou PGDN / SHIFT TAB ou PGDUP/ HOME)
-* [ ] Régler le pb du nom mDNS de l'ESP quand il vient d'être flashé par USB
-  serial
-* [ ] tty : init string, fast, autoexec => config$$$
-* [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
-  seule commande print.
-* [ ] Filtre "minitel to ansi"
-* [ ] Optimisation BIO (une seule structure), 1 fonction number (int), 2/3
-  params (union as_void_ptr, as_char_ptr, as_int, as_float), 1 result (union
-  like param) => static / extern
-* [ ] EVAL / EVAL$
-* [ ] DOWNLOAD / UPLOAD
-* [ ] TELNET / TELNET WS
-* [ ] Dans `test` : pouvoir lire un fichier `.bas` sur la ligne d'entrée et
-  l'envoyer à `bastos_send_keys`. Ce serait bien aussi de pouvoir construire un
-  disque à distance (pour l'envoyer par OTA ou le falsher directement)
-* [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
-  * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
-* [ ] Ajouter edit, integration "edit_min" ?
-* [ ] vitesse serial ()
-* [ ] Ajouter mode rouleau, mode 40/80, co, coff, echo
-* [ ] **BUGS UI / AMELIORATIONS**
-  * [ ] `Error 1` quand on se logue : utiliser `nc` pas telnet
-  * [ ] Pouvoir sauvegarder uniquement les variables (config manager, "SAVE VARS")
-  * [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
 * [ ] **OPTIMISATIONS** (valable aussi pour la version OTA only)
-  * [ ] Optimisation accès tableau / variable (factorisation number / string, name)
   * [x] Optim tout dans le même .c pour les static
   * [x] Mem : bloc pour prog, bloc pour vars, que des listes (avec ptr/index sur
         16 bits),
