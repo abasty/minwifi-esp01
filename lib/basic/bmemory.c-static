@@ -471,6 +471,18 @@ static prog_t *bmem_prog_get_line_or_next(uint16_t line_no)
     return 0;
 }
 
+static uint16_t bmem_get_line_count()
+{
+    uint16_t count = 0;
+    prog_t *prog = bmem_prog_first_line();
+    while (prog)
+    {
+        count++;
+        prog = bmem_prog_next_line(prog);
+    }
+    return count;
+}
+
 // Initialize the memory
 static void bmem_init(uint8_t *mem, uint16_t size)
 {

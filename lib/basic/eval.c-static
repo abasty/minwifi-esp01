@@ -1065,9 +1065,6 @@ static bool eval_list()
 
     if (bmem->bstate.do_eval)
     {
-        // FIXME: count vars & prog lines
-        // bio->print_integer("lines: %d\r\n", prog_tree.count);
-        // bio->print_integer("%d\r\n", var_tree.count);
         prog_t *prog = bmem_prog_first_line();
         while (prog && n >= 1)
         {
@@ -1147,6 +1144,10 @@ static void eval_free()
     bio->print_integer("%5d ", bmem->prog_end - bmem->prog_start);
     bio->print_integer("%5d ", bmem->vars_end - bmem->vars_start);
     bio->print_integer("%5d\r\n", bmem->vars_start - bmem->strings_end);
+    bio->print_string("l/v:       ");
+    bio->print_integer("%5d ", bmem_get_line_count());
+    bio->print_integer("%5d ", 2);
+    bio->print_string("\r\n");
 }
 
 static bool eval_inputting()
