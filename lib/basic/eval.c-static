@@ -1140,14 +1140,14 @@ static void eval_cont()
 static void eval_free()
 {
     bio->print_string ("       sys  prog  vars  free\r\n");
-    bio->print_integer("Mem: %5d ", bmem->prog_start - (uint8_t *)bmem);
-    bio->print_integer("%5d ", bmem->prog_end - bmem->prog_start);
-    bio->print_integer("%5d ", bmem->vars_end - bmem->vars_start);
-    bio->print_integer("%5d\r\n", bmem->vars_start - bmem->strings_end);
     bio->print_string("l/v:       ");
     bio->print_integer("%5d ", bmem_line_count());
     bio->print_integer("%5d ", bmem_var_count());
     bio->print_string("\r\n");
+    bio->print_integer("Mem: %5d ", bmem->prog_start - (uint8_t *)bmem);
+    bio->print_integer("%5d ", bmem->prog_end - bmem->prog_start);
+    bio->print_integer("%5d ", bmem->vars_end - bmem->vars_start);
+    bio->print_integer("%5d\r\n", bmem->vars_start - bmem->strings_end);
 }
 
 static bool eval_inputting()

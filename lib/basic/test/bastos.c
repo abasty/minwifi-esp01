@@ -209,7 +209,6 @@ int basic_main(int argc, char *argv[])
     print_string("Config vars OK.\r\n");
 
 after_config:
-
     if (var == 0)
     {
         // No config file or vars, run the config program
