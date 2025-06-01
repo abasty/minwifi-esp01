@@ -170,6 +170,19 @@ var_t *bastos_var_get(const char *name)
     return 0;
 }
 
+// Get count of variables
+static uint16_t bmem_var_count()
+{
+    uint16_t count = 0;
+    var_t *var = bmem_var_first();
+    while (var)
+    {
+        count++;
+        var = bmem_var_next(var);
+    }
+    return count;
+}
+
 // Return the first variable
 static var_t *bmem_var_first()
 {
@@ -471,7 +484,7 @@ static prog_t *bmem_prog_get_line_or_next(uint16_t line_no)
     return 0;
 }
 
-static uint16_t bmem_get_line_count()
+static uint16_t bmem_line_count()
 {
     uint16_t count = 0;
     prog_t *prog = bmem_prog_first_line();

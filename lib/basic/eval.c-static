@@ -1145,8 +1145,8 @@ static void eval_free()
     bio->print_integer("%5d ", bmem->vars_end - bmem->vars_start);
     bio->print_integer("%5d\r\n", bmem->vars_start - bmem->strings_end);
     bio->print_string("l/v:       ");
-    bio->print_integer("%5d ", bmem_get_line_count());
-    bio->print_integer("%5d ", 2);
+    bio->print_integer("%5d ", bmem_line_count());
+    bio->print_integer("%5d ", bmem_var_count());
     bio->print_string("\r\n");
 }
 
