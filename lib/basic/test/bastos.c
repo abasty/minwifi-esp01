@@ -30,7 +30,9 @@ void term_init()
     tcsetattr(0, TCSANOW, &new);
 
 #ifdef MINITEL
-    printf("%s", CON P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU CLS);
+    printf("%s", CON P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU);
+    printf("\x1f\x40\x41" CLEOL CLS);
+    fflush(stdout);
 #endif
 
 }
@@ -60,7 +62,9 @@ char getch()
 
 int print_float(float f)
 {
-    return printf("%g", f);
+    int n = printf("%g", f);
+    fflush(stdout);
+    return n;
 }
 
 int print_string(const char *s)
@@ -72,7 +76,9 @@ int print_string(const char *s)
 
 int print_integer(const char *format, int32_t i)
 {
-    return printf(format, i);
+    int n = printf(format, i);
+    fflush(stdout);
+    return n;
 }
 
 int bopen(const char *pathname, int flags)
@@ -102,17 +108,31 @@ int bread(int fd, void *buf, int count)
 
 static void bcat()
 {
-    struct dirent **namelist;
-    int n = scandir(".", &namelist, NULL, NULL);
+    off_t total = 0;
+    struct dirent **entry;
+    int n = scandir(".", &entry, NULL, NULL);
     while (n--)
     {
-        if (strcmp(".", namelist[n]->d_name) && strcmp("..", namelist[n]->d_name))
+        if (strcmp(".", entry[n]->d_name) && strcmp("..", entry[n]->d_name))
         {
-            printf("%s\r\n", namelist[n]->d_name);
+            char *path = entry[n]->d_name;
+            struct stat st;
+            if (stat(path, &st) == -1)
+                continue;
+            total += st.st_size;
+
+            uint8_t len = strlen(path);
+            print_string(path);
+            for (int i = 16 - len; i > 0; i--)
+                print_string(" ");
+            print_integer("%ju\r\n", st.st_size);
         }
-        free(namelist[n]);
+        free(entry[n]);
     }
-    free(namelist);
+    free(entry);
+    print_integer("Bytes: %ju/", total);
+    print_integer("%u\r\n", 65536);
+    fflush(stdout);
 }
 
 int berase(const char *pathname)
