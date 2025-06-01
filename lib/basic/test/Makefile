@@ -4,7 +4,7 @@
 # A generic build template for C/C++ programs
 
 # executable name
-EXE = test
+EXE = bastos
 
 # C compiler
 CC = gcc
@@ -12,7 +12,7 @@ CC = gcc
 LD = gcc
 
 # C flags
-CFLAGS = -O0 -g
+CFLAGS = -O0 -g -DMINITEL=1
 # C++ flags
 CXXFLAGS =
 # Preprocessor flags

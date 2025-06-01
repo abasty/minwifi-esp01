@@ -12,6 +12,10 @@
 #include <poll.h>
 #include <signal.h>
 
+#ifdef MINITEL
+#include "tty-minitel.h"
+#endif
+
 #include "bio.h"
 
 struct sigaction old_action;
@@ -24,6 +28,11 @@ void term_init()
     new.c_lflag &= ~ICANON;
     new.c_lflag &= ~ECHO;
     tcsetattr(0, TCSANOW, &new);
+
+#ifdef MINITEL
+    printf("%s", CON P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU CLS);
+#endif
+
 }
 
 void term_done()
@@ -99,7 +108,7 @@ static void bcat()
     {
         if (strcmp(".", namelist[n]->d_name) && strcmp("..", namelist[n]->d_name))
         {
-            printf("%s\n", namelist[n]->d_name);
+            printf("%s\r\n", namelist[n]->d_name);
         }
         free(namelist[n]);
     }
@@ -165,46 +174,78 @@ int basic_main(int argc, char *argv[])
 
     int err = bastos_load("config$$$");
     if (err != BERROR_NONE)
-        goto finalize;
+        goto after_config;
 
-    print_string("Config file loaded.\n");
+    print_string("Config file loaded.\r\n");
 
     var = bastos_var_get("\021WSSID");
     if (!var)
-        goto finalize;
+        goto after_config;
 
     var = bastos_var_get("\021WSECRET");
     if (!var)
-        goto finalize;
+        goto after_config;
 
-    print_string("Config vars OK.\n");
+    print_string("Config vars OK.\r\n");
 
-finalize:
+after_config:
 
     if (var == 0)
     {
+        // No config file or vars, run the config program
         bastos_prog_new();
         bastos_send_keys(config_prog, strlen(config_prog));
         bastos_send_keys("RUN\n", 4);
     }
 
+
+#ifdef MINITEL
+    bool fkey = false;
+#endif
+
     while (cont)
     {
-        int c = getch();
-        if (c != 0 && c != 24 && c != 1)
-        {
-            char *keys = (char *) &c;
-            bastos_send_keys(keys, 1);
-        }
-        else
-        {
-            if (c == 1)
-            {
-                bastos_stop();
+        int key = getch();
+
+#ifdef MINITEL
+        if (key == 0x13) {
+            fkey = true;
+        } else {
+            if (fkey) {
+                if (key == 0x47) { // CORRECTION
+                    key = 0x7F;
+                } else if (key == 0x45) { // ANNULATION
+                    key = 3;
+                } else { // ENVOI
+                    key = '\r';
+                }
+                fkey = false;
             }
+            bastos_send_keys((char *)&key, 1);
         }
+#else
+        if (key == 0x08) {
+            key = 0x7F;
+        } else if (key == 0x1b) {
+            key = 3;
+        }
+        bastos_send_keys((char *)&key, 1);
+#endif
+
+        // if (c != 0 && c != 24 && c != 1)
+        // {
+        //     char *keys = (char *) &c;
+        //     bastos_send_keys(keys, 1);
+        // }
+        // else
+        // {
+        //     if (c == 1)
+        //     {
+        //         bastos_stop();
+        //     }
+        // }
         bastos_loop();
-        cont = c != 24;
+        cont = key != 24;
     }
 
     bastos_prog_new();
