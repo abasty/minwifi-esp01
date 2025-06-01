@@ -158,7 +158,7 @@ static int bmem_var_size(var_t *var)
 }
 
 // Find a variable by name
-var_t *bmem_var_find(const char *name)
+var_t *bastos_var_get(const char *name)
 {
     var_t *var = bmem_var_first();
     while (var)
@@ -206,7 +206,7 @@ static void bmem_vars_clear()
 static var_t *bmem_var_string_set(const char *name, char *value)
 {
     // Remove the variable if it already exists
-    var_t *var = bmem_var_find(name);
+    var_t *var = bastos_var_get(name);
     if (var != 0)
         bmem_var_unset(var);
 
@@ -228,7 +228,7 @@ finalize:
 // Create a new number variable
 static var_t *bmem_var_number_set(const char *name, float value)
 {
-    var_t *var = bmem_var_find(name);
+    var_t *var = bastos_var_get(name);
     if (var == 0)
     {
         var = bmem_var_new(name, TOKEN_VARIABLE_NUMBER, 0, 0);
@@ -249,7 +249,7 @@ static float *bmem_number_array_get_cell(const char *name, uint8_t dim_count, ui
     tmp[B_NAME_SIZE_MAX - 1] = 0;
     tmp[0] |= TOKEN_ARRAY_FLAG;
 
-    var_t *var = bmem_var_find(tmp);
+    var_t *var = bastos_var_get(tmp);
     if (var == 0)
         return 0;
 
@@ -280,7 +280,7 @@ static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, ui
     uint8_t dim_asked = *dim_count & ~B_DIM_RANGE_FLAG;
 
     // Search simple string variable
-    var_t *var = bmem_var_find(name);
+    var_t *var = bastos_var_get(name);
     if (var)
     {
         if (dim_asked == 0)
@@ -301,7 +301,7 @@ static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, ui
 
     // Search array string variable
     tmp[0] |= TOKEN_ARRAY_FLAG;
-    var = bmem_var_find(tmp);
+    var = bastos_var_get(tmp);
     if (var == 0)
         return 0;
 
@@ -344,7 +344,7 @@ static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, ui
 }
 
 // Clear the program and the variables memory
-void bmem_prog_new()
+void bastos_prog_new()
 {
     bmem_vars_clear();
     bmem->prog_end = bmem->prog_start;
@@ -479,7 +479,7 @@ static void bmem_init(uint8_t *mem, uint16_t size)
     memset(bmem, 0, size);
     bmem->prog_start = (uint8_t *) bmem + sizeof(bmem_t);
     bmem->vars_end = (uint8_t *) bmem + size;
-    bmem_prog_new();
+    bastos_prog_new();
 }
 
 #if 0
@@ -644,10 +644,10 @@ void bmem_test()
 
     // Remove "tata" variable
     printf("Remove tata variable\n");
-    var = bmem_var_find("tata");
+    var = bastos_var_get("tata");
     bmem_var_unset(var);
     // Test if "tata" is still there
-    var = bmem_var_find("tata");
+    var = bastos_var_get("tata");
     if (var)
     {
         printf("Error: tata is still there\n");

@@ -223,12 +223,12 @@ static void setup_wifi()
     if (err != BERROR_NONE)
         goto config_new;
 
-    var = bmem_var_find("\021WSSID");
+    var = bastos_var_get("\021WSSID");
     if (!var)
         goto config_run;
     wssid = var->string;
 
-    var = bmem_var_find("\021WSECRET");
+    var = bastos_var_get("\021WSECRET");
     if (!var)
         goto config_run;
     wsecret = var->string;
@@ -265,11 +265,11 @@ static void setup_wifi()
         LittleFS.begin();
         bastos_save("config$$$");
     }
-    bmem_prog_new();
+    bastos_prog_new();
     return;
 
 config_new:
-    bmem_prog_new();
+    bastos_prog_new();
     bastos_send_keys(config_prog, strlen(config_prog));
 
 config_run:

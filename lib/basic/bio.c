@@ -252,7 +252,7 @@ int8_t bastos_load(const char *name)
     if (fd < 0)
         return BERROR_IO;
 
-    bmem_prog_new();
+    bastos_prog_new();
 
     int bread;
 

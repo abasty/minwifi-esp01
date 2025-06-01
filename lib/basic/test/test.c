@@ -169,11 +169,11 @@ int basic_main(int argc, char *argv[])
 
     print_string("Config file loaded.\n");
 
-    var = bmem_var_find("\021WSSID");
+    var = bastos_var_get("\021WSSID");
     if (!var)
         goto finalize;
 
-    var = bmem_var_find("\021WSECRET");
+    var = bastos_var_get("\021WSECRET");
     if (!var)
         goto finalize;
 
@@ -183,7 +183,7 @@ finalize:
 
     if (var == 0)
     {
-        bmem_prog_new();
+        bastos_prog_new();
         bastos_send_keys(config_prog, strlen(config_prog));
         bastos_send_keys("RUN\n", 4);
     }
@@ -207,7 +207,7 @@ finalize:
         cont = c != 24;
     }
 
-    bmem_prog_new();
+    bastos_prog_new();
     term_done();
 
     return 0;
