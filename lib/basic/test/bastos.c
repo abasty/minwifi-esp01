@@ -218,52 +218,36 @@ after_config:
         bastos_send_keys("RUN\n", 4);
     }
 
-
-#ifdef MINITEL
     bool fkey = false;
-#endif
-
     while (cont)
     {
         int key = getch();
 
-#ifdef MINITEL
         if (key == 0x13) {
+            // Function key pressed
             fkey = true;
+            key = 0;
         } else {
             if (fkey) {
-                if (key == 0x47) { // CORRECTION
-                    key = 0x7F;
-                } else if (key == 0x45) { // ANNULATION
-                    key = 3;
-                } else { // ENVOI
-                    key = '\r';
+                if (key == 0x47) { // CORRECTION key
+                    key = 0x7F; // Convert backspace to DEL
+                } else if (key == 0x45) { // ANNULATION key
+                    key = 3; // Convert to Ctrl+C
+                } else { // ENVOI and other function keys
+                    key = '\r'; // Convert to Enter
                 }
                 fkey = false;
             }
-            bastos_send_keys((char *)&key, 1);
+            else
+            {
+                if (key == 0x08) {
+                    key = 0x7F; // Convert backspace to DEL
+                } else if (key == 0x1b) {
+                    key = 3; // Convert ESC to Ctrl+C
+                }
+            }
         }
-#else
-        if (key == 0x08) {
-            key = 0x7F;
-        } else if (key == 0x1b) {
-            key = 3;
-        }
-        bastos_send_keys((char *)&key, 1);
-#endif
-
-        // if (c != 0 && c != 24 && c != 1)
-        // {
-        //     char *keys = (char *) &c;
-        //     bastos_send_keys(keys, 1);
-        // }
-        // else
-        // {
-        //     if (c == 1)
-        //     {
-        //         bastos_stop();
-        //     }
-        // }
+        bastos_send_keys((char *)&key, key != 0 ? 1 : 0);
         bastos_loop();
         cont = key != 24;
     }

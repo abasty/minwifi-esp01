@@ -56,11 +56,31 @@ void bastos_init(bastos_io_t *_io)
     bmem_init(malloc(BASTOS_MEMORY_SIZE), BASTOS_MEMORY_SIZE);
 }
 
+static void bastos_handle_ctrl_c()
+{
+    bastos_stop();
+    *bmem->io_buffer = 0;
+    bio->print_string("**Break**\r\n");
+}
+
 size_t bastos_send_keys(const char *keys, size_t n)
 {
     size_t m = 0;
     uint8_t *src = (uint8_t *)keys;
     uint8_t *dst = bmem->io_buffer;
+
+    // If no keys, do nothing
+    if (n == 0 || src == 0 || *src == 0)
+    {
+        return 0;
+    }
+
+    // If key is Ctrl+C, stop the program
+    if (*src == 3)
+    {
+        bastos_handle_ctrl_c();
+        return 1;
+    }
 
     // If running and not inputting, store the key in inkey state
     if (eval_running() && !eval_inputting())
@@ -311,7 +331,6 @@ void bastos_stop()
 
 void bastos_loop()
 {
-
     if (eval_running() && !eval_inputting())
     {
         eval_prog_next();
