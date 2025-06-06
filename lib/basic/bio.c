@@ -331,6 +331,7 @@ void bastos_stop()
 
 void bastos_loop()
 {
+    // TODO: Implement RESET and return -1 (else return 0)
     if (eval_running() && !eval_inputting())
     {
         eval_prog_next();
@@ -340,6 +341,5 @@ void bastos_loop()
         }
         return;
     }
-
     bastos_input();
 }

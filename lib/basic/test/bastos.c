@@ -11,6 +11,7 @@
 #include <termios.h>
 #include <poll.h>
 #include <signal.h>
+#include <errno.h>
 
 #ifdef MINITEL
 #include "tty-minitel.h"
@@ -53,11 +54,28 @@ char getch()
 {
     struct pollfd input[1] = {{fd: 0, events: POLLIN}};
     char ch = 0;
-    if (poll(input, 1, 1) == 1)
-    {
-        read(0, &ch, 1);
+    int ret = poll(input, 1, 1);
+    if (ret == 1) {
+        // Input is available, read one character
+        int n = read(0, &ch, 1);
+        if (n == 0) {
+            // EOF reached, exit
+            fprintf(stderr, "EOF reached, exiting.\n");
+            exit(0);
+        } else if (n < 0) {
+            // An error occurred while reading
+            fprintf(stderr, "Error reading input: %s\n", strerror(errno));
+            exit(0);
+        }
+        return ch;
+    } else if (ret < 0) {
+        // An error occurred while polling
+        fprintf(stderr, "Error reading input: %s\n", strerror(errno));
+        exit(0);
+    } else {
+        // No input available (timeout)
+        return 0; // No input available
     }
-    return ch;
 }
 
 int print_float(float f)
@@ -236,9 +254,7 @@ after_config:
                     key = '\r'; // Convert to Enter
                 }
                 fkey = false;
-            }
-            else
-            {
+            } else {
                 if (key == 0x08) {
                     key = 0x7F; // Convert backspace to DEL
                 } else if (key == 0x1b) {
@@ -246,6 +262,10 @@ after_config:
                 }
             }
         }
+
+        // if (key !=  0) {
+        //     fprintf(stderr, "Key: %d\n", key);
+        // }
         bastos_send_keys((char *)&key, key != 0 ? 1 : 0);
         bastos_loop();
         cont = key != 24;
