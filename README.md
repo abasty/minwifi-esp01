@@ -15,7 +15,7 @@ téléchargement s'effectue correctement même s'il se termine en erreur.
 * [ ] Gérer le bouton du Sonoff : ON / OFF Minitel + RESET
 * [ ] Gestion télérupteur
 * [ ] Gestion Led
-* [ ] À priori, retirer OTA.
+* [ ] À priori, retirer OTA
 * [ ] Voir si on peut récupérer de la place pour le disque et gérer les
   répertoires (genre 512Ko prog / 512Ko LittleFS (128 fichiers))
 
@@ -31,10 +31,12 @@ téléchargement s'effectue correctement même s'il se termine en erreur.
 
 * [x] Porter Zboub (TCP / IP, dployé sur IONOS)
 * [ ] Essayer d'autres prog stdin/stdout avec `ncat` (voir BASTOS server script)
-* [ ] Exemple Lua : `ncat -lk -vvv -C -c "lua -i 2>&1" 127.0.0.1 1967`
-* [ ] Ne marche pas : `ncat -lk -vvv -C -c "python3 -i 2>&1" 127.0.0.1 1967`
-* [ ] API minitel sur stdin / stdout
-* [ ] Penser à l'option CR/LF de ncat
+  * [ ] Si le programme n'est pas écrit pour Minitel : voir ce qu'on peut faire
+    avec le clavier, voir le mode mixte et téléinformatique du minitel 1B
+  * [ ] Penser à l'option CR/LF de ncat
+  * [ ] Exemple Lua : `ncat -lk -vvv -C -c "lua -i 2>&1" 127.0.0.1 1967`
+  * [ ] Ne marche pas : `ncat -lk -vvv -C -c "python3 -i 2>&1" 127.0.0.1 1967`
+* [ ] API minitel sur stdin / stdout en C / Dart ?
 
 ### Serveur local
 
