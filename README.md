@@ -3,20 +3,37 @@
 ## Prioritaire
 
 * [ ] Gérer le bouton du Sonoff : ON / OFF Minitel + RESET
-* [ ] MODE, MINITEL, TELNET, <url>
-* [ ] Filtre "minitel to ansi" ou émulateur minitel (voir emumin et le traduire
-  en C). Intégrer l'émulateur dans le firmware => SCREEN$()
-* [ ] Porter Zboub
 * [ ] lire_min(), ecrire_min() => API serveur
   * [ ] Faire un jeu (C sur flash ou telnet)
 
-## Autres
+# Serveurs
 
+## Serveurs sur IP
+
+* [x] Porter Zboub (TCP / IP, dployé sur IONOS)
+* [ ] Essayer d'autres prog stdin/stdout avec `ncat` (voir BASTOS server script)
+* [ ]
+
+## Serveur local
+
+Doivent être en C pour être intégrés à minwifi.
+
+* [ ] Interface à la BASTOS : send_keys, loop, callbacks IO
+* [ ] Connexion manager
+* [ ] API minitel intégré ?
+
+## Basic
+
+* [ ] MODE, MINITEL, TELNET, CONNECT <url>
+* [ ] SAVEVARS
+* [ ] SAVE, LOAD : pouvoir faire du .BAS et du BST. Majuscules / Minucules :
+  toujours en majuscules sur disque, pour faire plus rétro.
 * [ ] PAUSE
 * [ ] TAB
 * [ ] PLOT / UNPLOT / TEST ?
   * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
   * [ ] Minitel, semi graphique
+* SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs
 * [ ] RAND
 * [ ] SCROLL
 * [ ] MODE (mode écran)
@@ -39,7 +56,8 @@
   l'envoyer à `bastos_send_keys`. Ce serait bien aussi de pouvoir construire un
   disque à distance (pour l'envoyer par OTA ou le falsher directement)
 * [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
-  * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
+  * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$", sauf avec cat
+    hidden (ou cath)
 * [ ] Ajouter edit, integration "edit_min" ?
 * [ ] vitesse serial ()
 * [ ] **BUGS UI / AMELIORATIONS**
