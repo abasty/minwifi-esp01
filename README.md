@@ -1,20 +1,42 @@
+# Travail avec la carte de dev
+
+Pour tavailler avec la carte de dev, utiliser la _target_ `esp01_1m_nodecmu`.
+Lorsqu'on _upload_ en local, que ce soit le _firmware_ ou le _file system_, il
+faut penser à arrêter le _monitor_ et l'émulateur s'ils sont connectés par
+_serial_.
+
+Pour le _file system_, les fichiers doivent être dans le répertoire `data`. Le
+téléchargement s'effectue correctement même s'il se termine en erreur.
+
 # TODO
 
-## Prioritaire
+## Intégration SONOFF
 
 * [ ] Gérer le bouton du Sonoff : ON / OFF Minitel + RESET
-* [ ] lire_min(), ecrire_min() => API serveur
-  * [ ] Faire un jeu (C sur flash ou telnet)
+* [ ] Gestion télérupteur
+* [ ] Gestion Led
+* [ ] À priori, retirer OTA.
+* [ ] Voir si on peut récupérer de la place pour le disque et gérer les
+  répertoires (genre 512Ko prog / 512Ko LittleFS (128 fichiers))
 
-# Serveurs
+## Interface PC / Émulateur
 
-## Serveurs sur IP
+* [ ] Doit être intégré dans l'émulateur (ouvrir port série au lieu de network)
+* [ ] Plus de différence VT100 => on utilise l'émulateur pour se connecter au
+  SONOFF ou à la carte de dev ESP01-S
+
+## Serveurs
+
+### Serveurs sur IP
 
 * [x] Porter Zboub (TCP / IP, dployé sur IONOS)
 * [ ] Essayer d'autres prog stdin/stdout avec `ncat` (voir BASTOS server script)
-* [ ]
+* [ ] Exemple Lua : `ncat -lk -vvv -C -c "lua -i 2>&1" 127.0.0.1 1967`
+* [ ] Ne marche pas : `ncat -lk -vvv -C -c "python3 -i 2>&1" 127.0.0.1 1967`
+* [ ] API minitel sur stdin / stdout
+* [ ] Penser à l'option CR/LF de ncat
 
-## Serveur local
+### Serveur local
 
 Doivent être en C pour être intégrés à minwifi.
 
