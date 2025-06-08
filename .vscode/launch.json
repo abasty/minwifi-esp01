@@ -12,8 +12,8 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug",
-            "executable": "/home/alain/Projects/minitel/minwifi-esp01/.pio/build/minwifi/firmware.elf",
-            "projectEnvName": "minwifi",
+            "executable": "/home/alain/Projects/minitel/minwifi-esp01/.pio/build/esp01_1m_nodecmu/firmware.elf",
+            "projectEnvName": "esp01_1m_nodecmu",
             "toolchainBinDir": "/home/alain/.platformio/packages/toolchain-xtensa/bin",
             "internalConsoleOptions": "openOnSessionStart",
             "preLaunchTask": {
@@ -25,8 +25,8 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
-            "executable": "/home/alain/Projects/minitel/minwifi-esp01/.pio/build/minwifi/firmware.elf",
-            "projectEnvName": "minwifi",
+            "executable": "/home/alain/Projects/minitel/minwifi-esp01/.pio/build/esp01_1m_nodecmu/firmware.elf",
+            "projectEnvName": "esp01_1m_nodecmu",
             "toolchainBinDir": "/home/alain/.platformio/packages/toolchain-xtensa/bin",
             "internalConsoleOptions": "openOnSessionStart"
         },
@@ -34,8 +34,8 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (without uploading)",
-            "executable": "/home/alain/Projects/minitel/minwifi-esp01/.pio/build/minwifi/firmware.elf",
-            "projectEnvName": "minwifi",
+            "executable": "/home/alain/Projects/minitel/minwifi-esp01/.pio/build/esp01_1m_nodecmu/firmware.elf",
+            "projectEnvName": "esp01_1m_nodecmu",
             "toolchainBinDir": "/home/alain/.platformio/packages/toolchain-xtensa/bin",
             "internalConsoleOptions": "openOnSessionStart",
             "loadMode": "manual"

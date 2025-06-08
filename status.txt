@@ -305,3 +305,13 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  39.3% (used 32168 bytes from 81920 bytes)
 Flash: [=====     ]  49.5% (used 473980 bytes from 958448 bytes)
 ---
+3305486 Implemented BASTOS keyword (initial prompt)
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.5% (used 32360 bytes from 81920 bytes)
+Flash: [=====     ]  49.5% (used 474452 bytes from 958448 bytes)
+---
+4587829 Removed OTA and related targets
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  38.8% (used 31808 bytes from 81920 bytes)
+Flash: [=====     ]  45.7% (used 438259 bytes from 958448 bytes)
+---

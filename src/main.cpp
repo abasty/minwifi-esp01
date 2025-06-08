@@ -25,7 +25,6 @@
 
 
 #include <ESP8266WiFi.h>
-#include <ArduinoOTA.h>
 #include <WebSocketsClient.h>
 #include <LittleFS.h>
 
@@ -284,23 +283,12 @@ void setup()
     // Setup WiFi
     setup_wifi();
 
-    // Setup OTA
-    // ArduinoOTA.setPort(8266);
-#ifdef MINITEL
-    // Hostname
-    ArduinoOTA.setHostname("esp-minitel");
-#else
-    ArduinoOTA.setHostname("esp-minitel-dev");
-#endif
-    ArduinoOTA.begin();
-
+    // Cursor on
     print_string(CON);
 }
 
 void loop()
 {
-    ArduinoOTA.handle();
-
     // Forward Minitel server incoming data to serial output
     if (tcpMinitelConnexion && tcpMinitelConnexion.available() > 0) {
         // transparently forward bytes to serial
