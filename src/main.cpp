@@ -213,11 +213,7 @@ static void setup_wifi()
     WiFi.persistent(false);
     WiFi.mode(WIFI_STA);
 
-#ifdef MINITEL
-    print_string("\x1f\x40\x41" CLEOL BLINK INV "W");
-#else
     print_string(CLS "Connecting");
-#endif
 
     int err = bastos_load("config$$$");
     if (err != BERROR_NONE)
@@ -237,24 +233,15 @@ static void setup_wifi()
 
     while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000) {
         delay(500);
-#ifndef MINITEL
         print_string(".");
-#endif
     }
 
-#ifdef MINITEL
-    print_string("\x1f\x40\x41" CLEOL);
-#else
     print_string("\r\n");
-#endif
 
     if (WiFi.status() != WL_CONNECTED)
         goto config_run;
 
-#ifndef MINITEL
     print_string("WiFi connected with IP: ");
-#endif
-
     Serial.print(WiFi.localIP());
     print_string("\r\n");
 
@@ -273,11 +260,7 @@ config_new:
     bastos_send_keys(config_prog, strlen(config_prog));
 
 config_run:
-#ifdef MINITEL
-    print_string("\x1f\x40\x41" CLEOL CLS);
-#else
     print_string("WiFi connection failed\r\n");
-#endif
     // TODO: Add a send_keys w/o edit / echo
     bastos_send_keys("RUN\n", 4);
 }
