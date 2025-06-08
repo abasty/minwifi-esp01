@@ -201,7 +201,8 @@ static void setup_serial()
     "2PRINT\"* WiFi parameters *\"\n" \
     "4INPUT\"SSID: \",WSSID$\n" \
     "5INPUT\"PASS: \",WSECRET$\n" \
-    "6SAVE\"config$$$\"\n"
+    "6SAVE\"config$$$\"\n" \
+    "7RESET\n"
 
 static void setup_wifi()
 {
@@ -213,7 +214,7 @@ static void setup_wifi()
     WiFi.persistent(false);
     WiFi.mode(WIFI_STA);
 
-    print_string(CLS "Connecting");
+    print_string(CLS " Connecting");
 
     int err = bastos_load("config$$$");
     if (err != BERROR_NONE)
@@ -236,14 +237,14 @@ static void setup_wifi()
         print_string(".");
     }
 
-    print_string("\r\n");
+    print_string("\r" CLEOL);
 
     if (WiFi.status() != WL_CONNECTED)
         goto config_run;
 
-    print_string("WiFi connected with IP: ");
-    Serial.print(WiFi.localIP());
-    print_string("\r\n");
+    // print_string(" WiFi connected with IP: ");
+    // Serial.print(WiFi.localIP());
+    // print_string("\r\n");
 
     if (LittleFS.exists("format$$$"))
     {
@@ -253,6 +254,7 @@ static void setup_wifi()
         bastos_save("config$$$");
     }
     bastos_prog_new();
+    bastos_send_keys("bastos\n", 7);
     return;
 
 config_new:

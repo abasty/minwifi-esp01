@@ -81,6 +81,7 @@ peek
 poke
 usr
 eval
+bastos
 EOF
 
 # Do not sort to preserve save/load compatibility

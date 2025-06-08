@@ -69,4 +69,5 @@ static const char *keywords =
     "POK""\xc5"
     "US""\xd2"
     "EVA""\xcc"
+    "BASTO""\xd3"
 ;

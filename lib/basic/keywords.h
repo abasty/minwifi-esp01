@@ -69,3 +69,4 @@
 #define TOKEN_KEYWORD_POKE ((uint8_t) (67 | 0b10000000))
 #define TOKEN_KEYWORD_USR ((uint8_t) (68 | 0b10000000))
 #define TOKEN_KEYWORD_EVAL ((uint8_t) (69 | 0b10000000))
+#define TOKEN_KEYWORD_BASTOS ((uint8_t) (70 | 0b10000000))

@@ -15,10 +15,10 @@ téléchargement s'effectue correctement même s'il se termine en erreur.
 ## Code commun
 
 Après un reset sur l'ESP :
-* Bannière BASTOS
-* Connexion WiFi, affichage IP
-* Connexion à un site par défaut ? (3615)
-* AUTOEXEC ?
+* [x] Bannière BASTOS
+* [ ] Connexion WiFi, affichage IP
+* [ ] Connexion à un site par défaut ? (3615)
+* [ ] AUTOEXEC ?
 
 ## Intégration SONOFF
 

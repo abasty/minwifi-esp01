@@ -105,6 +105,7 @@ uint8_t instr0[] = {
     TOKEN_KEYWORD_FAST,
     TOKEN_KEYWORD_SLOW,
     TOKEN_KEYWORD_FREE,
+    TOKEN_KEYWORD_BASTOS,
     0,
 };
 
@@ -1139,7 +1140,7 @@ static void eval_cont()
 
 static void eval_free()
 {
-    bio->print_string ("       sys  prog  vars  free\r\n");
+    bio->print_string("       sys  prog  vars  free\r\n");
     bio->print_string("l/v:       ");
     bio->print_integer("%5d ", bmem_line_count());
     bio->print_integer("%5d ", bmem_var_count());
@@ -1148,6 +1149,16 @@ static void eval_free()
     bio->print_integer("%5d ", bmem->prog_end - bmem->prog_start);
     bio->print_integer("%5d ", bmem->vars_end - bmem->vars_start);
     bio->print_integer("%5d\r\n", bmem->vars_start - bmem->strings_end);
+}
+
+static void eval_bastos()
+{
+    bio->print_string("\x1f\x40\x41" CLEOL CLS);
+    bio->print_string(" BASTOS v1.0 16K microcontroller\r\n");
+    bio->print_string(" Basic for Terminal Operating System\r\n");
+    bio->print_string(" (c) 2024-2025 ABa\r\n");
+    bio->print_integer(" %d free\r\n", bmem->vars_start - bmem->strings_end);
+    bio->print_string("\r\nReady\r\n");
 }
 
 static bool eval_inputting()
@@ -1402,6 +1413,11 @@ EVAL:
     if (instr == TOKEN_KEYWORD_FREE)
     {
         eval_free();
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_BASTOS)
+    {
+        eval_bastos();
         return true;
     }
     return false;
