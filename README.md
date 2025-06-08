@@ -10,7 +10,7 @@ téléchargement s'effectue correctement même s'il se termine en erreur.
 
 # TODO
 
-* [ ] **Remettre en 1200-7E1 pas 115200**
+* [x] **Remettre en 1200-7E1 pas 115200**
 
 ## Code commun
 
@@ -31,8 +31,8 @@ Après un reset sur l'ESP :
 
 ## Interface PC / Émulateur
 
-* [ ] Doit être intégré dans l'émulateur (ouvrir port série au lieu de network)
-* [ ] Plus de différence VT100 => on utilise l'émulateur pour se connecter au
+* [x] Doit être intégré dans l'émulateur (ouvrir port série au lieu de network)
+* [x] Plus de différence VT100 => on utilise l'émulateur pour se connecter au
   SONOFF ou à la carte de dev ESP01-S
 
 ## Serveurs
@@ -64,6 +64,7 @@ Doivent être en C pour être intégrés à minwifi.
   toujours en majuscules sur disque, pour faire plus rétro.
 * [ ] PAUSE
 * [ ] TAB
+* [ ] Autres commandes Minitel (AI, AN, REP, etc, voir MIN)
 * [ ] PLOT / UNPLOT / TEST ?
   * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
   * [ ] Minitel, semi graphique
