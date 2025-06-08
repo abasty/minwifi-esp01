@@ -185,8 +185,7 @@ static void serial_flush()
 static void setup_serial()
 {
 #ifdef MINITEL
-    // Serial.begin(1200, SERIAL_7E1);
-    Serial.begin(115200);
+    Serial.begin(1200, SERIAL_7E1);
     serial_flush();
     delay(1000);
     Serial.print(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU CLS);
