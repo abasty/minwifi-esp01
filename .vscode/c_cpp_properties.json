@@ -10,7 +10,6 @@
             "includePath": [
                 "/home/alain/Projects/minitel/minwifi-esp01/include",
                 "/home/alain/Projects/minitel/minwifi-esp01/src",
-                "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/LittleFS/src",
                 "/home/alain/Projects/minitel/minwifi-esp01/lib/basic",
                 "/home/alain/Projects/minitel/minwifi-esp01/.pio/libdeps/esp01_1m_nodecmu/WebSockets/src",
                 "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/Ethernet/src",
@@ -39,6 +38,7 @@
                 "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/FSTools",
                 "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/GDBStub/src",
                 "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/I2S/src",
+                "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/LittleFS/src",
                 "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/Netdump/src",
                 "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/SD/src",
                 "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/SDFS/src",
@@ -61,7 +61,6 @@
                 "path": [
                     "/home/alain/Projects/minitel/minwifi-esp01/include",
                     "/home/alain/Projects/minitel/minwifi-esp01/src",
-                    "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/LittleFS/src",
                     "/home/alain/Projects/minitel/minwifi-esp01/lib/basic",
                     "/home/alain/Projects/minitel/minwifi-esp01/.pio/libdeps/esp01_1m_nodecmu/WebSockets/src",
                     "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/Ethernet/src",
@@ -90,6 +89,7 @@
                     "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/FSTools",
                     "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/GDBStub/src",
                     "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/I2S/src",
+                    "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/LittleFS/src",
                     "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/Netdump/src",
                     "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/SD/src",
                     "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/SDFS/src",

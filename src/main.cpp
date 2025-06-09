@@ -26,7 +26,7 @@
 
 #include <ESP8266WiFi.h>
 #include <WebSocketsClient.h>
-#include <LittleFS.h>
+#include <FS.h>
 
 #ifdef MINITEL
 #include "tty-minitel.h"
@@ -78,7 +78,7 @@ static inline int bopen(const char *pathname, int flags)
     {
         access = "w+";
     }
-    bastos_file0 = LittleFS.open(pathname, access);
+    bastos_file0 = SPIFFS.open(pathname, access);
     if (!bastos_file0)
         return -1;
     return 0;
@@ -103,7 +103,7 @@ static inline int bread(int fd, void *buf, int count)
 static inline void bcat()
 {
     print_string("\r\nDrive: A\r\n\r\n");
-    Dir dir = LittleFS.openDir("/");
+    Dir dir = SPIFFS.openDir("");
     while (dir.next())
     {
         uint8_t len = strlen(dir.fileName().c_str());
@@ -113,13 +113,13 @@ static inline void bcat()
         print_integer("%u\r\n", dir.fileSize());
     }
     FSInfo info;
-    LittleFS.info(info);
+    SPIFFS.info(info);
     print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (info.totalBytes - info.usedBytes) / 1024);
 }
 
 static inline int berase(const char *pathname)
 {
-    bool ret = LittleFS.remove(pathname);
+    bool ret = SPIFFS.remove(pathname);
     if (ret)
         return 0;
     return -1;
@@ -245,11 +245,11 @@ static void setup_wifi()
     // Serial.print(WiFi.localIP());
     // print_string("\r\n");
 
-    if (LittleFS.exists("format$$$"))
+    if (SPIFFS.exists("format$$$"))
     {
-        LittleFS.end();
-        LittleFS.format();
-        LittleFS.begin();
+        SPIFFS.end();
+        SPIFFS.format();
+        SPIFFS.begin();
         bastos_save("config$$$");
     }
     bastos_prog_new();
@@ -277,7 +277,7 @@ void setup()
     setup_serial();
 
     // Setup file system
-    LittleFS.begin();
+    SPIFFS.begin();
     bastos_init(&io);
 
     // Setup WiFi
