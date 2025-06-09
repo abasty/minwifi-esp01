@@ -1,21 +1,15 @@
-# Travail avec la carte de dev
-
-Pour tavailler avec la carte de dev, utiliser la _target_ `esp01_1m_nodecmu`.
-Lorsqu'on _upload_ en local, que ce soit le _firmware_ ou le _file system_, il
-faut penser à arrêter le _monitor_ et l'émulateur s'ils sont connectés par
-_serial_.
-
-Pour le _file system_, les fichiers doivent être dans le répertoire `data`. Le
-téléchargement s'effectue correctement même s'il se termine en erreur.
-
 # TODO
 
-* [x] **Remettre en 1200-7E1 pas 115200**
+* [ ] Partition 512/512
+* [ ] Revoir la machine d'état boot, connexion WiFi, Basic, Connexion à un site
+  distant. Tout intégrer au BASIC ? Config / Autoexec
+* [ ] Possibilité
+* [ ] Manuel utilisateur BASTOS (à commencer, à l'ancienne)
 
 ## Code commun
 
-Après un reset sur l'ESP :
-* [x] Bannière BASTOS
+* [x] Remettre en 1200-7E1 pas 115200
+* [x] Après un reset sur l'ESP : Bannière BASTOS
 * [ ] Connexion WiFi, affichage IP
 * [ ] Connexion à un site par défaut ? (3615)
 * [ ] AUTOEXEC ?
@@ -25,7 +19,7 @@ Après un reset sur l'ESP :
 * [ ] Gérer le bouton du Sonoff : ON / OFF Minitel + RESET
 * [ ] Gestion télérupteur
 * [ ] Gestion Led
-* [ ] À priori, retirer OTA
+* [x] À priori, retirer OTA
 * [ ] Voir si on peut récupérer de la place pour le disque et gérer les
   répertoires (genre 512Ko prog / 512Ko LittleFS (128 fichiers))
 
@@ -58,6 +52,8 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Basic
 
+* [ ] Variables WiFi dans fichier invisible par CAT, let, load vars, save vars
+  et init Wifi
 * [ ] MODE, MINITEL, TELNET, CONNECT <url>
 * [ ] SAVEVARS
 * [ ] SAVE, LOAD : pouvoir faire du .BAS et du BST. Majuscules / Minucules :
@@ -89,7 +85,7 @@ Doivent être en C pour être intégrés à minwifi.
   like param) => static / extern
 * [ ] Dans `test` : pouvoir lire un fichier `.bas` sur la ligne d'entrée et
   l'envoyer à `bastos_send_keys`. Ce serait bien aussi de pouvoir construire un
-  disque à distance (pour l'envoyer par OTA ou le falsher directement)
+  disque à distance
 * [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
   * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$", sauf avec cat
     hidden (ou cath)
@@ -99,7 +95,7 @@ Doivent être en C pour être intégrés à minwifi.
   * [ ] `Error 1` quand on se logue : utiliser `nc` pas telnet
   * [ ] Pouvoir sauvegarder uniquement les variables (config manager, "SAVE VARS")
   * [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
-* [ ] **OPTIMISATIONS** (valable aussi pour la version OTA only)
+* [ ] **OPTIMISATIONS**
   * [ ] Optimisation accès tableau / variable (factorisation number / string, name)
 
 # Done
@@ -121,12 +117,8 @@ Doivent être en C pour être intégrés à minwifi.
 * [x] SAVE / LOAD vars
 * [x] Ajouter FS sur target ESP-01
 * [x] Ajouter CAT, ERASE
-* [x] Variables WiFi dans fichier invisible par CAT, version limitée avec juste
-  OTA, let, load vars, save vars et init Wifi ()
 * [x] Minimal embedded config manager
-* [x] On ne peut pas uploader la flash par OTA quand on n'a pas encore la config
-  WiFi => config manager minimal dans le code comme fait aujourd'hui.
-  ~~Uploader le config manager  directement sur la flash par OTA~~
+* [x] Config manager minimal dans le codeOTA
 * [x] Ajouter "RESET"
 * [x] AT, INK, PAPER, CLS
 * [x] Toutes les fonctions qui produisent des codes de commandes => fonctions
@@ -146,7 +138,7 @@ Doivent être en C pour être intégrés à minwifi.
 * [x] Tableaux (DIM)
 * [x] Slice on left value
 * [x] INKEY$
-* [ ] **OPTIMISATIONS** (valable aussi pour la version OTA only)
+* [ ] **OPTIMISATIONS**
   * [x] Optim tout dans le même .c pour les static
   * [x] Mem : bloc pour prog, bloc pour vars, que des listes (avec ptr/index sur
         16 bits),
@@ -166,56 +158,7 @@ Doivent être en C pour être intégrés à minwifi.
   * [x] Unifier FFI (bio.*) : un genre de callback fourre tout à la `ioctl` ?
   * [x] Versions de platform @ 3.2.0 et xtens8266 au 220621
 
-# Versions pour optim
-
-```
-Resolving minwifi_ota dependencies...
-Platform espressif8266 @ 3.2.0 (required: espressif8266 @ 3.2.0)
-├── framework-arduinoespressif8266 @ 3.30002.0 (required: platformio/framework-arduinoespressif8266 @ ~3.30002.0)
-├── tool-esptool @ 1.413.0 (required: platformio/tool-esptool @ <2)
-├── tool-esptoolpy @ 1.30000.201119 (required: platformio/tool-esptoolpy @ ~1.30000.0)
-├── tool-mklittlefs @ 1.203.210628 (required: platformio/tool-mklittlefs @ ~1.203.0)
-├── tool-mkspiffs @ 1.200.0 (required: platformio/tool-mkspiffs @ ~1.200.0)
-└── toolchain-xtensa @ 2.100300.220621 (required: platformio/toolchain-xtensa @ ~2.100300.0)
-
-Libraries
-└── WebSockets @ 2.4.1 (required: links2004/WebSockets @ ^2.3.7)
-```
-
-# Liens
-
-## 8266 / 8285
-
-* Flash : <https://nodemcu.readthedocs.io/en/latest/flash/>
-* 8266 / 8285 diff + flash + example : <https://itead.cc/diy-kits-guides/using-esp8266-esp8285-to-blink-an-led/#:~:text=Differences%20between%20ESP8285%20and%20ESP8266&text=ESP8285%20integrates%201MB%20Flash%20in,work%20even%20after%20successfully%20download.>
-
-## ZX
-
-* <http://problemkaputt.de/zx.htm>
-* ZX81 memory map : <https://problemkaputt.de/zxdocs.htm#zx80zx81>
-* ZX81 memory map : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/chap27.html>
-* ZX emulator : <https://fuse-emulator.sourceforge.net/>
-* Basic ZX81 : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/appxc.html>
-* Sinclair Basic : <https://en.wikipedia.org/wiki/Sinclair_BASIC>
-* Prog spectrum à porter sur zx81 : https://zxbasic.readthedocs.io/en/docs/examples/snake.bas/
-
-## VT100
-
-* Codes VT100 : <https://espterm.github.io/docs/VT100%20escape%20codes.html>
-
-## Minitel
-
-* <https://minitel.cquest.org/miedit-page.html>, <https://medium.com/@cq94/computel-de-retour-1340d00ea79e>
-* <https://www.museeminitel.fr/>
-* <https://www.minitel.org/>
-* <http://pficheux.free.fr/xtel/>
-* <https://forum.museeminitel.fr/t/minitel-esp32-carte-peri-informatique-wifi-ble/711/42>
-* <https://www.tindie.com/products/iodeo/minitel-esp32-dev-board/>
-* Code minitel : <http://millevaches.hydraule.org/info/minitel/specs/codes.htm>
-* Python minitel avec fonctions et code :
-  <https://github.com/Zigazou/PyMinitel/blob/master/minitel/Minitel.py>
-
-# Hardware
+# Procédures
 
 ## Prise péri informatique
 
@@ -291,81 +234,100 @@ board_build.filesystem = littlefs
 >
 > You can open the Serial Monitor for information regarding your connection.
 
-
 ## Connexion Minitel
 
 ![Liaison sonoff minitel](sonoff-minitel.jpg)
 
-# Target PlatformIO
+## Travail avec Minterm
 
-* `[env:minwifi]` : À redéfinir, devra être le firmware_ota_only pour le Sonoff
-  branché sur FTDI. À utiliser uniquement la 1ère fois pour reflasher le sonoff
-  où quand OTA n'est plus accessible.
+TODO: Serveur BASTOS (`bastos-server.sh`)
 
-* `[env:minwifi_ota]` : Le firmware complet pour minitel uniquement. OTA ne
-  permet pas de recharger ce même firmware. Transmis par OTA step 1.
+## Travail avec la carte de dev
 
-* `[env:minwifi_ota_only]` : Le firmware avec juste OTA sans basic. À utiliser
-  comme step 1 quand le firmware complet est trop gros. Transmis par OTA.
+`[env:esp01_1m_nodecmu]` : Un firmware complet pour un ESP01s branché
+directement sur un FTDI / programmateur. Identique au firmware sonoff, tout est
+transmis par USB Serial. Il doit être utilisé avec `minterm`. Lorsqu'on _upload_
+en local, que ce soit le _firmware_ ou le _file system_, il faut penser à
+arrêter le _monitor_ et l'émulateur s'ils sont connectés par _serial_. Pour le
+_file system_, les fichiers doivent être dans le répertoire `data`. Le
+téléchargement s'effectue correctement même s'il se termine en erreur.
 
-* `[env:esp01_1m]` : Un firmware complet pour un ESP01s branché directement un
-  FTDI / programmateur. Il est transmis par USB Serial.
+## Travail avec le Sonoff
 
+`[env:sonoff]` : Un firmware complet pour un sonoff. Pour la programmation,
+l'interface série TTL du Sonoff doit être reliée par un FTDI / USB Serial au PC.
+Pour le test, on peut utiliser `minterm`. En exploitation il est relié à la
+prise péri-informatique d'un Minitel.
 
-# Style C
+## Style C
 
 ```
 $ astyle --style=1tbs -s4 src/*
 ```
 
-# OTA
-
-## Mise à jour du firmware
-
-Procédure qui ne marche pas :
-
-* Flash par USB serial => SW reboot de l'ESP
-* Après le reboot => FOTA
-
-Il faut **absolument** faire un HW reset de l'ESP :
-
-* Flash par USB serial => SW reboot de l'ESP
-* Débrancher / Rebrancher l'ESP => HW reboot
-* FOTA fonctionne
-
-## Mise à jour du filesystem
-
-Il faut fixer "Upload Filesystem Image OTA" :
-<https://github.com/platformio/platform-espressif8266/issues/263>
-
-Appliquer le patch sur :
-`/home/alain/.platformio/platforms/espressif8266/builder/main.py`
-
-```python
- 311  if "uploadfsota" in COMMAND_LINE_TARGETS:
-```
-
-# Shell sur port TCP 23
-
-On peut se connecter sur un shell distant de la façon suivante :
+## Versions pour optim
 
 ```
-$ stty -echo cbreak && nc esp-minitel.local 23
+Resolving minwifi_ota dependencies...
+Platform espressif8266 @ 3.2.0 (required: espressif8266 @ 3.2.0)
+├── framework-arduinoespressif8266 @ 3.30002.0 (required: platformio/framework-arduinoespressif8266 @ ~3.30002.0)
+├── tool-esptool @ 1.413.0 (required: platformio/tool-esptool @ <2)
+├── tool-esptoolpy @ 1.30000.201119 (required: platformio/tool-esptoolpy @ ~1.30000.0)
+├── tool-mklittlefs @ 1.203.210628 (required: platformio/tool-mklittlefs @ ~1.203.0)
+├── tool-mkspiffs @ 1.200.0 (required: platformio/tool-mkspiffs @ ~1.200.0)
+└── toolchain-xtensa @ 2.100300.220621 (required: platformio/toolchain-xtensa @ ~2.100300.0)
+
+Libraries
+└── WebSockets @ 2.4.1 (required: links2004/WebSockets @ ^2.3.7)
 ```
 
-Lorsqu'on sort de `nc` avec "Ctrl + C" on rétablit l'echo avec `stty sane`.
+## Pour l'article
 
-# TCP Minitel
+* pio dans vscode (menus)
+* sinon il faut avoir pio en ligne de commande : `source
+  ~/.platformio/penv/bin/activate`
 
-Lorsque une connexion WiFi existe avec un serveur, l'ESP passe en mode "Minitel" :
-tout ce qui arrive sur `Serial` passe sur la _socket_ et inversement.
+```
+$ pio run --list-targets
+$ pio device monitor
+$ pio run -e minwifi
+$ pio run -e minwifi -t clean
+```
 
-Pour tester la connexion, il suffit de lancer un `nc -l 2000` par exemple et
-configurer l'ESP avec `configopt` puis `<IP du serveur>` et `<port du serveur>`.
+# Liens
 
-Pour repasser en mode commande, il suffit de sortir de `nc`.
+## 8266 / 8285
 
-# WebSocket Minitel
+* Flash : <https://nodemcu.readthedocs.io/en/latest/flash/>
+* 8266 / 8285 diff + flash + example : <https://itead.cc/diy-kits-guides/using-esp8266-esp8285-to-blink-an-led/#:~:text=Differences%20between%20ESP8285%20and%20ESP8266&text=ESP8285%20integrates%201MB%20Flash%20in,work%20even%20after%20successfully%20download.>
+
+## ZX
+
+* <http://problemkaputt.de/zx.htm>
+* ZX81 memory map : <https://problemkaputt.de/zxdocs.htm#zx80zx81>
+* ZX81 memory map : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/chap27.html>
+* ZX emulator : <https://fuse-emulator.sourceforge.net/>
+* Basic ZX81 : <http://otremolet.free.fr/otnet/otzx/zx81/basic-progr/appxc.html>
+* Sinclair Basic : <https://en.wikipedia.org/wiki/Sinclair_BASIC>
+* Prog spectrum à porter sur zx81 : https://zxbasic.readthedocs.io/en/docs/examples/snake.bas/
+
+## VT100
+
+* Codes VT100 : <https://espterm.github.io/docs/VT100%20escape%20codes.html>
+
+## Minitel
+
+* <https://minitel.cquest.org/miedit-page.html>, <https://medium.com/@cq94/computel-de-retour-1340d00ea79e>
+* <https://www.museeminitel.fr/>
+* <https://www.minitel.org/>
+* <http://pficheux.free.fr/xtel/>
+* <https://forum.museeminitel.fr/t/minitel-esp32-carte-peri-informatique-wifi-ble/711/42>
+* <https://www.tindie.com/products/iodeo/minitel-esp32-dev-board/>
+* Code minitel : <http://millevaches.hydraule.org/info/minitel/specs/codes.htm>
+* Python minitel avec fonctions et code :
+  <https://github.com/Zigazou/PyMinitel/blob/master/minitel/Minitel.py>
+
+## WebSocket Minitel
 
 * Web sockets et liens vers services sur IP :
 <https://cq94.medium.com/retour-du-minitel-sur-le-web-8b8693ae8c6a>
@@ -388,73 +350,35 @@ $ python3 -m websockets "ws://3611.re/ws"
 
 Donc il suffit d'utiliser la lib WebSocket pour ESP8266 et le tour est joué.
 
-# Database de service minitel
+## Database de service minitel
 
 * À voir avec minitel.org ou cq94.
 
-# Pour l'article
+# Deprecated
 
-* pio dans vscode (menus)
-* sinon il faut avoir pio en ligne de commande : `source
-  ~/.platformio/penv/bin/activate`
+## OTA
 
+### Mise à jour du firmware
+
+Procédure qui ne marche pas :
+
+* Flash par USB serial => SW reboot de l'ESP
+* Après le reboot => FOTA
+
+Il faut **absolument** faire un HW reset de l'ESP :
+
+* Flash par USB serial => SW reboot de l'ESP
+* Débrancher / Rebrancher l'ESP => HW reboot
+* FOTA fonctionne
+
+### Mise à jour du filesystem
+
+Il faut fixer "Upload Filesystem Image OTA" :
+<https://github.com/platformio/platform-espressif8266/issues/263>
+
+Appliquer le patch sur :
+`/home/alain/.platformio/platforms/espressif8266/builder/main.py`
+
+```python
+ 311  if "uploadfsota" in COMMAND_LINE_TARGETS:
 ```
-$ pio run --list-targets
-$ pio device monitor
-$ pio run -e minwifi
-$ pio run -e minwifi -t clean
-```
-
-# Basic ZX81 like
-
-## Tokens
-
-## Valeurs
-
-* réels sur 4 octets : Utiliser IEEE_754 : <https://fr.wikipedia.org/wiki/IEEE_754>
-* string
-
-## Expressions
-
-## Variables
-
-### Déclaration et réservation mémoire
-
-* Symbole
-
-Un `$` est accepté à la fin pour signifier "string". Les symboles sont stockés
-dans un arbre binaire, indexé par la valeur du symbole.
-
-* Valeur
-
-Pour les chaines de caractères, la valeur associée au symbole est un pointeur.
-Pour les valeurs nombre (float), c'est la valeur en forme token (le token + la
-valeur tokenisée).
-
-* Tableaux
-
-Stocker les dimensions et le pointeur, vers la zone mémoire allouée avec calloc.
-4  dimensions max ?.
-
-## Ligne de prog
-
-Les lignes sont stockées dans un arbre binaire indexé par le n0 de ligne (uint16_t).
-
-## Sauvegarde
-
-Les lignes de prog et les variables sont sauvegardées. Un parcours GRD suffit
-pour sérialiser.
-
-Pour le prog, chaque ligne est sauvegardée selon le schéma suivant :
-
-* n° de ligne (uint16_t)
-* longueur de la ligne (uint16_t)
-* ligne tokenizée
-
-Visualiser un fichier sauvegardé :
-
-```
-$ hexdump -C toto
-```
-
-## Mémoire
