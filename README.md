@@ -1,29 +1,27 @@
 # TODO
 
-* [ ] Partition 512/512
-* [ ] Revoir la machine d'état boot, connexion WiFi, Basic, Connexion à un site
-  distant. Tout intégrer au BASIC ? Config / Autoexec
-* [ ] Possibilité
-* [ ] Manuel utilisateur BASTOS (à commencer, à l'ancienne)
-
 ## Code commun
 
+* [x] Partition 512/512
+* [x] Retirer OTA
+* [x] Voir si on peut récupérer de la place pour le disque et gérer les
+  répertoires (genre 512Ko prog / 512Ko LittleFS (128 fichiers))
 * [x] Remettre en 1200-7E1 pas 115200
 * [x] Après un reset sur l'ESP : Bannière BASTOS
 * [ ] repasser en SPIFS
+* [ ] Revoir la machine d'état boot, connexion WiFi, Basic, Connexion à un site
+  distant. Tout intégrer au BASIC ? Config / Autoexec
+  * [ ] Connexion WiFi, affichage IP
+  * [ ] Connexion à un site par défaut ? (3615)
+  * [ ] AUTOEXEC ?
+* [ ] Manuel utilisateur BASTOS (à commencer, à l'ancienne)
 * [ ] Commandes FS : <https://www.overtakenbyevents.com/amstrad-cpc-amsdos-commands/>
-* [ ] Connexion WiFi, affichage IP
-* [ ] Connexion à un site par défaut ? (3615)
-* [ ] AUTOEXEC ?
 
 ## Intégration SONOFF
 
 * [ ] Gérer le bouton du Sonoff : ON / OFF Minitel + RESET
 * [ ] Gestion télérupteur
 * [ ] Gestion Led
-* [x] À priori, retirer OTA
-* [ ] Voir si on peut récupérer de la place pour le disque et gérer les
-  répertoires (genre 512Ko prog / 512Ko LittleFS (128 fichiers))
 
 ## Interface PC / Émulateur
 
