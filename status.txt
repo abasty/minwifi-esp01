@@ -315,3 +315,8 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [====      ]  38.8% (used 31808 bytes from 81920 bytes)
 Flash: [=====     ]  45.7% (used 438259 bytes from 958448 bytes)
 ---
+54c5edf Updated ESP flash partitions, upgraded framework version (Full clean, erase flash,  dependencies update, build, upload)
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  39.0% (used 31944 bytes from 81920 bytes)
+Flash: [========= ]  88.1% (used 440283 bytes from 499696 bytes)
+---

@@ -1154,10 +1154,10 @@ static void eval_free()
 static void eval_bastos()
 {
     bio->print_string("\x1f\x40\x41" CLEOL CLS);
-    bio->print_string(" BASTOS v1.0 16K microcontroller\r\n");
-    bio->print_string(" Basic for Terminal Operating System\r\n");
-    bio->print_string(" (c) 2024-2025 ABa\r\n");
-    bio->print_integer(" %d free\r\n", bmem->vars_start - bmem->strings_end);
+    bio->print_string(" BASTOS 16K Microcontroller (v1)\r\n");
+    bio->print_string(" Basic for Terminal Operating System\r\n\r\n");
+    bio->print_string(" (c) 2024-2025 ABa\r\n\r\n");
+    bio->print_integer(" %d bytes free\r\n", bmem->vars_start - bmem->strings_end);
     bio->print_string("\r\nReady\r\n");
 }
 
