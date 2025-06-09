@@ -10,6 +10,8 @@
 
 * [x] Remettre en 1200-7E1 pas 115200
 * [x] Après un reset sur l'ESP : Bannière BASTOS
+* [ ] repasser en SPIFS
+* [ ] Commandes FS : <https://www.overtakenbyevents.com/amstrad-cpc-amsdos-commands/>
 * [ ] Connexion WiFi, affichage IP
 * [ ] Connexion à un site par défaut ? (3615)
 * [ ] AUTOEXEC ?
@@ -237,6 +239,13 @@ board_build.filesystem = littlefs
 ## Connexion Minitel
 
 ![Liaison sonoff minitel](sonoff-minitel.jpg)
+
+## Mise à jour framework
+
+* Erase flash
+* Full Clean
+* Dependencies / Update
+* Build
 
 ## Travail avec Minterm
 
