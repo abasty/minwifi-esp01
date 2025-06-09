@@ -102,6 +102,7 @@ static inline int bread(int fd, void *buf, int count)
 
 static inline void bcat()
 {
+    print_string("\r\nDrive: A\r\n\r\n");
     Dir dir = LittleFS.openDir("/");
     while (dir.next())
     {
@@ -113,8 +114,7 @@ static inline void bcat()
     }
     FSInfo info;
     LittleFS.info(info);
-    print_integer("Bytes: %u/", info.usedBytes);
-    print_integer("%u\r\n", info.totalBytes);
+    print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (info.totalBytes - info.usedBytes) / 1024);
 }
 
 static inline int berase(const char *pathname)

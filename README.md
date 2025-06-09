@@ -336,6 +336,10 @@ $ pio run -e minwifi -t clean
 * Python minitel avec fonctions et code :
   <https://github.com/Zigazou/PyMinitel/blob/master/minitel/Minitel.py>
 
+## Telestrat
+
+* <https://library.defence-force.org/books/content/telestrat/manuel_des_applications_telematiques.pdf>
+
 ## WebSocket Minitel
 
 * Web sockets et liens vers services sur IP :
