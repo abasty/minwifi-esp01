@@ -91,6 +91,7 @@ static inline char *name_of_var(var_t *var)
 }
 
 void bastos_init(bastos_io_t *_io);
+// TODO: Add a bastos_done() function to free memory and close files
 
 size_t bastos_send_keys(const char *keys, size_t n);
 void bastos_loop();
@@ -101,6 +102,7 @@ int8_t bastos_save(const char *name);
 int8_t bastos_load(const char *name);
 
 void bastos_prog_new();
+// TODO: Accept string variable name with ending '$'
 var_t *bastos_var_get(const char *name);
 
 // void bmem_test();

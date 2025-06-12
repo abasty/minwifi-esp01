@@ -1153,6 +1153,9 @@ static void eval_free()
 
 static void eval_bastos()
 {
+    // Mode rouleau ?
+    // TODO: printf("%s", CON P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU CLS);
+
     bio->print_string("\x1f\x40\x41" CLEOL CLS);
     bio->print_string(" BASTOS 16K Microcontroller (v1)\r\n");
     bio->print_string(" Basic for Terminal Operating System\r\n\r\n");

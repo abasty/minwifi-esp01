@@ -153,6 +153,17 @@ static void bcat()
     fflush(stdout);
 }
 
+static void breset()
+{
+    // TODO: Appeler os_bootstrap après un bastos_done() On ne peut pas faire ça
+    // ici car on est appelé par BASTOS et on retourne à BASTOS
+
+    // Voir comment on peut faire le done dans BASTOS puis mettre un flag
+    // "reset" à true dans bastos_io_t
+
+    // La programme principal doit tester ce flag et faire le reset approprié
+}
+
 int berase(const char *pathname)
 {
     return unlink(pathname);
@@ -167,7 +178,7 @@ static inline void bio_f0(uint8_t fn)
     }
     if (fn == TOKEN_KEYWORD_RESET)
     {
-        //breset();
+        breset();
         return;
     }
     if (fn == TOKEN_KEYWORD_FAST || fn == TOKEN_KEYWORD_SLOW)
