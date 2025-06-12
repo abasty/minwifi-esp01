@@ -170,6 +170,13 @@ static inline void bio_f0(uint8_t fn)
         //breset();
         return;
     }
+    if (fn == TOKEN_KEYWORD_FAST || fn == TOKEN_KEYWORD_SLOW)
+    {
+#ifdef MINITEL
+        printf("%s", fn == TOKEN_KEYWORD_FAST ? P_PRISE_4800 : P_PRISE_1200);
+        fflush(stdout);
+#endif
+    }
 }
 
 bastos_io_t io = {
