@@ -127,6 +127,7 @@ int bread(int fd, void *buf, int count)
 static void bcat()
 {
     off_t total = 0;
+    print_string("\r\nDrive: A\r\n\r\n");
     struct dirent **entry;
     int n = scandir(".", &entry, NULL, NULL);
     while (n--)
@@ -137,7 +138,7 @@ static void bcat()
             struct stat st;
             if (stat(path, &st) == -1)
                 continue;
-            total += st.st_size;
+            total += st.st_blocks * 512; // st_blocks is in 512-byte blocks
 
             uint8_t len = strlen(path);
             print_string(path);
@@ -148,8 +149,7 @@ static void bcat()
         free(entry[n]);
     }
     free(entry);
-    print_integer("Bytes: %ju/", total);
-    print_integer("%u\r\n", 65536);
+    print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (524288 - total) / 1024);
     fflush(stdout);
 }
 
@@ -175,16 +175,12 @@ static inline void bio_f0(uint8_t fn)
 bastos_io_t io = {
     .print_string = print_string,
     .print_float = print_float,
-
     .print_integer = print_integer,
     .bopen = bopen,
     .erase = berase,
-
     .bclose = bclose,
-
     .bwrite = bwrite,
     .bread = bread,
-
     .function0 = bio_f0,
 };
 
@@ -195,21 +191,11 @@ bastos_io_t io = {
     "5INPUT\"PASS: \",WSECRET$\n" \
     "6SAVE\"config$$$\"\n"
 
-int basic_main(int argc, char *argv[])
+void os_bootstrap()
 {
-    bool cont = true;
-    var_t *var = 0;
-    struct sigaction action = {0};
-
-    term_init();
-
-    action.sa_handler = &sigint_handler;
-    sigaction(SIGINT, &action, &old_action);
-
-    chdir("disk");
-
     bastos_init(&io);
-
+#if 0
+    var_t *var = 0;
     int err = bastos_load("config$$$");
     if (err != BERROR_NONE)
         goto after_config;
@@ -234,6 +220,25 @@ after_config:
         bastos_send_keys(config_prog, strlen(config_prog));
         bastos_send_keys("RUN\n", 4);
     }
+#endif
+    bastos_prog_new();
+    bastos_send_keys("bastos\n", 7);
+}
+
+int basic_main(int argc, char *argv[])
+{
+    bool cont = true;
+    struct sigaction action = {0};
+
+    term_init();
+
+    action.sa_handler = &sigint_handler;
+    sigaction(SIGINT, &action, &old_action);
+
+    chdir("disk");
+
+    // Initialize the Bastos system
+    os_bootstrap();
 
     bool fkey = false;
     while (cont)
