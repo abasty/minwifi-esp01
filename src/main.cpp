@@ -23,7 +23,6 @@
  * SOFTWARE.
  */
 
-
 #include <ESP8266WiFi.h>
 #include <WebSocketsClient.h>
 #include <LittleFS.h>
@@ -53,25 +52,34 @@ WebSocketsClient webSocket;
 bool _3611 = false;
 bool fkey = false;
 bool minitelMode;
+File bastos_file0;
 
-static inline int print_float(float f)
+uint8_t hal_get_key()
+{
+    if (Serial.available() <= 0)
+        return 0;
+
+    uint8_t key = 0;
+    size_t n = Serial.readBytes(&key, 1);
+    return n > 0 ? key : 0;
+}
+
+static inline int hal_print_float(float f)
 {
     return Serial.printf("%g", f);
 }
 
-static inline int print_string(const char *s)
+static inline int hal_print_string(const char *s)
 {
     return Serial.printf("%s", s);
 }
 
-static inline int print_integer(const char *format, int i)
+static inline int hal_print_integer(const char *format, int i)
 {
     return Serial.printf(format, i);
 }
 
-File bastos_file0;
-
-static inline int bopen(const char *pathname, int flags)
+static inline int hal_open(const char *pathname, int flags)
 {
     const char *access = "r";
     if (flags & B_CREAT)
@@ -84,40 +92,40 @@ static inline int bopen(const char *pathname, int flags)
     return 0;
 }
 
-static inline int bclose(int fd)
+static inline int hal_close(int fd)
 {
     bastos_file0.close();
     return 0;
 }
 
-static inline int bwrite(int fd, const void *buf, int count)
+static inline int hal_write(int fd, const void *buf, int count)
 {
-    return bastos_file0.write((const uint8_t *) buf, count);
+    return bastos_file0.write((const uint8_t *)buf, count);
 }
 
-static inline int bread(int fd, void *buf, int count)
+static inline int hal_read(int fd, void *buf, int count)
 {
-    return bastos_file0.read((uint8_t *) buf, count);
+    return bastos_file0.read((uint8_t *)buf, count);
 }
 
-static inline void bcat()
+static inline void hal_cat()
 {
-    print_string("\r\nDrive: A\r\n\r\n");
+    hal_print_string("\r\nDrive: A\r\n\r\n");
     Dir dir = LittleFS.openDir("/");
     while (dir.next())
     {
         uint8_t len = strlen(dir.fileName().c_str());
-        print_string(dir.fileName().c_str());
+        hal_print_string(dir.fileName().c_str());
         for (int i = 16 - len; i > 0; i--)
-            print_string(" ");
-        print_integer("%u\r\n", dir.fileSize());
+            hal_print_string(" ");
+        hal_print_integer("%u\r\n", dir.fileSize());
     }
     FSInfo info;
     LittleFS.info(info);
-    print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (info.totalBytes - info.usedBytes) / 1024);
+    hal_print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (info.totalBytes - info.usedBytes) / 1024);
 }
 
-static inline int berase(const char *pathname)
+static inline int hal_erase(const char *pathname)
 {
     bool ret = LittleFS.remove(pathname);
     if (ret)
@@ -125,31 +133,31 @@ static inline int berase(const char *pathname)
     return -1;
 }
 
-static inline void breset()
+static inline void hal_reset()
 {
 #ifdef MINITEL
-    Serial.print(P_ACK_OFF_PRISE P_PRISE_1200);
+    hal_print_string(P_ACK_OFF_PRISE P_PRISE_1200);
     delay(250);
 #endif
     ESP.restart();
 }
 
-static inline void bio_f0(uint8_t fn)
+static inline void hal_function(uint8_t fn)
 {
     if (fn == TOKEN_KEYWORD_CAT)
     {
-        bcat();
+        hal_cat();
         return;
     }
     if (fn == TOKEN_KEYWORD_RESET)
     {
-        breset();
+        hal_reset();
         return;
     }
     if (fn == TOKEN_KEYWORD_FAST || fn == TOKEN_KEYWORD_SLOW)
     {
 #ifdef MINITEL
-        Serial.print(fn == TOKEN_KEYWORD_FAST ? P_PRISE_4800 : P_PRISE_1200);
+        hal_print_string(fn == TOKEN_KEYWORD_FAST ? P_PRISE_4800 : P_PRISE_1200);
         delay(500);
         Serial.end();
         Serial.begin(fn == TOKEN_KEYWORD_FAST ? 4800 : 1200, SERIAL_7E1);
@@ -159,22 +167,23 @@ static inline void bio_f0(uint8_t fn)
 }
 
 bastos_io_t io = {
-    .print_string = print_string,
-    .print_float = print_float,
-    .print_integer = print_integer,
-    .bopen = bopen,
-    .bclose = bclose,
-    .bwrite = bwrite,
-    .bread = bread,
-    .erase = berase,
-    .function0 = bio_f0,
+    .print_string = hal_print_string,
+    .print_float = hal_print_float,
+    .print_integer = hal_print_integer,
+    .bopen = hal_open,
+    .bclose = hal_close,
+    .bwrite = hal_write,
+    .bread = hal_read,
+    .erase = hal_erase,
+    .function0 = hal_function,
 };
 
 static void serial_flush()
 {
     Serial.setTimeout(0);
     // Empty Serial buffer
-    while (Serial && Serial.available() > 0) {
+    while (Serial && Serial.available() > 0)
+    {
         uint8_t buffer[32];
         Serial.readBytes(buffer, 32);
     }
@@ -187,7 +196,7 @@ static void setup_serial()
     Serial.begin(1200, SERIAL_7E1);
     serial_flush();
     delay(1000);
-    Serial.print(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU CLS);
+    hal_print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU CLS);
 #else
     Serial.begin(115200);
     serial_flush();
@@ -195,12 +204,12 @@ static void setup_serial()
 #endif
 }
 
-#define config_prog \
-    "1CLS\n" \
+#define config_prog                   \
+    "1CLS\n"                          \
     "2PRINT\"* WiFi parameters *\"\n" \
-    "4INPUT\"SSID: \",WSSID$\n" \
-    "5INPUT\"PASS: \",WSECRET$\n" \
-    "6SAVE\"config$$$\"\n" \
+    "4INPUT\"SSID: \",WSSID$\n"       \
+    "5INPUT\"PASS: \",WSECRET$\n"     \
+    "6SAVE\"config$$$\"\n"            \
     "7RESET\n"
 
 static void setup_wifi()
@@ -213,7 +222,7 @@ static void setup_wifi()
     WiFi.persistent(false);
     WiFi.mode(WIFI_STA);
 
-    print_string(CLS " Connecting");
+    hal_print_string(CLS " Connecting");
 
     int err = bastos_load("config$$$");
     if (err != BERROR_NONE)
@@ -231,12 +240,13 @@ static void setup_wifi()
 
     WiFi.begin(wssid, wsecret);
 
-    while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000) {
+    while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000)
+    {
         delay(500);
-        print_string(".");
+        hal_print_string(".");
     }
 
-    print_string("\r" CLEOL);
+    hal_print_string("\r" CLEOL);
 
     if (WiFi.status() != WL_CONNECTED)
         goto config_run;
@@ -261,9 +271,87 @@ config_new:
     bastos_send_keys(config_prog, strlen(config_prog));
 
 config_run:
-    print_string("WiFi connection failed\r\n");
+    hal_print_string("WiFi connection failed\r\n");
     // TODO: Add a send_keys w/o edit / echo
     bastos_send_keys("RUN\n", 4);
+}
+
+uint8_t os_get_key()
+{
+    static bool fkey = false;
+    uint8_t key = hal_get_key();
+
+    if (key == 0x13)
+    {
+        // Function key pressed
+        fkey = true;
+        key = 0;
+    }
+    else
+    {
+        if (fkey)
+        {
+            if (key == 0x47)
+            {               // CORRECTION key
+                key = 0x7F; // Convert backspace to DEL
+            }
+            else if (key == 0x45)
+            {            // ANNULATION key
+                key = 3; // Convert to Ctrl+C
+            }
+            else
+            {               // ENVOI and other function keys
+                key = '\r'; // Convert to Enter
+            }
+            fkey = false;
+        }
+        else
+        {
+            if (key == 0x08)
+            {
+                key = 0x7F; // Convert backspace to DEL
+            }
+            else if (key == 0x1b)
+            {
+                key = 3; // Convert ESC to Ctrl+C
+            }
+        }
+    }
+    return key;
+}
+
+void os_bootstrap()
+{
+    bastos_init(&io);
+#if 0
+    var_t *var = 0;
+    int err = bastos_load("config$$$");
+    if (err != BERROR_NONE)
+        goto after_config;
+
+    print_string("Config file loaded.\r\n");
+
+    var = bastos_var_get("\021WSSID");
+    if (!var)
+        goto after_config;
+
+    var = bastos_var_get("\021WSECRET");
+    if (!var)
+        goto after_config;
+
+    print_string("Config vars OK.\r\n");
+
+after_config:
+    if (var == 0)
+    {
+        // No config file or vars, run the config program
+        bastos_prog_new();
+        bastos_send_keys(config_prog, strlen(config_prog));
+        bastos_send_keys("RUN\n", 4);
+    }
+#endif
+    bastos_prog_new();
+    bastos_send_keys("bastos\n", 7);
 }
 
 void setup()
@@ -271,36 +359,35 @@ void setup()
     // Setup sonoff pins
     pinMode(relayPin, OUTPUT);
     pinMode(ledPin, OUTPUT);
-    digitalWrite(relayPin, HIGH);   // On R2, light the red led (relay state)
-    digitalWrite(ledPin, HIGH);     // On R2, light the blue led (red + blue => purple)
+    digitalWrite(relayPin, HIGH); // On R2, light the red led (relay state)
+    digitalWrite(ledPin, HIGH);   // On R2, light the blue led (red + blue => purple)
 
     setup_serial();
 
     // Setup file system
     LittleFS.begin();
-    bastos_init(&io);
 
     // Setup WiFi
-    setup_wifi();
+    // setup_wifi();
 
-    // Cursor on
-    print_string(CON);
+    os_bootstrap();
 }
 
-void loop()
+void loop_connected()
 {
     // Forward Minitel server incoming data to serial output
-    if (tcpMinitelConnexion && tcpMinitelConnexion.available() > 0) {
+    if (tcpMinitelConnexion && tcpMinitelConnexion.available() > 0)
+    {
         // transparently forward bytes to serial
         uint8_t buffer[128];
         size_t n = tcpMinitelConnexion.read(buffer, 128);
         // conversion stream Videotex vers ANSI
         Serial.write(buffer, n);
     }
-
     // Handle Ws client
-    //if (webSocket.isConnected()) {
-    if (_3611) {
+    // if (webSocket.isConnected()) {
+    if (_3611)
+    {
         webSocket.loop();
     }
 
@@ -311,44 +398,20 @@ void loop()
     //     init_minitel(true);
     // }
 
-    // Handle Serial input
-    if (Serial && Serial.available() > 0) {
-        uint8_t key;
-        size_t n = Serial.readBytes(&key, 1);
-        // Serial.printf("%02x ", key);
-        if (n > 0) {
-            if (!_3611) {
-#ifdef MINITEL
-                if (key == 0x13) {
-                    fkey = true;
-                } else {
-                    if (fkey) {
-                        if (key == 0x47) { // CORRECTION
-                            key = 0x7F;
-                        } else if (key == 0x45) { // ANNULATION
-                            key = 3;
-                        } else { // ENVOI
-                            key = '\r';
-                        }
-                        fkey = false;
-                    }
-                    bastos_send_keys((char *)&key, 1);
-                }
-#else
-                if (key == 0x08) {
-                    key = 0x7F;
-                } else if (key == 0x1b) {
-                    key = 3;
-                }
-                bastos_send_keys((char *)&key, 1);
-#endif
-            } else {
-                // Minitel mode: Forward serial input to Minitel sever
-                // tcpMinitelConnexion.setNoDelay(true); // Disable nagle's algo.
-                // tcpMinitelConnexion.write((char *)&key, 1);
-                webSocket.sendTXT(key);
-            }
-        }
-    }
+    // Minitel mode: Forward serial input to Minitel sever
+    // tcpMinitelConnexion.setNoDelay(true); // Disable nagle's algo.
+    // tcpMinitelConnexion.write((char *)&key, 1);
+    // webSocket.sendTXT(key);
+}
+
+void loop()
+{
+    char key = os_get_key();
+    bastos_send_keys((char *)&key, key != 0 ? 1 : 0);
     bastos_loop();
+    if (bastos_is_reset())
+    {
+        bastos_done();
+        hal_reset();
+    }
 }

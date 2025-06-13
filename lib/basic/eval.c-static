@@ -1138,6 +1138,11 @@ static void eval_cont()
     bmem->bstate.running = bmem->bstate.pc != 0;
 }
 
+static void eval_reset()
+{
+    bmem->bstate.reset = true;
+}
+
 static void eval_free()
 {
     bio->print_string("       sys  prog  vars  free\r\n");
@@ -1153,15 +1158,13 @@ static void eval_free()
 
 static void eval_bastos()
 {
-    // Mode rouleau ?
-    // TODO: printf("%s", CON P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU CLS);
-
+    bio->print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU);
     bio->print_string("\x1f\x40\x41" CLEOL CLS);
     bio->print_string(" BASTOS 16K Microcontroller (v1)\r\n");
     bio->print_string(" Basic for Terminal Operating System\r\n\r\n");
     bio->print_string(" (c) 2024-2025 ABa\r\n\r\n");
     bio->print_integer(" %d bytes free\r\n", bmem->vars_start - bmem->strings_end);
-    bio->print_string("\r\nReady\r\n");
+    bio->print_string("\r\nReady\r\n" CON);
 }
 
 static bool eval_inputting()
@@ -1398,7 +1401,12 @@ EVAL:
         eval_new();
         return true;
     }
-    if (instr == TOKEN_KEYWORD_RESET || instr == TOKEN_KEYWORD_CAT || instr == TOKEN_KEYWORD_FAST || instr == TOKEN_KEYWORD_SLOW)
+    if (instr == TOKEN_KEYWORD_RESET)
+    {
+        eval_reset();
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_CAT || instr == TOKEN_KEYWORD_FAST || instr == TOKEN_KEYWORD_SLOW)
     {
         bio->function0(instr);
         return true;

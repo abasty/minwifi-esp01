@@ -47,13 +47,22 @@
 
 bastos_io_t *bio = 0;
 
-// bst_io_argv_t bastos_io_argv[4] = {0};
-// function0_t *function0_io = 0;
-
 void bastos_init(bastos_io_t *_io)
 {
     bio = _io;
     bmem_init(malloc(BASTOS_MEMORY_SIZE), BASTOS_MEMORY_SIZE);
+}
+
+void bastos_done()
+{
+    free(bmem);
+    bmem = 0;
+    bio = 0;
+}
+
+bool bastos_is_reset()
+{
+    return bmem == 0 || bmem->bstate.reset;
 }
 
 static void bastos_handle_ctrl_c()
@@ -331,10 +340,15 @@ void bastos_stop()
 
 void bastos_loop()
 {
-    // TODO: Implement RESET and return -1 (else return 0)
+    if (bmem->bstate.reset)
+        return;
+
     if (eval_running() && !eval_inputting())
     {
         eval_prog_next();
+        if (bmem->bstate.reset)
+            return;
+
         if (!eval_running())
         {
             bio->print_string("Ready\r\n");

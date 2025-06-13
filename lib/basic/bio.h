@@ -91,8 +91,10 @@ static inline char *name_of_var(var_t *var)
 }
 
 void bastos_init(bastos_io_t *_io);
-// TODO: Add a bastos_done() function to free memory and close files
+void bastos_done();
+bool bastos_is_reset();
 
+// TODO: manage a mode w/o echo
 size_t bastos_send_keys(const char *keys, size_t n);
 void bastos_loop();
 bool bastos_running();

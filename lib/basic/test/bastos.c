@@ -12,6 +12,7 @@
 #include <poll.h>
 #include <signal.h>
 #include <errno.h>
+#include <dirent.h>
 
 #ifdef MINITEL
 #include "tty-minitel.h"
@@ -19,6 +20,7 @@
 
 #include "bio.h"
 
+/* Low level management */
 struct sigaction old_action;
 struct termios old, new;
 
@@ -29,13 +31,6 @@ void term_init()
     new.c_lflag &= ~ICANON;
     new.c_lflag &= ~ECHO;
     tcsetattr(0, TCSANOW, &new);
-
-#ifdef MINITEL
-    printf("%s", CON P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU);
-    printf("\x1f\x40\x41" CLEOL CLS);
-    fflush(stdout);
-#endif
-
 }
 
 void term_done()
@@ -50,56 +45,52 @@ void sigint_handler(int sig_no)
     kill(0, SIGINT);
 }
 
-char getch()
+uint8_t hal_get_key()
 {
-    struct pollfd input[1] = {{fd: 0, events: POLLIN}};
-    char ch = 0;
+    struct pollfd input[1] = {{fd : 0, events : POLLIN}};
     int ret = poll(input, 1, 1);
-    if (ret == 1) {
-        // Input is available, read one character
-        int n = read(0, &ch, 1);
-        if (n == 0) {
-            // EOF reached, exit
-            fprintf(stderr, "EOF reached, exiting.\n");
-            exit(0);
-        } else if (n < 0) {
-            // An error occurred while reading
-            fprintf(stderr, "Error reading input: %s\n", strerror(errno));
-            exit(0);
-        }
-        return ch;
-    } else if (ret < 0) {
-        // An error occurred while polling
-        fprintf(stderr, "Error reading input: %s\n", strerror(errno));
-        exit(0);
-    } else {
-        // No input available (timeout)
-        return 0; // No input available
-    }
+
+    if (ret < 0)
+        goto err;
+
+    if (ret == 0)
+        return 0;
+
+    uint8_t ch = 0;
+    int n = read(0, (char *)&ch, 1);
+    if (n <= 0)
+        goto err;
+
+    return ch;
+
+err:
+    fprintf(stderr, "Error reading key\n");
+    term_done();
+    exit(0);
 }
 
-int print_float(float f)
+int hal_print_float(float f)
 {
     int n = printf("%g", f);
     fflush(stdout);
     return n;
 }
 
-int print_string(const char *s)
+int hal_print_string(const char *s)
 {
     int n = printf("%s", s);
     fflush(stdout);
     return n;
 }
 
-int print_integer(const char *format, int32_t i)
+int hal_print_integer(const char *format, int32_t i)
 {
     int n = printf(format, i);
     fflush(stdout);
     return n;
 }
 
-int bopen(const char *pathname, int flags)
+int hal_open(const char *pathname, int flags)
 {
     if ((flags & O_CREAT) != 0)
         return creat(pathname, 0644);
@@ -107,27 +98,25 @@ int bopen(const char *pathname, int flags)
     return open(pathname, flags);
 }
 
-int bclose(int fd)
+int hal_close(int fd)
 {
     return close(fd);
 }
 
-int bwrite(int fd, const void *buf, int count)
+int hal_write(int fd, const void *buf, int count)
 {
     return write(fd, buf, count);
 }
 
-int bread(int fd, void *buf, int count)
+int hal_read(int fd, void *buf, int count)
 {
     return read(fd, buf, count);
 }
 
-#include <dirent.h>
-
-static void bcat()
+static void hal_cat()
 {
     off_t total = 0;
-    print_string("\r\nDrive: A\r\n\r\n");
+    hal_print_string("\r\nDrive: A\r\n\r\n");
     struct dirent **entry;
     int n = scandir(".", &entry, NULL, NULL);
     while (n--)
@@ -141,73 +130,97 @@ static void bcat()
             total += st.st_blocks * 512; // st_blocks is in 512-byte blocks
 
             uint8_t len = strlen(path);
-            print_string(path);
+            hal_print_string(path);
             for (int i = 16 - len; i > 0; i--)
-                print_string(" ");
-            print_integer("%ju\r\n", st.st_size);
+                hal_print_string(" ");
+            hal_print_integer("%ju\r\n", st.st_size);
         }
         free(entry[n]);
     }
     free(entry);
-    print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (524288 - total) / 1024);
+    hal_print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (524288 - total) / 1024);
     fflush(stdout);
 }
 
-static void breset()
-{
-    // TODO: Appeler os_bootstrap après un bastos_done() On ne peut pas faire ça
-    // ici car on est appelé par BASTOS et on retourne à BASTOS
-
-    // Voir comment on peut faire le done dans BASTOS puis mettre un flag
-    // "reset" à true dans bastos_io_t
-
-    // La programme principal doit tester ce flag et faire le reset approprié
-}
-
-int berase(const char *pathname)
+static int hal_erase(const char *pathname)
 {
     return unlink(pathname);
 }
 
-static inline void bio_f0(uint8_t fn)
+static void hal_reset()
+{
+}
+
+static void hal_function(uint8_t fn)
 {
     if (fn == TOKEN_KEYWORD_CAT)
     {
-        bcat();
-        return;
-    }
-    if (fn == TOKEN_KEYWORD_RESET)
-    {
-        breset();
+        hal_cat();
         return;
     }
     if (fn == TOKEN_KEYWORD_FAST || fn == TOKEN_KEYWORD_SLOW)
     {
 #ifdef MINITEL
-        printf("%s", fn == TOKEN_KEYWORD_FAST ? P_PRISE_4800 : P_PRISE_1200);
-        fflush(stdout);
+        hal_print_string(fn == TOKEN_KEYWORD_FAST ? P_PRISE_4800 : P_PRISE_1200);
 #endif
     }
 }
 
 bastos_io_t io = {
-    .print_string = print_string,
-    .print_float = print_float,
-    .print_integer = print_integer,
-    .bopen = bopen,
-    .erase = berase,
-    .bclose = bclose,
-    .bwrite = bwrite,
-    .bread = bread,
-    .function0 = bio_f0,
+    .print_string = hal_print_string,
+    .print_float = hal_print_float,
+    .print_integer = hal_print_integer,
+    .bopen = hal_open,
+    .erase = hal_erase,
+    .bclose = hal_close,
+    .bwrite = hal_write,
+    .bread = hal_read,
+    .function0 = hal_function,
 };
 
-#define config_prog \
-    "1CLS\n" \
-    "2PRINT\"* WiFi parameters *\"\n" \
-    "4INPUT\"SSID: \",WSSID$\n" \
-    "5INPUT\"PASS: \",WSECRET$\n" \
-    "6SAVE\"config$$$\"\n"
+uint8_t os_get_key()
+{
+    static bool fkey = false;
+    uint8_t key = hal_get_key();
+
+    if (key == 0x13)
+    {
+        // Function key pressed
+        fkey = true;
+        key = 0;
+    }
+    else
+    {
+        if (fkey)
+        {
+            if (key == 0x47)
+            {               // CORRECTION key
+                key = 0x7F; // Convert backspace to DEL
+            }
+            else if (key == 0x45)
+            {            // ANNULATION key
+                key = 3; // Convert to Ctrl+C
+            }
+            else
+            {               // ENVOI and other function keys
+                key = '\r'; // Convert to Enter
+            }
+            fkey = false;
+        }
+        else
+        {
+            if (key == 0x08)
+            {
+                key = 0x7F; // Convert backspace to DEL
+            }
+            else if (key == 0x1b)
+            {
+                key = 3; // Convert ESC to Ctrl+C
+            }
+        }
+    }
+    return key;
+}
 
 void os_bootstrap()
 {
@@ -243,66 +256,40 @@ after_config:
     bastos_send_keys("bastos\n", 7);
 }
 
-int basic_main(int argc, char *argv[])
+void setup()
 {
-    bool cont = true;
-    struct sigaction action = {0};
-
-    term_init();
-
-    action.sa_handler = &sigint_handler;
-    sigaction(SIGINT, &action, &old_action);
-
-    chdir("disk");
-
-    // Initialize the Bastos system
     os_bootstrap();
+}
 
-    bool fkey = false;
-    while (cont)
+void loop(void)
+{
+    // if connected, loop_connected();
+    char key = os_get_key();
+    bastos_send_keys((char *)&key, key != 0 ? 1 : 0);
+    bastos_loop();
+    if (bastos_is_reset())
     {
-        int key = getch();
-
-        if (key == 0x13) {
-            // Function key pressed
-            fkey = true;
-            key = 0;
-        } else {
-            if (fkey) {
-                if (key == 0x47) { // CORRECTION key
-                    key = 0x7F; // Convert backspace to DEL
-                } else if (key == 0x45) { // ANNULATION key
-                    key = 3; // Convert to Ctrl+C
-                } else { // ENVOI and other function keys
-                    key = '\r'; // Convert to Enter
-                }
-                fkey = false;
-            } else {
-                if (key == 0x08) {
-                    key = 0x7F; // Convert backspace to DEL
-                } else if (key == 0x1b) {
-                    key = 3; // Convert ESC to Ctrl+C
-                }
-            }
-        }
-
-        // if (key !=  0) {
-        //     fprintf(stderr, "Key: %d\n", key);
-        // }
-        bastos_send_keys((char *)&key, key != 0 ? 1 : 0);
-        bastos_loop();
-        cont = key != 24;
+        bastos_done();
+        hal_reset();
     }
-
-    bastos_prog_new();
-    term_done();
-
-    return 0;
 }
 
 int main()
 {
-    // bmem_test();
-    basic_main(0, 0);
-    return 0;
+    struct sigaction action = {0};
+    action.sa_handler = &sigint_handler;
+    sigaction(SIGINT, &action, &old_action);
+
+    term_init();
+
+    chdir("disk");
+
+    while (true)
+    {
+        setup();
+        while (!bastos_is_reset())
+        {
+            loop();
+        }
+    }
 }
