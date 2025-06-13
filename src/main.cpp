@@ -56,6 +56,9 @@ File bastos_file0;
 
 uint8_t hal_get_key()
 {
+    if (!Serial)
+        return 0;
+
     if (Serial.available() <= 0)
         return 0;
 
@@ -280,6 +283,9 @@ uint8_t os_get_key()
 {
     static bool fkey = false;
     uint8_t key = hal_get_key();
+
+    if (key == 0)
+        return 0; // No key pressed
 
     if (key == 0x13)
     {

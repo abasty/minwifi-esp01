@@ -183,6 +183,9 @@ uint8_t os_get_key()
     static bool fkey = false;
     uint8_t key = hal_get_key();
 
+    if (key == 0)
+        return 0; // No key pressed
+
     if (key == 0x13)
     {
         // Function key pressed
