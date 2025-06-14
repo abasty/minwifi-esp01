@@ -114,7 +114,7 @@ int hal_read(int fd, void *buf, int count)
     return read(fd, buf, count);
 }
 
-static void hal_cat()
+void hal_cat()
 {
     off_t total = 0;
     hal_print_string("\r\nDrive: A\r\n\r\n");
@@ -143,7 +143,7 @@ static void hal_cat()
     fflush(stdout);
 }
 
-static int hal_erase(const char *pathname)
+int hal_erase(const char *pathname)
 {
     return unlink(pathname);
 }
@@ -152,13 +152,8 @@ static void hal_reset()
 {
 }
 
-static void hal_function(uint8_t fn)
+void hal_speed(uint8_t fn)
 {
-    if (fn == TOKEN_KEYWORD_CAT)
-    {
-        hal_cat();
-        return;
-    }
     if (fn == TOKEN_KEYWORD_FAST || fn == TOKEN_KEYWORD_SLOW)
     {
 #ifdef MINITEL
@@ -176,7 +171,6 @@ bastos_io_t io = {
     .bclose = hal_close,
     .bwrite = hal_write,
     .bread = hal_read,
-    .function0 = hal_function,
 };
 
 void setup()

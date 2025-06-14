@@ -33,9 +33,19 @@ extern "C" {
 #endif
 
 void os_bootstrap(bastos_io_t *io);
+uint8_t os_get_key();
 
 uint8_t hal_get_key();
-uint8_t os_get_key();
+int hal_print_string(const char *s);
+int hal_print_float(float f);
+int hal_print_integer(const char *format, int i);
+int hal_open(const char *pathname, int flags);
+int hal_close(int fd);
+int hal_write(int fd, const void *buf, int count);
+int hal_read(int fd, void *buf, int count);
+void hal_cat();
+void hal_speed(uint8_t fn);
+int hal_erase(const char *pathname);
 
 #ifdef __cplusplus
 }

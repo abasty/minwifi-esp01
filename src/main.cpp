@@ -68,22 +68,22 @@ uint8_t hal_get_key()
     return n > 0 ? key : 0;
 }
 
-static inline int hal_print_float(float f)
+int hal_print_float(float f)
 {
     return Serial.printf("%g", f);
 }
 
-static inline int hal_print_string(const char *s)
+int hal_print_string(const char *s)
 {
     return Serial.printf("%s", s);
 }
 
-static inline int hal_print_integer(const char *format, int i)
+int hal_print_integer(const char *format, int i)
 {
     return Serial.printf(format, i);
 }
 
-static inline int hal_open(const char *pathname, int flags)
+int hal_open(const char *pathname, int flags)
 {
     const char *access = "r";
     if (flags & B_CREAT)
@@ -96,23 +96,23 @@ static inline int hal_open(const char *pathname, int flags)
     return 0;
 }
 
-static inline int hal_close(int fd)
+int hal_close(int fd)
 {
     bastos_file0.close();
     return 0;
 }
 
-static inline int hal_write(int fd, const void *buf, int count)
+int hal_write(int fd, const void *buf, int count)
 {
     return bastos_file0.write((const uint8_t *)buf, count);
 }
 
-static inline int hal_read(int fd, void *buf, int count)
+int hal_read(int fd, void *buf, int count)
 {
     return bastos_file0.read((uint8_t *)buf, count);
 }
 
-static inline void hal_cat()
+void hal_cat()
 {
     hal_print_string("\r\nDrive: A\r\n\r\n");
     Dir dir = LittleFS.openDir("/");
@@ -129,7 +129,7 @@ static inline void hal_cat()
     hal_print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (info.totalBytes - info.usedBytes) / 1024);
 }
 
-static inline int hal_erase(const char *pathname)
+int hal_erase(const char *pathname)
 {
     bool ret = LittleFS.remove(pathname);
     if (ret)
@@ -146,18 +146,8 @@ static inline void hal_reset()
     ESP.restart();
 }
 
-static inline void hal_function(uint8_t fn)
+void hal_speed(uint8_t fn)
 {
-    if (fn == TOKEN_KEYWORD_CAT)
-    {
-        hal_cat();
-        return;
-    }
-    if (fn == TOKEN_KEYWORD_RESET)
-    {
-        hal_reset();
-        return;
-    }
     if (fn == TOKEN_KEYWORD_FAST || fn == TOKEN_KEYWORD_SLOW)
     {
 #ifdef MINITEL
@@ -179,7 +169,6 @@ bastos_io_t io = {
     .bwrite = hal_write,
     .bread = hal_read,
     .erase = hal_erase,
-    .function0 = hal_function,
 };
 
 static void serial_flush()
