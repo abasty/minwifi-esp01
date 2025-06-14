@@ -34,6 +34,7 @@
 #endif
 
 #include "bio.h"
+#include "os.h"
 
 // 0:	BUTTON
 // 12:	RELAY
@@ -279,87 +280,6 @@ config_run:
     bastos_send_keys("RUN\n", 4);
 }
 
-uint8_t os_get_key()
-{
-    static bool fkey = false;
-    uint8_t key = hal_get_key();
-
-    if (key == 0)
-        return 0; // No key pressed
-
-    if (key == 0x13)
-    {
-        // Function key pressed
-        fkey = true;
-        key = 0;
-    }
-    else
-    {
-        if (fkey)
-        {
-            if (key == 0x47)
-            {               // CORRECTION key
-                key = 0x7F; // Convert backspace to DEL
-            }
-            else if (key == 0x45)
-            {            // ANNULATION key
-                key = 3; // Convert to Ctrl+C
-            }
-            else
-            {               // ENVOI and other function keys
-                key = '\r'; // Convert to Enter
-            }
-            fkey = false;
-        }
-        else
-        {
-            if (key == 0x08)
-            {
-                key = 0x7F; // Convert backspace to DEL
-            }
-            else if (key == 0x1b)
-            {
-                key = 3; // Convert ESC to Ctrl+C
-            }
-        }
-    }
-    return key;
-}
-
-void os_bootstrap()
-{
-    bastos_init(&io);
-#if 0
-    var_t *var = 0;
-    int err = bastos_load("config$$$");
-    if (err != BERROR_NONE)
-        goto after_config;
-
-    print_string("Config file loaded.\r\n");
-
-    var = bastos_var_get("\021WSSID");
-    if (!var)
-        goto after_config;
-
-    var = bastos_var_get("\021WSECRET");
-    if (!var)
-        goto after_config;
-
-    print_string("Config vars OK.\r\n");
-
-after_config:
-    if (var == 0)
-    {
-        // No config file or vars, run the config program
-        bastos_prog_new();
-        bastos_send_keys(config_prog, strlen(config_prog));
-        bastos_send_keys("RUN\n", 4);
-    }
-#endif
-    bastos_prog_new();
-    bastos_send_keys("bastos\n", 7);
-}
-
 void setup()
 {
     // Setup sonoff pins
@@ -376,7 +296,7 @@ void setup()
     // Setup WiFi
     // setup_wifi();
 
-    os_bootstrap();
+    os_bootstrap(&io);
 }
 
 void loop_connected()

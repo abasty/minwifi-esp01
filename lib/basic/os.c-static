@@ -1,0 +1,115 @@
+#include "bio.h"
+/*
+ * Copyright © 2023 Alain Basty
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+// #include <stdint.h>
+// #include <stdlib.h>
+// #include <string.h>
+// #include <stdio.h>
+
+#include "bio.h"
+#include "os.h"
+
+void os_bootstrap(bastos_io_t *io)
+{
+    bastos_init(io);
+#if 0
+    var_t *var = 0;
+    int err = bastos_load("config$$$");
+    if (err != BERROR_NONE)
+        goto after_config;
+
+    print_string("Config file loaded.\r\n");
+
+    var = bastos_var_get("\021WSSID");
+    if (!var)
+        goto after_config;
+
+    var = bastos_var_get("\021WSECRET");
+    if (!var)
+        goto after_config;
+
+    print_string("Config vars OK.\r\n");
+
+after_config:
+    if (var == 0)
+    {
+        // No config file or vars, run the config program
+        bastos_prog_new();
+        bastos_send_keys(config_prog, strlen(config_prog));
+        bastos_send_keys("RUN\n", 4);
+    }
+#endif
+    bastos_prog_new();
+    // TODO: Why not eval_bastos?
+    bastos_send_keys("bastos\n", 7);
+}
+
+uint8_t os_get_key()
+{
+    static bool fkey = false;
+    uint8_t key = hal_get_key();
+
+    if (key == 0)
+        return 0; // No key pressed
+
+    if (key == 0x13)
+    {
+        // Function key pressed
+        fkey = true;
+        key = 0;
+    }
+    else
+    {
+        if (fkey)
+        {
+            if (key == 0x47)
+            {               // CORRECTION key
+                key = 0x7F; // Convert backspace to DEL
+            }
+            else if (key == 0x45)
+            {            // ANNULATION key
+                key = 3; // Convert to Ctrl+C
+            }
+            else
+            {               // ENVOI and other function keys
+                key = '\r'; // Convert to Enter
+            }
+            fkey = false;
+        }
+        else
+        {
+            if (key == 0x08)
+            {
+                key = 0x7F; // Convert backspace to DEL
+            }
+            else if (key == 0x1b)
+            {
+                key = 3; // Convert ESC to Ctrl+C
+            }
+        }
+    }
+    return key;
+}

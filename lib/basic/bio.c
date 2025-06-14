@@ -38,12 +38,14 @@
 #include "token.h"
 #include "eval.h"
 #include "bio.h"
+#include "os.h"
 
 #include "keywords.c-static"
 #include "token.c-static"
 #include "bmemory.c-static"
 #include "string.c-static"
 #include "eval.c-static"
+#include "os.c-static"
 
 bastos_io_t *bio = 0;
 
