@@ -129,6 +129,34 @@ void hal_cat()
     hal_print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (info.totalBytes - info.usedBytes) / 1024);
 }
 
+int hal_wifi(int func)
+{
+    if (func == TOKEN_KEYWORD_LIST)
+    {
+        int n = WiFi.scanNetworks(false, true);
+
+        String ssid;
+        uint8_t encryptionType;
+        int32_t RSSI;
+        uint8_t *BSSID;
+        int32_t channel;
+        bool isHidden;
+
+        for (int i = 0; i < n; i++)
+        {
+            WiFi.getNetworkInfo(i, ssid, encryptionType, RSSI, BSSID, channel, isHidden);
+            Serial.printf("%2d %3d %s\r\n", i + 1, RSSI, ssid.c_str());
+        }
+        return n;
+    }
+    else
+    {
+        hal_print_string("Not implemented WiFi command\r\n");
+        return -1;
+    }
+
+}
+
 int hal_erase(const char *pathname)
 {
     bool ret = LittleFS.remove(pathname);
@@ -186,77 +214,6 @@ static void setup_serial()
 #endif
 }
 
-#define config_prog                   \
-    "1CLS\n"                          \
-    "2PRINT\"* WiFi parameters *\"\n" \
-    "4INPUT\"SSID: \",WSSID$\n"       \
-    "5INPUT\"PASS: \",WSECRET$\n"     \
-    "6SAVE\"config$$$\"\n"            \
-    "7RESET\n"
-
-static void setup_wifi()
-{
-    unsigned long startTime = millis();
-    char *wssid = 0;
-    char *wsecret = 0;
-    var_t *var = 0;
-
-    WiFi.persistent(false);
-    WiFi.mode(WIFI_STA);
-
-    hal_print_string(CLS " Connecting");
-
-    int err = bastos_load("config$$$");
-    if (err != BERROR_NONE)
-        goto config_new;
-
-    var = bastos_var_get("WSSID$");
-    if (!var)
-        goto config_run;
-    wssid = var->string;
-
-    var = bastos_var_get("WSECRET$");
-    if (!var)
-        goto config_run;
-    wsecret = var->string;
-
-    WiFi.begin(wssid, wsecret);
-
-    while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000)
-    {
-        delay(500);
-        hal_print_string(".");
-    }
-
-    hal_print_string("\r" CLEOL);
-
-    if (WiFi.status() != WL_CONNECTED)
-        goto config_run;
-
-    // print_string(" WiFi connected with IP: ");
-    // Serial.print(WiFi.localIP());
-    // print_string("\r\n");
-
-    if (LittleFS.exists("format$$$"))
-    {
-        LittleFS.end();
-        LittleFS.format();
-        LittleFS.begin();
-        bastos_save("config$$$");
-    }
-    bastos_prog_new();
-    bastos_send_keys("bastos\n", 7, false);
-    return;
-
-config_new:
-    bastos_prog_new();
-    bastos_send_keys(config_prog, strlen(config_prog), false);
-
-config_run:
-    hal_print_string("WiFi connection failed\r\n");
-    bastos_send_keys("RUN\n", 4, false);
-}
-
 void setup()
 {
     // Setup sonoff pins
@@ -270,12 +227,11 @@ void setup()
     // Setup file system
     LittleFS.begin();
 
-    // Setup WiFi
-    // setup_wifi();
-
+    // Bootstrap the OS
     os_bootstrap();
 }
 
+#if 0
 void loop_connected()
 {
     // Forward Minitel server incoming data to serial output
@@ -306,6 +262,7 @@ void loop_connected()
     // tcpMinitelConnexion.write((char *)&key, 1);
     // webSocket.sendTXT(key);
 }
+#endif
 
 void loop()
 {

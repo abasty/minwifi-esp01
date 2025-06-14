@@ -162,6 +162,20 @@ void hal_speed(uint8_t fn)
     }
 }
 
+int hal_wifi(int func)
+{
+    if (func == TOKEN_KEYWORD_LIST)
+    {
+        hal_print_string("Connected via host LAN\r\n");
+        return 1;
+    }
+    else
+    {
+        hal_print_string("Not implemented WiFi command\r\n");
+        return -1;
+    }
+}
+
 void setup()
 {
     os_bootstrap();

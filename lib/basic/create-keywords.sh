@@ -75,8 +75,8 @@ plot
 unplot
 test
 mode
-minitel
-telnet
+wifi
+connect
 peek
 poke
 usr

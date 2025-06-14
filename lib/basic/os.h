@@ -46,6 +46,7 @@ int hal_read(int fd, void *buf, int count);
 void hal_cat(void);
 void hal_speed(uint8_t fn);
 int hal_erase(const char *pathname);
+int hal_wifi(int func);
 
 #ifdef __cplusplus
 }

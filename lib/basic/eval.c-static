@@ -120,6 +120,12 @@ uint8_t instr1n[] = {
     0,
 };
 
+uint8_t wifi_func[] = {
+    TOKEN_KEYWORD_LIST,
+    TOKEN_KEYWORD_CONNECT,
+    0,
+};
+
 static void running_state_clear()
 {
     bmem->bstate.pc = 0;
@@ -164,7 +170,7 @@ static bool eval_len_code()
 {
     uint8_t token;
 
-    if ((token = eval_token_one_of((char*) len_code_functions)) == 0 || !eval_string_expr())
+    if ((token = eval_token_one_of((char *)len_code_functions)) == 0 || !eval_string_expr())
         return false;
 
     if (!bmem->bstate.do_eval)
@@ -354,7 +360,7 @@ static bool eval_term()
             case '%':
                 if ((int)(truncf(bmem->bstate.number)) != 0)
                 {
-                   acc = (int)(truncf(acc)) % (int)(truncf(bmem->bstate.number));
+                    acc = (int)(truncf(acc)) % (int)(truncf(bmem->bstate.number));
                 }
                 else
                 {
@@ -566,8 +572,9 @@ static bool eval_string_const()
     if (!eval_token(TOKEN_STRING))
         return false;
 
-    bmem->bstate.string = (char *) bmem->bstate.read_ptr;
-    while(*bmem->bstate.read_ptr++);
+    bmem->bstate.string = (char *)bmem->bstate.read_ptr;
+    while (*bmem->bstate.read_ptr++)
+        ;
     return true;
 }
 
@@ -577,7 +584,8 @@ static bool eval_string_var()
         return false;
 
     char *name = (char *)bmem->bstate.read_ptr - 1;
-    while(*bmem->bstate.read_ptr++);
+    while (*bmem->bstate.read_ptr++)
+        ;
 
     uint8_t dim = 0;
     uint32_t dims[B_DIM_MAX];
@@ -659,7 +667,7 @@ static bool eval_string_expr()
     {
         char *string1 = bmem->bstate.string;
 
-        while(eval_token('+'))
+        while (eval_token('+'))
         {
             result = eval_string_term();
             if (!result)
@@ -880,8 +888,8 @@ static bool eval_let()
             if (end > len)
                 end = len;
 
-            uint8_t *src = (uint8_t*) bmem->bstate.string;
-            uint8_t *dst = (uint8_t*) string + start - 1;
+            uint8_t *src = (uint8_t *)bmem->bstate.string;
+            uint8_t *dst = (uint8_t *)string + start - 1;
             uint16_t n = end - start + 1;
             while (n)
             {
@@ -1018,7 +1026,6 @@ static bool eval_print(bool implicit)
             {
                 hal_print_string(" ");
             }
-
         }
         else if (eval_token(';'))
         {
@@ -1068,7 +1075,7 @@ static bool eval_list()
         {
             if (prog->line_no >= start)
             {
-                hal_print_integer("%4d", (int) prog->line_no);
+                hal_print_integer("%4d", (int)prog->line_no);
                 char c[2];
                 c[0] = bmem->bstate.pc == prog ? '>' : ' ';
                 c[1] = 0;
@@ -1333,15 +1340,15 @@ static bool eval_simple_instruction()
     uint8_t instr;
 
     // 0 arg instructions
-    if ((instr =  eval_token_one_of((char *)instr0)))
+    if ((instr = eval_token_one_of((char *)instr0)))
         goto EVAL;
 
     // 1 string instructions
-    if ((instr =  eval_token_one_of((char *)instr1s)) && eval_string_expr())
+    if ((instr = eval_token_one_of((char *)instr1s)) && eval_string_expr())
         goto EVAL;
 
     // 1 number instructions
-    if ((instr =  eval_token_one_of((char *)instr1n)) && eval_expr(TOKEN_NUMBER))
+    if ((instr = eval_token_one_of((char *)instr1n)) && eval_expr(TOKEN_NUMBER))
         goto EVAL;
 
     if (eval_token_one_of(tty_codes))
@@ -1446,20 +1453,59 @@ static bool eval_rem()
     return true;
 }
 
+static bool eval_wifi()
+{
+    if (!eval_token(TOKEN_KEYWORD_WIFI))
+        return false;
+
+    uint8_t func = eval_token_one_of((char *)wifi_func);
+    if (func == 0)
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    // Add parameters if any
+    switch (func)
+    {
+        case TOKEN_KEYWORD_LIST:
+            // TODO: Put LINE0 and other attibutest constants in TTY files
+            hal_print_string("\x1f\x40\x41\x1b\x40\x1b\x57 Scanning \n");
+            hal_print_string("\r\nID dBm SSID\r\n\r\n");
+            break;
+        case TOKEN_KEYWORD_CONNECT:
+            // TODO: Add parameters for connect
+            break;
+        default:
+            break;
+    }
+    int ret = hal_wifi(func);
+    switch (func)
+    {
+        case TOKEN_KEYWORD_LIST:
+            hal_print_integer("\r\n%d networks\r\n\r\nReady\r\n", ret);
+            hal_print_string("\x1f\x40\x41" CLEOL "\n");
+            break;
+        case TOKEN_KEYWORD_CONNECT:
+            // TODO: Add handling for connect result if needed
+            break;
+        default:
+            break;
+    }
+    return true;
+}
+
 static bool eval_instruction()
 {
-    return
-        eval_print(false) ||
-        eval_input() ||
-        eval_simple_instruction()
-#ifndef OTA_ONLY
-        ||
-        eval_rem() ||
-        eval_let() ||
-        eval_dim() ||
-        eval_list()
-#endif
-        ;
+    return eval_print(false) ||
+           eval_input() ||
+           eval_simple_instruction() ||
+           eval_rem() ||
+           eval_let() ||
+           eval_dim() ||
+           eval_list() ||
+           eval_wifi();
+    ;
 }
 
 static bool eval_if()
