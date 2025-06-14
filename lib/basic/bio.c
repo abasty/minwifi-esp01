@@ -38,29 +38,36 @@
 #include "token.h"
 #include "eval.h"
 #include "bio.h"
+#include "os.h"
 
 #include "keywords.c-static"
 #include "token.c-static"
 #include "bmemory.c-static"
 #include "string.c-static"
 #include "eval.c-static"
+#include "os.c-static"
 
-bastos_io_t *bio = 0;
-
-// bst_io_argv_t bastos_io_argv[4] = {0};
-// function0_t *function0_io = 0;
-
-void bastos_init(bastos_io_t *_io)
+void bastos_init(void)
 {
-    bio = _io;
     bmem_init(malloc(BASTOS_MEMORY_SIZE), BASTOS_MEMORY_SIZE);
+}
+
+void bastos_done()
+{
+    free(bmem);
+    bmem = 0;
+}
+
+bool bastos_is_reset()
+{
+    return bmem == 0 || bmem->bstate.reset;
 }
 
 static void bastos_handle_ctrl_c()
 {
     bastos_stop();
     *bmem->io_buffer = 0;
-    bio->print_string("**Break**\r\n");
+    hal_print_string("**Break**\r\n");
 }
 
 size_t bastos_send_keys(const char *keys, size_t n)
@@ -107,7 +114,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
         {
             *dst++ = '\n';
             src++;
-            bio->print_string("\r\n");
+            hal_print_string("\r\n");
         }
         else if (*src == 127)
         {
@@ -115,7 +122,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
             {
                 dst--;
                 *dst = 0;
-                bio->print_string(DEL);
+                hal_print_string(DEL);
             }
         }
         else
@@ -124,7 +131,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
             *dst++ = *src++;
             *dst = 0;
             size++;
-            bio->print_string((char *) c);
+            hal_print_string((char *) c);
         }
         size = dst - bmem->io_buffer;
         n--;
@@ -212,7 +219,7 @@ finalize:
     // Handle error
     if (err != BERROR_NONE)
     {
-        bio->print_integer("Error %d\r\n", (int)-err);
+        hal_print_integer("Error %d\r\n", (int)-err);
     }
 
     return err;
@@ -225,7 +232,7 @@ bool bastos_running()
 
 int8_t bastos_save(const char *name)
 {
-    int fd = bio->bopen(name, B_CREAT | B_RDWR);
+    int fd = hal_open(name, B_CREAT | B_RDWR);
     if (fd < 0) {
         goto err;
     }
@@ -233,33 +240,33 @@ int8_t bastos_save(const char *name)
     // save prog
     // Write prog total size
     uint16_t prog_size = bmem->prog_end - bmem->prog_start;
-    if (bio->bwrite(fd, &prog_size, sizeof(prog_size)) < 0) {
+    if (hal_write(fd, &prog_size, sizeof(prog_size)) < 0) {
         goto err;
     }
 
     // Write prog
-    if (bio->bwrite(fd, bmem->prog_start, prog_size) < 0) {
+    if (hal_write(fd, bmem->prog_start, prog_size) < 0) {
         goto err;
     }
 
     // save vars
     // Write vars total size
     uint16_t vars_size = bmem->vars_end - bmem->vars_start;
-    if (bio->bwrite(fd, &vars_size, sizeof(vars_size)) < 0) {
+    if (hal_write(fd, &vars_size, sizeof(vars_size)) < 0) {
         goto err;
     }
 
     // Write vars
-    if (bio->bwrite(fd, bmem->vars_start, vars_size) < 0) {
+    if (hal_write(fd, bmem->vars_start, vars_size) < 0) {
         goto err;
     }
 
-    bio->bclose(fd);
+    hal_close(fd);
     return 0;
 
 err:
     if (fd >= 0) {
-        bio->bclose(fd);
+        hal_close(fd);
     }
     return -1;
 }
@@ -267,7 +274,7 @@ err:
 int8_t bastos_load(const char *name)
 {
     int8_t err = BERROR_NONE;
-    int fd = bio->bopen(name, B_RDONLY);
+    int fd = hal_open(name, B_RDONLY);
 
     if (fd < 0)
         return BERROR_IO;
@@ -278,7 +285,7 @@ int8_t bastos_load(const char *name)
 
     // load prog
     uint16_t prog_size;
-    bread = bio->bread(fd, &prog_size, sizeof(prog_size));
+    bread = hal_read(fd, &prog_size, sizeof(prog_size));
     if (bread != sizeof(prog_size))
     {
         err = BERROR_IO;
@@ -289,7 +296,7 @@ int8_t bastos_load(const char *name)
         err = BERROR_IO;
         goto finalize;
     }
-    if (bio->bread(fd, bmem->prog_start, prog_size) != prog_size)
+    if (hal_read(fd, bmem->prog_start, prog_size) != prog_size)
     {
         err = BERROR_IO;
         goto finalize;
@@ -299,7 +306,7 @@ int8_t bastos_load(const char *name)
 
     // load vars
     uint16_t vars_size;
-    bread = bio->bread(fd, &vars_size, sizeof(vars_size));
+    bread = hal_read(fd, &vars_size, sizeof(vars_size));
     if (bread != sizeof(vars_size))
     {
         err = BERROR_IO;
@@ -311,7 +318,7 @@ int8_t bastos_load(const char *name)
         goto finalize;
     }
     bmem->vars_start = bmem->vars_end - vars_size;
-    if (bio->bread(fd, bmem->vars_start, vars_size) != vars_size)
+    if (hal_read(fd, bmem->vars_start, vars_size) != vars_size)
     {
         err = BERROR_IO;
         bmem_vars_clear();
@@ -319,7 +326,7 @@ int8_t bastos_load(const char *name)
     }
 
 finalize:
-    bio->bclose(fd);
+    hal_close(fd);
     bmem->bstate.read_ptr = 0;
     return err;
 }
@@ -331,13 +338,18 @@ void bastos_stop()
 
 void bastos_loop()
 {
-    // TODO: Implement RESET and return -1 (else return 0)
+    if (bmem->bstate.reset)
+        return;
+
     if (eval_running() && !eval_inputting())
     {
         eval_prog_next();
+        if (bmem->bstate.reset)
+            return;
+
         if (!eval_running())
         {
-            bio->print_string("Ready\r\n");
+            hal_print_string("Ready\r\n");
         }
         return;
     }

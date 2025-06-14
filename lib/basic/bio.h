@@ -45,28 +45,6 @@ extern "C"
 #define B_TRUNC   01000
 #define B_APPEND  02000
 
-typedef int print_string_t(const char *s);
-typedef int print_float_t(float f);
-typedef int print_format_integer_t(const char *format, int i);
-typedef int bopen_t(const char *pathname, int flags);
-typedef int bclose_t(int fd);
-typedef int bwrite_t(int fd, const void *buf, int count);
-typedef int bread_t(int fd, void *buf, int count);
-typedef int erase_t(const char *pathname);
-typedef void function0_t(uint8_t fn);
-
-typedef struct {
-    print_string_t *print_string;
-    print_float_t *print_float;
-    print_format_integer_t *print_integer;
-    bopen_t *bopen;
-    bclose_t *bclose;
-    bwrite_t *bwrite;
-    bread_t *bread;
-    erase_t *erase;
-    function0_t *function0;
-} bastos_io_t;
-
 typedef struct {
     uint16_t line_no;
     uint16_t len;
@@ -90,18 +68,20 @@ static inline char *name_of_var(var_t *var)
     return (char *)var->bytes + var->name_ofs;
 }
 
-void bastos_init(bastos_io_t *_io);
-// TODO: Add a bastos_done() function to free memory and close files
+void bastos_init(void);
+void bastos_done(void);
+bool bastos_is_reset(void);
 
+// TODO: manage a mode w/o echo
 size_t bastos_send_keys(const char *keys, size_t n);
-void bastos_loop();
-bool bastos_running();
-void bastos_stop();
+void bastos_loop(void);
+bool bastos_running(void);
+void bastos_stop(void);
 
 int8_t bastos_save(const char *name);
 int8_t bastos_load(const char *name);
 
-void bastos_prog_new();
+void bastos_prog_new(void);
 // TODO: Accept string variable name with ending '$'
 var_t *bastos_var_get(const char *name);
 

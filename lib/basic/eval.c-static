@@ -46,8 +46,6 @@ static inline void eval_input_mode(bool mode);
 static bool eval_string_tty();
 static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims);
 
-
-extern bastos_io_t *bio;
 extern bmem_t *bmem;
 
 uint8_t functions[] = {
@@ -943,7 +941,7 @@ static bool eval_input()
     {
         if (bmem->bstate.do_eval)
         {
-            bio->print_string(bmem->bstate.string);
+            hal_print_string(bmem->bstate.string);
         }
 
         if (!eval_token(','))
@@ -1000,11 +998,11 @@ static bool eval_print(bool implicit)
             {
                 if (bmem->bstate.token == TOKEN_NUMBER)
                 {
-                    bio->print_float(bmem->bstate.number);
+                    hal_print_float(bmem->bstate.number);
                 }
                 else // TOKEN_STRING
                 {
-                    bio->print_string(bmem->bstate.string ? bmem->bstate.string : "");
+                    hal_print_string(bmem->bstate.string ? bmem->bstate.string : "");
                 }
             }
         }
@@ -1012,14 +1010,14 @@ static bool eval_print(bool implicit)
         {
             if (bmem->bstate.do_eval)
             {
-                bio->print_string(bmem->bstate.string ? bmem->bstate.string : "");
+                hal_print_string(bmem->bstate.string ? bmem->bstate.string : "");
             }
         }
         else if (eval_token(','))
         {
             if (bmem->bstate.do_eval)
             {
-                bio->print_string(" ");
+                hal_print_string(" ");
             }
 
         }
@@ -1037,7 +1035,7 @@ static bool eval_print(bool implicit)
     {
         if (ln && !implicit)
         {
-            bio->print_string("\r\n");
+            hal_print_string("\r\n");
         }
     }
 
@@ -1071,13 +1069,13 @@ static bool eval_list()
         {
             if (prog->line_no >= start)
             {
-                bio->print_integer("%4d", (int) prog->line_no);
+                hal_print_integer("%4d", (int) prog->line_no);
                 char c[2];
                 c[0] = bmem->bstate.pc == prog ? '>' : ' ';
                 c[1] = 0;
-                bio->print_string(c);
-                bio->print_string(untokenize(prog->line));
-                bio->print_string("\r\n");
+                hal_print_string(c);
+                hal_print_string(untokenize(prog->line));
+                hal_print_string("\r\n");
                 n--;
             }
             prog = bmem_prog_next_line(prog);
@@ -1113,7 +1111,7 @@ int8_t eval_prog_next()
 
     if (err != BERROR_NONE && bmem->bstate.pc != 0)
     {
-        bio->print_integer("On line %d: ", bmem->bstate.pc->line_no);
+        hal_print_integer("On line %d: ", bmem->bstate.pc->line_no);
     }
 
     bmem->bstate.pc = 0;
@@ -1138,30 +1136,33 @@ static void eval_cont()
     bmem->bstate.running = bmem->bstate.pc != 0;
 }
 
+static void eval_reset()
+{
+    bmem->bstate.reset = true;
+}
+
 static void eval_free()
 {
-    bio->print_string("       sys  prog  vars  free\r\n");
-    bio->print_string("l/v:       ");
-    bio->print_integer("%5d ", bmem_line_count());
-    bio->print_integer("%5d ", bmem_var_count());
-    bio->print_string("\r\n");
-    bio->print_integer("Mem: %5d ", bmem->prog_start - (uint8_t *)bmem);
-    bio->print_integer("%5d ", bmem->prog_end - bmem->prog_start);
-    bio->print_integer("%5d ", bmem->vars_end - bmem->vars_start);
-    bio->print_integer("%5d\r\n", bmem->vars_start - bmem->strings_end);
+    hal_print_string("       sys  prog  vars  free\r\n");
+    hal_print_string("l/v:       ");
+    hal_print_integer("%5d ", bmem_line_count());
+    hal_print_integer("%5d ", bmem_var_count());
+    hal_print_string("\r\n");
+    hal_print_integer("Mem: %5d ", bmem->prog_start - (uint8_t *)bmem);
+    hal_print_integer("%5d ", bmem->prog_end - bmem->prog_start);
+    hal_print_integer("%5d ", bmem->vars_end - bmem->vars_start);
+    hal_print_integer("%5d\r\n", bmem->vars_start - bmem->strings_end);
 }
 
 static void eval_bastos()
 {
-    // Mode rouleau ?
-    // TODO: printf("%s", CON P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU CLS);
-
-    bio->print_string("\x1f\x40\x41" CLEOL CLS);
-    bio->print_string(" BASTOS 16K Microcontroller (v1)\r\n");
-    bio->print_string(" Basic for Terminal Operating System\r\n\r\n");
-    bio->print_string(" (c) 2024-2025 ABa\r\n\r\n");
-    bio->print_integer(" %d bytes free\r\n", bmem->vars_start - bmem->strings_end);
-    bio->print_string("\r\nReady\r\n");
+    hal_print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU);
+    hal_print_string("\x1f\x40\x41" CLEOL CLS);
+    hal_print_string(" BASTOS 16K Microcontroller (v1)\r\n");
+    hal_print_string(" Basic for Terminal Operating System\r\n\r\n");
+    hal_print_string(" (c) 2024-2025 ABa\r\n\r\n");
+    hal_print_integer(" %d bytes free\r\n", bmem->vars_start - bmem->strings_end);
+    hal_print_string("\r\nReady\r\n" CON);
 }
 
 static bool eval_inputting()
@@ -1244,7 +1245,7 @@ static void eval_load()
 
 static void eval_erase()
 {
-    if (bio->erase(bmem->bstate.string) != 0)
+    if (hal_erase(bmem->bstate.string) != 0)
     {
         bmem->bstate.error = BERROR_IO;
     }
@@ -1398,9 +1399,19 @@ EVAL:
         eval_new();
         return true;
     }
-    if (instr == TOKEN_KEYWORD_RESET || instr == TOKEN_KEYWORD_CAT || instr == TOKEN_KEYWORD_FAST || instr == TOKEN_KEYWORD_SLOW)
+    if (instr == TOKEN_KEYWORD_RESET)
     {
-        bio->function0(instr);
+        eval_reset();
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_CAT)
+    {
+        hal_cat();
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_FAST || instr == TOKEN_KEYWORD_SLOW)
+    {
+        hal_speed(instr);
         return true;
     }
     if (instr == TOKEN_KEYWORD_STOP)

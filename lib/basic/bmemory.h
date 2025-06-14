@@ -77,6 +77,7 @@ typedef struct
     bool do_eval;
     bool running;
     bool inputting;
+    bool reset;
     int sp;
     char *string;
     prog_buffer_t token_buffer;
