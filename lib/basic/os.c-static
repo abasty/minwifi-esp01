@@ -26,28 +26,20 @@
 #include "bio.h"
 #include "os.h"
 
+var_t *g_wssid, *g_wsecret = 0;
+
 void os_bootstrap(void)
 {
     bastos_init();
-#if 0
-    var_t *var = 0;
+
+    // Get system variable from config file
     int err = bastos_load("config$$$");
-    if (err != BERROR_NONE)
-        goto after_config;
-
-    print_string("Config file loaded.\r\n");
-
-    var = bastos_var_get("\021WSSID");
-    if (!var)
-        goto after_config;
-
-    var = bastos_var_get("\021WSECRET");
-    if (!var)
-        goto after_config;
-
-    print_string("Config vars OK.\r\n");
-
-after_config:
+    if (err == BERROR_NONE)
+    {
+        g_wssid = bastos_var_get("WSSID$");
+        g_wsecret = bastos_var_get("WSECRET$");
+    }
+#if 0
     if (var == 0)
     {
         // No config file or vars, run the config program

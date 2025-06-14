@@ -81,7 +81,6 @@ int8_t bastos_save(const char *name);
 int8_t bastos_load(const char *name);
 
 void bastos_prog_new(void);
-// TODO: Accept string variable name with ending '$'
 var_t *bastos_var_get(const char *name);
 
 // void bmem_test();

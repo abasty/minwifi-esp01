@@ -221,7 +221,7 @@ static bool eval_number()
         {
             if (dim == 0)
             {
-                var_t *var = bastos_var_get(name);
+                var_t *var = bmem_var_get(name);
                 if (var)
                 {
                     value = var->numbers[0];
@@ -795,7 +795,7 @@ static bool eval_dim()
     tmp[0] = token;
 
     // Remove existing variable
-    var_t *var = bastos_var_get(tmp);
+    var_t *var = bmem_var_get(tmp);
     if (var)
         bmem_var_unset(var);
 
@@ -1576,7 +1576,7 @@ static bool eval_next()
         return true;
     }
 
-    var_t *var = bastos_var_get(bmem->bstate.var_ref);
+    var_t *var = bmem_var_get(bmem->bstate.var_ref);
     if (var == 0)
     {
         bmem->bstate.error = BERROR_RUN;

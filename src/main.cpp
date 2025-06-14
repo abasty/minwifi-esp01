@@ -210,12 +210,12 @@ static void setup_wifi()
     if (err != BERROR_NONE)
         goto config_new;
 
-    var = bastos_var_get("\021WSSID");
+    var = bastos_var_get("WSSID$");
     if (!var)
         goto config_run;
     wssid = var->string;
 
-    var = bastos_var_get("\021WSECRET");
+    var = bastos_var_get("WSECRET$");
     if (!var)
         goto config_run;
     wsecret = var->string;

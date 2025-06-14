@@ -55,6 +55,7 @@ Doivent être en C pour être intégrés à minwifi.
 * [ ] Variables WiFi dans fichier invisible par CAT, let, load vars, save vars
   et init Wifi
 * [ ] MODE, MINITEL, TELNET, CONNECT <url>
+* [ ] BIP, INV, NORM, CLEOL, etc.
 * [ ] SAVEVARS
 * [ ] SAVE, LOAD : pouvoir faire du .BAS et du BST. Majuscules / Minucules :
   toujours en majuscules sur disque, pour faire plus rétro.
