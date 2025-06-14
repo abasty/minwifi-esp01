@@ -335,7 +335,6 @@ static bool eval_term()
     if ((result = eval_factor()))
     {
         acc = bmem->bstate.number;
-        // TODO: Manage / and % by zero (inf)
         while (eval_token_one_of("*/%"))
         {
             uint8_t op = bmem->bstate.token;

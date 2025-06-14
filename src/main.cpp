@@ -254,7 +254,6 @@ config_new:
 
 config_run:
     hal_print_string("WiFi connection failed\r\n");
-    // TODO: Add a send_keys w/o edit / echo
     bastos_send_keys("RUN\n", 4, false);
 }
 
