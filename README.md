@@ -247,7 +247,7 @@ board_build.filesystem = littlefs
 
 ## Travail avec Minterm
 
-TODO: Serveur BASTOS (`bastos-server.sh`)
+Serveur BASTOS (`bastos-server.sh`)
 
 ## Travail avec la carte de dev
 

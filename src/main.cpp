@@ -245,17 +245,17 @@ static void setup_wifi()
         bastos_save("config$$$");
     }
     bastos_prog_new();
-    bastos_send_keys("bastos\n", 7);
+    bastos_send_keys("bastos\n", 7, false);
     return;
 
 config_new:
     bastos_prog_new();
-    bastos_send_keys(config_prog, strlen(config_prog));
+    bastos_send_keys(config_prog, strlen(config_prog), false);
 
 config_run:
     hal_print_string("WiFi connection failed\r\n");
     // TODO: Add a send_keys w/o edit / echo
-    bastos_send_keys("RUN\n", 4);
+    bastos_send_keys("RUN\n", 4, false);
 }
 
 void setup()
@@ -311,7 +311,7 @@ void loop_connected()
 void loop()
 {
     char key = os_get_key();
-    bastos_send_keys((char *)&key, key != 0 ? 1 : 0);
+    bastos_send_keys((char *)&key, key != 0 ? 1 : 0, true);
     bastos_loop();
     if (bastos_is_reset())
     {

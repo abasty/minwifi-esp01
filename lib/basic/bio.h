@@ -72,8 +72,7 @@ void bastos_init(void);
 void bastos_done(void);
 bool bastos_is_reset(void);
 
-// TODO: manage a mode w/o echo
-size_t bastos_send_keys(const char *keys, size_t n);
+size_t bastos_send_keys(const char *keys, size_t n, bool echo);
 void bastos_loop(void);
 bool bastos_running(void);
 void bastos_stop(void);

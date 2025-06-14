@@ -171,7 +171,7 @@ void loop(void)
 {
     // if connected, loop_connected();
     char key = os_get_key();
-    bastos_send_keys((char *)&key, key != 0 ? 1 : 0);
+    bastos_send_keys((char *)&key, key != 0 ? 1 : 0, true);
     bastos_loop();
     if (bastos_is_reset())
     {

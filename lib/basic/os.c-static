@@ -58,13 +58,12 @@ after_config:
     {
         // No config file or vars, run the config program
         bastos_prog_new();
-        bastos_send_keys(config_prog, strlen(config_prog));
-        bastos_send_keys("RUN\n", 4);
+        bastos_send_keys(config_prog, strlen(config_prog), false);
+        bastos_send_keys("RUN\n", 4, false);
     }
 #endif
     bastos_prog_new();
-    // TODO: Why not eval_bastos?
-    bastos_send_keys("bastos\n", 7);
+    bastos_send_keys("bastos\n", 7, false);
 }
 
 uint8_t os_get_key()

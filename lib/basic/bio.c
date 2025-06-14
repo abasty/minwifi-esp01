@@ -70,7 +70,7 @@ static void bastos_handle_ctrl_c()
     hal_print_string("**Break**\r\n");
 }
 
-size_t bastos_send_keys(const char *keys, size_t n)
+size_t bastos_send_keys(const char *keys, size_t n, bool echo)
 {
     size_t m = 0;
     uint8_t *src = (uint8_t *)keys;
@@ -114,7 +114,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
         {
             *dst++ = '\n';
             src++;
-            hal_print_string("\r\n");
+            if (echo) hal_print_string("\r\n");
         }
         else if (*src == 127)
         {
@@ -122,7 +122,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
             {
                 dst--;
                 *dst = 0;
-                hal_print_string(DEL);
+                if (echo) hal_print_string(DEL);
             }
         }
         else
@@ -131,7 +131,7 @@ size_t bastos_send_keys(const char *keys, size_t n)
             *dst++ = *src++;
             *dst = 0;
             size++;
-            hal_print_string((char *) c);
+            if (echo) hal_print_string((char *) c);
         }
         size = dst - bmem->io_buffer;
         n--;
