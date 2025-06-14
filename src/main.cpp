@@ -160,17 +160,6 @@ void hal_speed(uint8_t fn)
     }
 }
 
-bastos_io_t io = {
-    .print_string = hal_print_string,
-    .print_float = hal_print_float,
-    .print_integer = hal_print_integer,
-    .bopen = hal_open,
-    .bclose = hal_close,
-    .bwrite = hal_write,
-    .bread = hal_read,
-    .erase = hal_erase,
-};
-
 static void serial_flush()
 {
     Serial.setTimeout(0);
@@ -285,7 +274,7 @@ void setup()
     // Setup WiFi
     // setup_wifi();
 
-    os_bootstrap(&io);
+    os_bootstrap();
 }
 
 void loop_connected()

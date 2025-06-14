@@ -34,7 +34,6 @@
 #include "berror.h"
 #include "bio.h"
 
-extern bastos_io_t *bio;
 extern bmem_t *bmem;
 
 static uint8_t token_get_next(tokenizer_state_t *state);

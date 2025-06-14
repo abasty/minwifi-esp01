@@ -47,11 +47,8 @@
 #include "eval.c-static"
 #include "os.c-static"
 
-bastos_io_t *bio = 0;
-
-void bastos_init(bastos_io_t *_io)
+void bastos_init(void)
 {
-    bio = _io;
     bmem_init(malloc(BASTOS_MEMORY_SIZE), BASTOS_MEMORY_SIZE);
 }
 
@@ -59,7 +56,6 @@ void bastos_done()
 {
     free(bmem);
     bmem = 0;
-    bio = 0;
 }
 
 bool bastos_is_reset()

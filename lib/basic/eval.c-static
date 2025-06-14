@@ -46,8 +46,6 @@ static inline void eval_input_mode(bool mode);
 static bool eval_string_tty();
 static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims);
 
-
-extern bastos_io_t *bio;
 extern bmem_t *bmem;
 
 uint8_t functions[] = {

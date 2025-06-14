@@ -32,9 +32,9 @@
 #include "bio.h"
 #include "os.h"
 
-void os_bootstrap(bastos_io_t *io)
+void os_bootstrap(void)
 {
-    bastos_init(io);
+    bastos_init();
 #if 0
     var_t *var = 0;
     int err = bastos_load("config$$$");
