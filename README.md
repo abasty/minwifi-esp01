@@ -35,7 +35,7 @@ Les fonctions du HAL sont appelées par BASTOS ou d'autres fonctions du HAL.
 Deux API de haut niveau permettent à la plateforme cible de s'interfacer avec
 **BASTOS** :
 
-* Les fonctions `os_*` : _bootstrap_ et filtrage clavier
+* Les fonctions `os_*` : _bootstrap_, réseaux WiFi, et filtrage clavier
 * Les fonctions `bastos_*` : Contrôle et interaction avec le Basic
 
 ## Bootstrap

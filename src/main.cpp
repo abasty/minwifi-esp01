@@ -145,7 +145,7 @@ int hal_wifi(int func)
         for (int i = 0; i < n; i++)
         {
             WiFi.getNetworkInfo(i, ssid, encryptionType, RSSI, BSSID, channel, isHidden);
-            Serial.printf("%2d %3d %s\r\n", i + 1, RSSI, ssid.c_str());
+            os_wifi_add_network(ssid.c_str(), encryptionType, RSSI);
         }
         return n;
     }

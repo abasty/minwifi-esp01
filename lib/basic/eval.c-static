@@ -1469,9 +1469,9 @@ static bool eval_wifi()
     switch (func)
     {
         case TOKEN_KEYWORD_LIST:
-            // TODO: Put LINE0 and other attibutest constants in TTY files
+            // TODO: Put LINE0 and other attributes constants in TTY files
             hal_print_string("\x1f\x40\x41\x1b\x40\x1b\x57 Scanning \n");
-            hal_print_string("\r\nID dBm SSID\r\n\r\n");
+            os_wifi_clear_networks();
             break;
         case TOKEN_KEYWORD_CONNECT:
             // TODO: Add parameters for connect
@@ -1479,11 +1479,11 @@ static bool eval_wifi()
         default:
             break;
     }
-    int ret = hal_wifi(func);
+    hal_wifi(func);
     switch (func)
     {
         case TOKEN_KEYWORD_LIST:
-            hal_print_integer("\r\n%d networks\r\n\r\nReady\r\n", ret);
+            os_wifi_list_networks();
             hal_print_string("\x1f\x40\x41" CLEOL "\n");
             break;
         case TOKEN_KEYWORD_CONNECT:

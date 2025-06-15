@@ -32,7 +32,17 @@
 extern "C" {
 #endif
 
+#define ENC_TKIP (2)
+#define ENC_WEP  (5)
+#define ENC_CCMP (4)
+#define ENC_NONE (7)
+#define ENC_AUTO (8)
+
 void os_bootstrap(void);
+
+void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi);
+void os_wifi_list_networks(void);
+void os_wifi_clear_networks(void);
 uint8_t os_get_key(void);
 
 uint8_t hal_get_key(void);
