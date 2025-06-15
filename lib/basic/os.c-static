@@ -154,7 +154,7 @@ static void wifi_print_network(int n, const network_t *net)
 
 void os_wifi_list_networks(void)
 {
-    hal_print_string("\r\nID dBm SSID\r\n");
+    hal_print_string("\r\n\x1b\x5d" "ID dBm SSID" CLEOL "\x1b\x5c\r\n");
 
     // Parse all newtorks and print those with dBm != -128
     int n = 0;
@@ -167,7 +167,7 @@ void os_wifi_list_networks(void)
         }
     }
 
-    hal_print_integer("\r\n%d network(s)\r\n\r\nReady\r\n", n);
+    hal_print_integer("\x1b\x5d%d network(s)" CLEOL "\x1b\x5c\r\n\r\nReady\r\n", n);
 }
 
 void os_wifi_clear_networks(void)
