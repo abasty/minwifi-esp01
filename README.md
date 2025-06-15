@@ -1,3 +1,154 @@
+# Architecture logicielle
+
+## Hardware Abstraction Layer
+
+La plateforme cible fournit une couche d'abstraction du matériel sous forme d'un
+ensemble de fonctions C. Ce groupe de fonctions `hal_*` permet l'accès à
+différents modules :
+
+  * Clavier
+  * Écran
+  * Système de fichier
+  * WiFi
+
+Exemple sur plateforme ESP8266 / Serial :
+
+```c
+uint8_t hal_get_key()
+{
+    if (!Serial)
+        return 0;
+
+    if (Serial.available() <= 0)
+        return 0;
+
+    uint8_t key = 0;
+    size_t n = Serial.readBytes(&key, 1);
+    return n > 0 ? key : 0;
+}
+```
+
+Les fonctions du HAL sont appelées par BASTOS ou d'autres fonctions du HAL.
+
+## Basic for Terminal Operating System
+
+Deux API de haut niveau permettent à la plateforme cible de s'interfacer avec
+**BASTOS** :
+
+* Les fonctions `os_*` : _bootstrap_ et filtrage clavier
+* Les fonctions `bastos_*` : Contrôle et interaction avec le Basic
+
+## Bootstrap
+
+### Initialisation BASTOS
+
+Les ressources pour BASTOS sont initialisées.
+
+### Configuration
+
+L'OS charge la config au boot (fichier `$$CONFIG$$`) et définit les variables
+OS, y compris les secrets.
+
+Le fichier `$$CONFIG$$` n'est pas chargeable / visible depuis le Basic : C'est
+un fichier binaire, et l'OS le gère directement avec des fonctions du HAL.
+
+~~La commande `SAVE CONFIG` indique à l'OS de fusionner les variables OS
+courantes avec les variables Basic. L'OS sauve alors la nouvelle configuration
+dans `$$CONFIG$$`.~~
+
+### Exécution BASTOS
+
+Après avoir chargé la config, le système vérifie s'il existe un fichier nommé
+`BONJOUR.BAS` ou `. BST`.
+
+Si oui, il charge ce fichier et l'exécute. Exemple de fichier `BONJOUR.BST` :
+
+```basic
+10 CONNECT "tcp://abasty-retro.fr:1967"
+```
+
+En l'absence de ce fichier, on affiche la bannière BASTOS et on arrive dans le
+Basic en mode interactif.
+
+## Variables OS
+
+(non accessibles depuis le Basic)
+
+### Liste des réseaux WiFi
+
+Chaque réseau est défini par :
+
+- ssid (max 32 caractères)
+- encryption (octet) : TKIP (WPA) = 2, WEP = 5, CCMP (WPA) = 4, NONE = 7, AUTO =
+  8
+- secret (éventuellement non renseigné, 63 caractères max pour clé
+  WPA-PSK/WPA2-PSK)
+- known (booléen, a été connectecté avec succès au moins une fois)
+- rssi en dBm
+
+Les réseaux connus, c'est à dire ceux sur lesquels on s'est connecté au moins
+une fois avec succès, sont sauvegardés dans la configuration.
+
+### Autres variables OS
+
+* Mode : Basic / Connecté
+* URL de connexion
+
+## WiFi
+
+`WIFI LIST` : Scanne les réseaux WiFi et l'affiche.
+
+Chaque réseau est précédé d'un numéro. Les réseaux connus sont affichés en
+premier, par ordre croissant de leur dBm. Les réseaux non connus sont affichés
+après, dans l'ordre de leur dBm. Les réseaux homonymes n'apparaissent qu'une
+fois.
+
+La liste (et son ordre) est retenue dans les variables OS.
+
+`WIFI CONNECT [<SSID>|<N> [<SECRET>]]` : Connexion à un réseau WiFi.
+
+Si pas de `<SSID>`, on connect le numéro 1 dans la liste du scan, ou si elle est
+vide, dans la liste de configuration.
+
+Si `<N>`, on choisit le N-ème SSID dans la liste du scan (il faut avoir fait
+`WIFI LIST` avant).
+
+Si `<SECRET>` n'est pas renseigné dans la commande, on prend le secret de la
+configuration.
+
+UNe fois qu'on a un SSID et un secret (même vide), on tente une connexion. Si la
+connexion échoue, si c'est une erreur de secret, on demande un pass en ligne 0.
+On retente une connexion.
+
+Si la deuxième connexion échoue, on arrête sur erreur on reste en mode Basic.
+
+Lors d'une connexion établie, on marque le réseau comme connu et on sauvegarde
+la configuration WiFi (si différente d'avant : mot de passe demandé, réseau
+nouvellement connu).
+
+`WIFI OFF` : Déconnecte le WiFi.
+
+## Mode connecté
+
+ADU : Si WiFi n'est pas connecté, on peut essayer un `WIFI CONNECT` avant. Si
+cette dernière commande échoue, inutile de tenter une connexion réseau.
+
+`CONNECT <URL>` : Supporte au moins les protocoles : "tcp", "ws", "wss".
+
+Si la connexion est acceptée, passe en mode connecté : les caractères arrivant
+depuis le réseau sont transférés sur le port série. Les caractères arrivant sur
+le port série sont transférés sur le réseau.
+
+En mode connecté, le Basic est suspendu (comme sur un `STOP`).
+
+Pour sortir du mode connecté, on utilise la touche CX/FIN. La même touche est
+envoyé au terminal par l'OS, de façon à remettre un Minitel physique en mode non
+connecté (fermeture du relais modem, passage en mode 'F').
+
+Lors du passage du mode connecté au mode Basic, le programme en cours est
+continué (avec `CONT`). Si un programme n'est pas en cours, on revient
+simplement au BAsic en mode interactif.
+
 # TODO
 
 ## Code commun
@@ -54,7 +205,7 @@ Doivent être en C pour être intégrés à minwifi.
 
 * [ ] Variables WiFi dans fichier invisible par CAT, let, load vars, save vars
   et init Wifi
-* [ ] MODE, MINITEL, TELNET, CONNECT <url>
+* [ ] MODE
 * [ ] BIP, INV, NORM, CLEOL, etc.
 * [ ] SAVEVARS
 * [ ] SAVE, LOAD : pouvoir faire du .BAS et du BST. Majuscules / Minucules :
@@ -67,7 +218,7 @@ Doivent être en C pour être intégrés à minwifi.
   * [ ] Minitel, semi graphique
 * SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs
 * [ ] RAND
-* [ ] SCROLL
+* [ ] SCROLL (ON, OFF, UP, DOWN)
 * [ ] MODE (mode écran)
 * [ ] RUN line, RUN "autorun.bst", RUN "program.bst", line
 * [ ] EVAL / EVAL$
