@@ -39,8 +39,10 @@
 #define CUR "\x1F%c%c"
 #define CUR_DELTA_V 64
 #define CUR_DELTA_H 64
+#define LINE0 "\x1F\x40\x41"
 
 #define INV "\x1B\x5D"
+#define NORMAL "\x1B\x5C"
 #define BLINK "\x1B\x48"
 
 #define INK "\x1B%c"

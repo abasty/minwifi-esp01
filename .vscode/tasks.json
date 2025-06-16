@@ -6,7 +6,7 @@
         {
             "label": "basic: Make",
             "type": "shell",
-            "command": "make",
+            "command": "make TERM=MINITEL",
             "problemMatcher": {
                 "base": "$gcc",
                 "fileLocation": [

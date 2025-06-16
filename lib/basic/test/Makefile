@@ -11,12 +11,15 @@ CC = gcc
 # linker
 LD = gcc
 
+# Terminal info
+TERM = VT100
+
 # C flags
-CFLAGS = -O0 -g -DMINITEL=1
+CFLAGS = -O0 -g
 # C++ flags
 CXXFLAGS =
 # Preprocessor flags
-CPPFLAGS = -Wall -Werror -I ..
+CPPFLAGS = -D$(TERM)=1 -Wall -Werror -I ..
 # dependency-generation flags
 DEPFLAGS = -MMD -MP
 # linker flags

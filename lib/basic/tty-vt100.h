@@ -14,8 +14,10 @@
 #define CUR "\x1B[%d;%dH"
 #define CUR_DELTA_V 0
 #define CUR_DELTA_H 0
+#define LINE0 ""
 
 #define INV "\x1B[7m"
+#define NORMAL "\x1B[m"
 #define BLINK "\x1B[5m"
 
 #define INK "\x1B[%dm"

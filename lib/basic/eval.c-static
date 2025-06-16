@@ -1162,8 +1162,12 @@ static void eval_free()
 
 static void eval_bastos()
 {
+#ifdef MINITEL
     hal_print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU);
-    hal_print_string("\x1f\x40\x41" CLEOL CLS);
+    hal_print_string(LINE0 CLEOL CLS);
+#else
+    hal_print_string(CLS);
+#endif
     hal_print_string(" BASTOS 16K Microcontroller (v1)\r\n");
     hal_print_string(" Basic for Terminal Operating System\r\n\r\n");
     hal_print_string(" (c) 2024-2025 ABa\r\n\r\n");
@@ -1469,8 +1473,7 @@ static bool eval_wifi()
     switch (func)
     {
         case TOKEN_KEYWORD_LIST:
-            // TODO: Put LINE0 and other attributes constants in TTY files
-            hal_print_string("\x1f\x40\x41\x1b\x40\x1b\x57 Scanning \n");
+            hal_print_string(LINE0 INV " Scanning " CLEOL NORMAL "\n");
             os_wifi_clear_networks();
             break;
         case TOKEN_KEYWORD_CONNECT:
@@ -1484,7 +1487,7 @@ static bool eval_wifi()
     {
         case TOKEN_KEYWORD_LIST:
             os_wifi_list_networks();
-            hal_print_string("\x1f\x40\x41" CLEOL "\n");
+            hal_print_string(LINE0 CLEOL "\n");
             break;
         case TOKEN_KEYWORD_CONNECT:
             // TODO: Add handling for connect result if needed
