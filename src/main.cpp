@@ -129,32 +129,35 @@ void hal_cat()
     hal_print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (info.totalBytes - info.usedBytes) / 1024);
 }
 
-int hal_wifi(int func)
+int hal_wifi_list()
 {
-    if (func == TOKEN_KEYWORD_LIST)
+    int n = WiFi.scanNetworks(false, true);
+
+    String ssid;
+    uint8_t encryptionType;
+    int32_t RSSI;
+    uint8_t *BSSID;
+    int32_t channel;
+    bool isHidden;
+
+    for (int i = 0; i < n; i++)
     {
-        int n = WiFi.scanNetworks(false, true);
-
-        String ssid;
-        uint8_t encryptionType;
-        int32_t RSSI;
-        uint8_t *BSSID;
-        int32_t channel;
-        bool isHidden;
-
-        for (int i = 0; i < n; i++)
-        {
-            WiFi.getNetworkInfo(i, ssid, encryptionType, RSSI, BSSID, channel, isHidden);
-            os_wifi_add_network(ssid.c_str(), encryptionType, RSSI);
-        }
-        return n;
+        WiFi.getNetworkInfo(i, ssid, encryptionType, RSSI, BSSID, channel, isHidden);
+        os_wifi_add_network(ssid.c_str(), encryptionType, RSSI);
     }
-    else
+    return n;
+}
+
+int hal_wifi_connect(const char* ssid, const char* secret)
+{
+    WiFi.begin(ssid, secret);
+    unsigned long startTime = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000)
     {
-        hal_print_string("Not implemented WiFi command\r\n");
-        return -1;
+        // os_wifi_progress();
+        delay(500);
     }
-
+    return WiFi.status() == WL_CONNECTED ? 0 : -1;
 }
 
 int hal_erase(const char *pathname)
@@ -226,6 +229,10 @@ void setup()
 
     // Setup file system
     LittleFS.begin();
+
+    // Setup WiFi
+    WiFi.persistent(false);
+    WiFi.mode(WIFI_STA);
 
     // Bootstrap the OS
     os_bootstrap();

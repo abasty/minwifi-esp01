@@ -116,7 +116,7 @@ Si `<N>`, on choisit le N-ème SSID dans la liste du scan (il faut avoir fait
 Si `<SECRET>` n'est pas renseigné dans la commande, on prend le secret de la
 configuration.
 
-UNe fois qu'on a un SSID et un secret (même vide), on tente une connexion. Si la
+Une fois qu'on a un SSID et un secret (même vide), on tente une connexion. Si la
 connexion échoue, si c'est une erreur de secret, on demande un pass en ligne 0.
 On retente une connexion.
 

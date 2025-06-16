@@ -162,22 +162,19 @@ void hal_speed(uint8_t fn)
     }
 }
 
-int hal_wifi(int func)
+int hal_wifi_list()
 {
-    if (func == TOKEN_KEYWORD_LIST)
-    {
-        // Simulate scanning networks
-        // Sleep for 2 seconds
-        sleep(2);
-        // Register a dummy network
-        os_wifi_add_network("Host network", ENC_NONE, 0);
-        return 1;
-    }
-    else
-    {
-        hal_print_string("Not implemented WiFi command\r\n");
-        return -1;
-    }
+    // Simulate scanning networks
+    sleep(2);
+    // Register a dummy network
+    os_wifi_add_network("Host network", ENC_NONE, 0);
+    return 1;
+}
+
+int hal_wifi_connect(const char* ssid, const char* secret)
+{
+    sleep(1);
+    return 0;
 }
 
 void setup()

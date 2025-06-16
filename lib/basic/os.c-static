@@ -35,17 +35,6 @@
 #define BASTOS_NETWORK_COUNT (100)
 #define BASTOS_KNOWN_NETWORK_COUNT (10)
 
-typedef struct network_s
-{
-    int32_t dBm;        // rssi in dBm
-    uint8_t encryption; // Encryption
-    uint8_t count;      // Count of sucessful connections
-    int16_t prev;       // previous network
-    int16_t next;       // next network
-    char ssid[36];      // ssid
-    char secret[64];    // password / passphrase
-} network_t;
-
 typedef struct network_list_s
 {
     int16_t first;
@@ -136,12 +125,30 @@ static void wifi_remove_networks(network_list_t *nets)
     nets->count = 0;
 }
 
-static network_t *wifi_find_network(const char *ssid)
+network_t *os_wifi_get_network_by_ssid(const char *ssid)
 {
     for (int i = 0; i < g_net_count; i++)
         if (g_nets[i] && strcmp(g_nets[i]->ssid, ssid) == 0)
             return g_nets[i];
     return NULL;
+}
+
+network_t *os_wifi_get_network_by_id(int16_t id)
+{
+    int16_t n = 0;
+    for (int16_t i = 0; i < g_net_count; i++)
+    {
+        network_t *net = g_nets[i];
+        if (net->dBm != -128)
+        {
+            n++;
+            if (n == id)
+            {
+                return net; // Return the network with the given ID
+            }
+        }
+    }
+    return NULL; // Network with the given ID not found
 }
 
 static void wifi_print_network(int n, const network_t *net)
@@ -166,7 +173,6 @@ void os_wifi_list_networks(void)
             wifi_print_network(++n, net);
         }
     }
-
     hal_print_integer(INV "%d network(s)" CLEOL NORMAL "\r\n\r\nReady\r\n", n);
 }
 
@@ -184,7 +190,7 @@ void os_wifi_clear_networks(void)
 void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi)
 {
     // Check if the network already exists
-    network_t *existing_net = wifi_find_network(ssid);
+    network_t *existing_net = os_wifi_get_network_by_ssid(ssid);
     if (existing_net)
     {
         // Update existing network
@@ -202,6 +208,39 @@ void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi)
     new_net.ssid[sizeof(new_net.ssid) - 1] = '\0'; // Ensure null-termination
     // Add the new network to the available networks list
     wifi_add_network(&new_net, &g_available_nets);
+}
+
+int os_wifi_connect(network_t *net)
+{
+    hal_print_string(LINE0 INV BLINK "Connecting ");
+    hal_print_string(net->ssid);
+    hal_print_string(CLEOL NORMAL "\n");
+
+    int ret = hal_wifi_connect(net->ssid, net->secret);
+    if (ret != 0)
+    {
+        // Ask secret
+        const char *secret = "changeme";
+        // Connect again with new secret
+        ret = hal_wifi_connect(net->ssid, secret);
+        // if connected => move network to known network and save OS variables
+        if (ret == 0)
+        {
+            strncpy(net->secret, secret, sizeof(net->secret));
+        }
+    }
+
+    if (ret != 0)
+    {
+        hal_print_string(LINE0 INV "Failed to connect" CLEOL NORMAL "\n");
+    }
+    else
+    {
+        hal_print_string(LINE0 INV "Connected" CLEOL NORMAL "\n");
+    }
+
+
+    return ret;
 }
 
 uint8_t os_get_key()

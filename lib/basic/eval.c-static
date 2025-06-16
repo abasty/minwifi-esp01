@@ -41,6 +41,7 @@
 #include "keywords.h"
 #include "eval.h"
 #include "bio.h"
+#include "os.h"
 
 static inline void eval_input_mode(bool mode);
 static bool eval_string_tty();
@@ -1457,6 +1458,54 @@ static bool eval_rem()
     return true;
 }
 
+static bool eval_wifi_list(void)
+{
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    hal_print_string(LINE0 INV "Scanning" CLEOL NORMAL "\n");
+    os_wifi_clear_networks();
+    hal_wifi_list();
+    os_wifi_list_networks();
+    hal_print_string(LINE0 CLEOL "\n");
+    return true;
+}
+
+static bool eval_wifi_connect(void)
+{
+    if (!eval_number() && !eval_string_const())
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    network_t *net = 0;
+
+    if (bmem->bstate.token == TOKEN_NUMBER)
+    {
+        net = os_wifi_get_network_by_id((int16_t)bmem->bstate.number);
+    }
+    else
+    {
+        net = os_wifi_get_network_by_ssid(bmem->bstate.string);
+    }
+
+    if (!net)
+    {
+        bmem->bstate.error = BERROR_WIFI;
+        return false;
+    }
+
+    int ret = os_wifi_connect(net);
+    if (ret < 0)
+    {
+        bmem->bstate.error = BERROR_WIFI;
+        return false;
+    }
+
+    return true;
+}
+
 static bool eval_wifi()
 {
     if (!eval_token(TOKEN_KEYWORD_WIFI))
@@ -1466,36 +1515,13 @@ static bool eval_wifi()
     if (func == 0)
         return false;
 
-    if (!bmem->bstate.do_eval)
-        return true;
+    if (func == TOKEN_KEYWORD_LIST)
+        return eval_wifi_list();
 
-    // Add parameters if any
-    switch (func)
-    {
-        case TOKEN_KEYWORD_LIST:
-            hal_print_string(LINE0 INV " Scanning " CLEOL NORMAL "\n");
-            os_wifi_clear_networks();
-            break;
-        case TOKEN_KEYWORD_CONNECT:
-            // TODO: Add parameters for connect
-            break;
-        default:
-            break;
-    }
-    hal_wifi(func);
-    switch (func)
-    {
-        case TOKEN_KEYWORD_LIST:
-            os_wifi_list_networks();
-            hal_print_string(LINE0 CLEOL "\n");
-            break;
-        case TOKEN_KEYWORD_CONNECT:
-            // TODO: Add handling for connect result if needed
-            break;
-        default:
-            break;
-    }
-    return true;
+    if (func == TOKEN_KEYWORD_CONNECT)
+        return eval_wifi_connect();
+
+    return false;
 }
 
 static bool eval_instruction()
