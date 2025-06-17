@@ -252,9 +252,12 @@ int os_wifi_connect(network_t *net)
         hal_print_string("Connected to ");
         strncpy(net->secret, secret, sizeof(net->secret) - 1);
         net->secret[sizeof(net->secret) - 1] = '\0';
-        net->count++;
+        if (net->count < 255)
+        {
+            net->count++;
+            if (net->count == 1) g_known_net_count++;
+        }
         wifi_sort_networks();
-        g_known_net_count++;
         // TODO: Save config
     }
 
