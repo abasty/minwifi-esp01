@@ -1464,8 +1464,9 @@ static bool eval_wifi_list(void)
         return true;
 
     hal_print_string(LINE0 INV "Scanning" CLEOL NORMAL "\n");
-    os_wifi_clear_networks();
-    hal_wifi_list();
+    // TODO: invalidate dBm on known networks
+    os_wifi_remove_unknown_networks();
+    hal_wifi_scan();
     os_wifi_list_networks();
     hal_print_string(LINE0 CLEOL "\n");
     return true;

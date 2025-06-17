@@ -129,7 +129,7 @@ void hal_cat()
     hal_print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (info.totalBytes - info.usedBytes) / 1024);
 }
 
-int hal_wifi_list()
+int hal_wifi_scan()
 {
     int n = WiFi.scanNetworks(false, true);
 

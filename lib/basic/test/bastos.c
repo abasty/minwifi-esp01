@@ -162,19 +162,26 @@ void hal_speed(uint8_t fn)
     }
 }
 
-int hal_wifi_list()
+int hal_wifi_scan()
 {
     // Simulate scanning networks
     sleep(2);
-    // Register a dummy network
+    // Register dummy networks
     os_wifi_add_network("Host network", ENC_NONE, 0);
+    os_wifi_add_network("Maison fake", ENC_NONE, 0);
+    os_wifi_add_network("Reseau 3", ENC_NONE, 0);
     return 1;
 }
 
 int hal_wifi_connect(const char* ssid, const char* secret)
 {
     sleep(1);
-    return 0;
+    if (strcmp(secret, "changeme") == 0)
+    {
+        // Simulate successful connection
+        return 0;
+    }
+    return -1;
 }
 
 void setup()

@@ -43,8 +43,6 @@ typedef struct network_s
     int32_t dBm;        // rssi in dBm
     uint8_t encryption; // Encryption
     uint8_t count;      // Count of sucessful connections
-    int16_t prev;       // previous network
-    int16_t next;       // next network
     char ssid[36];      // ssid
     char secret[64];    // password / passphrase
 } network_t;
@@ -54,10 +52,11 @@ void os_bootstrap(void);
 void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi);
 network_t *os_wifi_get_network_by_ssid(const char *ssid);
 network_t *os_wifi_get_network_by_id(int16_t id);
+void os_wifi_remove_unknown_networks(void);
 void os_wifi_list_networks(void);
-void os_wifi_clear_networks(void);
 int os_wifi_connect(network_t *net);
 uint8_t os_get_key(void);
+int os_get_string(char *buf, int size);
 
 uint8_t hal_get_key(void);
 int hal_print_string(const char *s);
@@ -70,7 +69,7 @@ int hal_read(int fd, void *buf, int count);
 void hal_cat(void);
 void hal_speed(uint8_t fn);
 int hal_erase(const char *pathname);
-int hal_wifi_list(void);
+int hal_wifi_scan(void);
 int hal_wifi_connect(const char* ssid, const char* secret);
 
 #ifdef __cplusplus
