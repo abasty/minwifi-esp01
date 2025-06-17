@@ -150,11 +150,16 @@ int hal_wifi_scan()
 
 int hal_wifi_connect(const char* ssid, const char* secret)
 {
+    if (WiFi.isConnected())
+    {
+        WiFi.disconnect();
+        delay(1000);
+    }
     WiFi.begin(ssid, secret);
     unsigned long startTime = millis();
     while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000)
     {
-        // os_wifi_progress();
+        // TODO: os_wifi_progress();
         delay(500);
     }
     return WiFi.status() == WL_CONNECTED ? 0 : -1;
