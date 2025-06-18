@@ -271,7 +271,7 @@ int os_wifi_connect(network_t *net)
     if (net->count == 0)
     {
         hal_print_string(LINE0 INV "Password: " CLEOL);
-        os_get_string(secret, sizeof(secret));
+        os_get_string(secret, sizeof(secret), '*');
     }
     else
     {
@@ -309,7 +309,7 @@ int os_wifi_connect(network_t *net)
     return ret;
 }
 
-int os_get_string(char *buf, int size)
+int os_get_string(char *buf, int size, char secret_char)
 {
     int i = 0;
     while (i < size - 1)
@@ -338,7 +338,14 @@ int os_get_string(char *buf, int size)
         if (key >= 32 && key <= 126) // Printable characters
         {
             buf[i++] = key; // Store the character
-            hal_print_string((const char[]){key, '\0'}); // Print the character
+            if (secret_char == 0)
+            {
+                hal_print_string((const char[]){key, '\0'}); // Print the character
+            }
+            else
+            {
+                hal_print_string((const char[]){secret_char, '\0'});
+            }
         }
     }
     buf[i] = '\0'; // Null-terminate the string

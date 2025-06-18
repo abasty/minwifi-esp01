@@ -159,7 +159,6 @@ int hal_wifi_connect(const char* ssid, const char* secret)
     unsigned long startTime = millis();
     while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000)
     {
-        // TODO: os_wifi_progress();
         delay(500);
     }
     return WiFi.status() == WL_CONNECTED ? 0 : -1;

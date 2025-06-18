@@ -56,7 +56,7 @@ void os_wifi_remove_unknown_networks(void);
 void os_wifi_list_networks(void);
 int os_wifi_connect(network_t *net);
 uint8_t os_get_key(void);
-int os_get_string(char *buf, int size);
+int os_get_string(char *buf, int size, char secret_char);
 
 uint8_t hal_get_key(void);
 int hal_print_string(const char *s);
