@@ -126,7 +126,12 @@ Lors d'une connexion établie, on marque le réseau comme connu et on sauvegarde
 la configuration WiFi (si différente d'avant : mot de passe demandé, réseau
 nouvellement connu).
 
-`WIFI OFF` : Déconnecte le WiFi.
+`WIFI DOWN` : Déconnecte le WiFi (on aura besoin de `UP` et `DOWN` pour la
+commande `SCROLL`).
+
+`WIFI STATUS` : Affiche des informations sur l'état du WiFi, l'adresse IP, le
+SSID connecté, etc. Ou alors, changer la commande `FREE` en `SYSTEMINFO`
+(MS-DOS) et afficher les infos WiFi dans les infos système.
 
 ## Mode connecté
 
