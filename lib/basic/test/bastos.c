@@ -219,5 +219,6 @@ int main()
         {
             loop();
         }
+        bastos_done();
     }
 }

@@ -42,9 +42,9 @@ network_t *g_net_store[BASTOS_NETWORK_COUNT + 1] = {0};
 static void wifi_sort_networks_by_count(int16_t first, int16_t last)
 {
     // Sort networks by count of connections (descending)
-    for (int16_t i = first; i < last - 1; i++)
+    for (int16_t i = first; i < last; i++)
     {
-        for (int16_t j = i + 1; j < last; j++)
+        for (int16_t j = i + 1; j <= last; j++)
         {
             if (g_net_store[i]->count < g_net_store[j]->count)
             {
@@ -60,9 +60,9 @@ static void wifi_sort_networks_by_count(int16_t first, int16_t last)
 static void wifi_sort_networks_by_dBm(int16_t first, int16_t last)
 {
     // Sort networks by dBm (descending)
-    for (int16_t i = first; i < last - 1; i++)
+    for (int16_t i = first; i < last; i++)
     {
-        for (int16_t j = i + 1; j < last; j++)
+        for (int16_t j = i + 1; j <= last; j++)
         {
             if (g_net_store[i]->dBm < g_net_store[j]->dBm)
             {
@@ -105,6 +105,7 @@ static network_t *wifi_new_network(const char *ssid, uint8_t encryption, int32_t
     return new_net;
 }
 
+// TODO: Implemente WIFI ERASE "network" command
 // static void wifi_remove_network(uint16_t index)
 // {
 //     if (index >= g_net_count || g_net_store[index] == NULL)
@@ -130,17 +131,6 @@ static network_t *wifi_new_network(const char *ssid, uint8_t encryption, int32_t
 //     }
 // }
 
-void os_wifi_remove_unknown_networks(void)
-{
-    // Remove all networks that are not known
-    for (int16_t i = g_known_net_count; i < g_net_count; i++)
-    {
-        free(g_net_store[i]);
-        g_net_store[i] = NULL;
-    }
-    g_net_count = g_known_net_count;
-}
-
 static void wifi_remove_all_networks(void)
 {
     // Free all networks in the store
@@ -154,6 +144,53 @@ static void wifi_remove_all_networks(void)
     }
     g_net_count = 0;
     g_known_net_count = 0;
+}
+
+static void wifi_print_network(int n, const network_t *net)
+{
+    hal_print_integer("%2d ", n);
+    hal_print_integer("%3d ", net->dBm);
+    hal_print_string(net->ssid);
+    hal_print_string("\r\n");
+}
+
+static void config_load(void)
+{
+    int fd = hal_open("$$$CONFIG$$$", B_RDONLY);
+    if (fd >= 0)
+    {
+        network_t net;
+        while (hal_read(fd, &net, sizeof(network_t)) == sizeof(network_t))
+        {
+            network_t *new_net = wifi_new_network(net.ssid, net.encryption, -128);
+            if (new_net)
+            {
+                new_net->count = net.count;
+                new_net->dBm = net.dBm;
+                strncpy(new_net->secret, net.secret, sizeof(new_net->secret) - 1);
+                new_net->secret[sizeof(new_net->secret) - 1] = '\0';
+                g_known_net_count++;
+            }
+        }
+        hal_close(fd);
+    }
+}
+
+static void config_save(void)
+{
+    int fd = hal_open("$$$CONFIG$$$", B_CREAT | B_WRONLY);
+    if (fd >= 0)
+    {
+        for (int16_t i = 0; i < g_known_net_count; i++)
+        {
+            network_t *net = g_net_store[i];
+            if (net) // Only save valid networks
+            {
+                hal_write(fd, net, sizeof(network_t));
+            }
+        }
+        hal_close(fd);
+    }
 }
 
 network_t *os_wifi_get_network_by_ssid(const char *ssid)
@@ -182,12 +219,15 @@ network_t *os_wifi_get_network_by_id(int16_t id)
     return NULL; // Network with the given ID not found
 }
 
-static void wifi_print_network(int n, const network_t *net)
+void os_wifi_remove_unknown_networks(void)
 {
-    hal_print_integer("%2d ", n);
-    hal_print_integer("%3d ", net->dBm);
-    hal_print_string(net->ssid);
-    hal_print_string("\r\n");
+    // Remove all networks that are not known
+    for (int16_t i = g_known_net_count; i < g_net_count; i++)
+    {
+        free(g_net_store[i]);
+        g_net_store[i] = NULL;
+    }
+    g_net_count = g_known_net_count;
 }
 
 void os_wifi_list_networks(void)
@@ -258,7 +298,7 @@ int os_wifi_connect(network_t *net)
             if (net->count == 1) g_known_net_count++;
         }
         wifi_sort_networks();
-        // TODO: Save config
+        config_save();
     }
 
     hal_print_string(net->ssid);
@@ -358,22 +398,7 @@ void os_bootstrap(void)
     wifi_remove_all_networks();
 
     // Load config
-    int fd = hal_open("$$$CONFIG$$$", B_RDONLY);
-    if (fd >= 0)
-    {
-        network_t net;
-        while (hal_read(fd, &net, sizeof(network_t)) == sizeof(network_t))
-        {
-            network_t *new_net = wifi_new_network(net.ssid, net.encryption, -128);
-            if (new_net)
-            {
-                new_net->count = net.count;
-                strncpy(new_net->secret, net.secret, sizeof(new_net->secret) - 1);
-                new_net->secret[sizeof(new_net->secret) - 1] = '\0'; // Ensure null-termination
-            }
-        }
-        hal_close(fd);
-    }
+    config_load();
 
     // Init Basic and display BASTOS banner
     bastos_init();
