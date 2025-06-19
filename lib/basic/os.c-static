@@ -271,12 +271,16 @@ int os_wifi_connect(network_t *net)
     if (net->count == 0)
     {
         hal_print_string(LINE0 INV "Password: " CLEOL);
-        os_get_string(secret, sizeof(secret), '*');
+        if (os_get_string(secret, sizeof(secret), '*') < 0)
+        {
+            hal_print_string(LINE0 CLEOL "\r\n");
+            return -1;
+        }
     }
     else
     {
         strncpy(secret, net->secret, sizeof(secret) - 1);
-        secret[sizeof(secret) - 1] = '\0'; // Ensure null-termination
+        secret[sizeof(secret) - 1] = '\0';
     }
     hal_print_string(LINE0 INV BLINK "Connecting to ");
     hal_print_string(net->ssid);
@@ -319,7 +323,6 @@ int os_get_string(char *buf, int size, char secret_char)
             continue;
         if (key == 3) // Ctrl+C
         {
-            hal_print_string("\nOperation cancelled.\n");
             return -1; // Cancel the input
         }
         if (key == 0x7F) // DEL key
