@@ -124,6 +124,7 @@ uint8_t instr1n[] = {
 uint8_t wifi_func[] = {
     TOKEN_KEYWORD_LIST,
     TOKEN_KEYWORD_CONNECT,
+    TOKEN_KEYWORD_ERASE,
     0,
 };
 
@@ -1507,6 +1508,41 @@ static bool eval_wifi_connect(void)
     return true;
 }
 
+static bool eval_wifi_erase(void)
+{
+    if (!eval_number() && !eval_string_const())
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    network_t *net = 0;
+
+    if (bmem->bstate.token == TOKEN_NUMBER)
+    {
+        net = os_wifi_get_network_by_id((int16_t)bmem->bstate.number);
+    }
+    else
+    {
+        net = os_wifi_get_network_by_ssid(bmem->bstate.string);
+    }
+
+    if (!net)
+    {
+        bmem->bstate.error = BERROR_WIFI;
+        return false;
+    }
+
+    int ret = os_wifi_erase(net);
+    if (ret < 0)
+    {
+        bmem->bstate.error = BERROR_WIFI;
+        return false;
+    }
+
+    return true;
+}
+
 static bool eval_wifi()
 {
     if (!eval_token(TOKEN_KEYWORD_WIFI))
@@ -1521,6 +1557,9 @@ static bool eval_wifi()
 
     if (func == TOKEN_KEYWORD_CONNECT)
         return eval_wifi_connect();
+
+    if (func == TOKEN_KEYWORD_ERASE)
+        return eval_wifi_erase();
 
     return false;
 }

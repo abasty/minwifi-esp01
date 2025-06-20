@@ -106,32 +106,6 @@ static network_t *wifi_new_network(const char *ssid, uint8_t encryption, int32_t
     return new_net;
 }
 
-// TODO: Implemente WIFI ERASE "network" command
-// static void wifi_remove_network(uint16_t index)
-// {
-//     if (index >= g_net_count || g_net_store[index] == NULL)
-//         return;
-
-//     // Free the network and remove it from the store
-//     free(g_net_store[index]);
-//     g_net_store[index] = NULL;
-
-//     // Shift remaining networks down
-//     for (uint16_t i = index; i < g_net_count - 1; i++)
-//     {
-//         g_net_store[i] = g_net_store[i + 1];
-//     }
-//     g_net_store[g_net_count - 1] = NULL;
-//     g_net_count--;
-
-//     // If the removed network was a known network, decrease the known network
-//     // count
-//     if (index < g_known_net_count)
-//     {
-//         g_known_net_count--;
-//     }
-// }
-
 static void wifi_remove_all_networks(void)
 {
     // Free all networks in the store
@@ -295,7 +269,7 @@ int os_wifi_connect(network_t *net)
     int ret = hal_wifi_connect(net->ssid, secret);
     if (ret != 0)
     {
-        hal_print_string("Failed to connect to " );
+        hal_print_string("Failed to connect to ");
     }
     else
     {
@@ -305,7 +279,8 @@ int os_wifi_connect(network_t *net)
         if (net->count < 255)
         {
             net->count++;
-            if (net->count == 1) g_known_net_count++;
+            if (net->count == 1)
+                g_known_net_count++;
         }
         wifi_sort_networks();
         config_save();
@@ -317,6 +292,51 @@ int os_wifi_connect(network_t *net)
     hal_print_string(LINE0 CLEOL "\r\n");
 #endif
     return ret;
+}
+
+int os_wifi_erase(network_t *net)
+{
+    if (!net)
+        return -1;
+
+    // Find the index of the network in g_net_store
+    int16_t index = -1;
+    for (int16_t i = 0; i < g_net_count; i++)
+    {
+        if (g_net_store[i] == net)
+        {
+            index = i;
+            break;
+        }
+    }
+    if (index == -1)
+        return -1;
+
+    // Free the network and remove it from the store
+    free(g_net_store[index]);
+    g_net_store[index] = NULL;
+
+    // Shift remaining networks down
+    for (int16_t i = index; i < g_net_count - 1; i++)
+    {
+        g_net_store[i] = g_net_store[i + 1];
+    }
+    g_net_store[g_net_count - 1] = NULL;
+    g_net_count--;
+
+    // If the removed network was a known network, decrease the known network
+    // count
+    if (index < g_known_net_count)
+    {
+        g_known_net_count--;
+        // Shift known networks count if needed
+        // (already handled by shifting above)
+    }
+
+    // Save updated config
+    config_save();
+
+    return 0;
 }
 
 int os_get_string(char *buf, int size, char secret_char)
@@ -358,7 +378,7 @@ int os_get_string(char *buf, int size, char secret_char)
         }
     }
     buf[i] = '\0'; // Null-terminate the string
-    return i; // Return the number of characters read
+    return i;      // Return the number of characters read
 }
 
 uint8_t os_get_key()
