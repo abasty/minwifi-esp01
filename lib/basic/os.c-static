@@ -94,7 +94,8 @@ static network_t *wifi_new_network(const char *ssid, uint8_t encryption, int32_t
     // Initialize the new network
     new_net->dBm = rssi;
     new_net->encryption = encryption;
-    new_net->count = 0; // Initial count of connections
+    new_net->count = 0;
+    new_net->available = false;
     strncpy(new_net->ssid, ssid, sizeof(new_net->ssid) - 1);
     new_net->ssid[sizeof(new_net->ssid) - 1] = '\0';
     new_net->secret[0] = '\0';
@@ -148,10 +149,14 @@ static void wifi_remove_all_networks(void)
 
 static void wifi_print_network(int n, const network_t *net)
 {
+    if (!net->available)
+    {
+        hal_print_string(INK1);
+    }
     hal_print_integer("%2d ", n);
     hal_print_integer("%3d ", net->dBm);
     hal_print_string(net->ssid);
-    hal_print_string("\r\n");
+    hal_print_string(INK7 "\r\n");
 }
 
 static void config_load(void)
@@ -162,11 +167,10 @@ static void config_load(void)
         network_t net;
         while (hal_read(fd, &net, sizeof(network_t)) == sizeof(network_t))
         {
-            network_t *new_net = wifi_new_network(net.ssid, net.encryption, -128);
+            network_t *new_net = wifi_new_network(net.ssid, net.encryption, net.dBm);
             if (new_net)
             {
                 new_net->count = net.count;
-                new_net->dBm = net.dBm;
                 strncpy(new_net->secret, net.secret, sizeof(new_net->secret) - 1);
                 new_net->secret[sizeof(new_net->secret) - 1] = '\0';
                 g_known_net_count++;
@@ -203,20 +207,12 @@ network_t *os_wifi_get_network_by_ssid(const char *ssid)
 
 network_t *os_wifi_get_network_by_id(int16_t id)
 {
-    int16_t n = 0;
-    for (int16_t i = 0; i < g_net_count; i++)
+    id--;
+    if (id >= 0 && id < g_net_count)
     {
-        network_t *net = g_net_store[i];
-        if (net->dBm != -128)
-        {
-            n++;
-            if (n == id)
-            {
-                return net; // Return the network with the given ID
-            }
-        }
+        return g_net_store[id];
     }
-    return NULL; // Network with the given ID not found
+    return NULL;
 }
 
 void os_wifi_remove_unknown_networks(void)
@@ -230,6 +226,14 @@ void os_wifi_remove_unknown_networks(void)
     g_net_count = g_known_net_count;
 }
 
+void os_wifi_mark_not_available(void)
+{
+    for (int16_t i = 0; i < g_net_count; i++)
+    {
+        g_net_store[i]->available = false;
+    }
+}
+
 void os_wifi_list_networks(void)
 {
     // Sort networks before listing
@@ -237,15 +241,12 @@ void os_wifi_list_networks(void)
 
     hal_print_string("\r\n" INV "ID dBm SSID" CLEOL " " NORMAL "\r\n");
 
-    // Parse all newtorks and print those with dBm != -128
+    // Parse all networks
     int n = 0;
     for (int16_t i = 0; i < g_net_count; i++)
     {
         network_t *net = g_net_store[i];
-        if (net->dBm != -128)
-        {
-            wifi_print_network(++n, net);
-        }
+        wifi_print_network(++n, net);
     }
     hal_print_integer("\r\n%d network(s)" CLEOL NORMAL "\r\n\r\nReady\r\n", n);
 }
@@ -253,16 +254,21 @@ void os_wifi_list_networks(void)
 void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi)
 {
     // Check if the network already exists
-    network_t *existing_net = os_wifi_get_network_by_ssid(ssid);
-    if (existing_net)
+    network_t *net = os_wifi_get_network_by_ssid(ssid);
+    if (net)
     {
         // Update existing network
-        existing_net->encryption = encryption;
-        existing_net->dBm = rssi;
+        net->available = true;
+        net->encryption = encryption;
+        net->dBm = rssi;
         return;
     }
-    // If the network does not exist, create a new one
-    wifi_new_network(ssid, encryption, rssi);
+    else
+    {
+        // If the network does not exist, create a new one
+        net = wifi_new_network(ssid, encryption, rssi);
+    }
+    net->available = true;
 }
 
 int os_wifi_connect(network_t *net)

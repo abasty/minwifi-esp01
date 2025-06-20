@@ -21,6 +21,8 @@
 #define BLINK "\x1B[5m"
 
 #define INK "\x1B[%dm"
+#define INK1 "\x1B[\x1Fm"
+#define INK7 "\x1B[\x25m"
 #define INK_DELTA 30
 
 #define PAPER "\x1B[%dm"

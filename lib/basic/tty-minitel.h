@@ -46,6 +46,8 @@
 #define BLINK "\x1B\x48"
 
 #define INK "\x1B%c"
+#define INK1 "\x1B\x41"
+#define INK7 "\x1B\x47"
 #define INK_DELTA 0x40
 
 #define PAPER "\x1B%c"

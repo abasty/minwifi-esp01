@@ -45,6 +45,7 @@ typedef struct network_s
     uint8_t count;      // Count of sucessful connections
     char ssid[36];      // ssid
     char secret[64];    // password / passphrase
+    bool available;     // Available in last scan
 } network_t;
 
 void os_bootstrap(void);
@@ -55,6 +56,8 @@ network_t *os_wifi_get_network_by_id(int16_t id);
 void os_wifi_remove_unknown_networks(void);
 void os_wifi_list_networks(void);
 int os_wifi_connect(network_t *net);
+void os_wifi_mark_not_available(void);
+
 uint8_t os_get_key(void);
 int os_get_string(char *buf, int size, char secret_char);
 
