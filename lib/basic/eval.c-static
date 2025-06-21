@@ -1564,6 +1564,27 @@ static bool eval_wifi()
     return false;
 }
 
+static bool eval_connect()
+{
+    if (!eval_token(TOKEN_KEYWORD_CONNECT))
+        return false;
+
+    if (!eval_string_const())
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    int ret = hal_connect(bmem->bstate.string);
+
+    if (ret != 0)
+    {
+        bmem->bstate.error = BERROR_WIFI;
+    }
+
+    return ret == 0;
+}
+
 static bool eval_instruction()
 {
     return eval_print(false) ||
@@ -1573,7 +1594,8 @@ static bool eval_instruction()
            eval_let() ||
            eval_dim() ||
            eval_list() ||
-           eval_wifi();
+           eval_wifi() ||
+           eval_connect();
     ;
 }
 

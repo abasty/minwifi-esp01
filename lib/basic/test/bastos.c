@@ -184,6 +184,11 @@ int hal_wifi_connect(const char* ssid, const char* secret)
     return -1;
 }
 
+int hal_connect(const char* url)
+{
+    return 0;
+}
+
 void setup()
 {
     os_bootstrap();

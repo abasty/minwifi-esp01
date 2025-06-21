@@ -164,6 +164,11 @@ int hal_wifi_connect(const char* ssid, const char* secret)
     return WiFi.status() == WL_CONNECTED ? 0 : -1;
 }
 
+int hal_connect(const char* url)
+{
+    return 0;
+}
+
 int hal_erase(const char *pathname)
 {
     bool ret = LittleFS.remove(pathname);
