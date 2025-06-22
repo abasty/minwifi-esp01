@@ -400,7 +400,7 @@ board_build.filesystem = littlefs
 * Erase flash
 * Full Clean
 * Dependencies / Update
-* Build
+* Build : Télécharge les nouvelles versions
 
 ## Travail avec Minterm
 

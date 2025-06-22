@@ -518,6 +518,7 @@ static void bmem_init(uint8_t *mem, uint16_t size)
     memset(bmem, 0, size);
     bmem->prog_start = (uint8_t *) bmem + sizeof(bmem_t);
     bmem->vars_end = (uint8_t *) bmem + size;
+    bmem->bstate.sock = -1;
     bastos_prog_new();
 }
 

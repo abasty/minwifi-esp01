@@ -91,6 +91,13 @@ int hal_print_integer(const char *format, int32_t i)
     return n;
 }
 
+int hal_print_buffer(uint8_t *buffer, int n)
+{
+    n = fwrite(buffer, n, 1, stdout);
+    fflush(stdout);
+    return n;
+}
+
 int hal_open(const char *pathname, int flags)
 {
     if ((flags & O_CREAT) != 0)
@@ -148,7 +155,7 @@ int hal_erase(const char *pathname)
     return unlink(pathname);
 }
 
-static void hal_reset()
+void hal_reset()
 {
 }
 
@@ -186,25 +193,35 @@ int hal_wifi_connect(const char* ssid, const char* secret)
 
 int hal_connect(const char* url)
 {
-    return 0;
+    // Do the connection (TCP socket or WebSocket)
+    // Disable nagle's algo
+
+    return 0; // -1 if error
+}
+
+void hal_disconnect(int n)
+{
+    // If connected, disconnect and remove associated resources
+}
+
+int hal_net_send(const uint8_t *buffer, int n)
+{
+    return -1;
+}
+
+int hal_net_recv(uint8_t *buffer, int n)
+{
+    return -1;
 }
 
 void setup()
 {
-    os_bootstrap();
+    os_setup();
 }
 
 void loop(void)
 {
-    // if connected, loop_connected();
-    char key = os_get_key();
-    bastos_send_keys((char *)&key, key != 0 ? 1 : 0, true);
-    bastos_loop();
-    if (bastos_is_reset())
-    {
-        bastos_done();
-        hal_reset();
-    }
+    os_loop();
 }
 
 int main()

@@ -35,6 +35,7 @@
 #define BERROR_IO     ((int8_t) -4)
 #define BERROR_RANGE  ((int8_t) -5)
 #define BERROR_WIFI   ((int8_t) -6)
+#define BERROR_SOCK   ((int8_t) -7)
 
 
 #endif // __BERROR_H__

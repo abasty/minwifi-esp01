@@ -1575,14 +1575,14 @@ static bool eval_connect()
     if (!bmem->bstate.do_eval)
         return true;
 
-    int ret = hal_connect(bmem->bstate.string);
+    bmem->bstate.sock = hal_connect(bmem->bstate.string);
 
-    if (ret != 0)
+    if (bmem->bstate.sock < 0)
     {
-        bmem->bstate.error = BERROR_WIFI;
+        bmem->bstate.error = BERROR_SOCK;
     }
 
-    return ret == 0;
+    return bmem->bstate.sock >= 0;
 }
 
 static bool eval_instruction()

@@ -48,8 +48,10 @@ typedef struct network_s
     bool available;     // Available in last scan
 } network_t;
 
-void os_bootstrap(void);
+void os_setup(void);
+void os_loop(void);
 
+// TODO: Try to reduce os_wifi_* functions with more  hal_wifi_* granularity
 void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi);
 network_t *os_wifi_get_network_by_ssid(const char *ssid);
 network_t *os_wifi_get_network_by_id(int16_t id);
@@ -58,24 +60,36 @@ void os_wifi_list_networks(void);
 int os_wifi_connect(network_t *net);
 void os_wifi_mark_not_available(void);
 int os_wifi_erase(network_t *net);
-int hal_connect(const char* url);
 
 uint8_t os_get_key(void);
 int os_get_string(char *buf, int size, char secret_char);
 
 uint8_t hal_get_key(void);
+// TODO: Think to hal_printf(format, ...)
 int hal_print_string(const char *s);
 int hal_print_float(float f);
 int hal_print_integer(const char *format, int i);
+
+int hal_print_buffer(uint8_t *buffer, int n);
+
 int hal_open(const char *pathname, int flags);
 int hal_close(int fd);
 int hal_write(int fd, const void *buf, int count);
 int hal_read(int fd, void *buf, int count);
+
 void hal_cat(void);
-void hal_speed(uint8_t fn);
 int hal_erase(const char *pathname);
+
 int hal_wifi_scan(void);
 int hal_wifi_connect(const char* ssid, const char* secret);
+
+int hal_connect(const char* url);
+void hal_disconnect(int n);
+int hal_net_send(const uint8_t *buffer, int n);
+int hal_net_recv(uint8_t *buffer, int n);
+
+void hal_speed(uint8_t fn);
+void hal_reset(void);
 
 #ifdef __cplusplus
 }

@@ -48,11 +48,11 @@ const int ledPin = 13;
 #define COMMAND_IP_PORT 23
 
 // Minitel server TCP/IP connexion
-WiFiClient tcpMinitelConnexion;
-WebSocketsClient webSocket;
-bool _3611 = false;
-bool fkey = false;
-bool minitelMode;
+// WiFiClient tcpMinitelConnexion;
+// WebSocketsClient webSocket;
+// bool _3611 = false;
+// bool fkey = false;
+// bool minitelMode;
 File bastos_file0;
 
 uint8_t hal_get_key()
@@ -81,6 +81,11 @@ int hal_print_string(const char *s)
 int hal_print_integer(const char *format, int i)
 {
     return Serial.printf(format, i);
+}
+
+int hal_print_buffer(uint8_t *buffer, int n)
+{
+    return Serial.write(buffer, n);
 }
 
 int hal_open(const char *pathname, int flags)
@@ -129,6 +134,37 @@ void hal_cat()
     hal_print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (info.totalBytes - info.usedBytes) / 1024);
 }
 
+int hal_erase(const char *pathname)
+{
+    bool ret = LittleFS.remove(pathname);
+    if (ret)
+        return 0;
+    return -1;
+}
+
+void hal_reset()
+{
+#ifdef MINITEL
+    hal_print_string(P_ACK_OFF_PRISE P_PRISE_1200);
+    delay(250);
+#endif
+    ESP.restart();
+}
+
+void hal_speed(uint8_t fn)
+{
+    if (fn == TOKEN_KEYWORD_FAST || fn == TOKEN_KEYWORD_SLOW)
+    {
+#ifdef MINITEL
+        hal_print_string(fn == TOKEN_KEYWORD_FAST ? P_PRISE_4800 : P_PRISE_1200);
+        delay(500);
+        Serial.end();
+        Serial.begin(fn == TOKEN_KEYWORD_FAST ? 4800 : 1200, SERIAL_7E1);
+#endif
+        return;
+    }
+}
+
 int hal_wifi_scan()
 {
     int n = WiFi.scanNetworks(false, true);
@@ -166,38 +202,25 @@ int hal_wifi_connect(const char* ssid, const char* secret)
 
 int hal_connect(const char* url)
 {
-    return 0;
+    // Do the connection (TCP socket or WebSocket)
+    // Disable nagle's algo
+
+    return 0; // -1 if error
 }
 
-int hal_erase(const char *pathname)
+void hal_disconnect(int n)
 {
-    bool ret = LittleFS.remove(pathname);
-    if (ret)
-        return 0;
+    // If connected, disconnect and remove associated resources
+}
+
+int hal_net_send(const uint8_t *buffer, int n)
+{
     return -1;
 }
 
-static inline void hal_reset()
+int hal_net_recv(uint8_t *buffer, int n)
 {
-#ifdef MINITEL
-    hal_print_string(P_ACK_OFF_PRISE P_PRISE_1200);
-    delay(250);
-#endif
-    ESP.restart();
-}
-
-void hal_speed(uint8_t fn)
-{
-    if (fn == TOKEN_KEYWORD_FAST || fn == TOKEN_KEYWORD_SLOW)
-    {
-#ifdef MINITEL
-        hal_print_string(fn == TOKEN_KEYWORD_FAST ? P_PRISE_4800 : P_PRISE_1200);
-        delay(500);
-        Serial.end();
-        Serial.begin(fn == TOKEN_KEYWORD_FAST ? 4800 : 1200, SERIAL_7E1);
-#endif
-        return;
-    }
+    return -1;
 }
 
 static void serial_flush()
@@ -244,12 +267,14 @@ void setup()
     WiFi.mode(WIFI_STA);
 
     // Bootstrap the OS
-    os_bootstrap();
+    os_setup();
 }
 
 #if 0
 void loop_connected()
 {
+    // TODO: Implement HAL connexion functions with socket and WebSockets
+
     // Forward Minitel server incoming data to serial output
     if (tcpMinitelConnexion && tcpMinitelConnexion.available() > 0)
     {
@@ -282,12 +307,5 @@ void loop_connected()
 
 void loop()
 {
-    char key = os_get_key();
-    bastos_send_keys((char *)&key, key != 0 ? 1 : 0, true);
-    bastos_loop();
-    if (bastos_is_reset())
-    {
-        bastos_done();
-        hal_reset();
-    }
+    os_loop();
 }

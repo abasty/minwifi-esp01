@@ -79,6 +79,7 @@ typedef struct
     bool inputting;
     bool reset;
     int sp;
+    int sock;
     char *string;
     prog_buffer_t token_buffer;
 } eval_state_t;

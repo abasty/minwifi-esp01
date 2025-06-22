@@ -428,7 +428,7 @@ uint8_t os_get_key()
     return key;
 }
 
-void os_bootstrap(void)
+void os_setup(void)
 {
     // Remove all networks
     wifi_remove_all_networks();
@@ -439,4 +439,84 @@ void os_bootstrap(void)
     // Init Basic and display BASTOS banner
     bastos_init();
     bastos_send_keys("bastos\n", 7, false);
+}
+
+static void os_disconnect(void)
+{
+    hal_disconnect(bmem->bstate.sock);
+    bmem->bstate.sock = -1;
+    hal_print_string("Ready\r\n");
+}
+
+static void os_loop_connected()
+{
+    static bool fkey = false;
+    uint8_t buffer[128];
+
+    // Read data on socket in a non blocking mode
+    int ret = hal_net_recv(buffer, sizeof(buffer));
+    if (ret < 0)
+    {
+        // If error on socket: exit the connected mode
+        os_disconnect();
+    }
+    else
+    {
+        // If chars on socket: forward chars to screen (print)
+        hal_print_buffer(buffer, ret);
+    }
+
+    uint8_t key = hal_get_key();
+    // If keyboard has not char: return
+    if (key == 0)
+        return;
+
+    // Send char to server through the socket
+    ret = hal_net_send(&key, 1);
+    if (ret < 0)
+    {
+        // If error on socket: exit the connected mode
+        os_disconnect();
+    }
+
+    // If Cx/Fin: close socket [exit the connected mode]
+    if (key == 0x13)
+    {
+        fkey = true;
+    }
+    else
+    {
+        if (fkey)
+        {
+            if (key == 'I') // CX/Fin
+            {
+                os_disconnect();
+            }
+            fkey = false;
+        }
+    }
+}
+
+static void os_loop_basic()
+{
+    char key = os_get_key();
+    bastos_send_keys((char *)&key, key != 0 ? 1 : 0, true);
+    bastos_loop();
+    if (bastos_is_reset())
+    {
+        bastos_done();
+        hal_reset();
+    }
+}
+
+void os_loop()
+{
+    if (bmem->bstate.sock >= 0)
+    {
+        os_loop_connected();
+    }
+    else
+    {
+        os_loop_basic();
+    }
 }
