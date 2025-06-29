@@ -1,18 +1,20 @@
 #define _GNU_SOURCE
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <arpa/inet.h>
+#include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
-#include <termios.h>
 #include <poll.h>
 #include <signal.h>
-#include <errno.h>
-#include <dirent.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <termios.h>
+#include <unistd.h>
 
 #ifdef MINITEL
 #include "tty-minitel.h"
@@ -118,7 +120,13 @@ int hal_write(int fd, const void *buf, int count)
 
 int hal_read(int fd, void *buf, int count)
 {
-    return read(fd, buf, count);
+    struct pollfd input[1] = {{fd : fd, events : POLLIN}};
+    int ret = poll(input, 1, 1);
+
+    if (ret > 0)
+        return read(fd, buf, count);
+
+    return 0;
 }
 
 void hal_cat()
@@ -191,27 +199,46 @@ int hal_wifi_connect(const char* ssid, const char* secret)
     return -1;
 }
 
-int hal_connect(const char* url)
+struct sockaddr_in addr;
+
+int hal_connect(const char *url)
 {
     // Do the connection (TCP socket or WebSocket)
     // Disable nagle's algo
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    addr.sin_port = htons(2000);
 
-    return 0; // -1 if error
+    if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
+    {
+        close(fd);
+        fd = -1;
+    }
+
+    return fd;
 }
 
 void hal_disconnect(int n)
 {
     // If connected, disconnect and remove associated resources
+    close(n);
 }
 
-int hal_net_send(const uint8_t *buffer, int n)
+int hal_net_send(int fd, const uint8_t *buffer, int n)
 {
-    return -1;
+    return write(fd, buffer, n);
 }
 
-int hal_net_recv(uint8_t *buffer, int n)
+int hal_net_recv(int fd, uint8_t *buffer, int n)
 {
-    return -1;
+    struct pollfd input[1] = {{fd : fd, events : POLLIN}};
+    int ret = poll(input, 1, 1);
+
+    if (ret > 0)
+        return read(fd, buffer, n);
+
+    return 0;
 }
 
 void setup()

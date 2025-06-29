@@ -85,8 +85,8 @@ int hal_wifi_connect(const char* ssid, const char* secret);
 
 int hal_connect(const char* url);
 void hal_disconnect(int n);
-int hal_net_send(const uint8_t *buffer, int n);
-int hal_net_recv(uint8_t *buffer, int n);
+int hal_net_send(int fd, const uint8_t *buffer, int n);
+int hal_net_recv(int fd, uint8_t *buffer, int n);
 
 void hal_speed(uint8_t fn);
 void hal_reset(void);

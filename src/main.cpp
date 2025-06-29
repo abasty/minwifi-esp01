@@ -213,12 +213,12 @@ void hal_disconnect(int n)
     // If connected, disconnect and remove associated resources
 }
 
-int hal_net_send(const uint8_t *buffer, int n)
+int hal_net_send(int fd, const uint8_t *buffer, int n)
 {
     return -1;
 }
 
-int hal_net_recv(uint8_t *buffer, int n)
+int hal_net_recv(int fd, uint8_t *buffer, int n)
 {
     return -1;
 }

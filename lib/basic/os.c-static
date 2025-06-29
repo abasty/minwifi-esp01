@@ -454,13 +454,13 @@ static void os_loop_connected()
     uint8_t buffer[128];
 
     // Read data on socket in a non blocking mode
-    int ret = hal_net_recv(buffer, sizeof(buffer));
+    int ret = hal_net_recv(bmem->bstate.sock, buffer, sizeof(buffer));
     if (ret < 0)
     {
         // If error on socket: exit the connected mode
         os_disconnect();
     }
-    else
+    else if (ret > 0)
     {
         // If chars on socket: forward chars to screen (print)
         hal_print_buffer(buffer, ret);
@@ -472,7 +472,7 @@ static void os_loop_connected()
         return;
 
     // Send char to server through the socket
-    ret = hal_net_send(&key, 1);
+    ret = hal_net_send(bmem->bstate.sock, &key, 1);
     if (ret < 0)
     {
         // If error on socket: exit the connected mode
