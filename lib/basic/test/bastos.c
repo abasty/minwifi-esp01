@@ -207,8 +207,8 @@ int hal_connect(const char *url)
     // Disable nagle's algo
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    addr.sin_port = htons(2000);
+    addr.sin_addr.s_addr = inet_addr("217.154.8.76");
+    addr.sin_port = htons(1967);
 
     if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
     {

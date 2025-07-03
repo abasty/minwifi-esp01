@@ -45,15 +45,10 @@ const int buttonPin = 0;
 const int relayPin = 12;
 const int ledPin = 13;
 
-#define COMMAND_IP_PORT 23
-
-// Minitel server TCP/IP connexion
-// WiFiClient tcpMinitelConnexion;
-// WebSocketsClient webSocket;
-// bool _3611 = false;
-// bool fkey = false;
-// bool minitelMode;
+// Files and sockets
 File bastos_file0;
+WiFiClient tcpSocket;
+// WebSocketsClient webSocket;
 
 uint8_t hal_get_key()
 {
@@ -204,6 +199,47 @@ int hal_connect(const char* url)
 {
     // Do the connection (TCP socket or WebSocket)
     // Disable nagle's algo
+    // "tcp:toto.fr:888"
+    // "ws:3611.re/ws:80"
+    // socket.connect("abasty-retro.fr", port)
+    // webSocket.begin("3611.re", 80, "/ws")
+
+    tcpSocket.connect("abasty-retro.fr", 1967);
+    if (!tcpSocket.connected())
+    {
+        tcpSocket.stop();
+        return -1;
+    }
+
+    tcpSocket.setDefaultNoDelay(true);
+    return 0;
+
+    // int proto = -1;
+    // const char *part = url;
+
+    // if (strncasecmp(url, "tcp", 3) == 0)
+    // {
+    //     part += 3;
+    //     proto = 0;
+    // }
+    // else if (strncasecmp(url, "ws", 2) == 0)
+    // {
+    //    part += 2;
+    //    proto = 1;
+    // }
+    // else if (strncasecmp(url, "wss", 3) == 0)
+    // {
+    //    part += 3;
+    //    proto = 2;
+    // }
+
+    // if (proto < 0)
+    //     return -1;
+
+    // if (*part != ':')
+    //     return -1;
+
+    // part++;
 
     return 0; // -1 if error
 }
@@ -211,16 +247,27 @@ int hal_connect(const char* url)
 void hal_disconnect(int n)
 {
     // If connected, disconnect and remove associated resources
+    if (tcpSocket.connected())
+    {
+        tcpSocket.stop();
+    }
 }
 
 int hal_net_send(int fd, const uint8_t *buffer, int n)
 {
-    return -1;
+    return tcpSocket.write(buffer, n);
 }
 
 int hal_net_recv(int fd, uint8_t *buffer, int n)
 {
-    return -1;
+    int available = tcpSocket.available();
+    if (available == 0)
+        return 0;
+
+    if (n > available)
+        n = available;
+
+    return tcpSocket.read(buffer, n);
 }
 
 static void serial_flush()
@@ -276,11 +323,11 @@ void loop_connected()
     // TODO: Implement HAL connexion functions with socket and WebSockets
 
     // Forward Minitel server incoming data to serial output
-    if (tcpMinitelConnexion && tcpMinitelConnexion.available() > 0)
+    if (tcpSocket && tcpSocket.available() > 0)
     {
         // transparently forward bytes to serial
         uint8_t buffer[128];
-        size_t n = tcpMinitelConnexion.read(buffer, 128);
+        size_t n = tcpSocket.read(buffer, 128);
         // conversion stream Videotex vers ANSI
         Serial.write(buffer, n);
     }
@@ -292,15 +339,15 @@ void loop_connected()
     }
 
     // If disconnected
-    // if (minitelMode && (!tcpMinitelConnexion || !tcpMinitelConnexion.connected())) {
+    // if (minitelMode && (!tcpSocket || !tcpSocket.connected())) {
     //     minitelMode = false;
-    //     tcpMinitelConnexion.stop();
+    //     tcpSocket.stop();
     //     init_minitel(true);
     // }
 
     // Minitel mode: Forward serial input to Minitel sever
-    // tcpMinitelConnexion.setNoDelay(true); // Disable nagle's algo.
-    // tcpMinitelConnexion.write((char *)&key, 1);
+    // tcpSocket.setNoDelay(true); // Disable nagle's algo.
+    // tcpSocket.write((char *)&key, 1);
     // webSocket.sendTXT(key);
 }
 #endif
