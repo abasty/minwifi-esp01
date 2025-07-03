@@ -36,6 +36,9 @@
 #define CON "\x11"
 #define COFF "\x14"
 
+#define G0 "\x0F"
+#define G1 "\x0E"
+
 #define CUR "\x1F%c%c"
 #define CUR_DELTA_V 64
 #define CUR_DELTA_H 64

@@ -11,6 +11,9 @@
 #define CON "\x1B[?25h"
 #define COFF "\x1B[?25l"
 
+#define G0 ""
+#define G1 ""
+
 #define CUR "\x1B[%d;%dH"
 #define CUR_DELTA_V 0
 #define CUR_DELTA_H 0
