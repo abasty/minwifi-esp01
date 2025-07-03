@@ -445,7 +445,11 @@ static void os_disconnect(void)
 {
     hal_disconnect(bmem->bstate.sock);
     bmem->bstate.sock = -1;
-    hal_print_string("Ready\r\n");
+
+    if (!eval_running())
+    {
+        hal_print_string("\r\nReady\r\n");
+    }
 }
 
 static void os_loop_connected()
