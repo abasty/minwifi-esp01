@@ -125,4 +125,6 @@ static inline int bmem_align4(int size)
     return (size + BASTOS_MEMORY_ALIGN - 1) & ~(BASTOS_MEMORY_ALIGN - 1);
 }
 
+extern bmem_t *bmem;
+
 #endif // __BMEMORY_H__

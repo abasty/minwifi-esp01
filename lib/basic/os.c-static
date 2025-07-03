@@ -24,6 +24,7 @@
  */
 
 #include "bio.h"
+#include "bmemory.h"
 #include "os.h"
 
 #ifdef MINITEL
@@ -448,7 +449,7 @@ static void os_disconnect(void)
 
     if (!eval_running())
     {
-        hal_print_string("\r\nReady\r\n");
+        hal_print_string(CON "\r\nReady\r\n");
     }
 }
 
