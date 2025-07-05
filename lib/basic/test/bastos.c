@@ -96,7 +96,7 @@ int hal_print_integer(const char *format, int32_t i)
 
 int hal_print_buffer(uint8_t *buffer, int n)
 {
-    n = fwrite(buffer, n, 1, stdout);
+    n = fwrite(buffer, 1, n, stdout);
     fflush(stdout);
     return n;
 }
@@ -121,7 +121,7 @@ int hal_write(int fd, const void *buf, int count)
 
 int hal_read(int fd, void *buf, int count)
 {
-    struct pollfd input[1] = {{fd : fd, events : POLLIN}};
+    struct pollfd input[1] = {{.fd = fd, .events = POLLIN}};
     int ret = poll(input, 1, 1);
 
     if (ret > 0)
