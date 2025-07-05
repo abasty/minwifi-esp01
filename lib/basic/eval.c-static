@@ -1120,6 +1120,7 @@ int8_t eval_prog_next()
     if (err != BERROR_NONE && bmem->bstate.pc != 0)
     {
         hal_print_integer("On line %d: ", bmem->bstate.pc->line_no);
+        hal_print_integer("Error %d\r\n", (int)-err);
     }
 
     bmem->bstate.pc = 0;
