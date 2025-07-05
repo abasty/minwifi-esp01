@@ -442,9 +442,45 @@ void os_setup(void)
     bastos_send_keys("bastos\n", 7, false);
 }
 
+int os_connect(const char* urn)
+{
+    // proto:ip:port:path
+
+    // "217.154.8.76"
+
+    return hal_net_connect(0, "abasty-retro.fr", 1967, "");
+
+    // int proto = -1;
+    // const char *part = url;
+
+    // if (strncasecmp(url, "tcp", 3) == 0)
+    // {
+    //     part += 3;
+    //     proto = 0;
+    // }
+    // else if (strncasecmp(url, "ws", 2) == 0)
+    // {
+    //    part += 2;
+    //    proto = 1;
+    // }
+    // else if (strncasecmp(url, "wss", 3) == 0)
+    // {
+    //    part += 3;
+    //    proto = 2;
+    // }
+
+    // if (proto < 0)
+    //     return -1;
+
+    // if (*part != ':')
+    //     return -1;
+
+    // part++;
+}
+
 static void os_disconnect(void)
 {
-    hal_disconnect(bmem->bstate.sock);
+    hal_net_disconnect(bmem->bstate.sock);
     bmem->bstate.sock = -1;
 
     if (!eval_running())

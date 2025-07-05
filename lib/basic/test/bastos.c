@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <netdb.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -201,14 +202,19 @@ int hal_wifi_connect(const char* ssid, const char* secret)
 
 struct sockaddr_in addr;
 
-int hal_connect(const char *url)
+int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path)
 {
     // Do the connection (TCP socket or WebSocket)
     // Disable nagle's algo
+
+    struct hostent *hp = gethostbyname(host);
+    if (hp == 0)
+        return -1;
+
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr("217.154.8.76");
-    addr.sin_port = htons(1967);
+    memcpy(&addr.sin_addr, hp->h_addr_list[0], hp->h_length);
+    addr.sin_port = htons(port);
 
     if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
     {
@@ -219,7 +225,7 @@ int hal_connect(const char *url)
     return fd;
 }
 
-void hal_disconnect(int n)
+void hal_net_disconnect(int n)
 {
     // If connected, disconnect and remove associated resources
     close(n);

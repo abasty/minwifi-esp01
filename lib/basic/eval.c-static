@@ -1575,7 +1575,7 @@ static bool eval_connect()
     if (!bmem->bstate.do_eval)
         return true;
 
-    bmem->bstate.sock = hal_connect(bmem->bstate.string);
+    bmem->bstate.sock = os_connect(bmem->bstate.string);
 
     if (bmem->bstate.sock < 0)
     {

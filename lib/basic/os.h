@@ -61,6 +61,8 @@ int os_wifi_connect(network_t *net);
 void os_wifi_mark_not_available(void);
 int os_wifi_erase(network_t *net);
 
+int os_connect(const char* urn);
+
 uint8_t os_get_key(void);
 int os_get_string(char *buf, int size, char secret_char);
 
@@ -83,8 +85,8 @@ int hal_erase(const char *pathname);
 int hal_wifi_scan(void);
 int hal_wifi_connect(const char* ssid, const char* secret);
 
-int hal_connect(const char* url);
-void hal_disconnect(int n);
+int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path);
+void hal_net_disconnect(int n);
 int hal_net_send(int fd, const uint8_t *buffer, int n);
 int hal_net_recv(int fd, uint8_t *buffer, int n);
 

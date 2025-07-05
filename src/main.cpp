@@ -195,7 +195,7 @@ int hal_wifi_connect(const char* ssid, const char* secret)
     return WiFi.status() == WL_CONNECTED ? 0 : -1;
 }
 
-int hal_connect(const char* url)
+int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path)
 {
     // Do the connection (TCP socket or WebSocket)
     // Disable nagle's algo
@@ -204,7 +204,7 @@ int hal_connect(const char* url)
     // socket.connect("abasty-retro.fr", port)
     // webSocket.begin("3611.re", 80, "/ws")
 
-    tcpSocket.connect("abasty-retro.fr", 1967);
+    tcpSocket.connect(host, port);
     if (!tcpSocket.connected())
     {
         tcpSocket.stop();
@@ -213,38 +213,9 @@ int hal_connect(const char* url)
 
     tcpSocket.setDefaultNoDelay(true);
     return 0;
-
-    // int proto = -1;
-    // const char *part = url;
-
-    // if (strncasecmp(url, "tcp", 3) == 0)
-    // {
-    //     part += 3;
-    //     proto = 0;
-    // }
-    // else if (strncasecmp(url, "ws", 2) == 0)
-    // {
-    //    part += 2;
-    //    proto = 1;
-    // }
-    // else if (strncasecmp(url, "wss", 3) == 0)
-    // {
-    //    part += 3;
-    //    proto = 2;
-    // }
-
-    // if (proto < 0)
-    //     return -1;
-
-    // if (*part != ':')
-    //     return -1;
-
-    // part++;
-
-    return 0; // -1 if error
 }
 
-void hal_disconnect(int n)
+void hal_net_disconnect(int n)
 {
     // If connected, disconnect and remove associated resources
     if (tcpSocket.connected())
