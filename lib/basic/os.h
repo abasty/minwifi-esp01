@@ -38,6 +38,12 @@ extern "C" {
 #define ENC_NONE (7)
 #define ENC_AUTO (8)
 
+#define URN_PROTO_TCP  (0)
+#define URN_PROTO_WS   (1)
+#define URN_PROTO_WSS  (2)
+
+#define NET_BUFFER_MAX (128)
+
 typedef struct network_s
 {
     int32_t dBm;        // rssi in dBm

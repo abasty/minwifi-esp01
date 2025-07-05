@@ -1165,7 +1165,7 @@ static void eval_free()
 static void eval_bastos()
 {
 #ifdef MINITEL
-    hal_print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU);
+    hal_print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU_ON);
     hal_print_string(LINE0 CLEOL CLS);
 #else
     hal_print_string(CLS);

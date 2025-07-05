@@ -442,10 +442,6 @@ void os_setup(void)
     bastos_send_keys("bastos\n", 7, false);
 }
 
-#define urn_proto_tcp  (0)
-#define urn_proto_ws   (1)
-#define urn_proto_wss  (2)
-
 int os_connect(const char* urn)
 {
     // proto:ip:port:path
@@ -464,17 +460,17 @@ int os_connect(const char* urn)
     if (strncasecmp(urn, "tcp:", 4) == 0)
     {
         part += 4;
-        proto = urn_proto_tcp;
+        proto = URN_PROTO_TCP;
     }
     else if (strncasecmp(urn, "ws:", 3) == 0)
     {
        part += 3;
-       proto = urn_proto_ws;
+       proto = URN_PROTO_WS;
     }
     else if (strncasecmp(urn, "wss:", 4) == 0)
     {
        part += 4;
-       proto = urn_proto_wss;
+       proto = URN_PROTO_WSS;
     }
 
     if (proto < 0)
@@ -511,6 +507,10 @@ int os_connect(const char* urn)
 
     // "217.154.8.76"
     ret = hal_net_connect(proto, host, port, path ? path : "");
+    if (ret == 0)
+    {
+        hal_print_string(P_ROULEAU_OFF);
+    }
 
 finalize:
     return ret;
@@ -523,14 +523,14 @@ static void os_disconnect(void)
 
     if (!eval_running())
     {
-        hal_print_string("\r\n" CON G0 INK7 "Ready\r\n");
+        hal_print_string("\r\n" P_ROULEAU_ON CON G0 INK7 "Ready\r\n");
     }
 }
 
 static void os_loop_connected()
 {
     static bool fkey = false;
-    uint8_t buffer[128];
+    uint8_t buffer[NET_BUFFER_MAX];
 
     // Read data on socket in a non blocking mode
     int ret = hal_net_recv(bmem->bstate.sock, buffer, sizeof(buffer));
