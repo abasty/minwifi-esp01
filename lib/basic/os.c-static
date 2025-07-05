@@ -442,40 +442,78 @@ void os_setup(void)
     bastos_send_keys("bastos\n", 7, false);
 }
 
+#define urn_proto_tcp  (0)
+#define urn_proto_ws   (1)
+#define urn_proto_wss  (2)
+
 int os_connect(const char* urn)
 {
     // proto:ip:port:path
+    // "tcp:toto.fr:888"
+    // "ws:3611.re:80:/ws"
+
+    int proto = -1;
+    char host[128] = {0};
+    const char *path = 0;
+    int port = 80;
+    int ret = -1;
+
+    const char *part = urn;
+
+    // Get procol part
+    if (strncasecmp(urn, "tcp:", 4) == 0)
+    {
+        part += 4;
+        proto = urn_proto_tcp;
+    }
+    else if (strncasecmp(urn, "ws:", 3) == 0)
+    {
+       part += 3;
+       proto = urn_proto_ws;
+    }
+    else if (strncasecmp(urn, "wss:", 4) == 0)
+    {
+       part += 4;
+       proto = urn_proto_wss;
+    }
+
+    if (proto < 0)
+        goto finalize;
+
+    // Get host
+    const char* start = part;
+    while (*part != 0 && *part != ':') part++;
+    // part refers to '\0' or ':'
+    if (part == start || (part - start) >= 128)
+        goto finalize;
+    strncpy(host, start, part - start);
+    host[part - start] = 0;
+
+    // Get port
+    if (*part == ':')
+    {
+        part++;
+        char *last;
+        port = strtoul(part, &last, 10);
+        part = last;
+
+        // Get path
+        if (*part == ':')
+        {
+            part++;
+            path = part;
+        }
+        else if (*part != 0)
+        {
+            goto finalize;
+        }
+    }
 
     // "217.154.8.76"
+    ret = hal_net_connect(proto, host, port, path ? path : "");
 
-    return hal_net_connect(0, "abasty-retro.fr", 1967, "");
-
-    // int proto = -1;
-    // const char *part = url;
-
-    // if (strncasecmp(url, "tcp", 3) == 0)
-    // {
-    //     part += 3;
-    //     proto = 0;
-    // }
-    // else if (strncasecmp(url, "ws", 2) == 0)
-    // {
-    //    part += 2;
-    //    proto = 1;
-    // }
-    // else if (strncasecmp(url, "wss", 3) == 0)
-    // {
-    //    part += 3;
-    //    proto = 2;
-    // }
-
-    // if (proto < 0)
-    //     return -1;
-
-    // if (*part != ':')
-    //     return -1;
-
-    // part++;
+finalize:
+    return ret;
 }
 
 static void os_disconnect(void)
