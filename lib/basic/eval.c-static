@@ -1569,7 +1569,7 @@ static bool eval_connect()
     if (!eval_token(TOKEN_KEYWORD_CONNECT))
         return false;
 
-    if (!eval_string_const())
+    if (!eval_string_expr())
         return false;
 
     if (!bmem->bstate.do_eval)
