@@ -521,9 +521,10 @@ static void os_disconnect(void)
     hal_net_disconnect(bmem->bstate.sock);
     bmem->bstate.sock = -1;
 
+    hal_print_string("\r\n" P_ROULEAU_ON);
     if (!eval_running())
     {
-        hal_print_string("\r\n" P_ROULEAU_ON CON G0 INK7 "Ready\r\n");
+        hal_print_string(CON G0 INK7 "Ready\r\n");
     }
 }
 
