@@ -79,6 +79,7 @@ typedef struct
     bool inputting;
     bool reset;
     int sp;
+    int sock;
     char *string;
     prog_buffer_t token_buffer;
 } eval_state_t;
@@ -123,5 +124,7 @@ static inline int bmem_align4(int size)
 {
     return (size + BASTOS_MEMORY_ALIGN - 1) & ~(BASTOS_MEMORY_ALIGN - 1);
 }
+
+extern bmem_t *bmem;
 
 #endif // __BMEMORY_H__

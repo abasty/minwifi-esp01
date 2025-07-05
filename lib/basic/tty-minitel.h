@@ -36,14 +36,21 @@
 #define CON "\x11"
 #define COFF "\x14"
 
+#define G0 "\x0F"
+#define G1 "\x0E"
+
 #define CUR "\x1F%c%c"
 #define CUR_DELTA_V 64
 #define CUR_DELTA_H 64
+#define LINE0 "\x1F\x40\x41"
 
 #define INV "\x1B\x5D"
+#define NORMAL "\x1B\x5C"
 #define BLINK "\x1B\x48"
 
 #define INK "\x1B%c"
+#define INK1 "\x1B\x41"
+#define INK7 "\x1B\x47"
 #define INK_DELTA 0x40
 
 #define PAPER "\x1B%c"
@@ -69,7 +76,8 @@
 #define P_LOCAL_ECHO_ON PRO3 P_ON P_MODEM_RX P_CLAVIER_TX
 #define P_LOCAL_ECHO_OFF PRO3 P_OFF P_MODEM_RX P_CLAVIER_TX
 
-#define P_ROULEAU PRO2 "\x69\x43"
+#define P_ROULEAU_ON PRO2 "\x69\x43"
+#define P_ROULEAU_OFF PRO2 "\x6A\x43"
 
 // Déconnexion
 #define P_DECONNEXION PRO1 "\x67"

@@ -11,14 +11,21 @@
 #define CON "\x1B[?25h"
 #define COFF "\x1B[?25l"
 
+#define G0 ""
+#define G1 ""
+
 #define CUR "\x1B[%d;%dH"
 #define CUR_DELTA_V 0
 #define CUR_DELTA_H 0
+#define LINE0 ""
 
 #define INV "\x1B[7m"
+#define NORMAL "\x1B[m"
 #define BLINK "\x1B[5m"
 
 #define INK "\x1B[%dm"
+#define INK1 "\x1B[\x1Fm"
+#define INK7 "\x1B[\x25m"
 #define INK_DELTA 30
 
 #define PAPER "\x1B[%dm"

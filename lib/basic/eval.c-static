@@ -41,6 +41,7 @@
 #include "keywords.h"
 #include "eval.h"
 #include "bio.h"
+#include "os.h"
 
 static inline void eval_input_mode(bool mode);
 static bool eval_string_tty();
@@ -123,6 +124,7 @@ uint8_t instr1n[] = {
 uint8_t wifi_func[] = {
     TOKEN_KEYWORD_LIST,
     TOKEN_KEYWORD_CONNECT,
+    TOKEN_KEYWORD_ERASE,
     0,
 };
 
@@ -1162,8 +1164,12 @@ static void eval_free()
 
 static void eval_bastos()
 {
-    hal_print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU);
-    hal_print_string("\x1f\x40\x41" CLEOL CLS);
+#ifdef MINITEL
+    hal_print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU_ON);
+    hal_print_string(LINE0 CLEOL CLS);
+#else
+    hal_print_string(CLS);
+#endif
     hal_print_string(" BASTOS 16K Microcontroller (v1)\r\n");
     hal_print_string(" Basic for Terminal Operating System\r\n\r\n");
     hal_print_string(" (c) 2024-2025 ABa\r\n\r\n");
@@ -1453,6 +1459,90 @@ static bool eval_rem()
     return true;
 }
 
+static bool eval_wifi_list(void)
+{
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    hal_print_string(LINE0 INV "Scanning" CLEOL NORMAL "\n");
+    os_wifi_remove_unknown_networks();
+    os_wifi_mark_not_available();
+    hal_wifi_scan();
+    os_wifi_list_networks();
+    hal_print_string(LINE0 CLEOL "\n");
+    return true;
+}
+
+static bool eval_wifi_connect(void)
+{
+    if (!eval_number() && !eval_string_const())
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    network_t *net = 0;
+
+    if (bmem->bstate.token == TOKEN_NUMBER)
+    {
+        net = os_wifi_get_network_by_id((int16_t)bmem->bstate.number);
+    }
+    else
+    {
+        net = os_wifi_get_network_by_ssid(bmem->bstate.string);
+    }
+
+    if (!net)
+    {
+        bmem->bstate.error = BERROR_WIFI;
+        return false;
+    }
+
+    int ret = os_wifi_connect(net);
+    if (ret < 0)
+    {
+        bmem->bstate.error = BERROR_WIFI;
+        return false;
+    }
+
+    return true;
+}
+
+static bool eval_wifi_erase(void)
+{
+    if (!eval_number() && !eval_string_const())
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    network_t *net = 0;
+
+    if (bmem->bstate.token == TOKEN_NUMBER)
+    {
+        net = os_wifi_get_network_by_id((int16_t)bmem->bstate.number);
+    }
+    else
+    {
+        net = os_wifi_get_network_by_ssid(bmem->bstate.string);
+    }
+
+    if (!net)
+    {
+        bmem->bstate.error = BERROR_WIFI;
+        return false;
+    }
+
+    int ret = os_wifi_erase(net);
+    if (ret < 0)
+    {
+        bmem->bstate.error = BERROR_WIFI;
+        return false;
+    }
+
+    return true;
+}
+
 static bool eval_wifi()
 {
     if (!eval_token(TOKEN_KEYWORD_WIFI))
@@ -1462,37 +1552,37 @@ static bool eval_wifi()
     if (func == 0)
         return false;
 
+    if (func == TOKEN_KEYWORD_LIST)
+        return eval_wifi_list();
+
+    if (func == TOKEN_KEYWORD_CONNECT)
+        return eval_wifi_connect();
+
+    if (func == TOKEN_KEYWORD_ERASE)
+        return eval_wifi_erase();
+
+    return false;
+}
+
+static bool eval_connect()
+{
+    if (!eval_token(TOKEN_KEYWORD_CONNECT))
+        return false;
+
+    if (!eval_string_expr())
+        return false;
+
     if (!bmem->bstate.do_eval)
         return true;
 
-    // Add parameters if any
-    switch (func)
+    bmem->bstate.sock = os_connect(bmem->bstate.string);
+
+    if (bmem->bstate.sock < 0)
     {
-        case TOKEN_KEYWORD_LIST:
-            // TODO: Put LINE0 and other attibutest constants in TTY files
-            hal_print_string("\x1f\x40\x41\x1b\x40\x1b\x57 Scanning \n");
-            hal_print_string("\r\nID dBm SSID\r\n\r\n");
-            break;
-        case TOKEN_KEYWORD_CONNECT:
-            // TODO: Add parameters for connect
-            break;
-        default:
-            break;
+        bmem->bstate.error = BERROR_SOCK;
     }
-    int ret = hal_wifi(func);
-    switch (func)
-    {
-        case TOKEN_KEYWORD_LIST:
-            hal_print_integer("\r\n%d networks\r\n\r\nReady\r\n", ret);
-            hal_print_string("\x1f\x40\x41" CLEOL "\n");
-            break;
-        case TOKEN_KEYWORD_CONNECT:
-            // TODO: Add handling for connect result if needed
-            break;
-        default:
-            break;
-    }
-    return true;
+
+    return bmem->bstate.sock >= 0;
 }
 
 static bool eval_instruction()
@@ -1504,7 +1594,8 @@ static bool eval_instruction()
            eval_let() ||
            eval_dim() ||
            eval_list() ||
-           eval_wifi();
+           eval_wifi() ||
+           eval_connect();
     ;
 }
 

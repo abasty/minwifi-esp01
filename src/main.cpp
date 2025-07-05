@@ -45,15 +45,27 @@ const int buttonPin = 0;
 const int relayPin = 12;
 const int ledPin = 13;
 
-#define COMMAND_IP_PORT 23
+// Files and sockets
+File g_file0;
+int g_net_proto = -1;
+WiFiClient g_tcp_socket;
+WebSocketsClient g_web_socket;
 
-// Minitel server TCP/IP connexion
-WiFiClient tcpMinitelConnexion;
-WebSocketsClient webSocket;
-bool _3611 = false;
-bool fkey = false;
-bool minitelMode;
-File bastos_file0;
+void web_socket_event(WStype_t type, uint8_t *payload, size_t length)
+{
+    switch(type)
+    {
+    case WStype_DISCONNECTED:
+        hal_net_disconnect(0);
+        break;
+    case WStype_TEXT:
+        if (length > 0 && payload != 0)
+            hal_print_buffer(payload, length);
+        break;
+    default:
+        break;
+    }
+}
 
 uint8_t hal_get_key()
 {
@@ -83,6 +95,11 @@ int hal_print_integer(const char *format, int i)
     return Serial.printf(format, i);
 }
 
+int hal_print_buffer(uint8_t *buffer, int n)
+{
+    return Serial.write(buffer, n);
+}
+
 int hal_open(const char *pathname, int flags)
 {
     const char *access = "r";
@@ -90,26 +107,26 @@ int hal_open(const char *pathname, int flags)
     {
         access = "w+";
     }
-    bastos_file0 = LittleFS.open(pathname, access);
-    if (!bastos_file0)
+    g_file0 = LittleFS.open(pathname, access);
+    if (!g_file0)
         return -1;
     return 0;
 }
 
 int hal_close(int fd)
 {
-    bastos_file0.close();
+    g_file0.close();
     return 0;
 }
 
 int hal_write(int fd, const void *buf, int count)
 {
-    return bastos_file0.write((const uint8_t *)buf, count);
+    return g_file0.write((const uint8_t *)buf, count);
 }
 
 int hal_read(int fd, void *buf, int count)
 {
-    return bastos_file0.read((uint8_t *)buf, count);
+    return g_file0.read((uint8_t *)buf, count);
 }
 
 void hal_cat()
@@ -129,34 +146,6 @@ void hal_cat()
     hal_print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (info.totalBytes - info.usedBytes) / 1024);
 }
 
-int hal_wifi(int func)
-{
-    if (func == TOKEN_KEYWORD_LIST)
-    {
-        int n = WiFi.scanNetworks(false, true);
-
-        String ssid;
-        uint8_t encryptionType;
-        int32_t RSSI;
-        uint8_t *BSSID;
-        int32_t channel;
-        bool isHidden;
-
-        for (int i = 0; i < n; i++)
-        {
-            WiFi.getNetworkInfo(i, ssid, encryptionType, RSSI, BSSID, channel, isHidden);
-            Serial.printf("%2d %3d %s\r\n", i + 1, RSSI, ssid.c_str());
-        }
-        return n;
-    }
-    else
-    {
-        hal_print_string("Not implemented WiFi command\r\n");
-        return -1;
-    }
-
-}
-
 int hal_erase(const char *pathname)
 {
     bool ret = LittleFS.remove(pathname);
@@ -165,7 +154,7 @@ int hal_erase(const char *pathname)
     return -1;
 }
 
-static inline void hal_reset()
+void hal_reset()
 {
 #ifdef MINITEL
     hal_print_string(P_ACK_OFF_PRISE P_PRISE_1200);
@@ -188,6 +177,127 @@ void hal_speed(uint8_t fn)
     }
 }
 
+int hal_wifi_scan()
+{
+    int n = WiFi.scanNetworks(false, true);
+
+    String ssid;
+    uint8_t encryptionType;
+    int32_t RSSI;
+    uint8_t *BSSID;
+    int32_t channel;
+    bool isHidden;
+
+    for (int i = 0; i < n; i++)
+    {
+        WiFi.getNetworkInfo(i, ssid, encryptionType, RSSI, BSSID, channel, isHidden);
+        os_wifi_add_network(ssid.c_str(), encryptionType, RSSI);
+    }
+    return n;
+}
+
+int hal_wifi_connect(const char* ssid, const char* secret)
+{
+    if (WiFi.isConnected())
+    {
+        WiFi.disconnect();
+        delay(1000);
+    }
+    WiFi.begin(ssid, secret);
+    unsigned long startTime = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000)
+    {
+        delay(500);
+    }
+    return WiFi.status() == WL_CONNECTED ? 0 : -1;
+}
+
+int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path)
+{
+    g_net_proto = proto;
+
+    if (g_net_proto == URN_PROTO_TCP)
+    {
+        g_tcp_socket.connect(host, port);
+        if (!g_tcp_socket.connected())
+        {
+            g_tcp_socket.stop();
+            return -1;
+        }
+
+        // Disable nagle's algo
+        g_tcp_socket.setDefaultNoDelay(true);
+        return 0;
+    }
+
+    if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
+    {
+        g_web_socket.begin(host, port, path);
+        g_web_socket.onEvent(web_socket_event);
+        // FIXME: wait connection (loop ?)
+        return 0;
+    }
+    return -1;
+}
+
+void hal_net_disconnect(int n)
+{
+    // If connected, disconnect and remove associated resources
+    if (g_net_proto == URN_PROTO_TCP)
+    {
+        if (g_tcp_socket.connected())
+        {
+            g_tcp_socket.stop();
+        }
+    }
+
+    if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
+    {
+        if (g_web_socket.isConnected())
+        {
+            g_web_socket.disconnect();
+            // TODO: call destructor ?
+        }
+    }
+
+    g_net_proto = -1;
+}
+
+int hal_net_send(int fd, const uint8_t *buffer, int n)
+{
+    if (g_net_proto == URN_PROTO_TCP)
+    {
+        return g_tcp_socket.write(buffer, n);
+    }
+    if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
+    {
+        bool ok = g_web_socket.sendTXT(buffer, n);
+        return ok ? n : -1;
+    }
+    return -1;
+}
+
+int hal_net_recv(int fd, uint8_t *buffer, int n)
+{
+    if (g_net_proto == URN_PROTO_TCP)
+    {
+        int available = g_tcp_socket.available();
+        if (available == 0)
+            return 0;
+
+        if (n > available)
+            n = available;
+
+        return g_tcp_socket.read(buffer, n);
+    }
+    if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
+    {
+        g_web_socket.loop();
+        return 0;
+    }
+    return -1;
+}
+
 static void serial_flush()
 {
     Serial.setTimeout(0);
@@ -206,7 +316,6 @@ static void setup_serial()
     Serial.begin(1200, SERIAL_7E1);
     serial_flush();
     delay(1000);
-    hal_print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU CLS);
 #else
     Serial.begin(115200);
     serial_flush();
@@ -227,51 +336,15 @@ void setup()
     // Setup file system
     LittleFS.begin();
 
+    // Setup WiFi
+    WiFi.persistent(false);
+    WiFi.mode(WIFI_STA);
+
     // Bootstrap the OS
-    os_bootstrap();
+    os_setup();
 }
-
-#if 0
-void loop_connected()
-{
-    // Forward Minitel server incoming data to serial output
-    if (tcpMinitelConnexion && tcpMinitelConnexion.available() > 0)
-    {
-        // transparently forward bytes to serial
-        uint8_t buffer[128];
-        size_t n = tcpMinitelConnexion.read(buffer, 128);
-        // conversion stream Videotex vers ANSI
-        Serial.write(buffer, n);
-    }
-    // Handle Ws client
-    // if (webSocket.isConnected()) {
-    if (_3611)
-    {
-        webSocket.loop();
-    }
-
-    // If disconnected
-    // if (minitelMode && (!tcpMinitelConnexion || !tcpMinitelConnexion.connected())) {
-    //     minitelMode = false;
-    //     tcpMinitelConnexion.stop();
-    //     init_minitel(true);
-    // }
-
-    // Minitel mode: Forward serial input to Minitel sever
-    // tcpMinitelConnexion.setNoDelay(true); // Disable nagle's algo.
-    // tcpMinitelConnexion.write((char *)&key, 1);
-    // webSocket.sendTXT(key);
-}
-#endif
 
 void loop()
 {
-    char key = os_get_key();
-    bastos_send_keys((char *)&key, key != 0 ? 1 : 0, true);
-    bastos_loop();
-    if (bastos_is_reset())
-    {
-        bastos_done();
-        hal_reset();
-    }
+    os_loop();
 }
