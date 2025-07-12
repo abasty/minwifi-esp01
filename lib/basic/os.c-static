@@ -408,6 +408,11 @@ uint8_t os_get_key()
             {            // ANNULATION key
                 key = 3; // Convert to Ctrl+C
             }
+            else if (key == 0x59)
+            {            // CX/FIN key
+                key = 0; // Ignore it
+                hal_print_string("\x13\x59"); // Send CX/Fin to terminal
+            }
             else
             {               // ENVOI and other function keys
                 key = '\r'; // Convert to Enter
@@ -568,7 +573,7 @@ static void os_loop_connected()
     {
         if (fkey)
         {
-            if (key == 'I') // CX/Fin
+            if (key == 'Y') // CX/Fin
             {
                 os_disconnect();
             }
