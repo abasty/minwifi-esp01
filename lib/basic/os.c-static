@@ -76,7 +76,7 @@ static void wifi_sort_networks_by_dBm(int16_t first, int16_t last)
     }
 }
 
-static void wifi_sort_networks(void)
+static void os_wifi_sort_networks(void)
 {
     wifi_sort_networks_by_count(0, g_net_count - 1);
     wifi_sort_networks_by_dBm(0, g_known_net_count - 1);
@@ -120,18 +120,6 @@ static void wifi_remove_all_networks(void)
     }
     g_net_count = 0;
     g_known_net_count = 0;
-}
-
-static void wifi_print_network(int n, const network_t *net)
-{
-    if (!net->available)
-    {
-        hal_print_string(INK1);
-    }
-    hal_print_integer("%2d ", n);
-    hal_print_integer("%3d ", net->dBm);
-    hal_print_string(net->ssid);
-    hal_print_string(INK7 "\r\n");
 }
 
 static void config_load(void)
@@ -190,42 +178,6 @@ network_t *os_wifi_get_network_by_id(int16_t id)
     return NULL;
 }
 
-void os_wifi_remove_unknown_networks(void)
-{
-    // Remove all networks that are not known
-    for (int16_t i = g_known_net_count; i < g_net_count; i++)
-    {
-        free(g_net_store[i]);
-        g_net_store[i] = NULL;
-    }
-    g_net_count = g_known_net_count;
-}
-
-void os_wifi_mark_not_available(void)
-{
-    for (int16_t i = 0; i < g_net_count; i++)
-    {
-        g_net_store[i]->available = false;
-    }
-}
-
-void os_wifi_list_networks(void)
-{
-    // Sort networks before listing
-    wifi_sort_networks();
-
-    hal_print_string("\r\n" INV "ID dBm SSID" CLEOL " " NORMAL "\r\n");
-
-    // Parse all networks
-    int n = 0;
-    for (int16_t i = 0; i < g_net_count; i++)
-    {
-        network_t *net = g_net_store[i];
-        wifi_print_network(++n, net);
-    }
-    hal_print_integer("\r\n%d network(s)" CLEOL NORMAL "\r\n\r\nReady\r\n", n);
-}
-
 void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi)
 {
     // Check if the network already exists
@@ -244,6 +196,53 @@ void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi)
         net = wifi_new_network(ssid, encryption, rssi);
     }
     net->available = true;
+}
+
+void os_wifi_list(void)
+{
+    // Display scanning status
+    hal_print_string(LINE0 INV "Scanning" CLEOL NORMAL "\n");
+
+    // Remove all networks that are not known
+    for (int16_t i = g_known_net_count; i < g_net_count; i++)
+    {
+        free(g_net_store[i]);
+        g_net_store[i] = NULL;
+    }
+    g_net_count = g_known_net_count;
+
+    // Mark all networks as not available
+    for (int16_t i = 0; i < g_net_count; i++)
+    {
+        g_net_store[i]->available = false;
+    }
+
+    // Scan for Wi-Fi networks
+    hal_wifi_scan();
+
+    // Sort networks
+    os_wifi_sort_networks();
+
+    // Print the list of networks
+    hal_print_string("\r\n" INV "ID dBm SSID" CLEOL " " NORMAL "\r\n");
+    int n = 0;
+    for (int16_t i = 0; i < g_net_count; i++)
+    {
+        network_t *net = g_net_store[i];
+        if (!net->available)
+        {
+            hal_print_string(INK1);
+        }
+        n++;
+        hal_print_integer("%2d ", n);
+        hal_print_integer("%3d ", net->dBm);
+        hal_print_string(net->ssid);
+        hal_print_string(INK7 "\r\n");
+    }
+    hal_print_integer("\r\n%d network(s)" CLEOL NORMAL "\r\n\r\nReady\r\n", n);
+
+    // Clear status line
+    hal_print_string(LINE0 CLEOL "\n");
 }
 
 int os_wifi_connect(network_t *net)
@@ -283,7 +282,7 @@ int os_wifi_connect(network_t *net)
             if (net->count == 1)
                 g_known_net_count++;
         }
-        wifi_sort_networks();
+        os_wifi_sort_networks();
         config_save();
     }
 
@@ -319,22 +318,14 @@ int os_wifi_erase(network_t *net)
 
     // Shift remaining networks down
     for (int16_t i = index; i < g_net_count - 1; i++)
-    {
         g_net_store[i] = g_net_store[i + 1];
-    }
     g_net_store[g_net_count - 1] = NULL;
+
+    // Update counts
     g_net_count--;
-
-    // If the removed network was a known network, decrease the known network
-    // count
     if (index < g_known_net_count)
-    {
         g_known_net_count--;
-        // Shift known networks count if needed
-        // (already handled by shifting above)
-    }
 
-    // Save updated config
     config_save();
 
     return 0;
@@ -367,15 +358,9 @@ int os_get_string(char *buf, int size, char secret_char)
         }
         if (key >= 32 && key <= 126) // Printable characters
         {
-            buf[i++] = key; // Store the character
-            if (secret_char == 0)
-            {
-                hal_print_string((const char[]){key, '\0'}); // Print the character
-            }
-            else
-            {
-                hal_print_string((const char[]){secret_char, '\0'});
-            }
+            buf[i++] = key;
+            const char key_str[2] = {secret_char ? secret_char : key, '\0'};
+            hal_print_string(key_str);
         }
     }
     buf[i] = '\0'; // Null-terminate the string
@@ -434,31 +419,13 @@ uint8_t os_get_key()
     return key;
 }
 
-void os_setup(void)
-{
-    // Remove all networks
-    wifi_remove_all_networks();
-
-    // Load config
-    config_load();
-
-    // Init Basic and display BASTOS banner
-    bastos_init();
-    bastos_send_keys("bastos\n", 7, false);
-}
-
 int os_connect(const char* urn)
 {
-    // proto:ip:port:path
-    // "tcp:toto.fr:888"
-    // "ws:3611.re:80:/ws"
-
     int proto = -1;
     char host[128] = {0};
     const char *path = 0;
     int port = 80;
     int ret = -1;
-
     const char *part = urn;
 
     // Get procol part
@@ -510,7 +477,7 @@ int os_connect(const char* urn)
         }
     }
 
-    // "217.154.8.76"
+    // Connext to the host
     ret = hal_net_connect(proto, host, port, path ? path : "");
     if (ret == 0)
     {
@@ -604,4 +571,17 @@ void os_loop()
     {
         os_loop_basic();
     }
+}
+
+void os_setup(void)
+{
+    // Remove all networks
+    wifi_remove_all_networks();
+
+    // Load config
+    config_load();
+
+    // Init Basic and display BASTOS banner
+    bastos_init();
+    bastos_send_keys("bastos\n", 7, false);
 }

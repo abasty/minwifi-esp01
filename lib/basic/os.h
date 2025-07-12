@@ -54,21 +54,22 @@ typedef struct network_s
     bool available;     // Available in last scan
 } network_t;
 
+// OS main functions
 void os_setup(void);
 void os_loop(void);
 
-// TODO: Try to reduce os_wifi_* functions with more  hal_wifi_* granularity
+// OS Wi-Fi functions
+void os_wifi_list(void);
 void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi);
 network_t *os_wifi_get_network_by_ssid(const char *ssid);
 network_t *os_wifi_get_network_by_id(int16_t id);
-void os_wifi_remove_unknown_networks(void);
-void os_wifi_list_networks(void);
 int os_wifi_connect(network_t *net);
-void os_wifi_mark_not_available(void);
 int os_wifi_erase(network_t *net);
 
+// OS network functions
 int os_connect(const char* urn);
 
+// OS keyboard functions
 uint8_t os_get_key(void);
 int os_get_string(char *buf, int size, char secret_char);
 

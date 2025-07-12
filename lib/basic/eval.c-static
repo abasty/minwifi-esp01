@@ -1465,12 +1465,7 @@ static bool eval_wifi_list(void)
     if (!bmem->bstate.do_eval)
         return true;
 
-    hal_print_string(LINE0 INV "Scanning" CLEOL NORMAL "\n");
-    os_wifi_remove_unknown_networks();
-    os_wifi_mark_not_available();
-    hal_wifi_scan();
-    os_wifi_list_networks();
-    hal_print_string(LINE0 CLEOL "\n");
+    os_wifi_list();
     return true;
 }
 
