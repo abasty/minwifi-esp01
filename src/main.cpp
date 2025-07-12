@@ -129,21 +129,16 @@ int hal_read(int fd, void *buf, int count)
     return g_file0.read((uint8_t *)buf, count);
 }
 
-void hal_cat()
+size_t hal_cat()
 {
-    hal_print_string("\r\nDrive: A\r\n\r\n");
     Dir dir = LittleFS.openDir("/");
     while (dir.next())
     {
-        uint8_t len = strlen(dir.fileName().c_str());
-        hal_print_string(dir.fileName().c_str());
-        for (int i = 16 - len; i > 0; i--)
-            hal_print_string(" ");
-        hal_print_integer("%u\r\n", dir.fileSize());
+        os_cat_file(dir.fileName().c_str(), dir.fileSize());
     }
     FSInfo info;
     LittleFS.info(info);
-    hal_print_integer("\r\n%3uK free\r\n\r\n", (info.totalBytes - info.usedBytes) / 1024);
+    return info.totalBytes - info.usedBytes;
 }
 
 int hal_erase(const char *pathname)

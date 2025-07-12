@@ -75,6 +75,10 @@ int os_connect(const char* urn);
 uint8_t os_get_key(void);
 int os_get_string(char *buf, int size, char secret_char);
 
+// OS file functions
+void os_cat_file(const char *filename, size_t size);
+void os_cat(void);
+
 uint8_t hal_get_key(void);
 // TODO: Think to hal_printf(format, ...)
 int hal_print_string(const char *s);
@@ -88,7 +92,7 @@ int hal_close(int fd);
 int hal_write(int fd, const void *buf, int count);
 int hal_read(int fd, void *buf, int count);
 
-void hal_cat(void);
+size_t hal_cat(void);
 int hal_erase(const char *pathname);
 
 int hal_wifi_scan(void);

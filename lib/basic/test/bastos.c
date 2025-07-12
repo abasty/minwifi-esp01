@@ -130,10 +130,9 @@ int hal_read(int fd, void *buf, int count)
     return 0;
 }
 
-void hal_cat()
+size_t hal_cat()
 {
     off_t total = 0;
-    hal_print_string("\r\nDrive: A\r\n\r\n");
     struct dirent **entry;
     int n = scandir(".", &entry, NULL, NULL);
     while (n--)
@@ -146,17 +145,12 @@ void hal_cat()
                 continue;
             total += st.st_blocks * 512; // st_blocks is in 512-byte blocks
 
-            uint8_t len = strlen(path);
-            hal_print_string(path);
-            for (int i = 16 - len; i > 0; i--)
-                hal_print_string(" ");
-            hal_print_integer("%ju\r\n", st.st_size);
+            os_cat_file(path, st.st_size);
         }
         free(entry[n]);
     }
     free(entry);
-    hal_print_integer("\r\n%3uK free\r\n\r\n", (524288 - total) / 1024);
-    fflush(stdout);
+    return 524288 - total;
 }
 
 int hal_erase(const char *pathname)
