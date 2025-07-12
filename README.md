@@ -105,37 +105,29 @@ fois.
 
 La liste (et son ordre) est retenue dans les variables OS.
 
-`WIFI CONNECT [<SSID>|<N> [<SECRET>]]` : Connexion à un réseau WiFi.
-
-Si pas de `<SSID>`, on connect le numéro 1 dans la liste du scan, ou si elle est
-vide, dans la liste de configuration.
+`WIFI CONNECT <SSID>|<N>` : Connexion à un réseau WiFi.
 
 Si `<N>`, on choisit le N-ème SSID dans la liste du scan (il faut avoir fait
-`WIFI LIST` avant).
+`WIFI LIST` avant ou avoir des réseaux connus dans la config).
 
-Si `<SECRET>` n'est pas renseigné dans la commande, on prend le secret de la
-configuration.
-
-Une fois qu'on a un SSID et un secret (même vide), on tente une connexion. Si la
-connexion échoue, si c'est une erreur de secret, on demande un pass en ligne 0.
-On retente une connexion.
-
-Si la deuxième connexion échoue, on arrête sur erreur on reste en mode Basic.
+Si le réseau n'est pas connu on demande le mot de passe en ligne 0. Si le réseau
+est connu, on utilise le mot de passe configuré. On tente alors une connexion
+sur l'AP désigné avec le mot de passe.
 
 Lors d'une connexion établie, on marque le réseau comme connu et on sauvegarde
 la configuration WiFi (si différente d'avant : mot de passe demandé, réseau
 nouvellement connu).
 
-`WIFI DOWN` : Déconnecte le WiFi (on aura besoin de `UP` et `DOWN` pour la
-commande `SCROLL`).
+`WIFI ERASE` : Permet d'oublier un réseau connu.
+
+`WIFI DISCONNECT` : Déconnecte le WiFi.
 
 `WIFI STATUS` : Affiche des informations sur l'état du WiFi, l'adresse IP, le
-SSID connecté, etc. Ou alors, changer la commande `FREE` en `SYSTEMINFO`
-(MS-DOS) et afficher les infos WiFi dans les infos système.
+SSID connecté, etc.
 
 ## Mode connecté
 
-ADU : Si WiFi n'est pas connecté, on peut essayer un `WIFI CONNECT` avant. Si
+ADU : Si WiFi n'est pas connecté, on peut essayer un `WIFI CONNECT 1` avant. Si
 cette dernière commande échoue, inutile de tenter une connexion réseau.
 
 `CONNECT <URL>` : Supporte au moins les protocoles : "tcp", "ws", "wss".
@@ -154,7 +146,38 @@ Lors du passage du mode connecté au mode Basic, le programme en cours est
 continué (avec `CONT`). Si un programme n'est pas en cours, on revient
 simplement au BAsic en mode interactif.
 
+## Téléchargement de fichier
+
+Le téléchargement permet de charger un fichier depuis le réseau et de le placer
+sur le disque. Le téléversement permet d'envoyer un fichier depuis le disque
+vers le réseau.
+
+* `FTP CONNECT <URN>` : Établit une connexion avec un serveur FTP. `<URN>` est
+  de la forme `host:port:login:password`.
+
+* `FTP CAT` : Liste les fichiers du serveur ftp.
+
+* `FTP DOWNLOAD <FILENAME>` : Télécharge un ficher depuis le serveur FTP vers le
+  disque A local.
+
+* `FTP UPLOAD <FILENAME>` : Téléverse un fichier depuis le disque A local vers
+  le serveur FTP.
+
+* `FTP DISCONNECT` : Déconnecte le serveur FTP.
+
+* `FTP STATUS` : Affiche le status et les détails de la connexion avec le
+  serveur FTP (sauf le mot de passe).
+
 # TODO
+
+## Code Minitel
+
+* [ ] Gestion de la touche Cx/Fin
+  * [*] voir avec une interface série PC <-> Minitel, quels codes on reçoit, en
+  mode F en mode C clignotant
+  * [*] Le traiter pour sortir du mode connecté BASTOS
+  * [ ] A tester : réagir en conséquence (envoyer un autre Cx/Fin par la prise
+    pour déconnecter le modem ou autre)
 
 ## Code commun
 
@@ -189,7 +212,7 @@ simplement au BAsic en mode interactif.
 
 ### Serveurs sur IP
 
-* [x] Porter Zboub (TCP / IP, dployé sur IONOS)
+* [x] Porter Zboub (TCP / IP, déployé sur IONOS)
 * [ ] Essayer d'autres prog stdin/stdout avec `ncat` (voir BASTOS server script)
   * [ ] Si le programme n'est pas écrit pour Minitel : voir ce qu'on peut faire
     avec le clavier, voir le mode mixte et téléinformatique du minitel 1B
@@ -208,6 +231,10 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Basic
 
+* [ ] DOWNLOAD / UPLOAD
+* [ ] Pouvoir lire un fichier `.bas` sur la ligne d'entrée et l'envoyer à
+  `bastos_send_keys`. Ce serait bien aussi de pouvoir construire un disque à
+  distance
 * [ ] Variables WiFi dans fichier invisible par CAT, let, load vars, save vars
   et init Wifi
 * [ ] MODE
@@ -221,13 +248,12 @@ Doivent être en C pour être intégrés à minwifi.
 * [ ] PLOT / UNPLOT / TEST ?
   * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
   * [ ] Minitel, semi graphique
-* SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs
 * [ ] RAND
 * [ ] SCROLL (ON, OFF, UP, DOWN)
 * [ ] MODE (mode écran)
 * [ ] RUN line, RUN "autorun.bst", RUN "program.bst", line
+* SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs
 * [ ] EVAL / EVAL$
-* [ ] DOWNLOAD / UPLOAD
 * [ ] TELNET / TELNET WS
 * [ ] Ajouter mode rouleau, mode 40/80, co, coff, echo
 * [ ] EDIT line ?
@@ -237,23 +263,22 @@ Doivent être en C pour être intégrés à minwifi.
 * [ ] tty : init string, fast, autoexec => config$$$
 * [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
   seule commande print.
-* [ ] Optimisation BIO (une seule structure), 1 fonction number (int), 2/3
-  params (union as_void_ptr, as_char_ptr, as_int, as_float), 1 result (union
-  like param) => static / extern
-* [ ] Dans `test` : pouvoir lire un fichier `.bas` sur la ligne d'entrée et
-  l'envoyer à `bastos_send_keys`. Ce serait bien aussi de pouvoir construire un
-  disque à distance
+* [*] Remplacé par le HAL : ~~Optimisation BIO (une seule structure), 1 fonction
+  number (int), 2/3 params (union as_void_ptr, as_char_ptr, as_int, as_float), 1
+  result (union like param) => static / extern~~
 * [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
   * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$", sauf avec cat
     hidden (ou cath)
 * [ ] Ajouter edit, integration "edit_min" ?
 * [ ] vitesse serial ()
 * [ ] **BUGS UI / AMELIORATIONS**
-  * [ ] `Error 1` quand on se logue : utiliser `nc` pas telnet
+  * [ ] `Error 1` quand on se logue
   * [ ] Pouvoir sauvegarder uniquement les variables (config manager, "SAVE VARS")
   * [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
 * [ ] **OPTIMISATIONS**
-  * [ ] Optimisation accès tableau / variable (factorisation number / string, name)
+  * [ ] Optimisation accès tableau / variable (factorisation number / string,
+    name)
+  * [ ] Optimisation execution basic
 
 # Done
 
@@ -319,6 +344,8 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Prise péri informatique
 
+TODO: Ajouter schéma + photo avec fils Dupont.
+
 ```
 TX -     - RX
     / | \
@@ -342,31 +369,49 @@ Sur la DIN, 3 fils souples papa :
 
 ## Connexion PC avec FTDI
 
+TODO : Ajouter schéma + photo de sonoff + fils dupont + platine d'essai + dupont
+vers ftdi
+
 ```
 $ ls /dev/ttyUSB*
 /dev/ttyUSB0
 $ /home/alain/.platformio/packages/tool-esptoolpy/esptool.py --chip esp8266 --port /dev/ttyUSB0 write_flash --flash_size detect 0x0 0x00000_blank1m.bin
 ```
 
-*** ATTENTION AU 3.3v DU FTDI ***
+**ATTENTION AU 3.3v DU FTDI**
 
-*** LA PROGRAMMATION DOIT SE FAIRE AVEC `board_build.flash_mode = dout` ***
+## Build
 
 ```
-[env:esp01_1m]
+[env:sonoff]
 platform = espressif8266
 board = esp01_1m
 framework = arduino
 upload_speed = 230400
-monitor_speed = 115200
+monitor_speed = 1200
+monitor_parity = E
 monitor_echo = no
 monitor_raw = yes
-board_build.flash_mode = dout
-board_build.ldscript = eagle.flash.1m64.ld
-lib_deps = links2004/WebSockets@^2.3.7
+monitor_eol = CR
+board_build.ldscript = eagle.flash.1m512.ld
+lib_deps = links2004/WebSockets
 board_build.filesystem = littlefs
+board_build.flash_mode = dout
+build_flags = -D MINITEL=1
 ```
 
+## Flash
+
+On passe le SonOff en mode _bootloader_ :
+
+* On branche tout sauf le +3.3v (sur la platine d'essai)
+* Bouton SonOff enfoncé
+* On branche le 3.3v
+* On relâche le bouton
+
+On flashe alors (en mode `dout`, voir `platformio.ini`).
+
+=> Voir si on peut faire directement avec `esptool`.
 
 > Programming the ESP01s (Sonoff)
 >
@@ -501,6 +546,7 @@ $ pio run -e minwifi -t clean
 <https://cq94.medium.com/retour-du-minitel-sur-le-web-8b8693ae8c6a>
 * <http://3611.re/> : Dans `minitel-3611.js` on a l'URI de la WebSocket :
   `"ws://3611.re/ws"`
+* <ws://mntl.joher.com:2018>
 
 Test avec Python, on installe `sudo apt install python3-websockets`.
 
