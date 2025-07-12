@@ -125,6 +125,8 @@ uint8_t wifi_func[] = {
     TOKEN_KEYWORD_LIST,
     TOKEN_KEYWORD_CONNECT,
     TOKEN_KEYWORD_ERASE,
+    TOKEN_KEYWORD_DISCONNECT,
+    TOKEN_KEYWORD_STATUS,
     0,
 };
 
@@ -1539,6 +1541,24 @@ static bool eval_wifi_erase(void)
     return true;
 }
 
+static bool eval_wifi_disconnect(void)
+{
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    hal_wifi_disconnect();
+    return true;
+}
+
+static bool eval_wifi_status(void)
+{
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    os_wifi_status();
+    return true;
+}
+
 static bool eval_wifi()
 {
     if (!eval_token(TOKEN_KEYWORD_WIFI))
@@ -1556,6 +1576,12 @@ static bool eval_wifi()
 
     if (func == TOKEN_KEYWORD_ERASE)
         return eval_wifi_erase();
+
+    if (func == TOKEN_KEYWORD_STATUS)
+        return eval_wifi_status();
+
+    if (func == TOKEN_KEYWORD_DISCONNECT)
+        return eval_wifi_disconnect();
 
     return false;
 }

@@ -82,6 +82,9 @@ poke
 usr
 eval
 bastos
+disconnect
+status
+ftp
 EOF
 
 # Do not sort to preserve save/load compatibility

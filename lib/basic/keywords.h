@@ -70,3 +70,6 @@
 #define TOKEN_KEYWORD_USR ((uint8_t) (68 | 0b10000000))
 #define TOKEN_KEYWORD_EVAL ((uint8_t) (69 | 0b10000000))
 #define TOKEN_KEYWORD_BASTOS ((uint8_t) (70 | 0b10000000))
+#define TOKEN_KEYWORD_DISCONNECT ((uint8_t) (71 | 0b10000000))
+#define TOKEN_KEYWORD_STATUS ((uint8_t) (72 | 0b10000000))
+#define TOKEN_KEYWORD_FTP ((uint8_t) (73 | 0b10000000))

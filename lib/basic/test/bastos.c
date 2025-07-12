@@ -155,7 +155,7 @@ void hal_cat()
         free(entry[n]);
     }
     free(entry);
-    hal_print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (524288 - total) / 1024);
+    hal_print_integer("\r\n%3uK free\r\n\r\n", (524288 - total) / 1024);
     fflush(stdout);
 }
 
@@ -189,23 +189,58 @@ int hal_wifi_scan()
     return 1;
 }
 
+bool wifi_connected = false;
+char wifi_ssid[36] = "";
+char wifi_ip[16] = "127.0.0.2";
+
 int hal_wifi_connect(const char* ssid, const char* secret)
 {
     sleep(1);
     if (strcmp(secret, "changeme") == 0)
     {
         // Simulate successful connection
+        strncpy(wifi_ssid, ssid, sizeof(wifi_ssid) - 1);
+        wifi_ssid[sizeof(wifi_ssid) - 1] = '\0';
+        wifi_connected = true;
+        // Get IP address
+        hal_net_disconnect(hal_net_connect(0, "google.com", 80, ""));
         return 0;
     }
+    wifi_connected = false;
     return -1;
 }
 
-struct sockaddr_in addr;
+void hal_wifi_disconnect()
+{
+    if (wifi_connected)
+    {
+        wifi_connected = false;
+    }
+}
+
+network_t *hal_wifi_is_connected()
+{
+    if (wifi_connected)
+    {
+        network_t *net = os_wifi_get_network_by_ssid(wifi_ssid);
+        if (net != 0)
+        {
+            strncpy(net->ip, wifi_ip, sizeof(net->ip) - 1);
+            net->ip[sizeof(net->ip) - 1] = '\0';
+            return net;
+        }
+        hal_wifi_disconnect();
+    }
+    return 0;
+}
+
 
 int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path)
 {
     // Do the connection (TCP socket or WebSocket)
     // Disable nagle's algo
+    struct sockaddr_in addr;
+    struct sockaddr_in addr_local;
 
     struct hostent *hp = gethostbyname(host);
     if (hp == 0)
@@ -220,6 +255,14 @@ int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char*
     {
         close(fd);
         fd = -1;
+    }
+    else
+    {
+        // Get local address
+        socklen_t addr_len = sizeof(addr_local);
+        getsockname(fd, (struct sockaddr *)&addr_local, &addr_len);
+        // Set wifi IP address with ntoa
+        inet_ntop(AF_INET, &addr_local.sin_addr, wifi_ip, sizeof(wifi_ip));
     }
 
     return fd;

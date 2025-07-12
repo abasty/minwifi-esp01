@@ -143,7 +143,7 @@ void hal_cat()
     }
     FSInfo info;
     LittleFS.info(info);
-    hal_print_integer("\r\n%3uK free\r\n\r\nReady\r\n", (info.totalBytes - info.usedBytes) / 1024);
+    hal_print_integer("\r\n%3uK free\r\n\r\n", (info.totalBytes - info.usedBytes) / 1024);
 }
 
 int hal_erase(const char *pathname)
@@ -210,6 +210,31 @@ int hal_wifi_connect(const char* ssid, const char* secret)
         delay(500);
     }
     return WiFi.status() == WL_CONNECTED ? 0 : -1;
+}
+
+void hal_wifi_disconnect()
+{
+    if (WiFi.isConnected())
+    {
+        WiFi.disconnect();
+    }
+}
+
+network_t *hal_wifi_is_connected()
+{
+    if (WiFi.isConnected())
+    {
+        network_t *net = os_wifi_get_network_by_ssid(WiFi.SSID().c_str());
+        if (net != 0)
+        {
+            strncpy(net->ip, WiFi.localIP().toString().c_str(), sizeof(net->ip) - 1);
+            net->ip[sizeof(net->ip) - 1] = '\0';
+            return net;
+        }
+        hal_wifi_disconnect();
+    }
+
+    return 0;
 }
 
 int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path)

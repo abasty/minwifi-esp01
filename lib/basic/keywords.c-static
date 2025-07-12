@@ -70,4 +70,7 @@ static const char *keywords =
     "US""\xd2"
     "EVA""\xcc"
     "BASTO""\xd3"
+    "DISCONNEC""\xd4"
+    "STATU""\xd3"
+    "FT""\xd0"
 ;

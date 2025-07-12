@@ -52,6 +52,7 @@ typedef struct network_s
     char ssid[36];      // ssid
     char secret[64];    // password / passphrase
     bool available;     // Available in last scan
+    char ip[16];        // IP address (if connected)
 } network_t;
 
 // OS main functions
@@ -65,6 +66,7 @@ network_t *os_wifi_get_network_by_ssid(const char *ssid);
 network_t *os_wifi_get_network_by_id(int16_t id);
 int os_wifi_connect(network_t *net);
 int os_wifi_erase(network_t *net);
+void os_wifi_status(void);
 
 // OS network functions
 int os_connect(const char* urn);
@@ -91,6 +93,8 @@ int hal_erase(const char *pathname);
 
 int hal_wifi_scan(void);
 int hal_wifi_connect(const char* ssid, const char* secret);
+void hal_wifi_disconnect(void);
+network_t *hal_wifi_is_connected(void);
 
 int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path);
 void hal_net_disconnect(int n);

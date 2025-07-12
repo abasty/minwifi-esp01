@@ -33,7 +33,7 @@
 #include "tty-vt100.h"
 #endif
 
-#define BASTOS_NETWORK_COUNT (100)
+#define BASTOS_NETWORK_COUNT (20)
 
 // OS variables
 int16_t g_net_count = 0;
@@ -239,7 +239,7 @@ void os_wifi_list(void)
         hal_print_string(net->ssid);
         hal_print_string(INK7 "\r\n");
     }
-    hal_print_integer("\r\n%d network(s)" CLEOL NORMAL "\r\n\r\nReady\r\n", n);
+    hal_print_integer("\r\n%d network(s)" CLEOL NORMAL "\r\n\r\n", n);
 
     // Clear status line
     hal_print_string(LINE0 CLEOL "\n");
@@ -267,13 +267,8 @@ int os_wifi_connect(network_t *net)
     hal_print_string(CLEOL NORMAL "\n");
 
     int ret = hal_wifi_connect(net->ssid, secret);
-    if (ret != 0)
+    if (ret == 0)
     {
-        hal_print_string("Failed to connect to ");
-    }
-    else
-    {
-        hal_print_string("Connected to ");
         strncpy(net->secret, secret, sizeof(net->secret) - 1);
         net->secret[sizeof(net->secret) - 1] = '\0';
         if (net->count < 255)
@@ -285,13 +280,25 @@ int os_wifi_connect(network_t *net)
         os_wifi_sort_networks();
         config_save();
     }
-
-    hal_print_string(net->ssid);
-    hal_print_string("\r\n");
 #ifdef MINITEL
     hal_print_string(LINE0 CLEOL "\r\n");
 #endif
     return ret;
+}
+
+static int16_t os_wifi_get_id(network_t *net)
+{
+    if (!net)
+        return -1;
+
+    for (int16_t i = 0; i < g_net_count; i++)
+    {
+        if (g_net_store[i] == net)
+        {
+            return i + 1; // Return ID starting from 1
+        }
+    }
+    return -1; // Not found
 }
 
 int os_wifi_erase(network_t *net)
@@ -300,15 +307,7 @@ int os_wifi_erase(network_t *net)
         return -1;
 
     // Find the index of the network in g_net_store
-    int16_t index = -1;
-    for (int16_t i = 0; i < g_net_count; i++)
-    {
-        if (g_net_store[i] == net)
-        {
-            index = i;
-            break;
-        }
-    }
+    int16_t index = os_wifi_get_id(net);
     if (index == -1)
         return -1;
 
@@ -329,6 +328,32 @@ int os_wifi_erase(network_t *net)
     config_save();
 
     return 0;
+}
+
+void os_wifi_status(void)
+{
+    hal_print_string("\r\n" INV "ID IP              SSID" CLEOL " " NORMAL "\r\n");
+    network_t *net = hal_wifi_is_connected();
+    int16_t index = os_wifi_get_id(net);
+    if (index == -1 || !net)
+    {
+        hal_print_string("-- ---.---.---.--- Not connected");
+    }
+    else
+    {
+        hal_print_integer("%2d ", index);
+        hal_print_string(net->ip);
+        // Print 16 - len(net->ip) spaces
+        uint8_t len = strlen(net->ip);
+        for (int i = 16 - len; i > 0; i--)
+            hal_print_string(" ");
+        // Copy SSID to a temporary buffer to limit its length
+        char ssid[21];
+        strncpy(ssid, net->ssid, sizeof(ssid) - 1);
+        ssid[sizeof(ssid) - 1] = '\0';
+        hal_print_string(ssid);
+    }
+    hal_print_string("\r\n\r\n");
 }
 
 int os_get_string(char *buf, int size, char secret_char)
