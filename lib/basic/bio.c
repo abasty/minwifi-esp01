@@ -232,11 +232,6 @@ finalize:
     return err;
 }
 
-bool bastos_running()
-{
-    return eval_running();
-}
-
 int8_t bastos_save(const char *name)
 {
     int fd = hal_open(name, B_CREAT | B_RDWR);

@@ -74,7 +74,6 @@ bool bastos_is_reset(void);
 
 void bastos_send_keys(const char *keys, size_t n, bool echo);
 void bastos_loop(void);
-bool bastos_running(void);
 void bastos_stop(void);
 
 int8_t bastos_save(const char *name);
