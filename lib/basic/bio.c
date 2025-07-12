@@ -70,30 +70,29 @@ static void bastos_handle_ctrl_c()
     hal_print_string("**Break**\r\n");
 }
 
-size_t bastos_send_keys(const char *keys, size_t n, bool echo)
+void bastos_send_keys(const char *keys, size_t n, bool echo)
 {
-    size_t m = 0;
     uint8_t *src = (uint8_t *)keys;
     uint8_t *dst = bmem->io_buffer;
 
     // If no keys, do nothing
     if (n == 0 || src == 0 || *src == 0)
     {
-        return 0;
+        return;
     }
 
     // If key is Ctrl+C, stop the program
     if (*src == 3)
     {
         bastos_handle_ctrl_c();
-        return 1;
+        return;
     }
 
     // If running and not inputting, store the key in inkey state
     if (eval_running() && !eval_inputting())
     {
         bmem->bstate.inkey = (char ) *src;
-        return 1;
+        return;
     }
 
     // Find the terminal 0 in io buffer
@@ -102,13 +101,24 @@ size_t bastos_send_keys(const char *keys, size_t n, bool echo)
 
     // Copy keys at the end of io buffer
     size_t size = dst - bmem->io_buffer;
+
+    // If buffer is full, remove the last char
+    if (size == IO_BUFFER_SIZE - 1 && *src == 127)
+    {
+        size--;
+        dst--;
+        *dst = 0;
+        if (echo) hal_print_string(DEL);
+        return;
+    }
+
     while (size < IO_BUFFER_SIZE - 1 && *src && n > 0)
     {
         if (*src == 3)
         {
             bastos_stop();
             *bmem->io_buffer = 0;
-            return 1;
+            return;
         }
         else if (*src == '\r')
         {
@@ -135,11 +145,8 @@ size_t bastos_send_keys(const char *keys, size_t n, bool echo)
         }
         size = dst - bmem->io_buffer;
         n--;
-        m++;
     }
     *dst = 0;
-
-    return m;
 }
 
 int8_t bastos_input()
