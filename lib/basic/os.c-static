@@ -86,11 +86,11 @@ static void os_wifi_sort_networks(void)
 static network_t *wifi_new_network(const char *ssid, uint8_t encryption, int32_t rssi)
 {
     if (g_net_count >= BASTOS_NETWORK_COUNT)
-        return NULL;
+        return 0;
 
     network_t *new_net = (network_t *)malloc(sizeof(network_t));
     if (!new_net)
-        return NULL;
+        return 0;
 
     // Initialize the new network
     new_net->dBm = rssi;
@@ -115,7 +115,7 @@ static void wifi_remove_all_networks(void)
         if (g_net_store[i])
         {
             free(g_net_store[i]);
-            g_net_store[i] = NULL;
+            g_net_store[i] = 0;
         }
     }
     g_net_count = 0;
@@ -165,7 +165,7 @@ network_t *os_wifi_get_network_by_ssid(const char *ssid)
     for (int i = 0; i < g_net_count; i++)
         if (g_net_store[i] && strcmp(g_net_store[i]->ssid, ssid) == 0)
             return g_net_store[i];
-    return NULL;
+    return 0;
 }
 
 network_t *os_wifi_get_network_by_id(int16_t id)
@@ -175,7 +175,7 @@ network_t *os_wifi_get_network_by_id(int16_t id)
     {
         return g_net_store[id];
     }
-    return NULL;
+    return 0;
 }
 
 void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi)
@@ -207,7 +207,7 @@ void os_wifi_list(void)
     for (int16_t i = g_known_net_count; i < g_net_count; i++)
     {
         free(g_net_store[i]);
-        g_net_store[i] = NULL;
+        g_net_store[i] = 0;
     }
     g_net_count = g_known_net_count;
 
@@ -306,23 +306,22 @@ int os_wifi_erase(network_t *net)
     if (!net)
         return -1;
 
-    // Find the index of the network in g_net_store
-    int16_t index = os_wifi_get_id(net);
-    if (index == -1)
+    // Find the id of the network in g_net_store
+    int16_t id = os_wifi_get_id(net);
+    if (id <= 0)
         return -1;
 
     // Free the network and remove it from the store
-    free(g_net_store[index]);
-    g_net_store[index] = NULL;
+    free(g_net_store[id - 1]);
 
     // Shift remaining networks down
-    for (int16_t i = index; i < g_net_count - 1; i++)
+    for (int16_t i = id - 1; i < g_net_count - 1; i++)
         g_net_store[i] = g_net_store[i + 1];
-    g_net_store[g_net_count - 1] = NULL;
 
-    // Update counts
     g_net_count--;
-    if (index < g_known_net_count)
+    g_net_store[g_net_count] = 0;
+
+    if (id <= g_known_net_count)
         g_known_net_count--;
 
     config_save();
@@ -334,14 +333,14 @@ void os_wifi_status(void)
 {
     hal_print_string("\r\n" INV "ID IP              SSID" CLEOL " " NORMAL "\r\n");
     network_t *net = hal_wifi_is_connected();
-    int16_t index = os_wifi_get_id(net);
-    if (index == -1 || !net)
+    int16_t id = os_wifi_get_id(net);
+    if (id == -1 || !net)
     {
         hal_print_string("-- ---.---.---.--- Not connected");
     }
     else
     {
-        hal_print_integer("%2d ", index);
+        hal_print_integer("%2d ", id);
         hal_print_string(net->ip);
         // Print 16 - len(net->ip) spaces
         uint8_t len = strlen(net->ip);
