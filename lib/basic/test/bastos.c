@@ -49,6 +49,11 @@ void sigint_handler(int sig_no)
     kill(0, SIGINT);
 }
 
+void hal_print_oem_string(void)
+{
+    hal_print_string("Linux");
+}
+
 uint8_t hal_get_key()
 {
     struct pollfd input[1] = {{fd : 0, events : POLLIN}};

@@ -67,6 +67,11 @@ void web_socket_event(WStype_t type, uint8_t *payload, size_t length)
     }
 }
 
+void hal_print_oem_string(void)
+{
+    hal_print_string("ESP8285/ArduinoSDK");
+}
+
 uint8_t hal_get_key()
 {
     if (!Serial)

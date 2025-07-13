@@ -68,12 +68,14 @@ int os_get_string(char *buf, int size, char secret_char);
 void os_cat_file(const char *filename, size_t size);
 void os_cat(void);
 
+// HAL functions
+void hal_print_oem_string(void);
+
 uint8_t hal_get_key(void);
-// TODO: Think to hal_printf(format, ...)
+
 int hal_print_string(const char *s);
 int hal_print_float(float f);
 int hal_print_integer(const char *format, int i);
-
 int hal_print_buffer(uint8_t *buffer, int n);
 
 int hal_open(const char *pathname, int flags);

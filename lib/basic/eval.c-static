@@ -1174,8 +1174,9 @@ static void eval_bastos()
     hal_print_string(CLS);
 #endif
     hal_print_string(" BASTOS 16K Microcontroller (v1)\r\n");
-    hal_print_string(" Basic for Terminal Operating System\r\n\r\n");
-    hal_print_string(" (c) 2024-2025 ABa\r\n\r\n");
+    hal_print_string(" Basic for Terminal Operating System\r\n on ");
+    hal_print_oem_string();
+    hal_print_string("\r\n\r\n (c) 2024-2025 ABa\r\n\r\n");
     hal_print_integer(" %d bytes free\r\n", bmem->vars_start - bmem->strings_end);
     hal_print_string("\r\nReady\r\n" CON);
 }
