@@ -1,7 +1,59 @@
-# Bugs
+# TODO
 
-* [x] wifi list / wifi connect / wifi erase 1 jusqu'à erreur / wifi list =>
-  crash sur ESP, connexion fermée sur émulateur + serveur bastos
+## Basic
+
+* [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
+
+* [ ] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.BST` /
+  `.BAS` ?
+* [ ] RUN line, RUN "autorun.bst", RUN "program.bst", line
+* [ ] SAVE, LOAD : pouvoir faire du `.BAS` et du `.BST`. Majuscules / Minucules
+  : toujours en majuscules sur disque, pour faire plus rétro.
+* [ ] Sauvegarder uniquement les variables et pouvoir recharger uniquement les
+  variables (ça peut remplacer des fichiers). Exemple : on crée des variables
+  contenant des codes videotex et on sauve ces variables.
+
+* [ ] Pouvoir lire un fichier `.BAS` sur la ligne d'entrée et l'envoyer à
+  `bastos_send_keys`. Ce serait bien aussi de pouvoir construire un disque à
+  distance
+
+* [ ] `FTP DOWNLOAD` / `FTP UPLOAD` et autres fonctions FTP.
+
+* [ ] MODE
+* [ ] BIP, INV, NORM, CLEOL, AI, AN, REP, etc. (voir MIN).
+* [ ] con, coff, echo on/off
+* [ ] TAB
+* [ ] SCROLL (ON, OFF, UP, DOWN)
+* [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
+
+* [ ] FAST FAST (9600 / Minitel 2)
+
+* [ ] PAUSE
+* [ ] PLOT / UNPLOT / TEST (Voir serveur zboub et lib graphique)
+  * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
+  * [ ] Minitel, semi graphique
+* [ ] RAND
+* [ ] EDIT line, EDIT tout seul édite la dernière entrée (raccourci: fleche haut)
+* [ ] EVAL / EVAL$
+* [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
+  seule commande print.
+* [ ] Ajouter edit, integration "edit_min" ?
+
+* [x] `CONNECT` devrait suffire : TELNET / TELNET WS
+* ~~SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs~~
+
+# Idées futures
+
+* Langage CISAB : Un Basic en post-fixé (RPN), à la HP + commande à adresse routine
+
+# Optimisations
+
+* [ ] Optimisation accès tableau / variable (factorisation number / string,
+  name)
+* [ ] Optimisation execution basic
+* [ ] Optimisation tokenisation (règles, mini lex/yacc, automate)
+
+# Bugs
 
 # Architecture logicielle
 
@@ -56,10 +108,6 @@ OS, y compris les secrets.
 
 Le fichier `$$CONFIG$$` n'est pas chargeable / visible depuis le Basic : C'est
 un fichier binaire, et l'OS le gère directement avec des fonctions du HAL.
-
-~~La commande `SAVE CONFIG` indique à l'OS de fusionner les variables OS
-courantes avec les variables Basic. L'OS sauve alors la nouvelle configuration
-dans `$$CONFIG$$`.~~
 
 ### Exécution BASTOS
 
@@ -192,7 +240,7 @@ vers le réseau.
   répertoires (genre 512Ko prog / 512Ko LittleFS (128 fichiers))
 * [x] Remettre en 1200-7E1 pas 115200
 * [x] Après un reset sur l'ESP : Bannière BASTOS
-* [ ] repasser en SPIFS
+* [x] ~~repasser en SPIFS~~
 * [ ] Revoir la machine d'état boot, connexion WiFi, Basic, Connexion à un site
   distant. Tout intégrer au BASIC ? Config / Autoexec
   * [ ] Connexion WiFi, affichage IP
@@ -234,59 +282,27 @@ Doivent être en C pour être intégrés à minwifi.
 * [ ] Connexion manager
 * [ ] API minitel intégré ?
 
-## Basic
-
-* [ ] DOWNLOAD / UPLOAD
-* [ ] Pouvoir lire un fichier `.bas` sur la ligne d'entrée et l'envoyer à
-  `bastos_send_keys`. Ce serait bien aussi de pouvoir construire un disque à
-  distance
-* [ ] Variables WiFi dans fichier invisible par CAT, let, load vars, save vars
-  et init Wifi
-* [ ] MODE
-* [ ] BIP, INV, NORM, CLEOL, etc.
-* [ ] SAVEVARS
-* [ ] SAVE, LOAD : pouvoir faire du .BAS et du BST. Majuscules / Minucules :
-  toujours en majuscules sur disque, pour faire plus rétro.
-* [ ] PAUSE
-* [ ] TAB
-* [ ] Autres commandes Minitel (AI, AN, REP, etc, voir MIN)
-* [ ] PLOT / UNPLOT / TEST ?
-  * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
-  * [ ] Minitel, semi graphique
-* [ ] RAND
-* [ ] SCROLL (ON, OFF, UP, DOWN)
-* [ ] MODE (mode écran)
-* [ ] RUN line, RUN "autorun.bst", RUN "program.bst", line
-* SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs
-* [ ] EVAL / EVAL$
-* [ ] TELNET / TELNET WS
-* [ ] Ajouter mode rouleau, mode 40/80, co, coff, echo
-* [ ] EDIT line ?
-* [ ] Support Suite / Retour / Sommaire (TAB ou PGDN / SHIFT TAB ou PGDUP/ HOME)
-* [ ] Régler le pb du nom mDNS de l'ESP quand il vient d'être flashé par USB
-  serial
-* [ ] tty : init string, fast, autoexec => config$$$
-* [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
-  seule commande print.
-* [*] Remplacé par le HAL : ~~Optimisation BIO (une seule structure), 1 fonction
-  number (int), 2/3 params (union as_void_ptr, as_char_ptr, as_int, as_float), 1
-  result (union like param) => static / extern~~
-* [ ] Limiter noms de fichier à 15 caractères, ajouter ".bst" ?
-  * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$", sauf avec cat
-    hidden (ou cath)
-* [ ] Ajouter edit, integration "edit_min" ?
-* [ ] vitesse serial ()
-* [ ] **BUGS UI / AMELIORATIONS**
-  * [ ] `Error 1` quand on se logue
-  * [ ] Pouvoir sauvegarder uniquement les variables (config manager, "SAVE VARS")
-  * [ ] Faire un config manager plus complet (vitesse port Minitel par exemple) ?
-* [ ] **OPTIMISATIONS**
-  * [ ] Optimisation accès tableau / variable (factorisation number / string,
-    name)
-  * [ ] Optimisation execution basic
-
 # Done
 
+## Bugs
+
+* [x] wifi list / wifi connect / wifi erase 1 jusqu'à erreur / wifi list =>
+  crash sur ESP, connexion fermée sur émulateur + serveur bastos
+
+## Features
+* [x] vitesse serial ()
+* [x] Support Suite / Retour / Sommaire (TAB ou PGDN / SHIFT TAB ou PGDUP/ HOME)
+* [x] Pas de mDSN (plus d'acces telnet ni OTA) ~~Régler le pb du nom mDNS de
+  l'ESP quand il vient d'être flashé par USB serial~~
+* [x] `$$CONFIG$$$` + `BONJOUR.BAS` : Faire un config manager plus complet
+  (vitesse port Minitel par exemple) ?
+* [x] Remplacé par `BASTOS, $$CONFIG$$$, BONJOUR.BAS` ~~tty : init string, fast,
+  autoexec => config$$$~~
+* [x] Remplacé par le HAL : ~~Optimisation BIO (une seule structure), 1 fonction
+  number (int), 2/3 params (union as_void_ptr, as_char_ptr, as_int, as_float), 1
+  result (union like param) => static / extern~~
+* [x] Fichiers `$$$CONFIG$$$` et `BONJOUR.BAS` ~~Variables WiFi dans fichier
+  invisible par CAT, let, load vars, save vars et init Wifi~~
 * [x] Passer tout en float
 * [x] Coder `eval_factor`
 * [x] Code `( expr )` dans factor ?
