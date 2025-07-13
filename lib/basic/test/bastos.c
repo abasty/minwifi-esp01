@@ -185,7 +185,7 @@ int hal_wifi_scan()
 
 bool wifi_connected = false;
 char wifi_ssid[36] = "";
-char wifi_ip[16] = "127.0.0.2";
+char wifi_ip[16] = "";
 
 int hal_wifi_connect(const char* ssid, const char* secret)
 {
@@ -212,22 +212,18 @@ void hal_wifi_disconnect()
     }
 }
 
-network_t *hal_wifi_is_connected()
+bool hal_wifi_is_connected()
 {
     if (wifi_connected)
     {
-        network_t *net = os_wifi_get_network_by_ssid(wifi_ssid);
-        if (net != 0)
-        {
-            strncpy(net->ip, wifi_ip, sizeof(net->ip) - 1);
-            net->ip[sizeof(net->ip) - 1] = '\0';
-            return net;
-        }
-        hal_wifi_disconnect();
+        os_wifi_set_info(wifi_ssid, wifi_ip);
     }
-    return 0;
+    else
+    {
+        os_wifi_set_info("", "");
+    }
+    return wifi_connected;
 }
-
 
 int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path)
 {
@@ -255,7 +251,7 @@ int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char*
         // Get local address
         socklen_t addr_len = sizeof(addr_local);
         getsockname(fd, (struct sockaddr *)&addr_local, &addr_len);
-        // Set wifi IP address with ntoa
+        // Set wifi IP address
         inet_ntop(AF_INET, &addr_local.sin_addr, wifi_ip, sizeof(wifi_ip));
     }
 

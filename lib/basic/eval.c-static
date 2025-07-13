@@ -1479,24 +1479,18 @@ static bool eval_wifi_connect(void)
     if (!bmem->bstate.do_eval)
         return true;
 
-    network_t *net = 0;
+    int16_t net_id = -1;
 
     if (bmem->bstate.token == TOKEN_NUMBER)
     {
-        net = os_wifi_get_network_by_id((int16_t)bmem->bstate.number);
+        net_id = (int16_t)bmem->bstate.number;
     }
     else
     {
-        net = os_wifi_get_network_by_ssid(bmem->bstate.string);
+        net_id = os_wifi_get_id_from_ssid(bmem->bstate.string);
     }
 
-    if (!net)
-    {
-        bmem->bstate.error = BERROR_WIFI;
-        return false;
-    }
-
-    int ret = os_wifi_connect(net);
+    int ret = os_wifi_connect(net_id);
     if (ret < 0)
     {
         bmem->bstate.error = BERROR_WIFI;
@@ -1514,24 +1508,18 @@ static bool eval_wifi_erase(void)
     if (!bmem->bstate.do_eval)
         return true;
 
-    network_t *net = 0;
+    int16_t net_id = -1;
 
     if (bmem->bstate.token == TOKEN_NUMBER)
     {
-        net = os_wifi_get_network_by_id((int16_t)bmem->bstate.number);
+        net_id = (int16_t)bmem->bstate.number;
     }
     else
     {
-        net = os_wifi_get_network_by_ssid(bmem->bstate.string);
+        net_id = os_wifi_get_id_from_ssid(bmem->bstate.string);
     }
 
-    if (!net)
-    {
-        bmem->bstate.error = BERROR_WIFI;
-        return false;
-    }
-
-    int ret = os_wifi_erase(net);
+    int ret = os_wifi_erase(net_id);
     if (ret < 0)
     {
         bmem->bstate.error = BERROR_WIFI;

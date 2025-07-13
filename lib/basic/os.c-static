@@ -35,12 +35,25 @@
 
 #define BASTOS_NETWORK_COUNT (20)
 
+typedef struct network_s
+{
+    int32_t dBm;        // rssi in dBm
+    uint8_t encryption; // Encryption
+    uint8_t count;      // Count of sucessful connections
+    char ssid[36];      // ssid
+    char secret[64];    // password / passphrase
+    bool available;     // Available in last scan
+} network_t;
+
 // OS variables
 int16_t g_net_count = 0;
 int16_t g_known_net_count = 0;
 network_t *g_net_store[BASTOS_NETWORK_COUNT + 1] = {0};
+int16_t g_net_connected_id = -1;
+char g_wifi_ssid[20] = ""; // 20 first characters of SSID
+char g_wifi_ip[16] = "";
 
-static void wifi_sort_networks_by_count(int16_t first, int16_t last)
+static void os_wifi_sort_networks_by_count(int16_t first, int16_t last)
 {
     // Sort networks by count of connections (descending)
     for (int16_t i = first; i < last; i++)
@@ -58,7 +71,7 @@ static void wifi_sort_networks_by_count(int16_t first, int16_t last)
     }
 }
 
-static void wifi_sort_networks_by_dBm(int16_t first, int16_t last)
+static void os_wifi_sort_networks_by_dBm(int16_t first, int16_t last)
 {
     // Sort networks by dBm (descending)
     for (int16_t i = first; i < last; i++)
@@ -78,12 +91,12 @@ static void wifi_sort_networks_by_dBm(int16_t first, int16_t last)
 
 static void os_wifi_sort_networks(void)
 {
-    wifi_sort_networks_by_count(0, g_net_count - 1);
-    wifi_sort_networks_by_dBm(0, g_known_net_count - 1);
-    wifi_sort_networks_by_dBm(g_known_net_count, g_net_count - 1);
+    os_wifi_sort_networks_by_count(0, g_net_count - 1);
+    os_wifi_sort_networks_by_dBm(0, g_known_net_count - 1);
+    os_wifi_sort_networks_by_dBm(g_known_net_count, g_net_count - 1);
 }
 
-static network_t *wifi_new_network(const char *ssid, uint8_t encryption, int32_t rssi)
+static network_t *os_wifi_new_network(const char *ssid, uint8_t encryption, int32_t rssi)
 {
     if (g_net_count >= BASTOS_NETWORK_COUNT)
         return 0;
@@ -107,16 +120,12 @@ static network_t *wifi_new_network(const char *ssid, uint8_t encryption, int32_t
     return new_net;
 }
 
-static void wifi_remove_all_networks(void)
+static void os_wifi_remove_all_networks(void)
 {
-    // Free all networks in the store
     for (int16_t i = 0; i < g_net_count; i++)
     {
-        if (g_net_store[i])
-        {
-            free(g_net_store[i]);
-            g_net_store[i] = 0;
-        }
+        free(g_net_store[i]);
+        g_net_store[i] = 0;
     }
     g_net_count = 0;
     g_known_net_count = 0;
@@ -130,7 +139,7 @@ static void config_load(void)
         network_t net;
         while (hal_read(fd, &net, sizeof(network_t)) == sizeof(network_t))
         {
-            network_t *new_net = wifi_new_network(net.ssid, net.encryption, net.dBm);
+            network_t *new_net = os_wifi_new_network(net.ssid, net.encryption, net.dBm);
             if (new_net)
             {
                 new_net->count = net.count;
@@ -160,28 +169,23 @@ static void config_save(void)
     }
 }
 
-network_t *os_wifi_get_network_by_ssid(const char *ssid)
+int16_t os_wifi_get_id_from_ssid(const char *ssid)
 {
-    for (int i = 0; i < g_net_count; i++)
-        if (g_net_store[i] && strcmp(g_net_store[i]->ssid, ssid) == 0)
-            return g_net_store[i];
-    return 0;
-}
-
-network_t *os_wifi_get_network_by_id(int16_t id)
-{
-    id--;
-    if (id >= 0 && id < g_net_count)
+    for (int16_t i = 0; i < g_net_count; i++)
     {
-        return g_net_store[id];
+        if (g_net_store[i] && strcmp(g_net_store[i]->ssid, ssid) == 0)
+        {
+            return i + 1; // Return ID starting from 1
+        }
     }
-    return 0;
+    return -1; // Not found
 }
 
 void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi)
 {
     // Check if the network already exists
-    network_t *net = os_wifi_get_network_by_ssid(ssid);
+    int net_id = os_wifi_get_id_from_ssid(ssid);
+    network_t *net = (net_id > 0 && net_id <= g_net_count) ? g_net_store[net_id - 1] : 0;
     if (net)
     {
         // Update existing network
@@ -193,7 +197,7 @@ void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi)
     else
     {
         // If the network does not exist, create a new one
-        net = wifi_new_network(ssid, encryption, rssi);
+        net = os_wifi_new_network(ssid, encryption, rssi);
     }
     net->available = true;
 }
@@ -201,7 +205,7 @@ void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi)
 void os_wifi_list(void)
 {
     // Display scanning status
-    hal_print_string(LINE0 INV "Scanning" CLEOL NORMAL "\n");
+    hal_print_string(LINE0 INV "Scanning..." CLEOL NORMAL "\n");
 
     // Remove all networks that are not known
     for (int16_t i = g_known_net_count; i < g_net_count; i++)
@@ -245,8 +249,15 @@ void os_wifi_list(void)
     hal_print_string(LINE0 CLEOL "\n");
 }
 
-int os_wifi_connect(network_t *net)
+int os_wifi_connect(int16_t net_id)
 {
+    if (net_id < 1 || net_id > g_net_count)
+        return -1;
+
+    network_t *net = g_net_store[net_id - 1];
+    if (!net)
+        return -1;
+
     char secret[64];
     if (net->count == 0)
     {
@@ -266,9 +277,11 @@ int os_wifi_connect(network_t *net)
     hal_print_string(net->ssid);
     hal_print_string(CLEOL NORMAL "\n");
 
+    g_net_connected_id = -1;
     int ret = hal_wifi_connect(net->ssid, secret);
     if (ret == 0)
     {
+        g_net_connected_id = net_id;
         strncpy(net->secret, secret, sizeof(net->secret) - 1);
         net->secret[sizeof(net->secret) - 1] = '\0';
         if (net->count < 255)
@@ -286,42 +299,22 @@ int os_wifi_connect(network_t *net)
     return ret;
 }
 
-static int16_t os_wifi_get_id(network_t *net)
+int os_wifi_erase(int16_t net_id)
 {
-    if (!net)
-        return -1;
-
-    for (int16_t i = 0; i < g_net_count; i++)
-    {
-        if (g_net_store[i] == net)
-        {
-            return i + 1; // Return ID starting from 1
-        }
-    }
-    return -1; // Not found
-}
-
-int os_wifi_erase(network_t *net)
-{
-    if (!net)
-        return -1;
-
-    // Find the id of the network in g_net_store
-    int16_t id = os_wifi_get_id(net);
-    if (id <= 0)
+    if (net_id < 1 || net_id > g_net_count)
         return -1;
 
     // Free the network and remove it from the store
-    free(g_net_store[id - 1]);
+    free(g_net_store[net_id - 1]);
 
     // Shift remaining networks down
-    for (int16_t i = id - 1; i < g_net_count - 1; i++)
+    for (int16_t i = net_id - 1; i < g_net_count - 1; i++)
         g_net_store[i] = g_net_store[i + 1];
 
     g_net_count--;
     g_net_store[g_net_count] = 0;
 
-    if (id <= g_known_net_count)
+    if (net_id <= g_known_net_count)
         g_known_net_count--;
 
     config_save();
@@ -329,28 +322,40 @@ int os_wifi_erase(network_t *net)
     return 0;
 }
 
+void os_wifi_set_info(const char *ssid, const char *ip)
+{
+    if (ssid)
+    {
+        strncpy(g_wifi_ssid, ssid, sizeof(g_wifi_ssid) - 1);
+        g_wifi_ssid[sizeof(g_wifi_ssid) - 1] = '\0';
+    }
+    if (ip)
+    {
+        strncpy(g_wifi_ip, ip, sizeof(g_wifi_ip) - 1);
+        g_wifi_ip[sizeof(g_wifi_ip) - 1] = '\0';
+    }
+}
+
 void os_wifi_status(void)
 {
     hal_print_string("\r\n" INV "ID IP              SSID" CLEOL " " NORMAL "\r\n");
-    network_t *net = hal_wifi_is_connected();
-    int16_t id = os_wifi_get_id(net);
-    if (id == -1 || !net)
+    g_net_connected_id = hal_wifi_is_connected() ? g_net_connected_id : -1;
+    if (g_net_connected_id < 1)
     {
         hal_print_string("-- ---.---.---.--- Not connected");
     }
     else
     {
-        hal_print_integer("%2d ", id);
-        hal_print_string(net->ip);
+        if (g_net_connected_id > g_known_net_count)
+            hal_print_string("-- ");
+        else
+            hal_print_integer("%2d ", g_net_connected_id);
+        hal_print_string(g_wifi_ip);
         // Print 16 - len(net->ip) spaces
-        uint8_t len = strlen(net->ip);
+        uint8_t len = strlen(g_wifi_ip);
         for (int i = 16 - len; i > 0; i--)
             hal_print_string(" ");
-        // Copy SSID to a temporary buffer to limit its length
-        char ssid[21];
-        strncpy(ssid, net->ssid, sizeof(ssid) - 1);
-        ssid[sizeof(ssid) - 1] = '\0';
-        hal_print_string(ssid);
+        hal_print_string(g_wifi_ssid);
     }
     hal_print_string("\r\n\r\n");
 }
@@ -616,7 +621,7 @@ void os_loop()
 void os_setup(void)
 {
     // Remove all networks
-    wifi_remove_all_networks();
+    os_wifi_remove_all_networks();
 
     // Load config
     config_load();

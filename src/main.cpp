@@ -215,21 +215,18 @@ void hal_wifi_disconnect()
     }
 }
 
-network_t *hal_wifi_is_connected()
+bool hal_wifi_is_connected()
 {
-    if (WiFi.isConnected())
+    bool connected = WiFi.isConnected();
+    if (connected)
     {
-        network_t *net = os_wifi_get_network_by_ssid(WiFi.SSID().c_str());
-        if (net != 0)
-        {
-            strncpy(net->ip, WiFi.localIP().toString().c_str(), sizeof(net->ip) - 1);
-            net->ip[sizeof(net->ip) - 1] = '\0';
-            return net;
-        }
-        hal_wifi_disconnect();
+        os_wifi_set_info(WiFi.SSID().c_str(), WiFi.localIP().toString().c_str());
     }
-
-    return 0;
+    else
+    {
+        os_wifi_set_info("", "");
+    }
+    return connected;
 }
 
 int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path)

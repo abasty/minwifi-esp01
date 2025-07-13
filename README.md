@@ -1,3 +1,8 @@
+# Bugs
+
+* [x] wifi list / wifi connect / wifi erase 1 jusqu'à erreur / wifi list =>
+  crash sur ESP, connexion fermée sur émulateur + serveur bastos
+
 # Architecture logicielle
 
 ## Hardware Abstraction Layer

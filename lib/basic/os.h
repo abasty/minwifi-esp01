@@ -44,17 +44,6 @@ extern "C" {
 
 #define NET_BUFFER_MAX (128)
 
-typedef struct network_s
-{
-    int32_t dBm;        // rssi in dBm
-    uint8_t encryption; // Encryption
-    uint8_t count;      // Count of sucessful connections
-    char ssid[36];      // ssid
-    char secret[64];    // password / passphrase
-    bool available;     // Available in last scan
-    char ip[16];        // IP address (if connected)
-} network_t;
-
 // OS main functions
 void os_setup(void);
 void os_loop(void);
@@ -62,11 +51,11 @@ void os_loop(void);
 // OS Wi-Fi functions
 void os_wifi_list(void);
 void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi);
-network_t *os_wifi_get_network_by_ssid(const char *ssid);
-network_t *os_wifi_get_network_by_id(int16_t id);
-int os_wifi_connect(network_t *net);
-int os_wifi_erase(network_t *net);
+int16_t os_wifi_get_id_from_ssid(const char *ssid);
+int os_wifi_connect(int16_t net_id);
+int os_wifi_erase(int16_t net_id);
 void os_wifi_status(void);
+void os_wifi_set_info(const char *ssid, const char *ip);
 
 // OS network functions
 int os_connect(const char* urn);
@@ -98,7 +87,7 @@ int hal_erase(const char *pathname);
 int hal_wifi_scan(void);
 int hal_wifi_connect(const char* ssid, const char* secret);
 void hal_wifi_disconnect(void);
-network_t *hal_wifi_is_connected(void);
+bool hal_wifi_is_connected(void);
 
 int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path);
 void hal_net_disconnect(int n);
