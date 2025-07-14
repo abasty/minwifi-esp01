@@ -76,7 +76,7 @@ char g_net_connected_ip[16] = "";
 
 // OS Server variables
 // TODO: Order servers by protocol then by name
-server_t g_server_store[BASTOS_NETWORK_COUNT] = {0};
+server_t *g_server_store[BASTOS_NETWORK_COUNT] = {0};
 int16_t g_server_count = 0;
 // int16_t g_minitel_connected_id = -1;
 int16_t g_ftp_connected_id = -1;
@@ -142,6 +142,20 @@ static network_t *os_wifi_new_network(const char *ssid, uint8_t encryption, int3
     return new_net;
 }
 
+static server_t *os_new_server(void)
+{
+    if (g_server_count >= BASTOS_SERVER_COUNT)
+        return 0;
+
+    server_t *new_server = (server_t *)malloc(sizeof(server_t));
+    if (!new_server)
+        return 0;
+
+    memset(new_server, 0, sizeof(server_t));
+    g_server_store[g_server_count++] = new_server;
+    return new_server;
+}
+
 static void os_wifi_remove_all_networks(void)
 {
     for (int16_t i = 0; i < g_net_count; i++)
@@ -153,44 +167,70 @@ static void os_wifi_remove_all_networks(void)
     g_known_net_count = 0;
 }
 
-static void config_load(void)
+static void os_remove_all_servers(void)
 {
-    // TODO: Load number of servers, then servers, then load wifi networks
-    int fd = hal_open("$$$CONFIG$$$", B_RDONLY);
-    if (fd >= 0)
+    for (int16_t i = 0; i < g_server_count; i++)
     {
-        network_t net;
-        while (hal_read(fd, &net, sizeof(network_t)) == sizeof(network_t))
-        {
-            network_t *new_net = os_wifi_new_network(net.ssid, net.encryption, net.dBm);
-            if (new_net)
-            {
-                new_net->count = net.count;
-                strncpy(new_net->secret, net.secret, sizeof(new_net->secret) - 1);
-                new_net->secret[sizeof(new_net->secret) - 1] = '\0';
-                g_known_net_count++;
-            }
-        }
-        hal_close(fd);
+        free(g_server_store[i]);
+        g_server_store[i] = 0;
     }
+    g_server_count = 0;
 }
 
-static void config_save(void)
+static void os_config_load(void)
 {
-    // TODO: Save servers (n servers then servers), then save wifi networks
-    int fd = hal_open("$$$CONFIG$$$", B_CREAT | B_WRONLY);
-    if (fd >= 0)
+    int fd = hal_open("$$$CONFIG$$$", B_RDONLY);
+    if (fd < 0)
+        return;
+
+    // Remove memory records
+    os_wifi_remove_all_networks();
+    os_remove_all_servers();
+
+    // Read number of servers
+    int16_t n;
+    if (hal_read(fd, &n, sizeof(n)) != sizeof(n))
+        return;
+
+    // Read server records from mass storage
+    server_t server;
+    for (int16_t i = 0; i < n; i++)
     {
-        for (int16_t i = 0; i < g_known_net_count; i++)
-        {
-            network_t *net = g_net_store[i];
-            if (net) // Only save valid networks
-            {
-                hal_write(fd, net, sizeof(network_t));
-            }
-        }
-        hal_close(fd);
+        if (hal_read(fd, &server, sizeof(server_t)) != sizeof(server_t))
+            goto finalize;
+        server_t *new_server = os_new_server();
+        if (new_server == 0)
+            goto finalize;
+        *new_server = server;
     }
+
+    // Read network records from mass storage
+    network_t net;
+    while (hal_read(fd, &net, sizeof(network_t)) == sizeof(network_t))
+    {
+        network_t *new_net = os_wifi_new_network(net.ssid, net.encryption, net.dBm);
+        if (new_net == 0)
+            goto finalize;
+        *new_net = net;
+        g_known_net_count++;
+    }
+
+finalize:
+    hal_close(fd);
+}
+
+static void os_config_save(void)
+{
+    int fd = hal_open("$$$CONFIG$$$", B_CREAT | B_WRONLY);
+    if (fd < 0)
+        return;
+
+    hal_write(fd, &g_server_count, sizeof(g_server_count));
+    for (int16_t i = 0; i < g_server_count; i++)
+        hal_write(fd, &g_server_store[i], sizeof(server_t));
+    for (int16_t i = 0; i < g_known_net_count; i++)
+        hal_write(fd, g_net_store[i], sizeof(network_t));
+    hal_close(fd);
 }
 
 int16_t os_wifi_get_id_from_ssid(const char *ssid)
@@ -315,7 +355,7 @@ int os_wifi_connect(int16_t net_id)
                 g_known_net_count++;
         }
         os_wifi_sort_networks();
-        config_save();
+        os_config_save();
     }
 #ifdef MINITEL
     hal_print_string(LINE0 CLEOL "\r\n");
@@ -341,7 +381,7 @@ int os_wifi_erase(int16_t net_id)
     if (net_id <= g_known_net_count)
         g_known_net_count--;
 
-    config_save();
+    os_config_save();
 
     return 0;
 }
@@ -644,11 +684,8 @@ void os_loop()
 
 void os_setup(void)
 {
-    // Remove all networks
-    os_wifi_remove_all_networks();
-
     // Load config
-    config_load();
+    os_config_load();
 
     // Init Basic and display BASTOS banner
     bastos_init();
