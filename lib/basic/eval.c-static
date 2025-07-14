@@ -1577,17 +1577,36 @@ static bool eval_wifi()
 
 static bool eval_connect()
 {
+    char name[16];
+    char *urn = 0;
+
     if (!eval_token(TOKEN_KEYWORD_CONNECT))
         return false;
 
     if (!eval_string_expr())
         return false;
 
+    if (bmem->bstate.do_eval)
+    {
+        strncpy(name, bmem->bstate.string, sizeof(name) - 1);
+        name[sizeof(name) - 1] = 0;
+    }
+
+    if (eval_token(','))
+    {
+        if (!eval_string_expr())
+            return false;
+
+        if (bmem->bstate.do_eval)
+        {
+            urn = bmem->bstate.string;
+        }
+    }
+
     if (!bmem->bstate.do_eval)
         return true;
 
-    bmem->bstate.sock = os_connect(bmem->bstate.string);
-
+    bmem->bstate.sock = os_connect(name, urn);
     if (bmem->bstate.sock < 0)
     {
         bmem->bstate.error = BERROR_SOCK;

@@ -83,6 +83,20 @@ int16_t g_ftp_connected_id = -1;
 
 typedef int (*os_cell_compare_fn)(int16_t a, int16_t b);
 
+static void os_config_save(void)
+{
+    int fd = hal_open("$$$CONFIG$$$", B_CREAT | B_WRONLY);
+    if (fd < 0)
+        return;
+
+    hal_write(fd, &g_server_count, sizeof(g_server_count));
+    for (int16_t i = 0; i < g_server_count; i++)
+        hal_write(fd, g_server_store[i], sizeof(server_t));
+    for (int16_t i = 0; i < g_known_net_count; i++)
+        hal_write(fd, g_net_store[i], sizeof(network_t));
+    hal_close(fd);
+}
+
 static int os_cell_compare_by_count(int16_t a, int16_t b)
 {
     return g_net_store[a]->count - g_net_store[b]->count;
@@ -142,7 +156,17 @@ static network_t *os_wifi_new_network(const char *ssid, uint8_t encryption, int3
     return new_net;
 }
 
-static server_t *os_new_server(void)
+static int16_t os_find_server(const char *name)
+{
+    for (int16_t i = 0; i < g_server_count; i++)
+    {
+        if (g_server_store[i] && strcmp(g_server_store[i]->name, name) == 0)
+            return i;
+    }
+    return -1;
+}
+
+static server_t *os_new_server(server_t *server)
 {
     if (g_server_count >= BASTOS_SERVER_COUNT)
         return 0;
@@ -151,9 +175,27 @@ static server_t *os_new_server(void)
     if (!new_server)
         return 0;
 
-    memset(new_server, 0, sizeof(server_t));
+    if (server)
+    {
+        *new_server = *server;
+    }
+
     g_server_store[g_server_count++] = new_server;
     return new_server;
+}
+
+static void os_set_server(server_t *server)
+{
+    int16_t id = os_find_server(server->name);
+    if (id >= 0)
+    {
+        *g_server_store[id] = *server;
+    }
+    else
+    {
+        os_new_server(server);
+    }
+    os_config_save();
 }
 
 static void os_wifi_remove_all_networks(void)
@@ -179,13 +221,13 @@ static void os_remove_all_servers(void)
 
 static void os_config_load(void)
 {
-    int fd = hal_open("$$$CONFIG$$$", B_RDONLY);
-    if (fd < 0)
-        return;
-
     // Remove memory records
     os_wifi_remove_all_networks();
     os_remove_all_servers();
+
+    int fd = hal_open("$$$CONFIG$$$", B_RDONLY);
+    if (fd < 0)
+        return;
 
     // Read number of servers
     int16_t n;
@@ -198,10 +240,8 @@ static void os_config_load(void)
     {
         if (hal_read(fd, &server, sizeof(server_t)) != sizeof(server_t))
             goto finalize;
-        server_t *new_server = os_new_server();
-        if (new_server == 0)
+        if (os_new_server(&server) == 0)
             goto finalize;
-        *new_server = server;
     }
 
     // Read network records from mass storage
@@ -216,20 +256,6 @@ static void os_config_load(void)
     }
 
 finalize:
-    hal_close(fd);
-}
-
-static void os_config_save(void)
-{
-    int fd = hal_open("$$$CONFIG$$$", B_CREAT | B_WRONLY);
-    if (fd < 0)
-        return;
-
-    hal_write(fd, &g_server_count, sizeof(g_server_count));
-    for (int16_t i = 0; i < g_server_count; i++)
-        hal_write(fd, &g_server_store[i], sizeof(server_t));
-    for (int16_t i = 0; i < g_known_net_count; i++)
-        hal_write(fd, g_net_store[i], sizeof(network_t));
     hal_close(fd);
 }
 
@@ -512,68 +538,83 @@ uint8_t os_get_key()
     return key;
 }
 
-int os_connect(const char* urn)
+// TODO: refactor URN management, save and close
+int os_connect(const char *name, const char* urn)
 {
-    int proto = -1;
-    char host[128] = {0};
-    const char *path = 0;
-    int port = 80;
     int ret = -1;
     const char *part = urn;
+    server_t server = {
+        .proto = -1,
+        .port = 80,
+        .path[0] = '\0',
+        .host[0] = '\0',
+        .name[0] = '\0',
+        .login[0] = '\0',
+    };
 
-    // Get procol part
-    if (strncasecmp(urn, "tcp:", 4) == 0)
+    if (urn == 0)
     {
-        part += 4;
-        proto = URN_PROTO_TCP;
+        int16_t id = os_find_server(name);
+        if (id < 0)
+            return -1;
+        server = *g_server_store[id];
     }
-    else if (strncasecmp(urn, "ws:", 3) == 0)
+    else
     {
-       part += 3;
-       proto = URN_PROTO_WS;
-    }
-    else if (strncasecmp(urn, "wss:", 4) == 0)
-    {
-       part += 4;
-       proto = URN_PROTO_WSS;
-    }
+        // Get procol part
+        if (strncasecmp(urn, "tcp:", 4) == 0)
+        {
+            part += 4;
+            server.proto = URN_PROTO_TCP;
+        }
+        else if (strncasecmp(urn, "ws:", 3) == 0)
+        {
+            part += 3;
+            server.proto = URN_PROTO_WS;
+        }
+        else if (strncasecmp(urn, "wss:", 4) == 0)
+        {
+            part += 4;
+            server.proto = URN_PROTO_WSS;
+        }
 
-    if (proto < 0)
-        goto finalize;
+        if (server.proto < 0)
+            goto finalize;
 
-    // Get host
-    const char* start = part;
-    while (*part != 0 && *part != ':') part++;
-    // part refers to '\0' or ':'
-    if (part == start || (part - start) >= 128)
-        goto finalize;
-    strncpy(host, start, part - start);
-    host[part - start] = 0;
+        // Get host
+        const char *start = part;
+        while (*part != 0 && *part != ':')
+            part++;
+        // part refers to '\0' or ':'
+        if (part == start || (part - start) >= sizeof(server.host))
+            goto finalize;
+        strncpy(server.host, start, part - start);
+        server.host[part - start] = 0;
 
-    // Get port
-    if (*part == ':')
-    {
-        part++;
-        char *last;
-        port = strtoul(part, &last, 10);
-        part = last;
-
-        // Get path
+        // Get port
         if (*part == ':')
         {
             part++;
-            path = part;
-        }
-        else if (*part != 0)
-        {
-            goto finalize;
+            char *last;
+            server.port = strtoul(part, &last, 10);
+            part = last;
+
+            // Get path
+            if (*part == ':')
+            {
+                part++;
+                strncpy(server.path, part, SERVER_PATH_MAX_SIZE - 1);
+                server.path[SERVER_PATH_MAX_SIZE - 1] = '\0';
+            }
         }
     }
-
-    // Connext to the host
-    ret = hal_net_connect(proto, host, port, path ? path : "");
-    if (ret == 0)
+    // Connect to the host
+    ret = hal_net_connect(server.proto, server.host, server.port, server.path);
+    if (ret >= 0)
     {
+        strncpy(server.name, name, SERVER_NAME_MAX_SIZE - 1);
+        server.name[SERVER_NAME_MAX_SIZE - 1] = '\0';
+        os_set_server(&server);
         hal_print_string(P_ROULEAU_OFF);
     }
 
