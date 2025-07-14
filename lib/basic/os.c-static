@@ -39,6 +39,7 @@
 #define WIFI_SSID_MAX_SIZE (36)
 #define WIFI_SECRET_MAX_SIZE (64)
 
+#define SERVER_NAME_MAX_SIZE (16)
 #define SERVER_HOST_MAX_SIZE (64)
 #define SERVER_PATH_MAX_SIZE (16)
 #define SERVER_LOGIN_MAX_SIZE (16)
@@ -58,6 +59,7 @@ typedef struct server_s
 {
     int proto;                           // Protocol (TCP, WS, WSS, FTP)
     int port;                            // Port number
+    char name[SERVER_NAME_MAX_SIZE];     // Name of the server
     char host[SERVER_HOST_MAX_SIZE];     // IP address / hostname
     char path[SERVER_PATH_MAX_SIZE];     // Path for WS/WSS
     char login[SERVER_LOGIN_MAX_SIZE];   // Login for authentication
@@ -73,42 +75,37 @@ char g_net_connected_ssid[20] = ""; // 20 first characters of SSID
 char g_net_connected_ip[16] = "";
 
 // OS Server variables
+// TODO: Order servers by protocol then by name
 server_t g_server_store[BASTOS_NETWORK_COUNT] = {0};
 int16_t g_server_count = 0;
 // int16_t g_minitel_connected_id = -1;
 int16_t g_ftp_connected_id = -1;
 
-static void os_wifi_sort_networks_by_count(int16_t first, int16_t last)
+typedef int (*os_cell_compare_fn)(int16_t a, int16_t b);
+
+static int os_cell_compare_by_count(int16_t a, int16_t b)
 {
-    // Sort networks by count of connections (descending)
-    for (int16_t i = first; i < last; i++)
-    {
-        for (int16_t j = i + 1; j <= last; j++)
-        {
-            if (g_net_store[i]->count < g_net_store[j]->count)
-            {
-                // Swap networks
-                network_t *temp = g_net_store[i];
-                g_net_store[i] = g_net_store[j];
-                g_net_store[j] = temp;
-            }
-        }
-    }
+    return g_net_store[a]->count - g_net_store[b]->count;
 }
 
-static void os_wifi_sort_networks_by_dBm(int16_t first, int16_t last)
+static int os_cell_compare_by_dBm(int16_t a, int16_t b)
 {
-    // Sort networks by dBm (descending)
+    return g_net_store[a]->dBm - g_net_store[b]->dBm;
+}
+
+static void os_sort_cells(void* array[], int16_t first, int16_t last, os_cell_compare_fn compare_fn)
+{
+    // Sort cells using bubble sort
     for (int16_t i = first; i < last; i++)
     {
         for (int16_t j = i + 1; j <= last; j++)
         {
-            if (g_net_store[i]->dBm < g_net_store[j]->dBm)
+            if (compare_fn(i, j) < 0)
             {
-                // Swap networks
-                network_t *temp = g_net_store[i];
-                g_net_store[i] = g_net_store[j];
-                g_net_store[j] = temp;
+                // Swap cells
+                void *temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
             }
         }
     }
@@ -116,9 +113,9 @@ static void os_wifi_sort_networks_by_dBm(int16_t first, int16_t last)
 
 static void os_wifi_sort_networks(void)
 {
-    os_wifi_sort_networks_by_count(0, g_net_count - 1);
-    os_wifi_sort_networks_by_dBm(0, g_known_net_count - 1);
-    os_wifi_sort_networks_by_dBm(g_known_net_count, g_net_count - 1);
+    os_sort_cells((void **)g_net_store, 0, g_net_count - 1, os_cell_compare_by_count);
+    os_sort_cells((void **)g_net_store, 0, g_known_net_count - 1, os_cell_compare_by_dBm);
+    os_sort_cells((void **)g_net_store, g_known_net_count, g_net_count - 1, os_cell_compare_by_dBm);
 }
 
 static network_t *os_wifi_new_network(const char *ssid, uint8_t encryption, int32_t rssi)
