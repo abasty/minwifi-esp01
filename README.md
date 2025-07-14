@@ -2,6 +2,13 @@
 
 ## Basic
 
+* [ ] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
+  mode connecté / basic / boot au mode interactif)
+* [ ] Uniquement majuscules en chiffres dans noms de serveur (pareil pour noms
+  de fichiers 8+3)
+* [ ] Passage de tous les paramètres de config en URN (y compris WiFi:
+  `wifi:ssid:secret:count:dbm`), sauvegarde de chaque enregistrement sur une
+  ligne. Les secrets peuvent être brouillés éventuellement.
 * [ ] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
   urn)). `MINITEL LIST / ERASE / CONNECT <URN>|<NAME>|<ID>`
 
@@ -112,18 +119,20 @@ Les ressources pour BASTOS sont initialisées.
 L'OS charge la config au boot (fichier `$$CONFIG$$`) et définit les variables
 OS, y compris les secrets.
 
-Le fichier `$$CONFIG$$` n'est pas chargeable / visible depuis le Basic : C'est
-un fichier binaire, et l'OS le gère directement avec des fonctions du HAL.
+Le fichier `$$CONFIG$$` n'est pas chargeable / visible depuis le Basic. BASTOS
+le gère directement avec des fonctions du HAL.
 
-### Exécution BASTOS
+### Démarrage BASTOS
 
 Après avoir chargé la config, le système vérifie s'il existe un fichier nommé
 `BONJOUR.BAS` ou `. BST`.
 
-Si oui, il charge ce fichier et l'exécute. Exemple de fichier `BONJOUR.BST` :
+Si oui, il charge ce fichier et l'exécute. Exemple de fichier `BONJOUR.BAS` :
 
 ```basic
-10 CONNECT "tcp://abasty-retro.fr:1967"
+10 WIFI CONNECT "Maison"
+20 CONNECT "ZBOUB", "tcp://abasty-retro.fr:1967"
+30 BASTOS
 ```
 
 En l'absence de ce fichier, on affiche la bannière BASTOS et on arrive dans le
@@ -131,7 +140,8 @@ Basic en mode interactif.
 
 ## Variables OS
 
-(non accessibles depuis le Basic)
+(non accessibles depuis le Basic, à voir si des instructions spéciales
+permettent d'y accéder (liste réseau wifi, serveurs, etc))
 
 ### Liste des réseaux WiFi
 
@@ -151,7 +161,50 @@ une fois avec succès, sont sauvegardés dans la configuration.
 ### Autres variables OS
 
 * Mode : Basic / Connecté
-* URL de connexion
+* URNs de connexion services Minitel et FTP
+
+## BASTOS Uniform Resource Name
+
+Les URNs permettent de définir avec une chaîne de caractères les paramètres de
+connexion aux points d'accès WiFi, aux services Minitel réseau et aux sites FTP.
+
+| type  | syntaxe                           |
+|-------|-----------------------------------|
+| wifi  | `wifi:ssid:secret:count`          |
+| tcp   | `tcp:name:host:port`              |
+| ws    | `ws:name:host:port:path`          |
+| wss   | `wss:name:host:port:path`         |
+| ftp   | `ftp:name:host:port:login:secret` |
+
+Les URNs sont sauvegardées dans le fichier de configuration à raison d'un par
+ligne. À son lancement, BASTOS lit la configuration depuis ce fichier et met à
+jour ses structures internes. Lors d'une connexion fructueuse à un réseau WiFi
+ou à un serveur, la configuration est automatiquement sauvegardée.
+
+Exemple d'inmplémentation :
+
+```c
+
+#define URN_SCHEMA (0)
+#define URN_WIFI_SSID (1)
+#define URN_WIFI_SECRET (2)
+#define URN_WIFI_COUNT (3)
+#define URN_SERVER_NAME (1)
+#define URN_SERVER_HOST (2)
+#define URN_SERVER_PORT (3)
+#define URN_SERVER_PATH (4)
+#define URN_SERVER_LOGIN (4)
+#define URN_SERVER_SECRET (5)
+
+typedef struct URN_s
+{
+    uint8_t proto;
+    uint8_t count;
+    uint16_t port;
+    char *part[6];
+    char line[0];
+} URN_t;
+```
 
 ## WiFi
 
@@ -189,21 +242,26 @@ SSID connecté, etc.
 ADU : Si WiFi n'est pas connecté, on peut essayer un `WIFI CONNECT 1` avant. Si
 cette dernière commande échoue, inutile de tenter une connexion réseau.
 
-`CONNECT <URL>` : Supporte au moins les protocoles : "tcp", "ws", "wss".
+`CONNECT <NAME> [, <URN>]` : Supporte les protocoles : "tcp", "ws", "wss". Lors
+d'une connexion réussie, les paramètres de connexion sont sauvegardés dans la
+configuration sous le nom de serveur `<NAME>`. Si `<URN>` n'est pas spécifié, le
+serveur `<NAME>` est recherché dans la configuration et, s'il existe, les
+paramètres de connexion sauvegardés sont appliqués.
 
-Si la connexion est acceptée, passe en mode connecté : les caractères arrivant
-depuis le réseau sont transférés sur le port série. Les caractères arrivant sur
-le port série sont transférés sur le réseau.
+Si la connexion est acceptée, BASTOS passe en mode connecté : les caractères
+arrivant depuis le serveur sont envoyés au Minitel (écran ou protocole) et les
+caractères arrivant depuis le Minitel (clavier ou protocole) sont transférés
+vers le serveur.
 
 En mode connecté, le Basic est suspendu (comme sur un `STOP`).
 
 Pour sortir du mode connecté, on utilise la touche CX/FIN. La même touche est
-envoyé au terminal par l'OS, de façon à remettre un Minitel physique en mode non
-connecté (fermeture du relais modem, passage en mode 'F').
+envoyé au terminal par l'OS, de façon à remettre le Minitel  en mode non
+connecté (ouverture du relais modem, lettre `F` affichée en ligne 0).
 
 Lors du passage du mode connecté au mode Basic, le programme en cours est
-continué (avec `CONT`). Si un programme n'est pas en cours, on revient
-simplement au BAsic en mode interactif.
+continué (comme avec `CONT`). Si un programme n'est pas en cours, on revient
+simplement au Basic en mode interactif.
 
 ## Téléchargement de fichier
 
@@ -249,11 +307,7 @@ vers le réseau.
 * [x] Remettre en 1200-7E1 pas 115200
 * [x] Après un reset sur l'ESP : Bannière BASTOS
 * [x] ~~repasser en SPIFS~~
-* [ ] Revoir la machine d'état boot, connexion WiFi, Basic, Connexion à un site
-  distant. Tout intégrer au BASIC ? Config / Autoexec
-  * [ ] Connexion WiFi, affichage IP
-  * [ ] Connexion à un site par défaut ? (3615)
-  * [ ] AUTOEXEC ?
+* [ ] Revoir la machine d'état boot : `$$$CONFIG$$$`, `BONJOUR.BAS`
 * [ ] Manuel utilisateur BASTOS (à commencer, à l'ancienne)
 * [ ] Commandes FS : <https://www.overtakenbyevents.com/amstrad-cpc-amsdos-commands/>
 
