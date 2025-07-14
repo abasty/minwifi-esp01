@@ -2,6 +2,9 @@
 
 ## Basic
 
+* [ ] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
+  urn)). `MINITEL LIST / ERASE / CONNECT <URN>|<NAME>|<ID>`
+
 * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
 
 * [ ] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.BST` /
@@ -19,6 +22,7 @@
 
 * [ ] `FTP DOWNLOAD` / `FTP UPLOAD` et autres fonctions FTP.
 
+* [ ] Pouvoir rediriger PRINT vers une variable
 * [ ] MODE
 * [ ] BIP, INV, NORM, CLEOL, AI, AN, REP, etc. (voir MIN).
 * [ ] con, coff, echo on/off
@@ -38,6 +42,8 @@
 * [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
   seule commande print.
 * [ ] Ajouter edit, integration "edit_min" ?
+
+* [ ] PEEK (y compris variables OS ?) / POKE / USR
 
 * [x] `CONNECT` devrait suffire : TELNET / TELNET WS
 * ~~SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs~~
@@ -149,7 +155,7 @@ une fois avec succès, sont sauvegardés dans la configuration.
 
 ## WiFi
 
-`WIFI LIST` : Scanne les réseaux WiFi et l'affiche.
+`WIFI LIST` : Scanne les réseaux WiFi et les affiche.
 
 Chaque réseau est précédé d'un numéro. Les réseaux connus sont affichés en
 premier, par ordre croissant de leur dBm. Les réseaux non connus sont affichés
@@ -205,8 +211,10 @@ Le téléchargement permet de charger un fichier depuis le réseau et de le plac
 sur le disque. Le téléversement permet d'envoyer un fichier depuis le disque
 vers le réseau.
 
-* `FTP CONNECT <URN>` : Établit une connexion avec un serveur FTP. `<URN>` est
-  de la forme `host:port:login:password`.
+* `FTP LIST`
+
+* `FTP CONNECT <URN>|<ID>|<NAME>` : Établit une connexion avec un serveur FTP.
+  `<URN>` est de la forme `host:port:login:password`.
 
 * `FTP CAT` : Liste les fichiers du serveur ftp.
 

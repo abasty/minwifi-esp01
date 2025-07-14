@@ -34,24 +34,49 @@
 #endif
 
 #define BASTOS_NETWORK_COUNT (20)
+#define BASTOS_SERVER_COUNT (20)
+
+#define WIFI_SSID_MAX_SIZE (36)
+#define WIFI_SECRET_MAX_SIZE (64)
+
+#define SERVER_HOST_MAX_SIZE (64)
+#define SERVER_PATH_MAX_SIZE (16)
+#define SERVER_LOGIN_MAX_SIZE (16)
+#define SERVER_SECRET_MAX_SIZE (64)
 
 typedef struct network_s
 {
-    int32_t dBm;        // rssi in dBm
-    uint8_t encryption; // Encryption
-    uint8_t count;      // Count of sucessful connections
-    char ssid[36];      // ssid
-    char secret[64];    // password / passphrase
-    bool available;     // Available in last scan
+    int32_t dBm;                       // rssi in dBm
+    uint8_t encryption;                // Encryption
+    uint8_t count;                     // Count of sucessful connections
+    char ssid[WIFI_SSID_MAX_SIZE];     // ssid
+    char secret[WIFI_SECRET_MAX_SIZE]; // password / passphrase
+    bool available;                    // Available in last scan
 } network_t;
 
-// OS variables
+typedef struct server_s
+{
+    int proto;                           // Protocol (TCP, WS, WSS, FTP)
+    int port;                            // Port number
+    char host[SERVER_HOST_MAX_SIZE];     // IP address / hostname
+    char path[SERVER_PATH_MAX_SIZE];     // Path for WS/WSS
+    char login[SERVER_LOGIN_MAX_SIZE];   // Login for authentication
+    char secret[SERVER_SECRET_MAX_SIZE]; // Password for authentication
+} server_t;
+
+// OS WiFi variables
 int16_t g_net_count = 0;
 int16_t g_known_net_count = 0;
 network_t *g_net_store[BASTOS_NETWORK_COUNT + 1] = {0};
 int16_t g_net_connected_id = -1;
-char g_wifi_ssid[20] = ""; // 20 first characters of SSID
-char g_wifi_ip[16] = "";
+char g_net_connected_ssid[20] = ""; // 20 first characters of SSID
+char g_net_connected_ip[16] = "";
+
+// OS Server variables
+server_t g_server_store[BASTOS_NETWORK_COUNT] = {0};
+int16_t g_server_count = 0;
+// int16_t g_minitel_connected_id = -1;
+int16_t g_ftp_connected_id = -1;
 
 static void os_wifi_sort_networks_by_count(int16_t first, int16_t last)
 {
@@ -133,6 +158,7 @@ static void os_wifi_remove_all_networks(void)
 
 static void config_load(void)
 {
+    // TODO: Load number of servers, then servers, then load wifi networks
     int fd = hal_open("$$$CONFIG$$$", B_RDONLY);
     if (fd >= 0)
     {
@@ -154,6 +180,7 @@ static void config_load(void)
 
 static void config_save(void)
 {
+    // TODO: Save servers (n servers then servers), then save wifi networks
     int fd = hal_open("$$$CONFIG$$$", B_CREAT | B_WRONLY);
     if (fd >= 0)
     {
@@ -326,13 +353,13 @@ void os_wifi_set_info(const char *ssid, const char *ip)
 {
     if (ssid)
     {
-        strncpy(g_wifi_ssid, ssid, sizeof(g_wifi_ssid) - 1);
-        g_wifi_ssid[sizeof(g_wifi_ssid) - 1] = '\0';
+        strncpy(g_net_connected_ssid, ssid, sizeof(g_net_connected_ssid) - 1);
+        g_net_connected_ssid[sizeof(g_net_connected_ssid) - 1] = '\0';
     }
     if (ip)
     {
-        strncpy(g_wifi_ip, ip, sizeof(g_wifi_ip) - 1);
-        g_wifi_ip[sizeof(g_wifi_ip) - 1] = '\0';
+        strncpy(g_net_connected_ip, ip, sizeof(g_net_connected_ip) - 1);
+        g_net_connected_ip[sizeof(g_net_connected_ip) - 1] = '\0';
     }
 }
 
@@ -350,12 +377,12 @@ void os_wifi_status(void)
             hal_print_string("-- ");
         else
             hal_print_integer("%2d ", g_net_connected_id);
-        hal_print_string(g_wifi_ip);
+        hal_print_string(g_net_connected_ip);
         // Print 16 - len(net->ip) spaces
-        uint8_t len = strlen(g_wifi_ip);
+        uint8_t len = strlen(g_net_connected_ip);
         for (int i = 16 - len; i > 0; i--)
             hal_print_string(" ");
-        hal_print_string(g_wifi_ssid);
+        hal_print_string(g_net_connected_ssid);
     }
     hal_print_string("\r\n\r\n");
 }

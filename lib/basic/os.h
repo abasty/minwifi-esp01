@@ -41,6 +41,7 @@ extern "C" {
 #define URN_PROTO_TCP  (0)
 #define URN_PROTO_WS   (1)
 #define URN_PROTO_WSS  (2)
+#define URN_PROTO_FTP  (3)
 
 #define NET_BUFFER_MAX (128)
 
