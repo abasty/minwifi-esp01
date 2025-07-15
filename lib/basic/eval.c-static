@@ -1121,8 +1121,9 @@ int8_t eval_prog_next()
 
     if (err != BERROR_NONE && bmem->bstate.pc != 0)
     {
-        hal_print_integer("On line %d: ", bmem->bstate.pc->line_no);
-        hal_print_integer("Error %d\r\n", (int)-err);
+        char buffer[32];
+        snprintf(buffer, sizeof(buffer), "On line %d: Error %d\r\n", bmem->bstate.pc->line_no, (int)-err);
+        hal_print_string(buffer);
     }
 
     bmem->bstate.pc = 0;
@@ -1155,29 +1156,30 @@ static void eval_reset()
 static void eval_free()
 {
     hal_print_string("       sys  prog  vars  free\r\n");
-    hal_print_string("l/v:       ");
-    hal_print_integer("%5d ", bmem_line_count());
-    hal_print_integer("%5d ", bmem_var_count());
-    hal_print_string("\r\n");
-    hal_print_integer("Mem: %5d ", bmem->prog_start - (uint8_t *)bmem);
-    hal_print_integer("%5d ", bmem->prog_end - bmem->prog_start);
-    hal_print_integer("%5d ", bmem->vars_end - bmem->vars_start);
-    hal_print_integer("%5d\r\n", bmem->vars_start - bmem->strings_end);
+
+    char info[40];
+    snprintf(info, sizeof(info), "l/v:       %5d %5d\r\n", bmem_line_count(), bmem_var_count());
+    hal_print_string(info);
+
+    snprintf(info, sizeof(info), "Mem: %5d %5d %5d %5d\r\n",
+             (int)(bmem->prog_start - (uint8_t *)bmem),
+             (int)(bmem->prog_end - bmem->prog_start),
+             (int)(bmem->vars_end - bmem->vars_start),
+             (int)(bmem->vars_start - bmem->strings_end));
+    hal_print_string(info);
 }
 
 static void eval_bastos()
 {
-#ifdef MINITEL
-    hal_print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU_ON);
-    hal_print_string(LINE0 CLEOL CLS);
-#else
-    hal_print_string(CLS);
-#endif
-    hal_print_string(" BASTOS 16K Microcontroller (v1)\r\n");
-    hal_print_string(" Basic for Terminal Operating System\r\n on ");
+    hal_print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU_ON LINE0 CLEOL CLS
+                     " BASTOS 16K Microcontroller (v1)\r\n"
+                     " Basic for Terminal Operating System\r\n on ");
     hal_print_oem_string();
-    hal_print_string("\r\n\r\n (c) 2024-2025 ABa\r\n\r\n");
-    hal_print_integer(" %d bytes free\r\n\r\n" CON, bmem->vars_start - bmem->strings_end);
+    char info[64];
+    snprintf(info, sizeof(info), "\r\n\r\n (c) 2024-2025 ABa\r\n\r\n %d bytes free\r\n\r\n" CON,
+             (int)(bmem->vars_start - bmem->strings_end));
+    hal_print_string(info);
+
     if (!eval_running())
     {
         hal_print_string("Ready\r\n");

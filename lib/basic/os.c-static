@@ -85,7 +85,7 @@ typedef int (*os_cell_compare_fn)(int16_t a, int16_t b);
 
 static void os_config_save(void)
 {
-    int fd = hal_open("$$$CONFIG$$$", B_CREAT | B_WRONLY);
+    int fd = hal_open("CONFIG.$$$", B_CREAT | B_WRONLY);
     if (fd < 0)
         return;
 
@@ -225,7 +225,7 @@ static void os_config_load(void)
     os_wifi_remove_all_networks();
     os_remove_all_servers();
 
-    int fd = hal_open("$$$CONFIG$$$", B_RDONLY);
+    int fd = hal_open("CONFIG.$$$", B_RDONLY);
     if (fd < 0)
         return;
 
@@ -333,10 +333,7 @@ void os_wifi_list(void)
         hal_print_string(net->ssid);
         hal_print_string(INK7 "\r\n");
     }
-    hal_print_integer("\r\n%d network(s)" CLEOL NORMAL "\r\n\r\n", n);
-
-    // Clear status line
-    hal_print_string(LINE0 CLEOL "\n");
+    hal_print_integer("\r\n%d network(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
 }
 
 int os_wifi_connect(int16_t net_id)
@@ -446,6 +443,7 @@ void os_wifi_status(void)
         for (int i = 16 - len; i > 0; i--)
             hal_print_string(" ");
         hal_print_string(g_net_connected_ssid);
+
     }
     hal_print_string("\r\n\r\n");
 }
@@ -643,11 +641,12 @@ void os_cat(void)
 
 void os_cat_file(const char *filename, size_t size)
 {
-    uint8_t len = strlen(filename);
-    hal_print_string(filename);
-    for (int i = 16 - len; i > 0; i--)
-        hal_print_string(" ");
-    hal_print_integer("%u\r\n", size);
+    char buffer[40];
+    char *ext = strchr(filename, '.');
+    int n = ext ? (ext - filename) : strlen(filename);
+    ext = ext ? ext + 1 : "";
+    snprintf(buffer, sizeof(buffer), "%-8.*s.%-3s %zu\r\n", n, filename, ext, size);
+    hal_print_string(buffer);
 }
 
 static void os_loop_connected()
