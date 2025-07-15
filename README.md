@@ -2,8 +2,9 @@
 
 ## Basic
 
-* [ ] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
+* [x] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
   mode connecté / basic / boot au mode interactif)
+* [ ] Augmenter la mémoire BASTOS (48KB?)
 * [ ] Uniquement majuscules en chiffres dans noms de serveur (pareil pour noms
   de fichiers 8+3)
 * [ ] Passage de tous les paramètres de config en URN (y compris WiFi:
@@ -29,7 +30,10 @@
 
 * [ ] `FTP DOWNLOAD` / `FTP UPLOAD` et autres fonctions FTP.
 
-* [ ] Pouvoir rediriger PRINT vers une variable
+* [ ] Pouvoir rediriger PRINT vers une variable. `OUTPUT a$`. Les fonctions
+  `hal_print_*` sont remplacées par `os_print_*` ou `os_printf`. Ces dernières
+  utilisent un buffer et `hal_print_buffer` ou, si OUTPUT est une variable,
+  ajoute le buffer à la variable.
 * [ ] MODE
 * [ ] BIP, INV, NORM, CLEOL, AI, AN, REP, etc. (voir MIN).
 * [ ] con, coff, echo on/off
@@ -196,15 +200,18 @@ Exemple d'inmplémentation :
 #define URN_SERVER_LOGIN (4)
 #define URN_SERVER_SECRET (5)
 
-typedef struct URN_s
+typedef struct urn_s
 {
     uint8_t proto;
     uint8_t count;
     uint16_t port;
     char *part[6];
     char line[0];
-} URN_t;
+} urn_t;
 ```
+
+Lecture depuis un fichier :
+
 
 ## WiFi
 
@@ -307,7 +314,7 @@ vers le réseau.
 * [x] Remettre en 1200-7E1 pas 115200
 * [x] Après un reset sur l'ESP : Bannière BASTOS
 * [x] ~~repasser en SPIFS~~
-* [ ] Revoir la machine d'état boot : `$$$CONFIG$$$`, `BONJOUR.BAS`
+* [ ] Revoir la machine d'état boot : `CONFIG.$$$`, `BONJOUR.BAS`
 * [ ] Manuel utilisateur BASTOS (à commencer, à l'ancienne)
 * [ ] Commandes FS : <https://www.overtakenbyevents.com/amstrad-cpc-amsdos-commands/>
 
@@ -363,7 +370,7 @@ Doivent être en C pour être intégrés à minwifi.
 * [x] Remplacé par le HAL : ~~Optimisation BIO (une seule structure), 1 fonction
   number (int), 2/3 params (union as_void_ptr, as_char_ptr, as_int, as_float), 1
   result (union like param) => static / extern~~
-* [x] Fichiers `$$$CONFIG$$$` et `BONJOUR.BAS` ~~Variables WiFi dans fichier
+* [x] Fichiers `CONFIG.$$$` et `BONJOUR.BAS` ~~Variables WiFi dans fichier
   invisible par CAT, let, load vars, save vars et init Wifi~~
 * [x] Passer tout en float
 * [x] Coder `eval_factor`
