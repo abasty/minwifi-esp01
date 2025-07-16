@@ -1,6 +1,13 @@
 # TODO
 
-## Basic
+## Bugs
+
+* [ ] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
+  même les chaines de caractères sont terminées par `\0`, notamment dans les
+  tableaux. Ce n'est pas compatibles avec le Basic ZX81 car on ne peut accéder
+  au dernier caractère (qui est forcément `\0`)
+
+## Fonctionnalités
 
 * [x] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
   mode connecté / basic / boot au mode interactif)
@@ -69,8 +76,6 @@
   name)
 * [ ] Optimisation execution basic
 * [ ] Optimisation tokenisation (règles, mini lex/yacc, automate)
-
-# Bugs
 
 # Architecture logicielle
 
