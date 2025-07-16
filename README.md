@@ -172,7 +172,7 @@ une fois avec succès, sont sauvegardés dans la configuration.
 Les URNs permettent de définir avec une chaîne de caractères les paramètres de
 connexion aux points d'accès WiFi, aux services Minitel réseau et aux sites FTP.
 
-| type  | syntaxe                           |
+| type  | syntaxe fichier et basic          |
 |-------|-----------------------------------|
 | wifi  | `wifi:ssid:secret:count`          |
 | tcp   | `tcp:name:host:port`              |
@@ -185,33 +185,28 @@ ligne. À son lancement, BASTOS lit la configuration depuis ce fichier et met à
 jour ses structures internes. Lors d'une connexion fructueuse à un réseau WiFi
 ou à un serveur, la configuration est automatiquement sauvegardée.
 
-Exemple d'inmplémentation :
+Le stockage interne d'un URN est un buffer de caractères. Le premier octet
+désigne le nombre de parties dans l'URN. Chaque partie est séparée de la
+suivante par un `\0`. La dernière partie est terminée par `\0`.
+
+Fonctions de conversion / creation / suppression :
 
 ```c
-
-#define URN_SCHEMA (0)
-#define URN_WIFI_SSID (1)
-#define URN_WIFI_SECRET (2)
-#define URN_WIFI_COUNT (3)
-#define URN_SERVER_NAME (1)
-#define URN_SERVER_HOST (2)
-#define URN_SERVER_PORT (3)
-#define URN_SERVER_PATH (4)
-#define URN_SERVER_LOGIN (4)
-#define URN_SERVER_SECRET (5)
-
-typedef struct urn_s
-{
-    uint8_t proto;
-    uint8_t count;
-    uint16_t port;
-    char *part[6];
-    char line[0];
-} urn_t;
+char *os_urn_new(const char *urn_ext); // malloc et retourne format interne
+free() => libération
+snprintf() => Création URN externe
 ```
 
-Lecture depuis un fichier :
+Fonctions de lecture d'une URN :
 
+Le pointeur courant et le nombre de parties restantes sont stockés dans des
+variables globales.
+
+```c
+uint8_t os_get_first(const char* urn); // Init des globales et renvoie os_get_next_int()
+char *os_get_next(void); // renvoie pointeur courant, avance pointeur courant
+int32_t os_get_next_int(void); // renvoie atoi(os_get_next())
+```
 
 ## WiFi
 
