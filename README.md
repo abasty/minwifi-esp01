@@ -5,7 +5,8 @@
 * [ ] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
   même les chaines de caractères sont terminées par `\0`, notamment dans les
   tableaux. Ce n'est pas compatibles avec le Basic ZX81 car on ne peut accéder
-  au dernier caractère (qui est forcément `\0`)
+  au dernier caractère (qui est forcément `\0`) => chaine de caractères
+  représentées par longueur (16 bits) + contenu
 
 ## Fonctionnalités
 
@@ -72,6 +73,11 @@
 
 # Optimisations
 
+* [ ] Voir s'il est facile de passer en align2 et dimensions sur 2 octets
+  (penser à arm32 / arm64)
+* [ ] packed structure (mémoire)
+* [ ] flags groupés en bit fields, élimination de bool (mémoire)
+* [ ] repasser en static ce qu'on peut mettre en static (HAL ? / OS)
 * [ ] Optimisation accès tableau / variable (factorisation number / string,
   name)
 * [ ] Optimisation execution basic
