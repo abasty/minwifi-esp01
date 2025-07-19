@@ -41,6 +41,7 @@ extern "C" {
 #define URN_PROTO_TCP  (0)
 #define URN_PROTO_WS   (1)
 #define URN_PROTO_WSS  (2)
+#define URN_PROTO_FTP  (3)
 
 #define NET_BUFFER_MAX (128)
 
@@ -58,7 +59,7 @@ void os_wifi_status(void);
 void os_wifi_set_info(const char *ssid, const char *ip);
 
 // OS network functions
-int os_connect(const char* urn);
+int os_connect(const char *name, const char* urn);
 
 // OS keyboard functions
 uint8_t os_get_key(void);

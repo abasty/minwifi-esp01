@@ -1,6 +1,25 @@
 # TODO
 
-## Basic
+## Bugs
+
+* [ ] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
+  même les chaines de caractères sont terminées par `\0`, notamment dans les
+  tableaux. Ce n'est pas compatibles avec le Basic ZX81 car on ne peut accéder
+  au dernier caractère (qui est forcément `\0`) => chaine de caractères
+  représentées par longueur (16 bits) + contenu
+
+## Fonctionnalités
+
+* [x] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
+  mode connecté / basic / boot au mode interactif)
+* [ ] Augmenter la mémoire BASTOS (48KB?)
+* [ ] Uniquement majuscules en chiffres dans noms de serveur (pareil pour noms
+  de fichiers 8+3)
+* [ ] Passage de tous les paramètres de config en URN (y compris WiFi:
+  `wifi:ssid:secret:count:dbm`), sauvegarde de chaque enregistrement sur une
+  ligne. Les secrets peuvent être brouillés éventuellement.
+* [ ] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
+  urn)). `MINITEL LIST / ERASE / CONNECT <URN>|<NAME>|<ID>`
 
 * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
 
@@ -19,6 +38,10 @@
 
 * [ ] `FTP DOWNLOAD` / `FTP UPLOAD` et autres fonctions FTP.
 
+* [ ] Pouvoir rediriger PRINT vers une variable. `OUTPUT a$`. Les fonctions
+  `hal_print_*` sont remplacées par `os_print_*` ou `os_printf`. Ces dernières
+  utilisent un buffer et `hal_print_buffer` ou, si OUTPUT est une variable,
+  ajoute le buffer à la variable.
 * [ ] MODE
 * [ ] BIP, INV, NORM, CLEOL, AI, AN, REP, etc. (voir MIN).
 * [ ] con, coff, echo on/off
@@ -39,6 +62,8 @@
   seule commande print.
 * [ ] Ajouter edit, integration "edit_min" ?
 
+* [ ] PEEK (y compris variables OS ?) / POKE / USR
+
 * [x] `CONNECT` devrait suffire : TELNET / TELNET WS
 * ~~SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs~~
 
@@ -48,12 +73,15 @@
 
 # Optimisations
 
+* [ ] Voir s'il est facile de passer en align2 et dimensions sur 2 octets
+  (penser à arm32 / arm64)
+* [ ] packed structure (mémoire)
+* [ ] flags groupés en bit fields, élimination de bool (mémoire)
+* [ ] repasser en static ce qu'on peut mettre en static (HAL ? / OS)
 * [ ] Optimisation accès tableau / variable (factorisation number / string,
   name)
 * [ ] Optimisation execution basic
 * [ ] Optimisation tokenisation (règles, mini lex/yacc, automate)
-
-# Bugs
 
 # Architecture logicielle
 
@@ -106,18 +134,20 @@ Les ressources pour BASTOS sont initialisées.
 L'OS charge la config au boot (fichier `$$CONFIG$$`) et définit les variables
 OS, y compris les secrets.
 
-Le fichier `$$CONFIG$$` n'est pas chargeable / visible depuis le Basic : C'est
-un fichier binaire, et l'OS le gère directement avec des fonctions du HAL.
+Le fichier `$$CONFIG$$` n'est pas chargeable / visible depuis le Basic. BASTOS
+le gère directement avec des fonctions du HAL.
 
-### Exécution BASTOS
+### Démarrage BASTOS
 
 Après avoir chargé la config, le système vérifie s'il existe un fichier nommé
 `BONJOUR.BAS` ou `. BST`.
 
-Si oui, il charge ce fichier et l'exécute. Exemple de fichier `BONJOUR.BST` :
+Si oui, il charge ce fichier et l'exécute. Exemple de fichier `BONJOUR.BAS` :
 
 ```basic
-10 CONNECT "tcp://abasty-retro.fr:1967"
+10 WIFI CONNECT "Maison"
+20 CONNECT "ZBOUB", "tcp://abasty-retro.fr:1967"
+30 BASTOS
 ```
 
 En l'absence de ce fichier, on affiche la bannière BASTOS et on arrive dans le
@@ -125,7 +155,8 @@ Basic en mode interactif.
 
 ## Variables OS
 
-(non accessibles depuis le Basic)
+(non accessibles depuis le Basic, à voir si des instructions spéciales
+permettent d'y accéder (liste réseau wifi, serveurs, etc))
 
 ### Liste des réseaux WiFi
 
@@ -145,11 +176,52 @@ une fois avec succès, sont sauvegardés dans la configuration.
 ### Autres variables OS
 
 * Mode : Basic / Connecté
-* URL de connexion
+* URNs de connexion services Minitel et FTP
+
+## BASTOS Uniform Resource Name
+
+Les URNs permettent de définir avec une chaîne de caractères les paramètres de
+connexion aux points d'accès WiFi, aux services Minitel réseau et aux sites FTP.
+
+| type  | syntaxe fichier et basic          |
+|-------|-----------------------------------|
+| wifi  | `wifi:ssid:secret:count`          |
+| tcp   | `tcp:name:host:port`              |
+| ws    | `ws:name:host:port:path`          |
+| wss   | `wss:name:host:port:path`         |
+| ftp   | `ftp:name:host:port:login:secret` |
+
+Les URNs sont sauvegardées dans le fichier de configuration à raison d'un par
+ligne. À son lancement, BASTOS lit la configuration depuis ce fichier et met à
+jour ses structures internes. Lors d'une connexion fructueuse à un réseau WiFi
+ou à un serveur, la configuration est automatiquement sauvegardée.
+
+Le stockage interne d'un URN est un buffer de caractères. Le premier octet
+désigne le nombre de parties dans l'URN. Chaque partie est séparée de la
+suivante par un `\0`. La dernière partie est terminée par `\0`.
+
+Fonctions de conversion / creation / suppression :
+
+```c
+char *os_urn_new(const char *urn_ext); // malloc et retourne format interne
+free() => libération
+snprintf() => Création URN externe
+```
+
+Fonctions de lecture d'une URN :
+
+Le pointeur courant et le nombre de parties restantes sont stockés dans des
+variables globales.
+
+```c
+uint8_t os_get_first(const char* urn); // Init des globales et renvoie os_get_next_int()
+char *os_get_next(void); // renvoie pointeur courant, avance pointeur courant
+int32_t os_get_next_int(void); // renvoie atoi(os_get_next())
+```
 
 ## WiFi
 
-`WIFI LIST` : Scanne les réseaux WiFi et l'affiche.
+`WIFI LIST` : Scanne les réseaux WiFi et les affiche.
 
 Chaque réseau est précédé d'un numéro. Les réseaux connus sont affichés en
 premier, par ordre croissant de leur dBm. Les réseaux non connus sont affichés
@@ -183,21 +255,26 @@ SSID connecté, etc.
 ADU : Si WiFi n'est pas connecté, on peut essayer un `WIFI CONNECT 1` avant. Si
 cette dernière commande échoue, inutile de tenter une connexion réseau.
 
-`CONNECT <URL>` : Supporte au moins les protocoles : "tcp", "ws", "wss".
+`CONNECT <NAME> [, <URN>]` : Supporte les protocoles : "tcp", "ws", "wss". Lors
+d'une connexion réussie, les paramètres de connexion sont sauvegardés dans la
+configuration sous le nom de serveur `<NAME>`. Si `<URN>` n'est pas spécifié, le
+serveur `<NAME>` est recherché dans la configuration et, s'il existe, les
+paramètres de connexion sauvegardés sont appliqués.
 
-Si la connexion est acceptée, passe en mode connecté : les caractères arrivant
-depuis le réseau sont transférés sur le port série. Les caractères arrivant sur
-le port série sont transférés sur le réseau.
+Si la connexion est acceptée, BASTOS passe en mode connecté : les caractères
+arrivant depuis le serveur sont envoyés au Minitel (écran ou protocole) et les
+caractères arrivant depuis le Minitel (clavier ou protocole) sont transférés
+vers le serveur.
 
 En mode connecté, le Basic est suspendu (comme sur un `STOP`).
 
 Pour sortir du mode connecté, on utilise la touche CX/FIN. La même touche est
-envoyé au terminal par l'OS, de façon à remettre un Minitel physique en mode non
-connecté (fermeture du relais modem, passage en mode 'F').
+envoyé au terminal par l'OS, de façon à remettre le Minitel  en mode non
+connecté (ouverture du relais modem, lettre `F` affichée en ligne 0).
 
 Lors du passage du mode connecté au mode Basic, le programme en cours est
-continué (avec `CONT`). Si un programme n'est pas en cours, on revient
-simplement au BAsic en mode interactif.
+continué (comme avec `CONT`). Si un programme n'est pas en cours, on revient
+simplement au Basic en mode interactif.
 
 ## Téléchargement de fichier
 
@@ -205,8 +282,10 @@ Le téléchargement permet de charger un fichier depuis le réseau et de le plac
 sur le disque. Le téléversement permet d'envoyer un fichier depuis le disque
 vers le réseau.
 
-* `FTP CONNECT <URN>` : Établit une connexion avec un serveur FTP. `<URN>` est
-  de la forme `host:port:login:password`.
+* `FTP LIST`
+
+* `FTP CONNECT <URN>|<ID>|<NAME>` : Établit une connexion avec un serveur FTP.
+  `<URN>` est de la forme `host:port:login:password`.
 
 * `FTP CAT` : Liste les fichiers du serveur ftp.
 
@@ -241,11 +320,7 @@ vers le réseau.
 * [x] Remettre en 1200-7E1 pas 115200
 * [x] Après un reset sur l'ESP : Bannière BASTOS
 * [x] ~~repasser en SPIFS~~
-* [ ] Revoir la machine d'état boot, connexion WiFi, Basic, Connexion à un site
-  distant. Tout intégrer au BASIC ? Config / Autoexec
-  * [ ] Connexion WiFi, affichage IP
-  * [ ] Connexion à un site par défaut ? (3615)
-  * [ ] AUTOEXEC ?
+* [ ] Revoir la machine d'état boot : `CONFIG.$$$`, `BONJOUR.BAS`
 * [ ] Manuel utilisateur BASTOS (à commencer, à l'ancienne)
 * [ ] Commandes FS : <https://www.overtakenbyevents.com/amstrad-cpc-amsdos-commands/>
 
@@ -301,7 +376,7 @@ Doivent être en C pour être intégrés à minwifi.
 * [x] Remplacé par le HAL : ~~Optimisation BIO (une seule structure), 1 fonction
   number (int), 2/3 params (union as_void_ptr, as_char_ptr, as_int, as_float), 1
   result (union like param) => static / extern~~
-* [x] Fichiers `$$$CONFIG$$$` et `BONJOUR.BAS` ~~Variables WiFi dans fichier
+* [x] Fichiers `CONFIG.$$$` et `BONJOUR.BAS` ~~Variables WiFi dans fichier
   invisible par CAT, let, load vars, save vars et init Wifi~~
 * [x] Passer tout en float
 * [x] Coder `eval_factor`
