@@ -73,6 +73,9 @@
 
 # Optimisations
 
+* [*] WebSockets : ça prend 110 KB. L'utilisation de l'API ArduinoHttpClient
+  permet d'accéder aux WebSocket cliente avec une API synchrone mais économe (on
+  retombe à 340383 octets (au lieu de 436xxx))
 * [ ] Voir s'il est facile de passer en align2 et dimensions sur 2 octets
   (penser à arm32 / arm64)
 * [ ] packed structure (mémoire)

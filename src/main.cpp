@@ -24,8 +24,8 @@
  */
 
 #include <ESP8266WiFi.h>
-#include <WebSocketsClient.h>
 #include <LittleFS.h>
+#include <ArduinoHttpClient.h>
 
 #ifdef MINITEL
 #include "tty-minitel.h"
@@ -49,23 +49,7 @@ const int ledPin = 13;
 File g_file0;
 int g_net_proto = -1;
 WiFiClient g_tcp_socket;
-WebSocketsClient g_web_socket;
-
-void web_socket_event(WStype_t type, uint8_t *payload, size_t length)
-{
-    switch(type)
-    {
-    case WStype_DISCONNECTED:
-        hal_net_disconnect(0);
-        break;
-    case WStype_TEXT:
-        if (length > 0 && payload != 0)
-            hal_print_buffer(payload, length);
-        break;
-    default:
-        break;
-    }
-}
+WebSocketClient *g_web_socket = 0;
 
 void hal_print_oem_string(void)
 {
@@ -254,9 +238,15 @@ int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char*
 
     if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
     {
-        g_web_socket.begin(host, port, path);
-        g_web_socket.onEvent(web_socket_event);
-        // FIXME: wait connection (loop ?)
+        g_web_socket = new WebSocketClient(g_tcp_socket, host, port);
+        g_web_socket->begin(path);
+        if (!g_web_socket->connected())
+        {
+            g_web_socket->stop();
+            delete g_web_socket;
+            g_web_socket = 0;
+            return -1;
+        }
         return 0;
     }
     return -1;
@@ -275,10 +265,11 @@ void hal_net_disconnect(int n)
 
     if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
     {
-        if (g_web_socket.isConnected())
+        if (g_web_socket && g_web_socket->connected())
         {
-            g_web_socket.disconnect();
-            // TODO: call destructor ?
+            g_web_socket->stop();
+            delete g_web_socket;
+            g_web_socket = 0;
         }
     }
 
@@ -293,14 +284,20 @@ int hal_net_send(int fd, const uint8_t *buffer, int n)
     }
     if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
     {
-        bool ok = g_web_socket.sendTXT(buffer, n);
-        return ok ? n : -1;
+        if (!g_web_socket || !g_web_socket->connected())
+            return -1;
+
+        g_web_socket->beginMessage(TYPE_TEXT);
+        int written = g_web_socket->write(buffer, n);
+        g_web_socket->endMessage();
+        return written;
     }
     return -1;
 }
 
 int hal_net_recv(int fd, uint8_t *buffer, int n)
 {
+    // TODO: Try to virtualize the socket
     if (g_net_proto == URN_PROTO_TCP)
     {
         int available = g_tcp_socket.available();
@@ -314,8 +311,21 @@ int hal_net_recv(int fd, uint8_t *buffer, int n)
     }
     if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
     {
-        g_web_socket.loop();
-        return 0;
+        static int unparsed = 0;
+        if (!g_web_socket || !g_web_socket->connected())
+        return -1;
+        if (unparsed == 0)
+        {
+            unparsed = g_web_socket->parseMessage();
+            if (unparsed == 0)
+                return 0;
+        }
+        if (n > unparsed)
+        {
+            n = unparsed;
+        }
+        unparsed -= n;
+        return g_web_socket->read(buffer, n);
     }
     return -1;
 }
