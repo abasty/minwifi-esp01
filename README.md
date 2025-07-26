@@ -20,11 +20,13 @@
   ligne. Les secrets peuvent être brouillés éventuellement.
 * [ ] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
   urn)). `MINITEL LIST / ERASE / CONNECT <URN>|<NAME>|<ID>`
+* [ ] Voir si la config peut être juste un historique de commandes, ou des
+  variables basic cachées, ou de lignes basic cachées
 
 * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
-
 * [ ] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.BST` /
   `.BAS` ?
+
 * [ ] RUN line, RUN "autorun.bst", RUN "program.bst", line
 * [ ] SAVE, LOAD : pouvoir faire du `.BAS` et du `.BST`. Majuscules / Minucules
   : toujours en majuscules sur disque, pour faire plus rétro.
@@ -278,6 +280,12 @@ connecté (ouverture du relais modem, lettre `F` affichée en ligne 0).
 Lors du passage du mode connecté au mode Basic, le programme en cours est
 continué (comme avec `CONT`). Si un programme n'est pas en cours, on revient
 simplement au Basic en mode interactif.
+
+`SERVER CONNECT` : Même commande que `CONNECT`.
+
+`SERVER LIST` : Liste les serveurs par nom, urn
+
+`SERVER ERASE <NAME>` : Supprime un serveur de la config
 
 ## Téléchargement de fichier
 
