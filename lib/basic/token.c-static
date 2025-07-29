@@ -177,10 +177,15 @@ static int8_t tokenize_number(tokenizer_state_t *state)
 static int8_t tokenize_string(tokenizer_state_t *state)
 {
     *state->write_ptr++ = TOKEN_STRING;
+    uint8_t *len_ptr = state->write_ptr;
+    uint16_t len = 0;
+    state->write_ptr += 2; // reserve space for length
     char c = *++state->read_ptr;
+    // TODO: check for escape sequences \n, \\, \", \222, \x23, etc.
     while (c != 0 && c != '"')
     {
         *state->write_ptr++ = c;
+        len++;
         c = *++state->read_ptr;
     }
     if (c == 0)
@@ -188,6 +193,8 @@ static int8_t tokenize_string(tokenizer_state_t *state)
         return BERROR_SYNTAX;
     }
     *state->write_ptr++ = 0;
+    *len_ptr++ = len & 0xFF; // low byte
+    *len_ptr = (len >> 8) & 0xFF; // high
     state->read_ptr++;
     return BERROR_NONE;
 }

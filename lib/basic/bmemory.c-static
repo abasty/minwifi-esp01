@@ -52,14 +52,16 @@ static void bmem_strings_clear()
 // Allocate a string in the memory, set memory to 0 and return the string
 static char *bmem_string_alloc(uint16_t size)
 {
-    size = bmem_align4(size);
-    if (bmem->vars_start - bmem->strings_end < size)
+    uint16_t storage_size = bmem_align4(size + 3);
+    if (bmem->vars_start - bmem->strings_end < storage_size)
         return 0;
 
     char *str = (char *) bmem->strings_end;
-    bmem->strings_end += size;
-    memset(str, 0, size);
-    return str;
+    bmem->strings_end += storage_size;
+    memset(str, 0, storage_size);
+    str[0] = (storage_size - 2) && 0xff;
+    str[1] = (storage_size - 2) >> 8;
+    return str + 2;
 }
 
 // Allocate a variable in the memory, set memory to 0 and return the variable
@@ -97,12 +99,13 @@ static int bmem_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims)
         size = sizeof(float);
         break;
     case TOKEN_VARIABLE_STRING:
-        size = dim_count + 1;
+        size = dim_count + 1 + 2;
         break;
     case TOKEN_ARRAY_NUMBER:
         size = bmem_array_size(sizeof(float), dim_count, dims);
         break;
     case TOKEN_ARRAY_STRING:
+        // FIXME: for the last dimension add 1 for the null char and 2 for the size
         size = bmem_array_size(1, dim_count, dims);
         break;
     }
@@ -141,6 +144,8 @@ static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, u
 
     if (token == TOKEN_ARRAY_STRING)
     {
+        // FIXME: set size of all strings (last dimension), 0 in the last char,
+        // space in the other chars
         // Set null char in all string cells
         int string_size = dims[dim_count - 1];
         char *string = (char *) var->bytes + dims_size + string_size - 1;
@@ -243,10 +248,16 @@ static var_t *bmem_var_string_set(const char *name, char *value)
     tmp[B_NAME_SIZE_MAX - 1] = 0;
 
     // Create the variable and copy the value
-    var = bmem_var_new(tmp, TOKEN_VARIABLE_STRING, strlen(value), 0);
+    uint16_t len = string_len(value);
+    var = bmem_var_new(tmp, TOKEN_VARIABLE_STRING, len, 0);
     if (var == 0)
         goto finalize;
-    strcpy(var->string, value ? value : "");
+
+    if (value)
+    {
+        memcpy(var->string, value - 2, len + 2);
+    }
+    var->string[len + 2] = 0;
 
 finalize:
     return var;

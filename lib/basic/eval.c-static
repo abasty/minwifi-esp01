@@ -188,7 +188,7 @@ static bool eval_len_code()
 
     if (token == TOKEN_KEYWORD_LEN)
     {
-        bmem->bstate.number = strlen(bmem->bstate.string);
+        bmem->bstate.number = string_len(bmem->bstate.string);
         return true;
     }
 
@@ -521,12 +521,11 @@ static bool eval_string_chr()
 
     if (bmem->bstate.do_eval)
     {
-        bmem->bstate.string = bmem_string_alloc(2);
+        bmem->bstate.string = bmem_string_alloc(1);
         if (!bmem->bstate.string)
             return false;
 
         bmem->bstate.string[0] = (char)((uint8_t)(truncf(bmem->bstate.number)));
-        bmem->bstate.string[1] = 0;
     }
 
     return true;
@@ -559,12 +558,11 @@ static bool eval_string_inkey()
 
     if (bmem->bstate.do_eval)
     {
-        bmem->bstate.string = bmem_string_alloc(2);
+        bmem->bstate.string = bmem_string_alloc(1);
         if (!bmem->bstate.string)
             return false;
 
         bmem->bstate.string[0] = bmem->bstate.inkey;
-        bmem->bstate.string[1] = 0;
         bmem->bstate.inkey = 0;
     }
 
@@ -576,9 +574,9 @@ static bool eval_string_const()
     if (!eval_token(TOKEN_STRING))
         return false;
 
-    bmem->bstate.string = (char *)bmem->bstate.read_ptr;
-    while (*bmem->bstate.read_ptr++)
-        ;
+    uint16_t len = (bmem->bstate.read_ptr[0] | (bmem->bstate.read_ptr[1] << 8));
+    bmem->bstate.string = (char *)bmem->bstate.read_ptr + 2;
+    bmem->bstate.read_ptr += 2 + len + 1;
     return true;
 }
 
@@ -877,7 +875,7 @@ static bool eval_let()
                 return true;
             }
 
-            uint16_t len = strlen(string);
+            uint16_t len = string_len(string);
             uint16_t start = dims[dim - 2];
             uint16_t end = dims[dim - 1];
 
@@ -1013,7 +1011,8 @@ static bool eval_print(bool implicit)
                 }
                 else // TOKEN_STRING
                 {
-                    hal_print_string(bmem->bstate.string ? bmem->bstate.string : "");
+                    // FIXME: use print_buffer to allow embedded 0
+                    hal_print_string(bmem->bstate.string ? bmem->bstate.string + 2 : "");
                 }
             }
         }
@@ -1336,7 +1335,7 @@ EVAL:
         return true;
 
     uint8_t len = strlen(codes);
-    bmem->bstate.string = bmem_string_alloc(len + 1);
+    bmem->bstate.string = bmem_string_alloc(len);
     if (!bmem->bstate.string)
         return false;
 
@@ -1345,7 +1344,6 @@ EVAL:
     {
         bmem->bstate.string[i] = codes[i];
     }
-    bmem->bstate.string[len] = 0;
 
     return true;
 }

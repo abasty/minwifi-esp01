@@ -30,6 +30,16 @@
 
 #include "bmemory.h"
 
+static int string_len(char *string)
+{
+    if (!string)
+        return 0;
+
+    uint8_t *len_ptr = (uint8_t *)string - 2;
+    uint16_t len = (len_ptr[0] | (len_ptr[1] << 8));
+    return len;
+}
+
 static void string_slice(char **string, uint16_t start, uint16_t end)
 {
     if (!*string)
@@ -40,7 +50,7 @@ static void string_slice(char **string, uint16_t start, uint16_t end)
         return;
     }
 
-    uint16_t len = strlen(*string);
+    uint16_t len = string_len(*string);
 
     if (end == 0)
     {
@@ -59,7 +69,7 @@ static void string_slice(char **string, uint16_t start, uint16_t end)
     }
 
     uint16_t slice_len = end - start + 1;
-    char *slice = bmem_string_alloc(slice_len + 1);
+    char *slice = bmem_string_alloc(slice_len);
 
     if (!slice)
     {
@@ -94,7 +104,8 @@ static void string_concat(char **string1, char *string2)
         return;
     }
 
-    char *concat = bmem_string_alloc(strlen(*string1) + strlen(string2) + 1);
+    uint16_t len = string_len(*string1) + string_len(string2);
+    char *concat = bmem_string_alloc(len);
     char *dst = concat;
     char *src = *string1;
     while (*src) *dst++ = *src++;
