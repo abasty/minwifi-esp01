@@ -61,7 +61,7 @@ static char *bmem_string_alloc(uint16_t size)
     memset(str, 0, storage_size);
     str[0] = (storage_size - 2) && 0xff;
     str[1] = (storage_size - 2) >> 8;
-    return str + 2;
+    return str;
 }
 
 // Allocate a variable in the memory, set memory to 0 and return the variable
@@ -255,7 +255,7 @@ static var_t *bmem_var_string_set(const char *name, char *value)
 
     if (value)
     {
-        memcpy(var->string, value - 2, len + 2);
+        memcpy(var->string, value, len + 2);
     }
     var->string[len + 2] = 0;
 

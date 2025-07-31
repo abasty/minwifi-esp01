@@ -35,7 +35,7 @@ static int string_len(char *string)
     if (!string)
         return 0;
 
-    uint8_t *len_ptr = (uint8_t *)string - 2;
+    uint8_t *len_ptr = (uint8_t *)string;
     uint16_t len = (len_ptr[0] | (len_ptr[1] << 8));
     return len;
 }
@@ -77,8 +77,8 @@ static void string_slice(char **string, uint16_t start, uint16_t end)
         return;
     }
 
-    char *src = *string + start - 1;
-    char *dst = slice;
+    char *src = *string + start - 1 + 2;
+    char *dst = slice + 2;
 
     while (slice_len > 0)
     {
@@ -106,10 +106,10 @@ static void string_concat(char **string1, char *string2)
 
     uint16_t len = string_len(*string1) + string_len(string2);
     char *concat = bmem_string_alloc(len);
-    char *dst = concat;
-    char *src = *string1;
+    char *dst = concat + 2;
+    char *src = *string1 + 2;
     while (*src) *dst++ = *src++;
-    src = string2;
+    src = string2 + 2;
     while (*src) *dst++ = *src++;
     *dst = 0;
     *string1 = concat;
