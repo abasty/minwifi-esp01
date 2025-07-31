@@ -1335,14 +1335,14 @@ EVAL:
         return true;
 
     uint8_t len = strlen(codes);
-    bmem->bstate.string = bmem_string_alloc(len);
+    bmem->bstate.string = bmem_string_alloc(len) - 2;
     if (!bmem->bstate.string)
         return false;
 
     // Copy codes to string
-    for (uint8_t i = 0; i < len; i++)
+    for (uint8_t i = 0; i <= len; i++)
     {
-        bmem->bstate.string[i] = codes[i];
+        bmem->bstate.string[i + 2] = codes[i];
     }
 
     return true;
