@@ -59,8 +59,8 @@ static char *bmem_string_alloc(uint16_t size)
     char *str = (char *) bmem->strings_end;
     bmem->strings_end += storage_size;
     memset(str, 0, storage_size);
-    str[0] = (storage_size - 2) && 0xff;
-    str[1] = (storage_size - 2) >> 8;
+    str[0] = size & 0xff;
+    str[1] = size >> 8;
     return str;
 }
 
