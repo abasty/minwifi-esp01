@@ -394,11 +394,9 @@ static float token_number_get_value(tokenizer_state_t *state)
 
 static char *token_string_get_value(tokenizer_state_t *state)
 {
+    uint16_t len = string_len((char *)(state->read_ptr));
+    state->read_ptr += 2;
     char *value = (char *)(state->read_ptr);
-    while (*state->read_ptr)
-    {
-        state->read_ptr++;
-    }
-    state->read_ptr++;
+    state->read_ptr += len + 1;
     return value;
 }
