@@ -30,6 +30,11 @@
 
 #include "bmemory.h"
 
+static char *string_cstr(char *string)
+{
+    return string ? string + 2 : "";
+}
+
 static int string_len(char *string)
 {
     if (!string)

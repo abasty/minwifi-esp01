@@ -253,13 +253,17 @@ static var_t *bmem_var_string_set(const char *name, char *value, bool is_cstr)
     if (var == 0)
         goto finalize;
 
+    // set string length
+    var->string[0] = len & 0xff;
+    var->string[1] = len >> 8;
+
     // set string terminator
     var->string[len + 2] = 0;
     if (!value)
         goto finalize;
 
     // Copy the string value
-    memcpy(var->string + 2, is_cstr ? value : value + 2, len);
+    memcpy(string_cstr(var->string), is_cstr ? value : value + 2, len);
 
 finalize:
     return var;
