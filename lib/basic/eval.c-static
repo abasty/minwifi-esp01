@@ -545,7 +545,7 @@ static bool eval_string_str()
         if (!bmem->bstate.string)
             return false;
 
-        sprintf(bmem->bstate.string + 2, "%g", bmem->bstate.number);
+        sprintf(string_cstr(bmem->bstate.string), "%g", bmem->bstate.number);
     }
 
     return true;
@@ -865,7 +865,7 @@ static bool eval_let()
         if (bmem->bstate.do_eval)
         {
             if (dim == 0)
-                return bmem_var_string_set(name, bmem->bstate.string) != 0;
+                return bmem_var_string_set(name, bmem->bstate.string, false) != 0;
 
             // Manage array and slice
             char *string = bmem_string_array_get_cell(name, &dim, dims);
@@ -912,8 +912,9 @@ static bool eval_let()
     return false;
 }
 
-int8_t eval_input_store(char *io_string)
+static int8_t eval_input_store(char *io_string)
 {
+    // FIXME: accept empty string
     if (strlen(io_string) == 0)
         return BERROR_NONE;
 
@@ -933,7 +934,7 @@ int8_t eval_input_store(char *io_string)
     }
     else if (bmem->bstate.input_var_token == TOKEN_VARIABLE_STRING)
     {
-        if (bmem_var_string_set(name_of_var(bmem->bstate.input_var), io_string) == 0)
+        if (bmem_var_string_set(name_of_var(bmem->bstate.input_var), io_string, true) == 0)
             return BERROR_MEMORY;
 
         return BERROR_NONE;
@@ -950,7 +951,7 @@ static bool eval_input()
     {
         if (bmem->bstate.do_eval)
         {
-            hal_print_string(bmem->bstate.string);
+            hal_print_string(string_cstr(bmem->bstate.string));
         }
 
         if (!eval_token(','))
@@ -973,7 +974,7 @@ static bool eval_input()
         }
         else if (bmem->bstate.input_var_token == TOKEN_VARIABLE_STRING)
         {
-            bmem->bstate.input_var = bmem_var_string_set(bmem->bstate.var_ref, "");
+            bmem->bstate.input_var = bmem_var_string_set(bmem->bstate.var_ref, "", true);
         }
         if (bmem->bstate.input_var == 0)
             return false;
@@ -1012,7 +1013,7 @@ static bool eval_print(bool implicit)
                 else // TOKEN_STRING
                 {
                     // FIXME: use print_buffer to allow embedded 0
-                    hal_print_string(bmem->bstate.string ? bmem->bstate.string + 2 : "");
+                    hal_print_string(string_cstr(bmem->bstate.string));
                 }
             }
         }
@@ -1020,7 +1021,7 @@ static bool eval_print(bool implicit)
         {
             if (bmem->bstate.do_eval)
             {
-                hal_print_string(bmem->bstate.string ? bmem->bstate.string : "");
+                hal_print_string(string_cstr(bmem->bstate.string));
             }
         }
         else if (eval_token(','))
@@ -1099,7 +1100,7 @@ static inline void eval_input_mode(bool mode)
     bmem->bstate.inputting = mode;
 }
 
-int8_t eval_prog_next()
+static int8_t eval_prog_next()
 {
     int8_t err = BERROR_NONE;
     prog_t *pc = bmem->bstate.pc;
@@ -1249,7 +1250,7 @@ static void eval_save()
     if (bmem->bstate.string == 0)
         return;
 
-    bastos_save(bmem->bstate.string);
+    bastos_save(string_cstr(bmem->bstate.string));
 }
 
 static void eval_load()
@@ -1260,12 +1261,12 @@ static void eval_load()
     bmem->bstate.running = false;
     bmem->bstate.pc = 0;
     running_state_clear();
-    bmem->bstate.error = bastos_load(bmem->bstate.string);
+    bmem->bstate.error = bastos_load(string_cstr(bmem->bstate.string));
 }
 
 static void eval_erase()
 {
-    if (hal_erase(bmem->bstate.string) != 0)
+    if (hal_erase(string_cstr(bmem->bstate.string)) != 0)
     {
         bmem->bstate.error = BERROR_IO;
     }
@@ -1491,7 +1492,7 @@ static bool eval_wifi_connect(void)
     }
     else
     {
-        net_id = os_wifi_get_id_from_ssid(bmem->bstate.string);
+        net_id = os_wifi_get_id_from_ssid(string_cstr(bmem->bstate.string));
     }
 
     int ret = os_wifi_connect(net_id);
@@ -1520,7 +1521,7 @@ static bool eval_wifi_erase(void)
     }
     else
     {
-        net_id = os_wifi_get_id_from_ssid(bmem->bstate.string);
+        net_id = os_wifi_get_id_from_ssid(string_cstr(bmem->bstate.string));
     }
 
     int ret = os_wifi_erase(net_id);

@@ -152,7 +152,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo)
     *dst = 0;
 }
 
-int8_t bastos_input()
+static int8_t bastos_input()
 {
     int8_t err = BERROR_NONE;
 

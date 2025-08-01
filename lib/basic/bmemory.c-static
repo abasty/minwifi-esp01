@@ -235,7 +235,7 @@ static void bmem_vars_clear()
 }
 
 // Create a new string variable
-static var_t *bmem_var_string_set(const char *name, char *value)
+static var_t *bmem_var_string_set(const char *name, char *value, bool is_cstr)
 {
     // Remove the variable if it already exists
     var_t *var = bmem_var_get(name);
@@ -247,17 +247,19 @@ static var_t *bmem_var_string_set(const char *name, char *value)
     strncpy(tmp, name, B_NAME_SIZE_MAX - 1);
     tmp[B_NAME_SIZE_MAX - 1] = 0;
 
-    // Create the variable and copy the value
-    uint16_t len = string_len(value);
+    // Create the variable
+    uint16_t len = is_cstr ? strlen(value) : string_len(value);
     var = bmem_var_new(tmp, TOKEN_VARIABLE_STRING, len, 0);
     if (var == 0)
         goto finalize;
 
-    if (value)
-    {
-        memcpy(var->string, value, len + 2);
-    }
+    // set string terminator
     var->string[len + 2] = 0;
+    if (!value)
+        goto finalize;
+
+    // Copy the string value
+    memcpy(var->string + 2, is_cstr ? value : value + 2, len);
 
 finalize:
     return var;
