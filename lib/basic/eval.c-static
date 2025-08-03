@@ -439,12 +439,14 @@ static bool eval_compare_expr()
         }
         else // type_token == TOKEN_STRING
         {
-            char *string1 = bmem->bstate.string;
+            char *string1 = string_cstr(bmem->bstate.string);
 
             if (!eval_string_expr())
                 return false;
 
-            result = strcmp(string1 ? string1 : "", bmem->bstate.string ? bmem->bstate.string : "");
+            char *string2 = string_cstr(bmem->bstate.string);
+
+            result = strcmp(string1, string2);
         }
         switch (op)
         {
@@ -973,7 +975,7 @@ static bool eval_input()
     {
         if (bmem->bstate.do_eval)
         {
-            hal_print_string(string_cstr(bmem->bstate.string));
+            hal_print_buffer((uint8_t *) string_cstr(bmem->bstate.string), string_len(bmem->bstate.string));
         }
 
         if (!eval_token(','))
@@ -1613,7 +1615,7 @@ static bool eval_connect()
 
     if (bmem->bstate.do_eval)
     {
-        strncpy(name, bmem->bstate.string, sizeof(name) - 1);
+        strncpy(name,  string_cstr(bmem->bstate.string), sizeof(name) - 1);
         name[sizeof(name) - 1] = 0;
     }
 
@@ -1624,7 +1626,7 @@ static bool eval_connect()
 
         if (bmem->bstate.do_eval)
         {
-            urn = bmem->bstate.string;
+            urn = string_cstr(bmem->bstate.string);
         }
     }
 
