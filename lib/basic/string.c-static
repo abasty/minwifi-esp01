@@ -56,26 +56,11 @@ static void string_slice(char **string, uint16_t start, uint16_t end)
     }
 
     uint16_t len = string_len(*string);
+    end = end < 1 || end > len ? len : end;
+    start = start < 1 ? start = 1 : start;
+    uint16_t slice_len = end - start < 0 ? 0 : end - start + 1;
 
-    if (end == 0)
-    {
-        end = len;
-    }
-
-    if (start > end || start > len)
-    {
-        *string = 0;
-        return;
-    }
-
-    if (end > len || end == 0)
-    {
-        end = len;
-    }
-
-    uint16_t slice_len = end - start + 1;
     char *slice = bmem_string_alloc(slice_len);
-
     if (!slice)
     {
         *string = 0;
@@ -84,14 +69,12 @@ static void string_slice(char **string, uint16_t start, uint16_t end)
 
     char *src = *string + start - 1 + 2;
     char *dst = slice + 2;
-
     while (slice_len > 0)
     {
         *dst++ = *src++;
         slice_len--;
     }
     *dst = 0;
-
     *string = slice;
 }
 

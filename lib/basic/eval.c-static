@@ -596,7 +596,8 @@ static bool eval_string_var()
 
     if (bmem->bstate.do_eval)
     {
-        char *cstr = bmem_var_get_cstr_and_slice(name, &dim_count, dims);
+        uint16_t len;
+        char *cstr = bmem_var_get_cstr_and_slice(name, &dim_count, dims, &len);
         if (!cstr)
         {
             bmem->bstate.error = BERROR_RANGE;
@@ -616,10 +617,12 @@ static bool eval_string_var()
             return true;
         }
 
-        // FIXME: check end / start against len (see string_slice)
         uint16_t start = dims[dim_count - 2];
         uint16_t end = dims[dim_count - 1];
-        uint16_t len = end - start + 1;
+        end = end < 1 || end > len ? len : end;
+        start = start < 1 ? start = 1 : start;
+        len = end - start < 0 ? 0 : end - start + 1;
+
         bmem->bstate.string = bmem_string_alloc(len);
         if (!bmem->bstate.string)
         {
@@ -891,30 +894,27 @@ static bool eval_let()
                 return bmem_var_string_set(name, bmem->bstate.string, false) != 0;
 
             // Manage array and slice
-            char *string = bmem_var_get_cstr_and_slice(name, &dim, dims);
+            uint16_t len;
+            char *string = bmem_var_get_cstr_and_slice(name, &dim, dims, &len);
             if (!string)
             {
                 bmem->bstate.error = BERROR_RANGE;
                 return true;
             }
-            uint16_t len = strlen(string);
+            // Compute slice parameters
             uint16_t start = dims[dim - 2];
             uint16_t end = dims[dim - 1];
+            end = end < 1 || end > len ? len : end;
+            start = start < 1 ? start = 1 : start;
+            uint16_t n = end - start < 0 ? 0 : end - start + 1;
 
-            if (len == 0)
+            // Empty slice
+            if (n == 0)
                 return true;
-            if (start <= 0)
-                return true;
-            if (start > len)
-                return true;
-            if (end < start)
-                return true;
-            if (end > len)
-                end = len;
 
+            // Set slice chars from source string
             uint8_t *src = (uint8_t *)string_cstr(bmem->bstate.string);
             uint8_t *dst = (uint8_t *)string + start - 1;
-            uint16_t n = end - start + 1;
             while (n)
             {
                 if (src && *src)
