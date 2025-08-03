@@ -1034,8 +1034,7 @@ static bool eval_print(bool implicit)
                 }
                 else // TOKEN_STRING
                 {
-                    // FIXME: use print_buffer to allow embedded 0
-                    hal_print_string(string_cstr(bmem->bstate.string));
+                    hal_print_buffer((uint8_t *) string_cstr(bmem->bstate.string), string_len(bmem->bstate.string));
                 }
             }
         }

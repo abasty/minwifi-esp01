@@ -105,7 +105,6 @@ static int bmem_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims)
         size = bmem_array_size(sizeof(float), dim_count, dims);
         break;
     case TOKEN_ARRAY_STRING:
-        // FIXME: for the last dimension add 1 for the null char and 2 for the size
         size = bmem_array_size(1, dim_count, dims);
         break;
     }
@@ -141,17 +140,6 @@ static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, u
 
     // Copy name
     memcpy(var->bytes + var->name_ofs, name, name_size);
-
-    if (token == TOKEN_ARRAY_STRING)
-    {
-        // FIXME: set size of all strings (last dimension), 0 in the last char,
-        // space in the other chars
-        // Set null char in all string cells
-        int string_size = dims[dim_count - 1];
-        char *string = (char *) var->bytes + dims_size + string_size - 1;
-        for (; string < (char *) var->bytes + var->name_ofs; string += string_size)
-            *string = 0;
-    }
 
     return var;
 }
@@ -385,7 +373,7 @@ static char *bmem_var_get_cstr_and_slice(const char *name, uint8_t *dim_count, u
     }
 
     // Fixed length in char arrays
-    *len = var->dims[var->dim_count - 1] - 1;
+    *len = var->dims[var->dim_count - 1];
 
     // check dims
     uint8_t dim = var->dim_count - 1;
