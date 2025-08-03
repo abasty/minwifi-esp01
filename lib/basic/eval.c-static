@@ -589,21 +589,44 @@ static bool eval_string_var()
     while (*bmem->bstate.read_ptr++)
         ;
 
-    uint8_t dim = 0;
+    uint8_t dim_count = 0;
     uint32_t dims[B_DIM_MAX];
 
-    eval_array_ref(TOKEN_VARIABLE_STRING, &dim, dims);
+    eval_array_ref(TOKEN_VARIABLE_STRING, &dim_count, dims);
 
     if (bmem->bstate.do_eval)
     {
-        bmem->bstate.string = bmem_string_array_get_cell(name, &dim, dims);
-        if (!bmem->bstate.string || dim < 2)
+        char *cstr = bmem_var_get_cstr_and_slice(name, &dim_count, dims);
+        if (!cstr)
         {
-            bmem->bstate.error = dim == 0 ? 0 : BERROR_RANGE;
+            bmem->bstate.error = BERROR_RANGE;
+            return true;
+        }
+        if (dim_count == 0)
+        {
+            // String var and no slice: Use the string pointer
+            bmem->bstate.string = cstr - 2;
+            return true;
+        }
+        if (dim_count < 2)
+        {
+            // Wrong number of given indexes (at least one slice / 2 indexes are
+            // needed)
+            bmem->bstate.error = BERROR_RANGE;
             return true;
         }
 
-        string_slice(&bmem->bstate.string, dims[dim - 2], dims[dim - 1]);
+        // FIXME: check end / start against len (see string_slice)
+        uint16_t start = dims[dim_count - 2];
+        uint16_t end = dims[dim_count - 1];
+        uint16_t len = end - start + 1;
+        bmem->bstate.string = bmem_string_alloc(len);
+        if (!bmem->bstate.string)
+        {
+            bmem->bstate.error = BERROR_MEMORY;
+            return true;
+        }
+        memcpy(string_cstr(bmem->bstate.string), cstr + start - 1, len);
     }
     return true;
 }
@@ -868,14 +891,13 @@ static bool eval_let()
                 return bmem_var_string_set(name, bmem->bstate.string, false) != 0;
 
             // Manage array and slice
-            char *string = bmem_string_array_get_cell(name, &dim, dims);
+            char *string = bmem_var_get_cstr_and_slice(name, &dim, dims);
             if (!string)
             {
                 bmem->bstate.error = BERROR_RANGE;
                 return true;
             }
-
-            uint16_t len = string_len(string);
+            uint16_t len = strlen(string);
             uint16_t start = dims[dim - 2];
             uint16_t end = dims[dim - 1];
 
@@ -890,7 +912,7 @@ static bool eval_let()
             if (end > len)
                 end = len;
 
-            uint8_t *src = (uint8_t *)bmem->bstate.string;
+            uint8_t *src = (uint8_t *)string_cstr(bmem->bstate.string);
             uint8_t *dst = (uint8_t *)string + start - 1;
             uint16_t n = end - start + 1;
             while (n)

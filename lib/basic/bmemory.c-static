@@ -314,7 +314,15 @@ static float *bmem_number_array_get_cell(const char *name, uint8_t dim_count, ui
     return &var->numbers[offset];
 }
 
-static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, uint32_t *indexes)
+/**
+ * @brief Returns pointer to the first char in a string variable or a char array
+ *
+ * @param name The name of the string variable or char array
+ * @param dim_count The number of dimensions of the request
+ * @param indexes The array indexes and / or slice offsets
+ * @return Pointer to the first char, dim_count and indexes are updated
+ */
+static char *bmem_var_get_cstr_and_slice(const char *name, uint8_t *dim_count, uint32_t *indexes)
 {
     // Copy name in tmp
     char tmp[B_NAME_SIZE_MAX];
@@ -329,7 +337,7 @@ static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, ui
     {
         if (dim_asked == 0)
         {
-            return var->string;
+            return string_cstr(var->string);
         }
         else if (dim_asked == 1)
         {
@@ -340,7 +348,7 @@ static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, ui
             return 0;
         }
         *dim_count = 2;
-        return var->string;
+        return string_cstr(var->string);
     }
 
     // Search array string variable
@@ -353,18 +361,20 @@ static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, ui
     // all chars of the string at given index
     if (dim_asked == var->dim_count - 1)
     {
+        // If asked for the full sting, add 1,<len> as start and end indexes
         indexes[dim_asked] = 1;
         indexes[dim_asked + 1] = var->dims[dim_asked];
     }
     else if (dim_asked == var->dim_count)
     {
-        // If asked dims is equal to var->dim_count, the result is a slice of one char
+        // If asked for a single char, add end index equal to the start index
+        // and adjust dims count
         indexes[dim_asked] = indexes[dim_asked - 1];
         dim_asked--;
     }
     else if (dim_asked == var->dim_count + 1)
     {
-        // If asked dims is equal to var->dim_count + 1, the result is a slice
+        // If asked for a slice, adjust dims count
         dim_asked -= 2;
     }
     else
@@ -378,11 +388,13 @@ static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, ui
         if (indexes[i] > var->dims[i])
             return 0;
 
+    // Compute offset of the first char of the string
     uint16_t offset = 0;
     for (uint8_t i = 0; i < dim; i++)
         offset = (offset + indexes[i] - 1) * var->dims[i + 1];
     offset += var->dim_count * sizeof(uint32_t);
 
+    // Adjust dims count (splice)
     *dim_count = dim_asked + 2;
     return (char *) &var->bytes[offset];
 }
