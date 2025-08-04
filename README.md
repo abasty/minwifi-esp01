@@ -2,7 +2,8 @@
 
 ## Bugs
 
-* [ ] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
+* [ ] edition de ligne : gérer les séquences de caractères spéciaux (G2, G1)
+* [x] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
   même les chaines de caractères sont terminées par `\0`, notamment dans les
   tableaux. Ce n'est pas compatibles avec le Basic ZX81 car on ne peut accéder
   au dernier caractère (qui est forcément `\0`) => chaine de caractères
