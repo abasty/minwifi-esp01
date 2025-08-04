@@ -1672,6 +1672,13 @@ static bool eval_if()
     if (!eval_token(TOKEN_KEYWORD_THEN))
         return false;
 
+    if (eval_expr(TOKEN_NUMBER))
+    {
+        if (bmem->bstate.do_eval)
+            eval_goto();
+        return true;
+    }
+
     if (!eval_instruction())
         return false;
 
