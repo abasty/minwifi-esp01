@@ -188,11 +188,11 @@ static bool eval_len_code()
 
     if (token == TOKEN_KEYWORD_LEN)
     {
-        bmem->bstate.number = strlen(bmem->bstate.string);
+        bmem->bstate.number = string_len(bmem->bstate.string);
         return true;
     }
 
-    bmem->bstate.number = *bmem->bstate.string;
+    bmem->bstate.number = bmem->bstate.string[2];
     return true;
 }
 
@@ -439,12 +439,14 @@ static bool eval_compare_expr()
         }
         else // type_token == TOKEN_STRING
         {
-            char *string1 = bmem->bstate.string;
+            char *string1 = string_cstr(bmem->bstate.string);
 
             if (!eval_string_expr())
                 return false;
 
-            result = strcmp(string1 ? string1 : "", bmem->bstate.string ? bmem->bstate.string : "");
+            char *string2 = string_cstr(bmem->bstate.string);
+
+            result = strcmp(string1, string2);
         }
         switch (op)
         {
@@ -521,12 +523,11 @@ static bool eval_string_chr()
 
     if (bmem->bstate.do_eval)
     {
-        bmem->bstate.string = bmem_string_alloc(2);
+        bmem->bstate.string = bmem_string_alloc(1);
         if (!bmem->bstate.string)
             return false;
 
-        bmem->bstate.string[0] = (char)((uint8_t)(truncf(bmem->bstate.number)));
-        bmem->bstate.string[1] = 0;
+        bmem->bstate.string[2] = (char)((uint8_t)(truncf(bmem->bstate.number)));
     }
 
     return true;
@@ -546,7 +547,7 @@ static bool eval_string_str()
         if (!bmem->bstate.string)
             return false;
 
-        sprintf(bmem->bstate.string, "%g", bmem->bstate.number);
+        sprintf(string_cstr(bmem->bstate.string), "%g", bmem->bstate.number);
     }
 
     return true;
@@ -559,12 +560,11 @@ static bool eval_string_inkey()
 
     if (bmem->bstate.do_eval)
     {
-        bmem->bstate.string = bmem_string_alloc(2);
+        bmem->bstate.string = bmem_string_alloc(1);
         if (!bmem->bstate.string)
             return false;
 
-        bmem->bstate.string[0] = bmem->bstate.inkey;
-        bmem->bstate.string[1] = 0;
+        bmem->bstate.string[2] = bmem->bstate.inkey;
         bmem->bstate.inkey = 0;
     }
 
@@ -576,9 +576,9 @@ static bool eval_string_const()
     if (!eval_token(TOKEN_STRING))
         return false;
 
+    uint16_t len = (bmem->bstate.read_ptr[0] | (bmem->bstate.read_ptr[1] << 8));
     bmem->bstate.string = (char *)bmem->bstate.read_ptr;
-    while (*bmem->bstate.read_ptr++)
-        ;
+    bmem->bstate.read_ptr += 2 + len + 1;
     return true;
 }
 
@@ -591,21 +591,47 @@ static bool eval_string_var()
     while (*bmem->bstate.read_ptr++)
         ;
 
-    uint8_t dim = 0;
+    uint8_t dim_count = 0;
     uint32_t dims[B_DIM_MAX];
 
-    eval_array_ref(TOKEN_VARIABLE_STRING, &dim, dims);
+    eval_array_ref(TOKEN_VARIABLE_STRING, &dim_count, dims);
 
     if (bmem->bstate.do_eval)
     {
-        bmem->bstate.string = bmem_string_array_get_cell(name, &dim, dims);
-        if (!bmem->bstate.string || dim < 2)
+        uint16_t len;
+        char *cstr = bmem_var_get_cstr_and_slice(name, &dim_count, dims, &len);
+        if (!cstr)
         {
-            bmem->bstate.error = dim == 0 ? 0 : BERROR_RANGE;
+            bmem->bstate.error = BERROR_RANGE;
+            return true;
+        }
+        if (dim_count == 0)
+        {
+            // String var and no slice: Use the string pointer
+            bmem->bstate.string = cstr - 2;
+            return true;
+        }
+        if (dim_count < 2)
+        {
+            // Wrong number of given indexes (at least one slice / 2 indexes are
+            // needed)
+            bmem->bstate.error = BERROR_RANGE;
             return true;
         }
 
-        string_slice(&bmem->bstate.string, dims[dim - 2], dims[dim - 1]);
+        uint16_t start = dims[dim_count - 2];
+        uint16_t end = dims[dim_count - 1];
+        end = end < 1 || end > len ? len : end;
+        start = start < 1 ? 1 : start;
+        len = end - start < 0 ? 0 : end - start + 1;
+
+        bmem->bstate.string = bmem_string_alloc(len);
+        if (!bmem->bstate.string)
+        {
+            bmem->bstate.error = BERROR_MEMORY;
+            return true;
+        }
+        memcpy(string_cstr(bmem->bstate.string), cstr + start - 1, len);
     }
     return true;
 }
@@ -633,11 +659,7 @@ static bool eval_string_term()
 
     if (eval_expr(TOKEN_NUMBER))
     {
-        start = bmem->bstate.number;
-        if (start < 1)
-        {
-            start = 1;
-        }
+        start = bmem->bstate.number < 1 ? 1 : bmem->bstate.number;
         end = start;
     }
 
@@ -867,34 +889,30 @@ static bool eval_let()
         if (bmem->bstate.do_eval)
         {
             if (dim == 0)
-                return bmem_var_string_set(name, bmem->bstate.string) != 0;
+                return bmem_var_string_set(name, bmem->bstate.string, false) != 0;
 
             // Manage array and slice
-            char *string = bmem_string_array_get_cell(name, &dim, dims);
+            uint16_t len;
+            char *string = bmem_var_get_cstr_and_slice(name, &dim, dims, &len);
             if (!string)
             {
                 bmem->bstate.error = BERROR_RANGE;
                 return true;
             }
-
-            uint16_t len = strlen(string);
+            // Compute slice parameters
             uint16_t start = dims[dim - 2];
             uint16_t end = dims[dim - 1];
+            end = end < 1 || end > len ? len : end;
+            start = start < 1 ? 1 : start;
+            uint16_t n = end - start < 0 ? 0 : end - start + 1;
 
-            if (len == 0)
+            // Empty slice
+            if (n == 0)
                 return true;
-            if (start <= 0)
-                return true;
-            if (start > len)
-                return true;
-            if (end < start)
-                return true;
-            if (end > len)
-                end = len;
 
-            uint8_t *src = (uint8_t *)bmem->bstate.string;
+            // Set slice chars from source string
+            uint8_t *src = (uint8_t *)string_cstr(bmem->bstate.string);
             uint8_t *dst = (uint8_t *)string + start - 1;
-            uint16_t n = end - start + 1;
             while (n)
             {
                 if (src && *src)
@@ -914,8 +932,9 @@ static bool eval_let()
     return false;
 }
 
-int8_t eval_input_store(char *io_string)
+static int8_t eval_input_store(char *io_string)
 {
+    // FIXME: accept empty string
     if (strlen(io_string) == 0)
         return BERROR_NONE;
 
@@ -935,7 +954,7 @@ int8_t eval_input_store(char *io_string)
     }
     else if (bmem->bstate.input_var_token == TOKEN_VARIABLE_STRING)
     {
-        if (bmem_var_string_set(name_of_var(bmem->bstate.input_var), io_string) == 0)
+        if (bmem_var_string_set(name_of_var(bmem->bstate.input_var), io_string, true) == 0)
             return BERROR_MEMORY;
 
         return BERROR_NONE;
@@ -952,7 +971,7 @@ static bool eval_input()
     {
         if (bmem->bstate.do_eval)
         {
-            hal_print_string(bmem->bstate.string);
+            hal_print_buffer((uint8_t *) string_cstr(bmem->bstate.string), string_len(bmem->bstate.string));
         }
 
         if (!eval_token(','))
@@ -975,7 +994,7 @@ static bool eval_input()
         }
         else if (bmem->bstate.input_var_token == TOKEN_VARIABLE_STRING)
         {
-            bmem->bstate.input_var = bmem_var_string_set(bmem->bstate.var_ref, "");
+            bmem->bstate.input_var = bmem_var_string_set(bmem->bstate.var_ref, "", true);
         }
         if (bmem->bstate.input_var == 0)
             return false;
@@ -1013,7 +1032,7 @@ static bool eval_print(bool implicit)
                 }
                 else // TOKEN_STRING
                 {
-                    hal_print_string(bmem->bstate.string ? bmem->bstate.string : "");
+                    hal_print_buffer((uint8_t *) string_cstr(bmem->bstate.string), string_len(bmem->bstate.string));
                 }
             }
         }
@@ -1021,7 +1040,7 @@ static bool eval_print(bool implicit)
         {
             if (bmem->bstate.do_eval)
             {
-                hal_print_string(bmem->bstate.string ? bmem->bstate.string : "");
+                hal_print_string(string_cstr(bmem->bstate.string));
             }
         }
         else if (eval_token(','))
@@ -1100,7 +1119,7 @@ static inline void eval_input_mode(bool mode)
     bmem->bstate.inputting = mode;
 }
 
-int8_t eval_prog_next()
+static int8_t eval_prog_next()
 {
     int8_t err = BERROR_NONE;
     prog_t *pc = bmem->bstate.pc;
@@ -1250,7 +1269,7 @@ static void eval_save()
     if (bmem->bstate.string == 0)
         return;
 
-    bastos_save(bmem->bstate.string);
+    bastos_save(string_cstr(bmem->bstate.string));
 }
 
 static void eval_load()
@@ -1261,12 +1280,12 @@ static void eval_load()
     bmem->bstate.running = false;
     bmem->bstate.pc = 0;
     running_state_clear();
-    bmem->bstate.error = bastos_load(bmem->bstate.string);
+    bmem->bstate.error = bastos_load(string_cstr(bmem->bstate.string));
 }
 
 static void eval_erase()
 {
-    if (hal_erase(bmem->bstate.string) != 0)
+    if (hal_erase(string_cstr(bmem->bstate.string)) != 0)
     {
         bmem->bstate.error = BERROR_IO;
     }
@@ -1336,16 +1355,15 @@ EVAL:
         return true;
 
     uint8_t len = strlen(codes);
-    bmem->bstate.string = bmem_string_alloc(len + 1);
+    bmem->bstate.string = bmem_string_alloc(len);
     if (!bmem->bstate.string)
         return false;
 
     // Copy codes to string
-    for (uint8_t i = 0; i < len; i++)
+    for (uint8_t i = 0; i <= len; i++)
     {
-        bmem->bstate.string[i] = codes[i];
+        bmem->bstate.string[i + 2] = codes[i];
     }
-    bmem->bstate.string[len] = 0;
 
     return true;
 }
@@ -1493,7 +1511,7 @@ static bool eval_wifi_connect(void)
     }
     else
     {
-        net_id = os_wifi_get_id_from_ssid(bmem->bstate.string);
+        net_id = os_wifi_get_id_from_ssid(string_cstr(bmem->bstate.string));
     }
 
     int ret = os_wifi_connect(net_id);
@@ -1522,7 +1540,7 @@ static bool eval_wifi_erase(void)
     }
     else
     {
-        net_id = os_wifi_get_id_from_ssid(bmem->bstate.string);
+        net_id = os_wifi_get_id_from_ssid(string_cstr(bmem->bstate.string));
     }
 
     int ret = os_wifi_erase(net_id);
@@ -1593,7 +1611,7 @@ static bool eval_connect()
 
     if (bmem->bstate.do_eval)
     {
-        strncpy(name, bmem->bstate.string, sizeof(name) - 1);
+        strncpy(name,  string_cstr(bmem->bstate.string), sizeof(name) - 1);
         name[sizeof(name) - 1] = 0;
     }
 
@@ -1604,7 +1622,7 @@ static bool eval_connect()
 
         if (bmem->bstate.do_eval)
         {
-            urn = bmem->bstate.string;
+            urn = string_cstr(bmem->bstate.string);
         }
     }
 

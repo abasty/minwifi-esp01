@@ -2,7 +2,8 @@
 
 ## Bugs
 
-* [ ] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
+* [ ] edition de ligne : gérer les séquences de caractères spéciaux (G2, G1)
+* [x] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
   même les chaines de caractères sont terminées par `\0`, notamment dans les
   tableaux. Ce n'est pas compatibles avec le Basic ZX81 car on ne peut accéder
   au dernier caractère (qui est forcément `\0`) => chaine de caractères
@@ -78,6 +79,14 @@
 * [*] WebSockets : ça prend 110 KB. L'utilisation de l'API ArduinoHttpClient
   permet d'accéder aux WebSocket cliente avec une API synchrone mais économe (on
   retombe à 340383 octets (au lieu de 436xxx))
+* Nouveau modèle mémoire
+  * [ ] redéfinir la gestion mémoire : alloc, free, garbage collector. Tous les
+    objets, prog_t, var_t, nommés ou non, sont stockés dans le heap.
+  * [ ] Table des symboles/objets optimisée (prog_t, var_t), unicité, possibilité
+    de lier des objets (previous/next) ou d'y accéder en absolu
+  * [ ] Mem map : `[ system | handles | free space | heap (names / values) ]`,
+    handles : `(name addr, class, value addr, )`. addr : adresse / 4 (12 bits),
+    class : 8 bits => 1 handle : 32 bits
 * [ ] Voir s'il est facile de passer en align2 et dimensions sur 2 octets
   (penser à arm32 / arm64)
 * [ ] packed structure (mémoire)

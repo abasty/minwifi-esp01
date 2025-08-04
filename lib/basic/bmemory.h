@@ -108,7 +108,7 @@ static prog_t *bmem_prog_get_line_or_next(uint16_t line_no);
 
 // var related functions
 static void bmem_vars_clear();
-static var_t *bmem_var_string_set(const char *name, char *value);
+static var_t *bmem_var_string_set(const char *name, char *value, bool is_cstr);
 static var_t *bmem_var_number_set(const char *name, float value);
 static var_t *bmem_var_first();
 static var_t *bmem_var_next(var_t *var);
@@ -117,6 +117,8 @@ static var_t *bmem_var_next(var_t *var);
 static char *bmem_string_alloc(uint16_t size);
 static void bmem_strings_clear();
 
+static char *string_cstr(char *string);
+static int string_len(char *string);
 static void string_slice(char **string, uint16_t start, uint16_t end);
 static void string_concat(char **string1, char *string2);
 

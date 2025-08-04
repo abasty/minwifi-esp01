@@ -52,13 +52,15 @@ static void bmem_strings_clear()
 // Allocate a string in the memory, set memory to 0 and return the string
 static char *bmem_string_alloc(uint16_t size)
 {
-    size = bmem_align4(size);
-    if (bmem->vars_start - bmem->strings_end < size)
+    uint16_t storage_size = bmem_align4(size + 3);
+    if (bmem->vars_start - bmem->strings_end < storage_size)
         return 0;
 
     char *str = (char *) bmem->strings_end;
-    bmem->strings_end += size;
-    memset(str, 0, size);
+    bmem->strings_end += storage_size;
+    memset(str, 0, storage_size);
+    str[0] = size & 0xff;
+    str[1] = size >> 8;
     return str;
 }
 
@@ -97,7 +99,7 @@ static int bmem_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims)
         size = sizeof(float);
         break;
     case TOKEN_VARIABLE_STRING:
-        size = dim_count + 1;
+        size = dim_count + 1 + 2;
         break;
     case TOKEN_ARRAY_NUMBER:
         size = bmem_array_size(sizeof(float), dim_count, dims);
@@ -138,15 +140,6 @@ static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, u
 
     // Copy name
     memcpy(var->bytes + var->name_ofs, name, name_size);
-
-    if (token == TOKEN_ARRAY_STRING)
-    {
-        // Set null char in all string cells
-        int string_size = dims[dim_count - 1];
-        char *string = (char *) var->bytes + dims_size + string_size - 1;
-        for (; string < (char *) var->bytes + var->name_ofs; string += string_size)
-            *string = 0;
-    }
 
     return var;
 }
@@ -230,7 +223,7 @@ static void bmem_vars_clear()
 }
 
 // Create a new string variable
-static var_t *bmem_var_string_set(const char *name, char *value)
+static var_t *bmem_var_string_set(const char *name, char *value, bool is_cstr)
 {
     // Remove the variable if it already exists
     var_t *var = bmem_var_get(name);
@@ -242,11 +235,23 @@ static var_t *bmem_var_string_set(const char *name, char *value)
     strncpy(tmp, name, B_NAME_SIZE_MAX - 1);
     tmp[B_NAME_SIZE_MAX - 1] = 0;
 
-    // Create the variable and copy the value
-    var = bmem_var_new(tmp, TOKEN_VARIABLE_STRING, strlen(value), 0);
+    // Create the variable
+    uint16_t len = is_cstr ? strlen(value) : string_len(value);
+    var = bmem_var_new(tmp, TOKEN_VARIABLE_STRING, len, 0);
     if (var == 0)
         goto finalize;
-    strcpy(var->string, value ? value : "");
+
+    // set string length
+    var->string[0] = len & 0xff;
+    var->string[1] = len >> 8;
+
+    // set string terminator
+    var->string[len + 2] = 0;
+    if (!value)
+        goto finalize;
+
+    // Copy the string value
+    memcpy(string_cstr(var->string), is_cstr ? value : value + 2, len);
 
 finalize:
     return var;
@@ -297,7 +302,15 @@ static float *bmem_number_array_get_cell(const char *name, uint8_t dim_count, ui
     return &var->numbers[offset];
 }
 
-static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, uint32_t *indexes)
+/**
+ * @brief Returns pointer to the first char in a string variable or a char array
+ *
+ * @param name The name of the string variable or char array
+ * @param dim_count The number of dimensions of the request
+ * @param indexes The array indexes and / or slice offsets
+ * @return Pointer to the first char, dim_count and indexes are updated, len is set
+ */
+static char *bmem_var_get_cstr_and_slice(const char *name, uint8_t *dim_count, uint32_t *indexes, uint16_t *len)
 {
     // Copy name in tmp
     char tmp[B_NAME_SIZE_MAX];
@@ -305,14 +318,16 @@ static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, ui
     tmp[B_NAME_SIZE_MAX - 1] = 0;
 
     uint8_t dim_asked = *dim_count & ~B_DIM_RANGE_FLAG;
+    *len = 0;
 
     // Search simple string variable
     var_t *var = bmem_var_get(name);
     if (var)
     {
+        *len = string_len(var->string);
         if (dim_asked == 0)
         {
-            return var->string;
+            return string_cstr(var->string);
         }
         else if (dim_asked == 1)
         {
@@ -323,7 +338,7 @@ static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, ui
             return 0;
         }
         *dim_count = 2;
-        return var->string;
+        return string_cstr(var->string);
     }
 
     // Search array string variable
@@ -336,18 +351,20 @@ static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, ui
     // all chars of the string at given index
     if (dim_asked == var->dim_count - 1)
     {
+        // If asked for the full string, add 1,<len> as start and end indexes
         indexes[dim_asked] = 1;
         indexes[dim_asked + 1] = var->dims[dim_asked];
     }
     else if (dim_asked == var->dim_count)
     {
-        // If asked dims is equal to var->dim_count, the result is a slice of one char
+        // If asked for a single char, add end index equal to the start index
+        // and adjust dims count
         indexes[dim_asked] = indexes[dim_asked - 1];
         dim_asked--;
     }
     else if (dim_asked == var->dim_count + 1)
     {
-        // If asked dims is equal to var->dim_count + 1, the result is a slice
+        // If asked for a slice, adjust dims count
         dim_asked -= 2;
     }
     else
@@ -355,17 +372,22 @@ static char *bmem_string_array_get_cell(const char *name, uint8_t *dim_count, ui
         return 0;
     }
 
+    // Fixed length in char arrays
+    *len = var->dims[var->dim_count - 1];
+
     // check dims
     uint8_t dim = var->dim_count - 1;
     for (uint8_t i = 0; i < dim; i++)
         if (indexes[i] > var->dims[i])
             return 0;
 
+    // Compute offset of the first char of the string
     uint16_t offset = 0;
     for (uint8_t i = 0; i < dim; i++)
         offset = (offset + indexes[i] - 1) * var->dims[i + 1];
     offset += var->dim_count * sizeof(uint32_t);
 
+    // Adjust dims count (splice)
     *dim_count = dim_asked + 2;
     return (char *) &var->bytes[offset];
 }
