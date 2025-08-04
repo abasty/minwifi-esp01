@@ -351,7 +351,7 @@ static char *bmem_var_get_cstr_and_slice(const char *name, uint8_t *dim_count, u
     // all chars of the string at given index
     if (dim_asked == var->dim_count - 1)
     {
-        // If asked for the full sting, add 1,<len> as start and end indexes
+        // If asked for the full string, add 1,<len> as start and end indexes
         indexes[dim_asked] = 1;
         indexes[dim_asked + 1] = var->dims[dim_asked];
     }

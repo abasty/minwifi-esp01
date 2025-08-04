@@ -57,7 +57,7 @@ static void string_slice(char **string, uint16_t start, uint16_t end)
 
     uint16_t len = string_len(*string);
     end = end < 1 || end > len ? len : end;
-    start = start < 1 ? start = 1 : start;
+    start = start < 1 ? 1 : start;
     uint16_t slice_len = end - start < 0 ? 0 : end - start + 1;
 
     char *slice = bmem_string_alloc(slice_len);

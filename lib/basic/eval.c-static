@@ -622,7 +622,7 @@ static bool eval_string_var()
         uint16_t start = dims[dim_count - 2];
         uint16_t end = dims[dim_count - 1];
         end = end < 1 || end > len ? len : end;
-        start = start < 1 ? start = 1 : start;
+        start = start < 1 ? 1 : start;
         len = end - start < 0 ? 0 : end - start + 1;
 
         bmem->bstate.string = bmem_string_alloc(len);
@@ -659,11 +659,7 @@ static bool eval_string_term()
 
     if (eval_expr(TOKEN_NUMBER))
     {
-        start = bmem->bstate.number;
-        if (start < 1)
-        {
-            start = 1;
-        }
+        start = bmem->bstate.number < 1 ? 1 : bmem->bstate.number;
         end = start;
     }
 
@@ -907,7 +903,7 @@ static bool eval_let()
             uint16_t start = dims[dim - 2];
             uint16_t end = dims[dim - 1];
             end = end < 1 || end > len ? len : end;
-            start = start < 1 ? start = 1 : start;
+            start = start < 1 ? 1 : start;
             uint16_t n = end - start < 0 ? 0 : end - start + 1;
 
             // Empty slice
