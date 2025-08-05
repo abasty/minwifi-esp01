@@ -13,9 +13,12 @@
 
 * [x] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
   mode connecté / basic / boot au mode interactif)
-* [ ] Augmenter la mémoire BASTOS (48KB?)
+* [x] Augmenter la mémoire BASTOS (32KB), reste 12KB pour l'OS (wifi / db)
 * [ ] Uniquement majuscules en chiffres dans noms de serveur (pareil pour noms
   de fichiers 8+3)
+* [ ] Config database, "key":"value", dans un espace protégé de `CLEAR` et `NEW`
+  (`HIMEM` ou zone mémoire). `PUT "key", "value"`, `GET "key"`, `KEY ERASE
+  "key"`
 * [ ] Passage de tous les paramètres de config en URN (y compris WiFi:
   `wifi:ssid:secret:count:dbm`), sauvegarde de chaque enregistrement sur une
   ligne. Les secrets peuvent être brouillés éventuellement.

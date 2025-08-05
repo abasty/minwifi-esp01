@@ -1197,9 +1197,9 @@ static void eval_free()
 
 static void eval_bastos()
 {
-    hal_print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU_ON LINE0 CLEOL CLS
-                     " BASTOS 16K Microcontroller (v1)\r\n"
-                     " Basic for Terminal Operating System\r\n on ");
+    hal_print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU_ON LINE0 CLEOL CLS " BASTOS ");
+    hal_print_integer("%dK", BASTOS_MEMORY_SIZE_KB);
+    hal_print_string(" Microcontroller (v1)\r\n Basic for Terminal Operating System\r\n on ");
     hal_print_oem_string();
     char info[64];
     snprintf(info, sizeof(info), "\r\n\r\n (c) 2024-2025 ABa\r\n\r\n %d bytes free\r\n\r\n" CON,

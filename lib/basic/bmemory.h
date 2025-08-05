@@ -31,7 +31,8 @@
 #include "bio.h"
 #include "eval.h"
 
-#define BASTOS_MEMORY_SIZE (16 * 1024)
+#define BASTOS_MEMORY_SIZE_KB (32)
+#define BASTOS_MEMORY_SIZE (BASTOS_MEMORY_SIZE_KB * 1024)
 #define BASTOS_MEMORY_ALIGN (sizeof(uint32_t))
 #define IO_BUFFER_SIZE  (128)
 #define TOKEN_LINE_SIZE (128)

@@ -53,7 +53,8 @@ WebSocketClient *g_web_socket = 0;
 
 void hal_print_oem_string(void)
 {
-    hal_print_string("ESP8285/ArduinoSDK");
+    hal_print_string("ESP8285");
+    hal_print_integer(", OS free RAM: %u", ESP.getFreeHeap());
 }
 
 uint8_t hal_get_key()
