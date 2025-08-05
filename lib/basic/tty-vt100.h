@@ -31,4 +31,10 @@
 #define PAPER "\x1B[%dm"
 #define PAPER_DELTA 40
 
+#define P_ROULEAU_ON ""
+#define P_ROULEAU_OFF ""
+
+#define P_ACK_OFF_PRISE ""
+#define P_LOCAL_ECHO_OFF ""
+
 #endif // TTY_VT100_H
