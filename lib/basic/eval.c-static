@@ -560,15 +560,11 @@ static bool eval_string_inkey()
 
     if (bmem->bstate.do_eval)
     {
-        bmem->bstate.string = bmem_string_alloc(1);
+        bmem->bstate.string = bmem_string_alloc(bmem->bstate.inkey == 0 ? 0 : 1);
         if (!bmem->bstate.string)
             return false;
 
-        if (bmem->bstate.inkey == 0)
-        {
-            bmem->bstate.string[0] = 0;
-        }
-        else
+        if (bmem->bstate.inkey != 0)
         {
             bmem->bstate.string[2] = bmem->bstate.inkey;
         }
