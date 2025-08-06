@@ -18,7 +18,11 @@
   de fichiers 8+3)
 * [ ] Config database, "key":"value", dans un espace protégé de `CLEAR` et `NEW`
   (`HIMEM` ou zone mémoire). `PUT "key", "value"`, `GET "key"`, `KEY ERASE
-  "key"`
+  "key"`. L'OS peut se servir de la database pour stocker des structures dans
+  des strings (len = sizeof struct / cstr = memcpy struct)
+  * [x] Mettre en place la gestion de la mémoire DB
+  * [ ] Gestion Wifi : sauvegarder les mots de passe avec comme clé le SSID
+  * [ ] Gestion serveurs : clé=nom, valeur=urn
 * [ ] Passage de tous les paramètres de config en URN (y compris WiFi:
   `wifi:ssid:secret:count:dbm`), sauvegarde de chaque enregistrement sur une
   ligne. Les secrets peuvent être brouillés éventuellement.
