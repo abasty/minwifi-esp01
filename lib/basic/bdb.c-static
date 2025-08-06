@@ -139,14 +139,9 @@ static entry_t *bdb_entry_set(const char *name, char *value, bool is_cstr)
     if (entry != 0)
         bdb_entry_unset(entry);
 
-    // Copy the name in tmp
-    char tmp[B_NAME_SIZE_MAX];
-    strncpy(tmp, name, B_NAME_SIZE_MAX - 1);
-    tmp[B_NAME_SIZE_MAX - 1] = 0;
-
     // Create the entry
     uint16_t len = is_cstr ? strlen(value) : string_len(value);
-    entry = bdb_entry_new(tmp, (uint8_t *) value, len);
+    entry = bdb_entry_new(name, (uint8_t *) value, len);
     if (entry == 0)
         goto finalize;
 
