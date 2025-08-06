@@ -1177,18 +1177,22 @@ static void eval_reset()
 
 static void eval_free()
 {
-    hal_print_string("       sys  prog  vars  free\r\n");
-
     char info[40];
-    snprintf(info, sizeof(info), "l/v:       %5d %5d\r\n", bmem_line_count(), bmem_var_count());
+    hal_print_string("       sys  prog  vars    db  free\r\n");
+
+    snprintf(info, sizeof(info), "cnt:       %5d %5d %5d\r\n", bmem_line_count(), bmem_var_count(), 0);
     hal_print_string(info);
 
-    snprintf(info, sizeof(info), "Mem: %5d %5d %5d %5d\r\n",
+    // The info string is max 39 chars length
+    snprintf(info, sizeof(info), "mem: %5d %5d %5d %5d %5d+%d",
              (int)(bmem->prog_start - (uint8_t *)bmem),
              (int)(bmem->prog_end - bmem->prog_start),
              (int)(bmem->vars_end - bmem->vars_start),
-             (int)(bmem->vars_start - bmem->strings_end));
+             (int)(bmem->db_end - bmem->db_start),
+             (int)(bmem->vars_start - bmem->strings_end),
+             (int)(BASTOS_DB_SIZE - (bmem->db_end - bmem->db_start)));
     hal_print_string(info);
+    hal_print_string("\r\n");
 }
 
 static void eval_bastos()
@@ -1198,8 +1202,9 @@ static void eval_bastos()
     hal_print_string(" Microcontroller (v1)\r\n Basic for Terminal Operating System\r\n on ");
     hal_print_oem_string();
     char info[64];
-    snprintf(info, sizeof(info), "\r\n\r\n (c) 2024-2025 ABa\r\n\r\n %d bytes free\r\n\r\n" CON,
-             (int)(bmem->vars_start - bmem->strings_end));
+    snprintf(info, sizeof(info), "\r\n\r\n (c) 2024-2025 ABa\r\n\r\n %d+%d bytes free\r\n\r\n" CON,
+             (int)(bmem->vars_start - bmem->strings_end),
+             (int)(BASTOS_DB_SIZE - (bmem->db_end - bmem->db_start)));
     hal_print_string(info);
 
     if (!eval_running())
