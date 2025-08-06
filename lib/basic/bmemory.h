@@ -32,7 +32,9 @@
 #include "eval.h"
 
 #define BASTOS_MEMORY_SIZE_KB (32)
-#define BASTOS_MEMORY_SIZE (BASTOS_MEMORY_SIZE_KB * 1024)
+#define BASTOS_DB_SIZE_KB (4)
+#define BASTOS_DB_SIZE (BASTOS_DB_SIZE_KB * 1024)
+#define BASTOS_MEMORY_SIZE ((BASTOS_MEMORY_SIZE_KB + BASTOS_DB_SIZE_KB) * 1024)
 #define BASTOS_MEMORY_ALIGN (sizeof(uint32_t))
 #define IO_BUFFER_SIZE  (128)
 #define TOKEN_LINE_SIZE (128)
@@ -92,6 +94,8 @@ typedef struct {
     uint8_t *strings_end;
     uint8_t *vars_start;
     uint8_t *vars_end;
+    uint8_t *db_start;
+    uint8_t *db_end;
     eval_state_t bstate;
     loop_t loops['Z' - 'A' + 1];
     return_t returns[EVAL_RETURNS_SIZE];
