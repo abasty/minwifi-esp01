@@ -1180,7 +1180,8 @@ static void eval_free()
     char info[40];
     hal_print_string("       sys  prog  vars    db  free\r\n");
 
-    snprintf(info, sizeof(info), "cnt:       %5d %5d %5d\r\n", bmem_line_count(), bmem_var_count(), bdb_entry_count());
+    snprintf(info, sizeof(info), "obj:       %5d %5d %5d\r\n",
+             bmem_line_count(), bmem_var_count(), bdb_entry_count());
     hal_print_string(info);
 
     // The info string is max 39 chars length
@@ -1192,7 +1193,8 @@ static void eval_free()
              (int)(bmem->vars_start - bmem->strings_end),
              (int)(BASTOS_DB_SIZE - (bmem->db_end - bmem->db_start)));
     hal_print_string(info);
-    hal_print_string("\r\n");
+
+    hal_print_string("\r\n\r\n");
 }
 
 static void eval_bastos()
