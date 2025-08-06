@@ -35,6 +35,7 @@
 
 #include "berror.h"
 #include "bmemory.h"
+#include "bdb.h"
 #include "token.h"
 #include "eval.h"
 #include "bio.h"
@@ -46,6 +47,7 @@
 #include "string.c-static"
 #include "eval.c-static"
 #include "os.c-static"
+#include "bdb.c-static"
 
 void bastos_init(void)
 {

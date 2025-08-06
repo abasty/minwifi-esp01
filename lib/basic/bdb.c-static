@@ -1,0 +1,167 @@
+/*
+ * Copyright © 2023 Alain Basty
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+#include "bdb.h"
+#include "token.h"
+
+extern bmem_t *bmem;
+
+// Return the size of an entry
+static int bdb_entry_size(entry_t *entry)
+{
+    return bmem_align4(sizeof(entry_t) + entry->name_ofs + strlen((char *) (entry->bytes + entry->name_ofs)) + 1);
+}
+
+// Return the first entry
+static entry_t *bdb_entry_first()
+{
+    if (bmem->db_start == bmem->db_end)
+        return 0;
+    return (entry_t*) bmem->db_start;
+}
+
+// Return the next entry
+static entry_t *bdb_entry_next(entry_t *entry)
+{
+    int size = bdb_entry_size(entry);
+    entry_t *next = (entry_t *) ((uint8_t *) entry + size);
+    if ((uint8_t *) next >= bmem->db_end)
+        return 0;
+    return next;
+}
+
+// Allocate an entry in the database, set memory to 0 and return the entry
+static entry_t *bdb_entry_alloc(uint16_t size)
+{
+    int psize = bmem_align4(size);
+    if (BASTOS_DB_SIZE - (bmem->db_end - bmem->db_start) < psize)
+        return 0;
+
+    bmem->db_start -= psize;
+    memset(bmem->db_start, 0, psize);
+    return (entry_t *)bmem->db_start;
+}
+
+// Create a new entry and copy the name
+static entry_t *bdb_entry_new(const char *key, uint8_t *value, uint16_t size)
+{
+    int key_size = strlen(key) + 1;
+    int data_size = size + 2 + 1;
+
+    // Allocate entry
+    entry_t *entry = bdb_entry_alloc(sizeof(entry_t) + data_size + key_size);
+    if (!entry)
+        return 0;
+
+    // Init entry
+    entry->token = TOKEN_STRING;
+    entry->name_ofs = data_size;
+    entry->dim_count = 0;
+
+    // Copy name
+    memcpy(entry->bytes + entry->name_ofs, key, key_size);
+
+    return entry;
+}
+
+// Find an entry by name
+static entry_t *bdb_entry_get(const char *name)
+{
+    entry_t *entry = bdb_entry_first();
+    while (entry)
+    {
+        if (strcmp((char *) (entry->bytes + entry->name_ofs), name) == 0)
+            return entry;
+        entry = bdb_entry_next(entry);
+    }
+    return 0;
+}
+
+// Get count of DB entries
+static uint16_t bdb_entry_count()
+{
+    uint16_t count = 0;
+    entry_t *entry = bdb_entry_first();
+    while (entry)
+    {
+        count++;
+        entry = bdb_entry_next(entry);
+    }
+    return count;
+}
+
+// Unset/Erase a DB entry
+static void bdb_entry_unset(entry_t *entry)
+{
+    int size = bdb_entry_size(entry);
+    memmove(bmem->db_start + size, bmem->db_start, (uint8_t *) entry - bmem->db_start);
+    bmem->db_start += size;
+}
+
+// // Clear all entries
+// static void bmem_db_clear()
+// {
+//     bmem->db_start = bmem->db_end;
+// }
+
+// PUT "key", "value": Create a new (key, value) entry
+static entry_t *bdb_entry_set(const char *name, char *value, bool is_cstr)
+{
+    // Remove the entry if it already exists
+    entry_t *entry = bdb_entry_get(name);
+    if (entry != 0)
+        bdb_entry_unset(entry);
+
+    // Copy the name in tmp
+    char tmp[B_NAME_SIZE_MAX];
+    strncpy(tmp, name, B_NAME_SIZE_MAX - 1);
+    tmp[B_NAME_SIZE_MAX - 1] = 0;
+
+    // Create the entry
+    uint16_t len = is_cstr ? strlen(value) : string_len(value);
+    entry = bdb_entry_new(tmp, (uint8_t *) value, len);
+    if (entry == 0)
+        goto finalize;
+
+    // set string length
+    entry->string[0] = len & 0xff;
+    entry->string[1] = len >> 8;
+
+    // set string terminator
+    entry->string[len + 2] = 0;
+    if (!value)
+        goto finalize;
+
+    // Copy the string value
+    memcpy(string_cstr(entry->string), is_cstr ? value : string_cstr(value), len);
+
+finalize:
+    return entry;
+}
