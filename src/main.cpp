@@ -314,7 +314,7 @@ int hal_net_recv(int fd, uint8_t *buffer, int n)
     {
         static int unparsed = 0;
         if (!g_web_socket || !g_web_socket->connected())
-        return -1;
+            return -1;
         if (unparsed == 0)
         {
             unparsed = g_web_socket->parseMessage();

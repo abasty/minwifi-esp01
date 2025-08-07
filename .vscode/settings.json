@@ -16,6 +16,7 @@
         "utility": "c",
         "bio.h": "c",
         "os.h": "c",
-        "bdb.h": "c"
+        "bdb.h": "c",
+        "tty-minitel.h": "c"
     }
 }

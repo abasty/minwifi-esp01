@@ -26,6 +26,7 @@
 #include "bio.h"
 #include "bmemory.h"
 #include "os.h"
+#include "bdb.h"
 
 #ifdef MINITEL
 #include "tty-minitel.h"
@@ -35,9 +36,6 @@
 
 #define BASTOS_NETWORK_COUNT (20)
 #define BASTOS_SERVER_COUNT (20)
-
-#define WIFI_SSID_MAX_SIZE (36)
-#define WIFI_SECRET_MAX_SIZE (64)
 
 #define SERVER_NAME_MAX_SIZE (16)
 #define SERVER_HOST_MAX_SIZE (64)
@@ -183,7 +181,9 @@ void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t 
     hal_print_string("\r\n");
 
     // Add the network to the SSID array (SSID$(i))
-    uint16_t len = 32;
+    // Note: If i does not exist in the array, cstr is 0 and the SSID is not
+    // added to the array
+    uint16_t len = WIFI_SSID_MAX_SIZE;
     char *cstr = bmem_ssid_get_from_id(i);
     if (cstr)
     {
@@ -207,10 +207,18 @@ void os_wifi_list(void)
 
 int os_wifi_connect(const char *ssid)
 {
-    // TODO: Get password from DB
-    char secret[64] = "";
+    bool known = false;
+    char secret[WIFI_SECRET_MAX_SIZE] = "";
 
-    if (strlen(secret) == 0)
+    entry_t *entry = bdb_entry_get(ssid);
+    if (entry)
+    {
+        strncpy(secret, string_cstr(entry->string), WIFI_SECRET_MAX_SIZE - 1);
+        secret[WIFI_SECRET_MAX_SIZE - 1] = 0;
+        known = true;
+    }
+
+    if (!known)
     {
         hal_print_string(LINE0 INV "Password: " CLEOL);
         if (os_get_string(secret, sizeof(secret), '*') < 0)
@@ -229,6 +237,12 @@ int os_wifi_connect(const char *ssid)
         bdb_entry_set(ssid, secret, true);
         os_config_save();
     }
+    else if (entry)
+    {
+        bdb_entry_unset(entry);
+        os_config_save();
+    }
+
 #ifdef MINITEL
     hal_print_string(LINE0 CLEOL "\r\n");
 #endif

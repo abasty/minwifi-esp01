@@ -30,6 +30,7 @@
 
 #include "bmemory.h"
 #include "token.h"
+#include "os.h"
 
 bmem_t *bmem;
 
@@ -545,14 +546,14 @@ static char *bmem_ssid_get_from_id(int16_t id)
 static var_t *bmem_ssid_array_new()
 {
     uint8_t dim = 2;
-    uint32_t dims[B_DIM_MAX] = { 10, 32 };
+    uint32_t dims[B_DIM_MAX] = { WIFI_SSID_ARRAY_SIZE, WIFI_SSID_MAX_SIZE };
 
-    // Remove existing variable
+    // Remove existing array
     var_t *var = bmem_var_get(BMEM_SSID);
     if (var)
         bmem_var_unset(var);
 
-    // Create variable
+    // Create array
     var = bmem_var_new(BMEM_SSID, (uint8_t) BMEM_SSID[0], dim, dims);
     if (!var)
         bmem->bstate.error = BERROR_MEMORY;

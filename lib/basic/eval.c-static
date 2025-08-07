@@ -1505,6 +1505,18 @@ static bool eval_wifi_list(void)
     return true;
 }
 
+static char *eval_get_ssid()
+{
+    if (bmem->bstate.token == TOKEN_NUMBER)
+    {
+        return bmem_ssid_get_from_id(bmem->bstate.number);
+    }
+    else
+    {
+        return string_cstr(bmem->bstate.string);
+    }
+}
+
 static bool eval_wifi_connect(void)
 {
     if (!eval_number() && !eval_string_const())
@@ -1513,16 +1525,7 @@ static bool eval_wifi_connect(void)
     if (!bmem->bstate.do_eval)
         return true;
 
-    char *ssid;
-    if (bmem->bstate.token == TOKEN_NUMBER)
-    {
-        ssid = bmem_ssid_get_from_id(bmem->bstate.number);
-    }
-    else
-    {
-        ssid = string_cstr(bmem->bstate.string);
-    }
-
+    char *ssid = eval_get_ssid();
     if (ssid == 0 || string_len(ssid) == 0)
     {
         bmem->bstate.error = BERROR_WIFI;
@@ -1547,10 +1550,11 @@ static bool eval_wifi_erase(void)
     if (!bmem->bstate.do_eval)
         return true;
 
-    char *ssid = "";
-    if (bmem->bstate.token == TOKEN_NUMBER)
+    char *ssid = eval_get_ssid();
+    if (ssid == 0 || string_len(ssid) == 0)
     {
-        // FIXME: Get SSID from SSID$()
+        bmem->bstate.error = BERROR_WIFI;
+        return false;
     }
 
     int ret = os_wifi_erase(ssid);

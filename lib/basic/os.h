@@ -45,6 +45,10 @@ extern "C" {
 
 #define NET_BUFFER_MAX (128)
 
+#define WIFI_SSID_ARRAY_SIZE (10)
+#define WIFI_SSID_MAX_SIZE (36)
+#define WIFI_SECRET_MAX_SIZE (64)
+
 // OS main functions
 void os_setup(void);
 void os_loop(void);

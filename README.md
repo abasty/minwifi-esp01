@@ -242,34 +242,33 @@ int32_t os_get_next_int(void); // renvoie atoi(os_get_next())
 
 ## WiFi
 
-`WIFI LIST` : Scanne les réseaux WiFi et les affiche.
+`WIFI LIST` : Scanne les réseaux WiFi, les affiche et stocke les 10 premiers
+SSIDs dans le tableau Basic `DIM SSID$(10)`.
 
-Chaque réseau est précédé d'un numéro. Les réseaux connus sont affichés en
-premier, par ordre croissant de leur dBm. Les réseaux non connus sont affichés
-après, dans l'ordre de leur dBm. Les réseaux homonymes n'apparaissent qu'une
-fois.
+Chaque réseau est précédé d'un numéro indiquant son index dans `SSID$`.
 
 La liste (et son ordre) est retenue dans les variables OS.
 
 `WIFI CONNECT <SSID>|<N>` : Connexion à un réseau WiFi.
 
-Si `<N>`, on choisit le N-ème SSID dans la liste du scan (il faut avoir fait
-`WIFI LIST` avant ou avoir des réseaux connus dans la config).
+Si `<N>`, on choisit `SSID$(N)` comme SSID (il faut avoir fait `WIFI LIST`
+avant).
 
 Si le réseau n'est pas connu on demande le mot de passe en ligne 0. Si le réseau
 est connu, on utilise le mot de passe configuré. On tente alors une connexion
 sur l'AP désigné avec le mot de passe.
 
 Lors d'une connexion établie, on marque le réseau comme connu et on sauvegarde
-la configuration WiFi (si différente d'avant : mot de passe demandé, réseau
-nouvellement connu).
+la configuration WiFi. Si le réseau est connu mais la connexion échoue avec le
+mot de passe configuré, on supprime le réseau de la configuration (un mot de
+passe sera alors deandé à la prochaine tentative de connexion sur ce réseau).
 
 `WIFI ERASE` : Permet d'oublier un réseau connu.
 
 `WIFI DISCONNECT` : Déconnecte le WiFi.
 
 `WIFI STATUS` : Affiche des informations sur l'état du WiFi, l'adresse IP, le
-SSID connecté, etc.
+SSID connecté.
 
 ## Mode connecté
 
