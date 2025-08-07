@@ -176,7 +176,7 @@ int hal_wifi_scan()
     for (int i = 0; i < n; i++)
     {
         WiFi.getNetworkInfo(i, ssid, encryptionType, RSSI, BSSID, channel, isHidden);
-        os_wifi_add_network(ssid.c_str(), encryptionType, RSSI);
+        os_wifi_print_network(i + 1, ssid.c_str(), encryptionType, RSSI);
     }
     return n;
 }

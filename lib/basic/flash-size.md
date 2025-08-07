@@ -16,8 +16,8 @@ wifi list     | 446835
 
 ## DB
 
-implem        | taille flash
---------------|---------------
-Initial       | 341239
-WiFi en DB    |
-Serveurs en DB|
+implem        | flash  | RAM ESP
+--------------|--------|---------
+Initial       | 341239 | 10448
+WiFi en DB    | 340143 | 10664
+Serveurs en DB|        |

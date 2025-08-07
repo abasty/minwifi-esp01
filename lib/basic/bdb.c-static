@@ -139,6 +139,10 @@ static entry_t *bdb_entry_set(const char *name, char *value, bool is_cstr)
     if (entry != 0)
         bdb_entry_unset(entry);
 
+    // Only unset key if no value given
+    if (value == 0)
+        return 0;
+
     // Create the entry
     uint16_t len = is_cstr ? strlen(value) : string_len(value);
     entry = bdb_entry_new(name, (uint8_t *) value, len);

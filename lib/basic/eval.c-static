@@ -1513,18 +1513,23 @@ static bool eval_wifi_connect(void)
     if (!bmem->bstate.do_eval)
         return true;
 
-    int16_t net_id = -1;
-
+    char *ssid;
     if (bmem->bstate.token == TOKEN_NUMBER)
     {
-        net_id = (int16_t)bmem->bstate.number;
+        ssid = bmem_ssid_get_from_id(bmem->bstate.number);
     }
     else
     {
-        net_id = os_wifi_get_id_from_ssid(string_cstr(bmem->bstate.string));
+        ssid = string_cstr(bmem->bstate.string);
     }
 
-    int ret = os_wifi_connect(net_id);
+    if (ssid == 0 || string_len(ssid) == 0)
+    {
+        bmem->bstate.error = BERROR_WIFI;
+        return false;
+    }
+
+    int ret = os_wifi_connect(ssid);
     if (ret < 0)
     {
         bmem->bstate.error = BERROR_WIFI;
@@ -1542,18 +1547,13 @@ static bool eval_wifi_erase(void)
     if (!bmem->bstate.do_eval)
         return true;
 
-    int16_t net_id = -1;
-
+    char *ssid = "";
     if (bmem->bstate.token == TOKEN_NUMBER)
     {
-        net_id = (int16_t)bmem->bstate.number;
-    }
-    else
-    {
-        net_id = os_wifi_get_id_from_ssid(string_cstr(bmem->bstate.string));
+        // FIXME: Get SSID from SSID$()
     }
 
-    int ret = os_wifi_erase(net_id);
+    int ret = os_wifi_erase(ssid);
     if (ret < 0)
     {
         bmem->bstate.error = BERROR_WIFI;

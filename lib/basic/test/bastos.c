@@ -181,11 +181,12 @@ int hal_wifi_scan()
 {
     // Simulate scanning networks
     sleep(2);
+    int n = 0;
     // Register dummy networks
-    os_wifi_add_network("Host network", ENC_NONE, 0);
-    os_wifi_add_network("Maison fake", ENC_NONE, 0);
-    os_wifi_add_network("Reseau 3", ENC_NONE, 0);
-    return 1;
+    os_wifi_print_network(++n, "Host network", ENC_NONE, 0);
+    os_wifi_print_network(++n, "Maison fake", ENC_NONE, 0);
+    os_wifi_print_network(++n, "Reseau 3", ENC_NONE, 0);
+    return n;
 }
 
 bool wifi_connected = false;

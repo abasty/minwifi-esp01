@@ -51,10 +51,9 @@ void os_loop(void);
 
 // OS Wi-Fi functions
 void os_wifi_list(void);
-void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi);
-int16_t os_wifi_get_id_from_ssid(const char *ssid);
-int os_wifi_connect(int16_t net_id);
-int os_wifi_erase(int16_t net_id);
+void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t rssi);
+int os_wifi_connect(const char* ssid);
+int os_wifi_erase(const char* ssid);
 void os_wifi_status(void);
 void os_wifi_set_info(const char *ssid, const char *ip);
 
