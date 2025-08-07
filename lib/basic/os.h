@@ -53,6 +53,9 @@ extern "C" {
 void os_setup(void);
 void os_loop(void);
 
+// OS config function
+void os_config_load(void);
+
 // OS Wi-Fi functions
 void os_wifi_list(void);
 void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t rssi);

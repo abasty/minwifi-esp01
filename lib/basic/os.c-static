@@ -73,12 +73,21 @@ static void os_config_save(void)
     if (fd < 0)
         return;
 
-    // FIXME: Save DB
+    // Write DB size
+    uint16_t db_size = bmem->db_end - bmem->db_start;
+    if (hal_write(fd, &db_size, sizeof(db_size)) < 0) {
+        goto err;
+    }
 
-    hal_write(fd, &g_server_count, sizeof(g_server_count));
-    for (int16_t i = 0; i < g_server_count; i++)
-        hal_write(fd, g_server_store[i], sizeof(server_t));
-    hal_close(fd);
+    // Write DB
+    if (hal_write(fd, bmem->db_start, db_size) < 0) {
+        goto err;
+    }
+
+err:
+    if (fd >= 0) {
+        hal_close(fd);
+    }
 }
 
 static int16_t os_find_server(const char *name)
@@ -123,41 +132,27 @@ static void os_set_server(server_t *server)
     os_config_save();
 }
 
-static void os_remove_all_servers(void)
-{
-    for (int16_t i = 0; i < g_server_count; i++)
-    {
-        free(g_server_store[i]);
-        g_server_store[i] = 0;
-    }
-    g_server_count = 0;
-}
-
-static void os_config_load(void)
+void os_config_load(void)
 {
     // Remove memory records
-    // os_wifi_remove_all_networks();
-    // FIXME: load DB from config
-    os_remove_all_servers();
+    bmem_db_clear();
 
     int fd = hal_open("CONFIG.$$$", B_RDONLY);
     if (fd < 0)
         return;
 
-    // Read number of servers
-    int16_t n;
-    if (hal_read(fd, &n, sizeof(n)) != sizeof(n))
-        return;
+    // Read DB size
+    int16_t db_size;
+    if (hal_read(fd, &db_size, sizeof(db_size)) != sizeof(db_size))
+        goto finalize;
 
-    // Read server records from mass storage
-    server_t server;
-    for (int16_t i = 0; i < n; i++)
-    {
-        if (hal_read(fd, &server, sizeof(server_t)) != sizeof(server_t))
-            goto finalize;
-        if (os_new_server(&server) == 0)
-            goto finalize;
-    }
+    // Check DB size
+    if (db_size > BASTOS_DB_SIZE)
+        goto finalize;
+
+    // Read DB records from mass storage
+    bmem->db_start = bmem->db_end - db_size;
+    hal_read(fd, bmem->db_start, db_size);
 
 finalize:
     hal_close(fd);
@@ -234,8 +229,11 @@ int os_wifi_connect(const char *ssid)
     int ret = hal_wifi_connect(ssid, secret);
     if (ret == 0)
     {
-        bdb_entry_set(ssid, secret, true);
-        os_config_save();
+        if (!known)
+        {
+            bdb_entry_set(ssid, secret, true);
+            os_config_save();
+        }
     }
     else if (entry)
     {
@@ -564,9 +562,6 @@ void os_loop()
 
 void os_setup(void)
 {
-    // Load config
-    os_config_load();
-
     // Init Basic and display BASTOS banner
     bastos_init();
     bastos_send_keys("bastos\n", 7, false);

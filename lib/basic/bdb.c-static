@@ -125,11 +125,11 @@ static void bdb_entry_unset(entry_t *entry)
     bmem->db_start += size;
 }
 
-// // Clear all entries
-// static void bmem_db_clear()
-// {
-//     bmem->db_start = bmem->db_end;
-// }
+// Clear all entries
+static void bmem_db_clear()
+{
+    bmem->db_start = bmem->db_end;
+}
 
 // PUT "key", "value": Create a new (key, value) entry
 static entry_t *bdb_entry_set(const char *name, char *value, bool is_cstr)
