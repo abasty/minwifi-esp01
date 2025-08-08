@@ -205,7 +205,7 @@ int os_wifi_connect(const char *ssid)
     bool known = false;
     char secret[WIFI_SECRET_MAX_SIZE] = "";
 
-    entry_t *entry = bdb_entry_get(ssid);
+    entry_t *entry = bdb_entry_get(DB_WIFI_SET, ssid);
     if (entry)
     {
         strncpy(secret, string_cstr(entry->string), WIFI_SECRET_MAX_SIZE - 1);
@@ -231,7 +231,7 @@ int os_wifi_connect(const char *ssid)
     {
         if (!known)
         {
-            bdb_entry_set(ssid, secret, true);
+            bdb_entry_set(DB_WIFI_SET, ssid, secret, true);
             os_config_save();
         }
     }
@@ -249,7 +249,7 @@ int os_wifi_connect(const char *ssid)
 
 int os_wifi_erase(const char *ssid)
 {
-    bdb_entry_set(ssid, 0, true);
+    bdb_entry_set(DB_WIFI_SET, ssid, 0, true);
     os_config_save();
     return 0;
 }

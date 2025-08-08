@@ -17,6 +17,7 @@
         "bio.h": "c",
         "os.h": "c",
         "bdb.h": "c",
-        "tty-minitel.h": "c"
+        "tty-minitel.h": "c",
+        "stdbool.h": "c"
     }
 }

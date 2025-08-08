@@ -27,13 +27,19 @@
 #define __BDB_H__
 
 #include <stdbool.h>
+#include "token.h"
 #include "bmemory.h"
 
 typedef var_t entry_t;
 
+    // Init entry
+#define DB_WIFI_SET ((uint8_t) 32)
+#define DB_MIN_SET ((uint8_t) 254)
+#define DB_FTP_SET ((uint8_t) 253)
+
 static uint16_t bdb_entry_count();
-static entry_t *bdb_entry_set(const char *name, char *value, bool is_cstr);
-static entry_t *bdb_entry_get(const char *name);
+static entry_t *bdb_entry_set(uint8_t set, const char *name, char *value, bool is_cstr);
+static entry_t *bdb_entry_get(uint8_t set, const char *name);
 static void bdb_entry_unset(entry_t *entry);
 static void bmem_db_clear();
 

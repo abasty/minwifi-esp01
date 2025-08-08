@@ -70,7 +70,7 @@ static entry_t *bdb_entry_alloc(uint16_t size)
 }
 
 // Create a new entry and copy the name
-static entry_t *bdb_entry_new(const char *key, uint8_t *value, uint16_t size)
+static entry_t *bdb_entry_new(uint8_t set, const char *key, uint8_t *value, uint16_t size)
 {
     int key_size = strlen(key) + 1;
     int data_size = size + 2 + 1;
@@ -81,7 +81,7 @@ static entry_t *bdb_entry_new(const char *key, uint8_t *value, uint16_t size)
         return 0;
 
     // Init entry
-    entry->token = TOKEN_STRING;
+    entry->token = set;
     entry->name_ofs = data_size;
     entry->dim_count = 0;
 
@@ -92,13 +92,16 @@ static entry_t *bdb_entry_new(const char *key, uint8_t *value, uint16_t size)
 }
 
 // Find an entry by name
-static entry_t *bdb_entry_get(const char *name)
+static entry_t *bdb_entry_get(uint8_t set, const char *name)
 {
     entry_t *entry = bdb_entry_first();
     while (entry)
     {
-        if (strcmp((char *) (entry->bytes + entry->name_ofs), name) == 0)
-            return entry;
+        if (entry->token == set)
+        {
+            if (strcmp((char *) (entry->bytes + entry->name_ofs), name) == 0)
+                return entry;
+        }
         entry = bdb_entry_next(entry);
     }
     return 0;
@@ -132,10 +135,10 @@ static void bmem_db_clear()
 }
 
 // PUT "key", "value": Create a new (key, value) entry
-static entry_t *bdb_entry_set(const char *name, char *value, bool is_cstr)
+static entry_t *bdb_entry_set(uint8_t set, const char *name, char *value, bool is_cstr)
 {
     // Remove the entry if it already exists
-    entry_t *entry = bdb_entry_get(name);
+    entry_t *entry = bdb_entry_get(set, name);
     if (entry != 0)
         bdb_entry_unset(entry);
 
@@ -145,7 +148,7 @@ static entry_t *bdb_entry_set(const char *name, char *value, bool is_cstr)
 
     // Create the entry
     uint16_t len = is_cstr ? strlen(value) : string_len(value);
-    entry = bdb_entry_new(name, (uint8_t *) value, len);
+    entry = bdb_entry_new(set, name, (uint8_t *) value, len);
     if (entry == 0)
         goto finalize;
 
