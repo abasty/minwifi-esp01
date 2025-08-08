@@ -224,6 +224,33 @@ void os_wifi_status(void)
     hal_print_string("\r\n\r\n");
 }
 
+void os_db_list(uint8_t set)
+{
+    hal_print_string("\r\n" INV "Name     URN" CLEOL " " NORMAL "\r\n");
+    int n = 0;
+    entry_t *entry = bdb_entry_first();
+    while (entry)
+    {
+        if (entry->token == set)
+        {
+            char line[40];
+            snprintf(line, 40, "%-8.8s %-30.30s", entry->bytes + entry->name_ofs, string_cstr(entry->string));
+            hal_print_string(line);
+            hal_print_string("\r\n");
+            n++;
+        }
+        entry = bdb_entry_next(entry);
+    }
+    hal_print_integer("\r\n%d servers(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
+}
+
+void os_db_erase(uint8_t set, const char *name)
+{
+    entry_t *entry = bdb_entry_get(set, name);
+    if (entry)
+        bdb_entry_unset(entry);
+}
+
 int os_get_string(char *buf, int size, char secret_char)
 {
     int i = 0;

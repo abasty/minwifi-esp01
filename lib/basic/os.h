@@ -65,6 +65,10 @@ int os_wifi_erase(const char* ssid);
 void os_wifi_status(void);
 void os_wifi_set_info(const char *ssid, const char *ip);
 
+// OS DB functions
+void os_db_list(uint8_t set);
+void os_db_erase(uint8_t set, const char *name);
+
 // OS network functions
 int os_minitel_connect(const char *name, const char* urn);
 

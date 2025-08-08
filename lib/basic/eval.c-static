@@ -42,6 +42,7 @@
 #include "eval.h"
 #include "bio.h"
 #include "os.h"
+#include "bdb.h"
 
 static inline void eval_input_mode(bool mode);
 static bool eval_string_tty();
@@ -1666,6 +1667,27 @@ static bool eval_minitel_connect()
     return bmem->bstate.sock >= 0;
 }
 
+static bool eval_db_list(uint8_t set)
+{
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    os_db_list(set);
+    return true;
+}
+
+static bool eval_db_erase(uint8_t set)
+{
+    if (!eval_expr(TOKEN_STRING))
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    os_db_erase(set, string_cstr(bmem->bstate.string));
+    return true;
+}
+
 static bool eval_minitel()
 {
     if (!eval_token(TOKEN_KEYWORD_MINITEL))
@@ -1676,10 +1698,10 @@ static bool eval_minitel()
         return eval_minitel_connect();
 
     if (func == TOKEN_KEYWORD_LIST)
-        return true;
+        return eval_db_list(DB_MIN_SET);
 
     if (func == TOKEN_KEYWORD_ERASE)
-        return true;
+        return eval_db_erase(DB_MIN_SET);
 
     return false;
 }
@@ -1695,7 +1717,6 @@ static bool eval_instruction()
            eval_wifi() ||
            eval_minitel() ||
            eval_let();
-    ;
 }
 
 static bool eval_if()

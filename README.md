@@ -3,6 +3,8 @@
 ## Bugs
 
 * [ ] edition de ligne : gérer les séquences de caractères spéciaux (G2, G1)
+* [ ] Memory leak quand on enchaine connexions et déconnexions à un serveur
+  Minitel.
 * [x] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
   même les chaines de caractères sont terminées par `\0`, notamment dans les
   tableaux. Ce n'est pas compatibles avec le Basic ZX81 car on ne peut accéder
@@ -22,10 +24,11 @@
   * [x] Gestion Wifi : sauvegarder les mots de passe avec comme clé le SSID
   * [x] Gestion serveurs : clé=nom, valeur=urn
 * [x] Passage des paramètres de config en URN
-* [ ] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
+* [x] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
   urn)). `MINITEL LIST / ERASE / CONNECT <URN>|<NAME>|<ID>`
-* [ ] Gérer l'historique avec la DB config
 
+* [ ] Gérer l'historique avec la DB config
+* [ ] Ramener les variables OS dans le bstate
 * [ ] Uniquement majuscules noms de fichiers 8+3
 * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
 * [ ] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.BST` /
@@ -68,7 +71,11 @@
   seule commande print.
 * [ ] Ajouter edit, integration "edit_min" ?
 
-* [ ] PEEK (y compris variables OS ?) / POKE / USR
+* [ ] PEEK (y compris variables OS ?) / POKE / USR : adresses converties par
+  rapport au début du bloc (0 à 32K+4K). PEEK16 / POKE16. Les pointeurs
+  pourraient être à l'extérieur et dans le bstate on ne mettrait que des offsets
+  sur 16 bits => on pourrait modifier vars_start / vars_end. `@<VAR>`,
+  `@<LINE_NO>`, `@DB <SET>,<KEY>`
 
 * [x] `CONNECT` devrait suffire : TELNET / TELNET WS
 * ~~SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs~~
@@ -243,11 +250,12 @@ SSID connecté.
 
 ## Mode connecté
 
-`CONNECT <URN>` ou `CONNECT <NAME> [, <URN>]` : Supporte les protocoles : "tcp",
-"ws", "wss". Lors d'une connexion réussie, les paramètres de connexion sont
-sauvegardés dans la configuration sous le nom de serveur `<NAME>`. Si `<URN>`
-n'est pas spécifié, le serveur `<NAME>` est recherché dans la configuration et,
-s'il existe, les paramètres de connexion sauvegardés sont appliqués.
+`MINITEL [CONNECT] <URN>` ou `MINITEL [CONNECT] <NAME> [, <URN>]` : Supporte les
+protocoles : "tcp", "ws", "wss". Lors d'une connexion réussie, les paramètres de
+connexion sont sauvegardés dans la configuration sous le nom de serveur
+`<NAME>`. Si `<URN>` n'est pas spécifié, le serveur `<NAME>` est recherché dans
+la configuration et, s'il existe, les paramètres de connexion sauvegardés sont
+appliqués.
 
 Si la connexion est réussie, BASTOS passe en mode connecté : les caractères
 arrivant depuis le serveur sont envoyés au Minitel (écran ou protocole) et les
@@ -264,11 +272,9 @@ Lors du passage du mode connecté au mode Basic, le programme en cours est
 continué (comme avec `CONT`). Si aucun programme n'est en cours, on revient
 simplement au mode interactif.
 
-`SERVER CONNECT` : Même commande que `CONNECT`.
+`MINITEL LIST` : Liste les serveurs par nom, urn
 
-`SERVER LIST` : Liste les serveurs par nom, urn
-
-`SERVER ERASE <NAME>` : Supprime un serveur de la config
+`MINITEL ERASE <NAME>` : Supprime un serveur de la config
 
 ## Téléchargement de fichier
 

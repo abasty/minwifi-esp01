@@ -59,6 +59,9 @@ static bool bdb_is_urn(char* str);
 static split_t *bdb_urn_split(const char *urn);
 
 static uint16_t bdb_entry_count();
+static entry_t *bdb_entry_first();
+static entry_t *bdb_entry_next();
+
 static entry_t *bdb_entry_set(uint8_t set, const char *name, char *value, bool is_cstr);
 static entry_t *bdb_entry_get(uint8_t set, const char *name);
 static void bdb_entry_unset(entry_t *entry);
