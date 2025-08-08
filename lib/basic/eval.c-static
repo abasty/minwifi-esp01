@@ -1671,11 +1671,11 @@ static bool eval_instruction()
            eval_input() ||
            eval_simple_instruction() ||
            eval_rem() ||
-           eval_let() ||
            eval_dim() ||
            eval_list() ||
            eval_wifi() ||
-           eval_connect();
+           eval_connect() ||
+           eval_let();
     ;
 }
 
