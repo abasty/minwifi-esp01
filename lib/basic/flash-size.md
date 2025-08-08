@@ -21,5 +21,5 @@ implem        | flash  | RAM ESP
 Initial       | 341239 | 10448
 WiFi en DB    | 340239 | 10664/9582(after cx wifi) / 8696(after cx server)
 save/load cfg | 340111 | 11432/9776(after cx wifi) / 9312(after cx server)
-db set        | 340111 | -
+db set        | 340127 | -
 Serveurs en DB|        |

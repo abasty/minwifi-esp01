@@ -33,7 +33,7 @@
 typedef var_t entry_t;
 
     // Init entry
-#define DB_WIFI_SET ((uint8_t) 32)
+#define DB_WIFI_SET ((uint8_t) 255)
 #define DB_MIN_SET ((uint8_t) 254)
 #define DB_FTP_SET ((uint8_t) 253)
 
