@@ -37,6 +37,7 @@ typedef var_t entry_t;
 #define DB_MIN_SET ((uint8_t) 254)
 #define DB_FTP_SET ((uint8_t) 253)
 
+static bool bdb_is_urn(char* str);
 static uint16_t bdb_entry_count();
 static entry_t *bdb_entry_set(uint8_t set, const char *name, char *value, bool is_cstr);
 static entry_t *bdb_entry_get(uint8_t set, const char *name);

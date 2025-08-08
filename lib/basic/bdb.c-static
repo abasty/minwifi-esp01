@@ -33,6 +33,16 @@
 
 extern bmem_t *bmem;
 
+static bool bdb_is_urn(char* str)
+{
+    while (*str)
+    {
+        if (*str++ == ':')
+            return true;
+    }
+    return false;
+}
+
 // Return the size of an entry
 static int bdb_entry_size(entry_t *entry)
 {

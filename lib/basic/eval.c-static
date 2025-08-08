@@ -1612,10 +1612,17 @@ static bool eval_wifi()
     return false;
 }
 
+static void eval_copy_string(char *dst, char *src, uint16_t len)
+{
+    strncpy(dst, src, len - 1);
+    dst[len - 1] = 0;
+}
+
 static bool eval_connect()
 {
-    char name[16];
+    char name[16] = "";
     char *urn = 0;
+    int n = 1;
 
     if (!eval_token(TOKEN_KEYWORD_CONNECT))
         return false;
@@ -1623,25 +1630,31 @@ static bool eval_connect()
     if (!eval_string_expr())
         return false;
 
-    if (bmem->bstate.do_eval)
-    {
-        strncpy(name,  string_cstr(bmem->bstate.string), sizeof(name) - 1);
-        name[sizeof(name) - 1] = 0;
-    }
-
     if (eval_token(','))
     {
+        if (bmem->bstate.do_eval)
+        {
+            eval_copy_string(name, string_cstr(bmem->bstate.string), sizeof(name) - 1);
+        }
+
         if (!eval_string_expr())
             return false;
 
-        if (bmem->bstate.do_eval)
-        {
-            urn = string_cstr(bmem->bstate.string);
-        }
+        n++;
     }
 
     if (!bmem->bstate.do_eval)
         return true;
+
+    char *param = string_cstr(bmem->bstate.string);
+    if (n == 1 && !bdb_is_urn(param))
+    {
+        eval_copy_string(name, param, sizeof(name) - 1);
+    }
+    else
+    {
+        urn = param;
+    }
 
     bmem->bstate.sock = os_connect(name, urn);
     if (bmem->bstate.sock < 0)

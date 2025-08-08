@@ -272,16 +272,13 @@ SSID connecté.
 
 ## Mode connecté
 
-ADU : Si WiFi n'est pas connecté, on peut essayer un `WIFI CONNECT 1` avant. Si
-cette dernière commande échoue, inutile de tenter une connexion réseau.
+`CONNECT <URN>` ou `CONNECT <NAME> [, <URN>]` : Supporte les protocoles : "tcp",
+"ws", "wss". Lors d'une connexion réussie, les paramètres de connexion sont
+sauvegardés dans la configuration sous le nom de serveur `<NAME>`. Si `<URN>`
+n'est pas spécifié, le serveur `<NAME>` est recherché dans la configuration et,
+s'il existe, les paramètres de connexion sauvegardés sont appliqués.
 
-`CONNECT <NAME> [, <URN>]` : Supporte les protocoles : "tcp", "ws", "wss". Lors
-d'une connexion réussie, les paramètres de connexion sont sauvegardés dans la
-configuration sous le nom de serveur `<NAME>`. Si `<URN>` n'est pas spécifié, le
-serveur `<NAME>` est recherché dans la configuration et, s'il existe, les
-paramètres de connexion sauvegardés sont appliqués.
-
-Si la connexion est acceptée, BASTOS passe en mode connecté : les caractères
+Si la connexion est réussie, BASTOS passe en mode connecté : les caractères
 arrivant depuis le serveur sont envoyés au Minitel (écran ou protocole) et les
 caractères arrivant depuis le Minitel (clavier ou protocole) sont transférés
 vers le serveur.
@@ -294,7 +291,7 @@ connecté (ouverture du relais modem, lettre `F` affichée en ligne 0).
 
 Lors du passage du mode connecté au mode Basic, le programme en cours est
 continué (comme avec `CONT`). Si un programme n'est pas en cours, on revient
-simplement au Basic en mode interactif.
+simplement au mode interactif.
 
 `SERVER CONNECT` : Même commande que `CONNECT`.
 
