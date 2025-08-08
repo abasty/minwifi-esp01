@@ -66,7 +66,7 @@ void os_wifi_status(void);
 void os_wifi_set_info(const char *ssid, const char *ip);
 
 // OS network functions
-int os_connect(const char *name, const char* urn);
+int os_minitel_connect(const char *name, const char* urn);
 
 // OS keyboard functions
 uint8_t os_get_key(void);

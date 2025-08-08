@@ -14,23 +14,19 @@
 * [x] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
   mode connecté / basic / boot au mode interactif)
 * [x] Augmenter la mémoire BASTOS (32KB), reste 12KB pour l'OS (wifi / db)
-* [ ] Uniquement majuscules en chiffres dans noms de serveur (pareil pour noms
-  de fichiers 8+3)
 * [ ] Config database, "key":"value", dans un espace protégé de `CLEAR` et `NEW`
   (`HIMEM` ou zone mémoire). `PUT "key", "value"`, `GET "key"`, `KEY ERASE
-  "key"`. L'OS peut se servir de la database pour stocker des structures dans
-  des strings (len = sizeof struct / cstr = memcpy struct)
+  "key"`.
+* [x] L'OS se sert de la database pour stocker la config
   * [x] Mettre en place la gestion de la mémoire DB
-  * [ ] Gestion Wifi : sauvegarder les mots de passe avec comme clé le SSID
-  * [ ] Gestion serveurs : clé=nom, valeur=urn
-* [ ] Passage de tous les paramètres de config en URN (y compris WiFi:
-  `wifi:ssid:secret:count:dbm`), sauvegarde de chaque enregistrement sur une
-  ligne. Les secrets peuvent être brouillés éventuellement.
+  * [x] Gestion Wifi : sauvegarder les mots de passe avec comme clé le SSID
+  * [x] Gestion serveurs : clé=nom, valeur=urn
+* [x] Passage des paramètres de config en URN
 * [ ] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
   urn)). `MINITEL LIST / ERASE / CONNECT <URN>|<NAME>|<ID>`
-* [ ] Voir si la config peut être juste un historique de commandes, ou des
-  variables basic cachées, ou de lignes basic cachées
+* [ ] Gérer l'historique avec la DB config
 
+* [ ] Uniquement majuscules noms de fichiers 8+3
 * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
 * [ ] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.BST` /
   `.BAS` ?
@@ -202,43 +198,18 @@ une fois avec succès, sont sauvegardés dans la configuration.
 ## BASTOS Uniform Resource Name
 
 Les URNs permettent de définir avec une chaîne de caractères les paramètres de
-connexion aux points d'accès WiFi, aux services Minitel réseau et aux sites FTP.
+connexion aux services Minitel réseau et aux sites FTP.
 
-| type  | syntaxe fichier et basic          |
-|-------|-----------------------------------|
-| wifi  | `wifi:ssid:secret:count`          |
-| tcp   | `tcp:name:host:port`              |
-| ws    | `ws:name:host:port:path`          |
-| wss   | `wss:name:host:port:path`         |
-| ftp   | `ftp:name:host:port:login:secret` |
+| type  | syntaxe fichier et basic     |
+|-------|------------------------------|
+| tcp   | `tcp:host:port`              |
+| ws    | `ws:host:port:path`          |
+| wss   | `wss:host:port:path`         |
+| ftp   | `ftp:host:port:login:pass`   |
 
-Les URNs sont sauvegardées dans le fichier de configuration à raison d'un par
-ligne. À son lancement, BASTOS lit la configuration depuis ce fichier et met à
-jour ses structures internes. Lors d'une connexion fructueuse à un réseau WiFi
-ou à un serveur, la configuration est automatiquement sauvegardée.
-
-Le stockage interne d'un URN est un buffer de caractères. Le premier octet
-désigne le nombre de parties dans l'URN. Chaque partie est séparée de la
-suivante par un `\0`. La dernière partie est terminée par `\0`.
-
-Fonctions de conversion / creation / suppression :
-
-```c
-char *os_urn_new(const char *urn_ext); // malloc et retourne format interne
-free() => libération
-snprintf() => Création URN externe
-```
-
-Fonctions de lecture d'une URN :
-
-Le pointeur courant et le nombre de parties restantes sont stockés dans des
-variables globales.
-
-```c
-uint8_t os_get_first(const char* urn); // Init des globales et renvoie os_get_next_int()
-char *os_get_next(void); // renvoie pointeur courant, avance pointeur courant
-int32_t os_get_next_int(void); // renvoie atoi(os_get_next())
-```
+À son lancement, BASTOS lit la configuration depuis le fichier `CONFIG.$$$` et
+met à jour ses structures internes. Lors d'une connexion fructueuse à un réseau
+WiFi ou à un serveur, la configuration est automatiquement sauvegardée.
 
 ## WiFi
 

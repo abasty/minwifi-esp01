@@ -312,7 +312,7 @@ uint8_t os_get_key()
     return key;
 }
 
-int os_connect(const char *name, const char* urn)
+int os_minitel_connect(const char *name, const char* urn)
 {
     int ret = -1;
 

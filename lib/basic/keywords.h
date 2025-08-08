@@ -73,3 +73,4 @@
 #define TOKEN_KEYWORD_DISCONNECT ((uint8_t) (71 | 0b10000000))
 #define TOKEN_KEYWORD_STATUS ((uint8_t) (72 | 0b10000000))
 #define TOKEN_KEYWORD_FTP ((uint8_t) (73 | 0b10000000))
+#define TOKEN_KEYWORD_MINITEL ((uint8_t) (74 | 0b10000000))

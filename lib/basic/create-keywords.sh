@@ -85,6 +85,7 @@ bastos
 disconnect
 status
 ftp
+minitel
 EOF
 
 # Do not sort to preserve save/load compatibility

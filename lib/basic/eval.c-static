@@ -130,6 +130,13 @@ uint8_t wifi_func[] = {
     0,
 };
 
+uint8_t minitel_func[] = {
+    TOKEN_KEYWORD_LIST,
+    TOKEN_KEYWORD_CONNECT,
+    TOKEN_KEYWORD_ERASE,
+    0,
+};
+
 static void running_state_clear()
 {
     bmem->bstate.pc = 0;
@@ -1591,14 +1598,11 @@ static bool eval_wifi()
         return false;
 
     uint8_t func = eval_token_one_of((char *)wifi_func);
-    if (func == 0)
-        return false;
+    if (func == 0 || func == TOKEN_KEYWORD_CONNECT)
+        return eval_wifi_connect();
 
     if (func == TOKEN_KEYWORD_LIST)
         return eval_wifi_list();
-
-    if (func == TOKEN_KEYWORD_CONNECT)
-        return eval_wifi_connect();
 
     if (func == TOKEN_KEYWORD_ERASE)
         return eval_wifi_erase();
@@ -1618,14 +1622,11 @@ static void eval_copy_string(char *dst, char *src, uint16_t len)
     dst[len - 1] = 0;
 }
 
-static bool eval_connect()
+static bool eval_minitel_connect()
 {
     char name[16] = "";
     char *urn = 0;
     int n = 1;
-
-    if (!eval_token(TOKEN_KEYWORD_CONNECT))
-        return false;
 
     if (!eval_string_expr())
         return false;
@@ -1656,13 +1657,31 @@ static bool eval_connect()
         urn = param;
     }
 
-    bmem->bstate.sock = os_connect(name, urn);
+    bmem->bstate.sock = os_minitel_connect(name, urn);
     if (bmem->bstate.sock < 0)
     {
         bmem->bstate.error = BERROR_SOCK;
     }
 
     return bmem->bstate.sock >= 0;
+}
+
+static bool eval_minitel()
+{
+    if (!eval_token(TOKEN_KEYWORD_MINITEL))
+        return false;
+
+    uint8_t func = eval_token_one_of((char *)minitel_func);
+    if (func == 0 || func == TOKEN_KEYWORD_CONNECT)
+        return eval_minitel_connect();
+
+    if (func == TOKEN_KEYWORD_LIST)
+        return true;
+
+    if (func == TOKEN_KEYWORD_ERASE)
+        return true;
+
+    return false;
 }
 
 static bool eval_instruction()
@@ -1674,7 +1693,7 @@ static bool eval_instruction()
            eval_dim() ||
            eval_list() ||
            eval_wifi() ||
-           eval_connect() ||
+           eval_minitel() ||
            eval_let();
     ;
 }
