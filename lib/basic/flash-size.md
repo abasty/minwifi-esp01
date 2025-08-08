@@ -23,3 +23,9 @@ WiFi en DB    | 340239 | 10664/9582(after cx wifi) / 8696(after cx server)
 save/load cfg | 340111 | 11432/9776(after cx wifi) / 9312(after cx server)
 db set        | 340127 | -
 Serveurs en DB| 340015 | 11512/9776(after cx wifi) / 9504(after cx server)/9264(plusieurs cx)
+URN split     | 339923 | 11264/9336(after cx wifi+ws+tcp)
+
+Passage en DB + URN :
+
+* 1316 octets gagnés en flash
+* 640 octets gagnés en RAM

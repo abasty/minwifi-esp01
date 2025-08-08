@@ -38,16 +38,17 @@ extern "C" {
 #define ENC_NONE (7)
 #define ENC_AUTO (8)
 
-#define URN_PROTO_TCP  (0)
-#define URN_PROTO_WS   (1)
-#define URN_PROTO_WSS  (2)
-#define URN_PROTO_FTP  (3)
-
 #define NET_BUFFER_MAX (128)
 
 #define WIFI_SSID_ARRAY_SIZE (10)
 #define WIFI_SSID_MAX_SIZE (36)
 #define WIFI_SECRET_MAX_SIZE (64)
+
+#define URN_PROTO_NONE (0)
+#define URN_PROTO_TCP  (1)
+#define URN_PROTO_WS   (2)
+#define URN_PROTO_WSS  (3)
+#define URN_PROTO_FTP  (4)
 
 // OS main functions
 void os_setup(void);

@@ -28,6 +28,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "os.h"
 #include "bdb.h"
 #include "token.h"
 
@@ -41,6 +42,51 @@ static bool bdb_is_urn(char* str)
             return true;
     }
     return false;
+}
+
+// Split a URN into parts
+static split_t *bdb_urn_split(const char *urn)
+{
+    static const char *g_urn_protos[] = {
+        "tcp", "ws", "wss", "ftp", NULL
+    };
+
+    static split_t split;
+    for (int i = 0; i < URN_PARTS_MAX; i++)
+    {
+        split.parts[i] = "";
+    }
+    split.n = 0;
+    split.proto = URN_PROTO_NONE;
+
+    const char *src = urn;
+    char *dst = split.urn;
+    bool new_part = true;
+
+    while (new_part && split.n < URN_PARTS_MAX - 1)
+    {
+        split.parts[split.n++] = dst;
+        while (*src && *src != ':')
+            *dst++ = *src++;
+        new_part = *src++ == ':';
+        *dst++ = '\0';
+    }
+    split.parts[split.n] = 0;
+
+    uint8_t n = 0;
+    for (const char **proto = g_urn_protos; *proto ; proto++)
+    {
+        n++;
+        if (strcmp(*proto, split.parts[0]) == 0)
+        {
+            split.proto = n;
+            break;
+        }
+    }
+
+    split.port = strtoul(split.parts[URN_PART_PORT], 0, 10);
+
+    return &split;
 }
 
 // Return the size of an entry
