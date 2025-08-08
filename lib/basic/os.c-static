@@ -50,6 +50,7 @@ typedef struct server_s
     char name[SERVER_NAME_MAX_SIZE];     // Name of the server
     char host[SERVER_HOST_MAX_SIZE];     // IP address / hostname
     char path[SERVER_PATH_MAX_SIZE];     // Path for WS/WSS
+
     char login[SERVER_LOGIN_MAX_SIZE];   // Login for authentication
     char secret[SERVER_SECRET_MAX_SIZE]; // Password for authentication
 } server_t;
@@ -57,12 +58,6 @@ typedef struct server_s
 // OS WiFi variables
 char g_net_connected_ssid[20] = ""; // 20 first characters of SSID
 char g_net_connected_ip[16] = "";
-
-// OS Server variables
-server_t *g_server_store[BASTOS_NETWORK_COUNT] = {0};
-int16_t g_server_count = 0;
-
-typedef int (*os_cell_compare_fn)(int16_t a, int16_t b);
 
 static void os_config_save(void)
 {
@@ -333,7 +328,7 @@ uint8_t os_get_key()
 int os_connect(const char *name, const char* urn)
 {
     int ret = -1;
-    const char *part = urn;
+    const char *part = 0;
     server_t server = {
         .proto = -1,
         .port = 80,
@@ -343,9 +338,14 @@ int os_connect(const char *name, const char* urn)
         .login[0] = '\0',
     };
 
+    // Get configuration if needed
+    entry_t *entry = bdb_entry_get(DB_MIN_SET, name);
+    bool known = entry != 0 && urn == 0;
+    urn = known ? string_cstr(entry->string) : urn;
     if (!urn)
         goto finalize;
 
+    part = urn;
     // Get protocol part
     if (strncasecmp(urn, "tcp:", 4) == 0)
     {
@@ -396,10 +396,12 @@ int os_connect(const char *name, const char* urn)
     ret = hal_net_connect(server.proto, server.host, server.port, server.path);
     if (ret >= 0)
     {
-        // strncpy(server.name, name, SERVER_NAME_MAX_SIZE - 1);
-        // server.name[SERVER_NAME_MAX_SIZE - 1] = '\0';
-        // os_set_server(&server);
         hal_print_string(P_ROULEAU_OFF);
+        if (!known && *name)
+        {
+            bdb_entry_set(DB_MIN_SET, name, (char*) urn, true);
+            os_config_save();
+        }
     }
 
 finalize:

@@ -290,7 +290,7 @@ envoyé au terminal par l'OS, de façon à remettre le Minitel  en mode non
 connecté (ouverture du relais modem, lettre `F` affichée en ligne 0).
 
 Lors du passage du mode connecté au mode Basic, le programme en cours est
-continué (comme avec `CONT`). Si un programme n'est pas en cours, on revient
+continué (comme avec `CONT`). Si aucun programme n'est en cours, on revient
 simplement au mode interactif.
 
 `SERVER CONNECT` : Même commande que `CONNECT`.
