@@ -124,6 +124,7 @@ static void bmem_strings_clear();
 
 static char *string_cstr(const char *string);
 static int string_len(const char *string);
+static char *string_dup(const char *string);
 static void string_slice(char **string, uint16_t start, uint16_t end);
 static void string_concat(char **string1, char *string2);
 

@@ -45,6 +45,17 @@ static int string_len(const char *string)
     return len;
 }
 
+static char *string_dup(const char *string)
+{
+    if (!string)
+        return 0;
+
+    uint16_t len = string_len(string);
+    char *dup = bmem_string_alloc(len);
+    memcpy(string_cstr(dup), string_cstr(string), len);
+    return dup;
+}
+
 static void string_slice(char **string, uint16_t start, uint16_t end)
 {
     if (!*string)

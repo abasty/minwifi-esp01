@@ -588,12 +588,7 @@ static bool eval_string_get()
     {
         // Wifi password are write only
         entry_t *entry = set == DB_WIFI_SET ? 0 : bdb_entry_get(set, string_cstr(bmem->bstate.string));
-        uint16_t len = entry ? string_len(entry->string) : 0;
-        bmem->bstate.string = bmem_string_alloc(len);
-        if (!bmem->bstate.string)
-            return false;
-        if (entry)
-            memcpy(string_cstr(bmem->bstate.string), string_cstr(entry->string), len);
+        bmem->bstate.string = entry ? string_dup(entry->string) : bmem_string_alloc(0);
     }
 
     return true;
@@ -887,6 +882,50 @@ static bool eval_dim()
     var = bmem_var_new(tmp, token, dim, dims);
     if (!var)
         bmem->bstate.error = BERROR_MEMORY;
+
+    return true;
+}
+
+static bool eval_put()
+{
+    uint8_t set;
+
+    if (!eval_token(TOKEN_KEYWORD_PUT))
+        return false;
+
+    bool brackets = eval_token('(');
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    set = (uint16_t) bmem->bstate.number;
+
+    if (!eval_token(','))
+        return false;
+
+    if (!eval_expr(TOKEN_STRING))
+        return false;
+
+    if (!eval_token(','))
+        return false;
+
+    char *key = 0;
+    if (bmem->bstate.do_eval)
+    {
+        key = string_dup(bmem->bstate.string);
+    }
+
+    if (!eval_expr(TOKEN_STRING))
+        return false;
+
+    if (brackets && !eval_token(')'))
+        return false;
+
+    if (bmem->bstate.do_eval)
+    {
+        // FIXME: Save to file after "DB ERASE / LIST" implementation
+        bdb_entry_set(set, string_cstr(key), bmem->bstate.string, false);
+    }
 
     return true;
 }
@@ -1753,6 +1792,7 @@ static bool eval_instruction()
            eval_rem() ||
            eval_dim() ||
            eval_list() ||
+           eval_put() ||
            eval_wifi() ||
            eval_minitel() ||
            eval_let();
