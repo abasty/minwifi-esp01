@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Alain Basty
+ * Copyright © 2023-2025 Alain Basty
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -42,6 +42,7 @@
 #include "eval.h"
 #include "bio.h"
 #include "os.h"
+#include "bdb.h"
 
 static inline void eval_input_mode(bool mode);
 static bool eval_string_tty();
@@ -127,6 +128,19 @@ uint8_t wifi_func[] = {
     TOKEN_KEYWORD_ERASE,
     TOKEN_KEYWORD_DISCONNECT,
     TOKEN_KEYWORD_STATUS,
+    0,
+};
+
+uint8_t minitel_func[] = {
+    TOKEN_KEYWORD_LIST,
+    TOKEN_KEYWORD_CONNECT,
+    TOKEN_KEYWORD_ERASE,
+    0,
+};
+
+uint8_t db_func[] = {
+    TOKEN_KEYWORD_LIST,
+    TOKEN_KEYWORD_ERASE,
     0,
 };
 
@@ -553,6 +567,39 @@ static bool eval_string_str()
     return true;
 }
 
+static bool eval_string_get()
+{
+    uint8_t set;
+
+    if (!eval_token(TOKEN_KEYWORD_GET))
+        return false;
+
+    bool brackets = eval_token('(');
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    set = (uint16_t) bmem->bstate.number;
+
+    if (!eval_token(','))
+        return false;
+
+    if (!eval_expr(TOKEN_STRING))
+        return false;
+
+    if (brackets && !eval_token(')'))
+        return false;
+
+    if (bmem->bstate.do_eval)
+    {
+        // Wifi password are write only
+        entry_t *entry = set == DB_WIFI_SET ? 0 : bdb_entry_get(set, string_cstr(bmem->bstate.string));
+        bmem->bstate.string = entry ? string_dup(entry->string) : bmem_string_alloc(0);
+    }
+
+    return true;
+}
+
 static bool eval_string_inkey()
 {
     if (!eval_token(TOKEN_KEYWORD_INKEY))
@@ -648,6 +695,7 @@ static bool eval_string_term()
         eval_string_chr() ||
         eval_string_tty() ||
         eval_string_str() ||
+        eval_string_get() ||
         eval_string_inkey() ||
         (eval_token('(') && eval_string_expr() && eval_token(')'));
 
@@ -840,6 +888,50 @@ static bool eval_dim()
     var = bmem_var_new(tmp, token, dim, dims);
     if (!var)
         bmem->bstate.error = BERROR_MEMORY;
+
+    return true;
+}
+
+static bool eval_put()
+{
+    uint8_t set;
+
+    if (!eval_token(TOKEN_KEYWORD_PUT))
+        return false;
+
+    bool brackets = eval_token('(');
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    set = (uint16_t) bmem->bstate.number;
+
+    if (!eval_token(','))
+        return false;
+
+    if (!eval_expr(TOKEN_STRING))
+        return false;
+
+    if (!eval_token(','))
+        return false;
+
+    char *key = 0;
+    if (bmem->bstate.do_eval)
+    {
+        key = string_dup(bmem->bstate.string);
+    }
+
+    if (!eval_expr(TOKEN_STRING))
+        return false;
+
+    if (brackets && !eval_token(')'))
+        return false;
+
+    if (bmem->bstate.do_eval)
+    {
+        bdb_entry_set(set, string_cstr(key), bmem->bstate.string, false);
+        os_db_save();
+    }
 
     return true;
 }
@@ -1177,18 +1269,24 @@ static void eval_reset()
 
 static void eval_free()
 {
-    hal_print_string("       sys  prog  vars  free\r\n");
-
     char info[40];
-    snprintf(info, sizeof(info), "l/v:       %5d %5d\r\n", bmem_line_count(), bmem_var_count());
+    hal_print_string("       sys  prog  vars    db       free\r\n");
+
+    snprintf(info, sizeof(info), "obj:       %5d %5d %5d\r\n",
+             bmem_line_count(), bmem_var_count(), bdb_entry_count());
     hal_print_string(info);
 
-    snprintf(info, sizeof(info), "Mem: %5d %5d %5d %5d\r\n",
+    // The info string is max 39 chars length
+    snprintf(info, sizeof(info), "mem: %5d %5d %5d %5d %5d+%4d",
              (int)(bmem->prog_start - (uint8_t *)bmem),
              (int)(bmem->prog_end - bmem->prog_start),
              (int)(bmem->vars_end - bmem->vars_start),
-             (int)(bmem->vars_start - bmem->strings_end));
+             (int)(bmem->db_end - bmem->db_start),
+             (int)(bmem->vars_start - bmem->strings_end),
+             (int)(BASTOS_DB_SIZE - (bmem->db_end - bmem->db_start)));
     hal_print_string(info);
+
+    hal_print_string("\r\n\r\n");
 }
 
 static void eval_bastos()
@@ -1198,8 +1296,9 @@ static void eval_bastos()
     hal_print_string(" Microcontroller (v1)\r\n Basic for Terminal Operating System\r\n on ");
     hal_print_oem_string();
     char info[64];
-    snprintf(info, sizeof(info), "\r\n\r\n (c) 2024-2025 ABa\r\n\r\n %d bytes free\r\n\r\n" CON,
-             (int)(bmem->vars_start - bmem->strings_end));
+    snprintf(info, sizeof(info), "\r\n\r\n (c) 2024-2025 ABa\r\n\r\n %d+%d bytes free\r\n\r\n" CON,
+             (int)(bmem->vars_start - bmem->strings_end),
+             (int)(BASTOS_DB_SIZE - (bmem->db_end - bmem->db_start)));
     hal_print_string(info);
 
     if (!eval_running())
@@ -1498,6 +1597,18 @@ static bool eval_wifi_list(void)
     return true;
 }
 
+static char *eval_get_ssid()
+{
+    if (bmem->bstate.token == TOKEN_NUMBER)
+    {
+        return bmem_ssid_get_from_id(bmem->bstate.number);
+    }
+    else
+    {
+        return string_cstr(bmem->bstate.string);
+    }
+}
+
 static bool eval_wifi_connect(void)
 {
     if (!eval_number() && !eval_string_const())
@@ -1506,18 +1617,14 @@ static bool eval_wifi_connect(void)
     if (!bmem->bstate.do_eval)
         return true;
 
-    int16_t net_id = -1;
-
-    if (bmem->bstate.token == TOKEN_NUMBER)
+    char *ssid = eval_get_ssid();
+    if (ssid == 0 || string_len(ssid) == 0)
     {
-        net_id = (int16_t)bmem->bstate.number;
-    }
-    else
-    {
-        net_id = os_wifi_get_id_from_ssid(string_cstr(bmem->bstate.string));
+        bmem->bstate.error = BERROR_WIFI;
+        return false;
     }
 
-    int ret = os_wifi_connect(net_id);
+    int ret = os_wifi_connect(ssid);
     if (ret < 0)
     {
         bmem->bstate.error = BERROR_WIFI;
@@ -1535,18 +1642,14 @@ static bool eval_wifi_erase(void)
     if (!bmem->bstate.do_eval)
         return true;
 
-    int16_t net_id = -1;
-
-    if (bmem->bstate.token == TOKEN_NUMBER)
+    char *ssid = eval_get_ssid();
+    if (ssid == 0 || string_len(ssid) == 0)
     {
-        net_id = (int16_t)bmem->bstate.number;
-    }
-    else
-    {
-        net_id = os_wifi_get_id_from_ssid(string_cstr(bmem->bstate.string));
+        bmem->bstate.error = BERROR_WIFI;
+        return false;
     }
 
-    int ret = os_wifi_erase(net_id);
+    int ret = os_wifi_erase(ssid);
     if (ret < 0)
     {
         bmem->bstate.error = BERROR_WIFI;
@@ -1580,14 +1683,11 @@ static bool eval_wifi()
         return false;
 
     uint8_t func = eval_token_one_of((char *)wifi_func);
-    if (func == 0)
-        return false;
+    if (func == 0 || func == TOKEN_KEYWORD_CONNECT)
+        return eval_wifi_connect();
 
     if (func == TOKEN_KEYWORD_LIST)
         return eval_wifi_list();
-
-    if (func == TOKEN_KEYWORD_CONNECT)
-        return eval_wifi_connect();
 
     if (func == TOKEN_KEYWORD_ERASE)
         return eval_wifi_erase();
@@ -1601,38 +1701,48 @@ static bool eval_wifi()
     return false;
 }
 
-static bool eval_connect()
+static void eval_copy_string(char *dst, char *src, uint16_t len)
 {
-    char name[16];
-    char *urn = 0;
+    strncpy(dst, src, len - 1);
+    dst[len - 1] = 0;
+}
 
-    if (!eval_token(TOKEN_KEYWORD_CONNECT))
-        return false;
+static bool eval_minitel_connect()
+{
+    char name[16] = "";
+    char *urn = 0;
+    int n = 1;
 
     if (!eval_string_expr())
         return false;
 
-    if (bmem->bstate.do_eval)
-    {
-        strncpy(name,  string_cstr(bmem->bstate.string), sizeof(name) - 1);
-        name[sizeof(name) - 1] = 0;
-    }
-
     if (eval_token(','))
     {
+        if (bmem->bstate.do_eval)
+        {
+            eval_copy_string(name, string_cstr(bmem->bstate.string), sizeof(name) - 1);
+        }
+
         if (!eval_string_expr())
             return false;
 
-        if (bmem->bstate.do_eval)
-        {
-            urn = string_cstr(bmem->bstate.string);
-        }
+        n++;
     }
 
     if (!bmem->bstate.do_eval)
         return true;
 
-    bmem->bstate.sock = os_connect(name, urn);
+    char *param = string_cstr(bmem->bstate.string);
+    if (n == 1 && !bdb_is_urn(param))
+    {
+        eval_copy_string(name, param, sizeof(name) - 1);
+    }
+    else
+    {
+        urn = param;
+    }
+
+    bmem->bstate.sock = os_minitel_connect(name, urn);
     if (bmem->bstate.sock < 0)
     {
         bmem->bstate.error = BERROR_SOCK;
@@ -1641,18 +1751,86 @@ static bool eval_connect()
     return bmem->bstate.sock >= 0;
 }
 
+static bool eval_db_list(uint8_t set)
+{
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    os_db_list(set);
+    return true;
+}
+
+static bool eval_db_erase(uint8_t set)
+{
+    if (!eval_expr(TOKEN_STRING))
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    os_db_erase(set, string_cstr(bmem->bstate.string));
+    return true;
+}
+
+static bool eval_db()
+{
+    if (!eval_token(TOKEN_KEYWORD_DB))
+        return false;
+
+    uint8_t func = eval_token_one_of((char *)db_func);
+    if (func == 0)
+        return false;
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    uint8_t set = (uint8_t) bmem->bstate.number;
+
+    if (func == TOKEN_KEYWORD_LIST)
+        return eval_db_list(set);
+
+    if (func == TOKEN_KEYWORD_ERASE)
+    {
+        if (!eval_token(','))
+            return false;
+
+        return eval_db_erase(set);
+    }
+
+    return false;
+}
+
+static bool eval_minitel()
+{
+    if (!eval_token(TOKEN_KEYWORD_MINITEL))
+        return false;
+
+    uint8_t func = eval_token_one_of((char *)minitel_func);
+    if (func == 0 || func == TOKEN_KEYWORD_CONNECT)
+        return eval_minitel_connect();
+
+    if (func == TOKEN_KEYWORD_LIST)
+        return eval_db_list(DB_MIN_SET);
+
+    if (func == TOKEN_KEYWORD_ERASE)
+        return eval_db_erase(DB_MIN_SET);
+
+    return false;
+}
+
 static bool eval_instruction()
 {
     return eval_print(false) ||
            eval_input() ||
            eval_simple_instruction() ||
            eval_rem() ||
-           eval_let() ||
            eval_dim() ||
            eval_list() ||
+           eval_put() ||
+           eval_db() ||
            eval_wifi() ||
-           eval_connect();
-    ;
+           eval_minitel() ||
+           eval_let();
 }
 
 static bool eval_if()

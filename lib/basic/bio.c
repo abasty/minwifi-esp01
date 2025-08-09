@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Alain Basty
+ * Copyright © 2023-2025 Alain Basty
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -35,6 +35,7 @@
 
 #include "berror.h"
 #include "bmemory.h"
+#include "bdb.h"
 #include "token.h"
 #include "eval.h"
 #include "bio.h"
@@ -46,6 +47,7 @@
 #include "string.c-static"
 #include "eval.c-static"
 #include "os.c-static"
+#include "bdb.c-static"
 
 void bastos_init(void)
 {

@@ -3,10 +3,14 @@
 ## Bugs
 
 * [ ] edition de ligne : gérer les séquences de caractères spéciaux (G2, G1)
+* [x] Crash avec connexion en boucle sur WS "3615" ou "hacker" (pages lourdes)
+  lorsque qu'on coupe la communication alors qu'on reçoit des données
+* [ ] Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
+  serveur Minitel.
 * [x] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
   même les chaines de caractères sont terminées par `\0`, notamment dans les
-  tableaux. Ce n'est pas compatibles avec le Basic ZX81 car on ne peut accéder
-  au dernier caractère (qui est forcément `\0`) => chaine de caractères
+  tableaux. Ce n'est pas compatible avec le Basic ZX81 car on ne peut accéder au
+  dernier caractère (qui est forcément `\0`) => chaine de caractères
   représentées par longueur (16 bits) + contenu
 
 ## Fonctionnalités
@@ -14,19 +18,20 @@
 * [x] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
   mode connecté / basic / boot au mode interactif)
 * [x] Augmenter la mémoire BASTOS (32KB), reste 12KB pour l'OS (wifi / db)
-* [ ] Uniquement majuscules en chiffres dans noms de serveur (pareil pour noms
-  de fichiers 8+3)
-* [ ] Config database, "key":"value", dans un espace protégé de `CLEAR` et `NEW`
-  (`HIMEM` ou zone mémoire). `PUT "key", "value"`, `GET "key"`, `KEY ERASE
-  "key"`
-* [ ] Passage de tous les paramètres de config en URN (y compris WiFi:
-  `wifi:ssid:secret:count:dbm`), sauvegarde de chaque enregistrement sur une
-  ligne. Les secrets peuvent être brouillés éventuellement.
-* [ ] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
+* [x] Commandes `DB`: `PUT <SET>, <KEY>, <VALUE>`, `GET$ <SET>, <KEY>` (Basic
+  VBA)
+* [x] `DB ERASE <SET>, <KEY>`, `DB LIST <SET>`
+* [x] L'OS se sert de la database pour stocker la config
+  * [x] Mettre en place la gestion de la mémoire DB
+  * [x] Gestion Wifi : sauvegarder les mots de passe avec comme clé le SSID
+  * [x] Gestion serveurs : clé=nom, valeur=urn
+* [x] Passage des paramètres de config en URN
+* [x] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
   urn)). `MINITEL LIST / ERASE / CONNECT <URN>|<NAME>|<ID>`
-* [ ] Voir si la config peut être juste un historique de commandes, ou des
-  variables basic cachées, ou de lignes basic cachées
 
+* [ ] Gérer l'historique avec la DB config
+* [ ] Ramener les variables OS dans le bstate
+* [ ] Uniquement majuscules noms de fichiers 8+3
 * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
 * [ ] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.BST` /
   `.BAS` ?
@@ -48,7 +53,6 @@
   `hal_print_*` sont remplacées par `os_print_*` ou `os_printf`. Ces dernières
   utilisent un buffer et `hal_print_buffer` ou, si OUTPUT est une variable,
   ajoute le buffer à la variable.
-* [ ] MODE
 * [ ] BIP, INV, NORM, CLEOL, AI, AN, REP, etc. (voir MIN).
 * [ ] con, coff, echo on/off
 * [ ] TAB
@@ -68,7 +72,11 @@
   seule commande print.
 * [ ] Ajouter edit, integration "edit_min" ?
 
-* [ ] PEEK (y compris variables OS ?) / POKE / USR
+* [ ] PEEK (y compris variables OS ?) / POKE / USR : adresses converties par
+  rapport au début du bloc (0 à 32K+4K). PEEK16 / POKE16. Les pointeurs
+  pourraient être à l'extérieur et dans le bstate on ne mettrait que des offsets
+  sur 16 bits => on pourrait modifier vars_start / vars_end. `@<VAR>`,
+  `@<LINE_NO>`, `@DB <SET>,<KEY>`
 
 * [x] `CONNECT` devrait suffire : TELNET / TELNET WS
 * ~~SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs~~
@@ -198,87 +206,59 @@ une fois avec succès, sont sauvegardés dans la configuration.
 ## BASTOS Uniform Resource Name
 
 Les URNs permettent de définir avec une chaîne de caractères les paramètres de
-connexion aux points d'accès WiFi, aux services Minitel réseau et aux sites FTP.
+connexion aux services Minitel réseau et aux sites FTP.
 
-| type  | syntaxe fichier et basic          |
-|-------|-----------------------------------|
-| wifi  | `wifi:ssid:secret:count`          |
-| tcp   | `tcp:name:host:port`              |
-| ws    | `ws:name:host:port:path`          |
-| wss   | `wss:name:host:port:path`         |
-| ftp   | `ftp:name:host:port:login:secret` |
+| type  | syntaxe fichier et basic     |
+|-------|------------------------------|
+| tcp   | `tcp:host:port`              |
+| ws    | `ws:host:port:path`          |
+| wss   | `wss:host:port:path`         |
+| ftp   | `ftp:host:port:login:pass`   |
 
-Les URNs sont sauvegardées dans le fichier de configuration à raison d'un par
-ligne. À son lancement, BASTOS lit la configuration depuis ce fichier et met à
-jour ses structures internes. Lors d'une connexion fructueuse à un réseau WiFi
-ou à un serveur, la configuration est automatiquement sauvegardée.
-
-Le stockage interne d'un URN est un buffer de caractères. Le premier octet
-désigne le nombre de parties dans l'URN. Chaque partie est séparée de la
-suivante par un `\0`. La dernière partie est terminée par `\0`.
-
-Fonctions de conversion / creation / suppression :
-
-```c
-char *os_urn_new(const char *urn_ext); // malloc et retourne format interne
-free() => libération
-snprintf() => Création URN externe
-```
-
-Fonctions de lecture d'une URN :
-
-Le pointeur courant et le nombre de parties restantes sont stockés dans des
-variables globales.
-
-```c
-uint8_t os_get_first(const char* urn); // Init des globales et renvoie os_get_next_int()
-char *os_get_next(void); // renvoie pointeur courant, avance pointeur courant
-int32_t os_get_next_int(void); // renvoie atoi(os_get_next())
-```
+À son lancement, BASTOS lit la configuration depuis le fichier `CONFIG.$$$` et
+met à jour ses structures internes. Lors d'une connexion fructueuse à un réseau
+WiFi ou à un serveur, la configuration est automatiquement sauvegardée.
 
 ## WiFi
 
-`WIFI LIST` : Scanne les réseaux WiFi et les affiche.
+`WIFI LIST` : Scanne les réseaux WiFi, les affiche et stocke les 10 premiers
+SSIDs dans le tableau Basic `DIM SSID$(10)`.
 
-Chaque réseau est précédé d'un numéro. Les réseaux connus sont affichés en
-premier, par ordre croissant de leur dBm. Les réseaux non connus sont affichés
-après, dans l'ordre de leur dBm. Les réseaux homonymes n'apparaissent qu'une
-fois.
+Chaque réseau est précédé d'un numéro indiquant son index dans `SSID$`.
 
 La liste (et son ordre) est retenue dans les variables OS.
 
 `WIFI CONNECT <SSID>|<N>` : Connexion à un réseau WiFi.
 
-Si `<N>`, on choisit le N-ème SSID dans la liste du scan (il faut avoir fait
-`WIFI LIST` avant ou avoir des réseaux connus dans la config).
+Si `<N>`, on choisit `SSID$(N)` comme SSID (il faut avoir fait `WIFI LIST`
+avant).
 
 Si le réseau n'est pas connu on demande le mot de passe en ligne 0. Si le réseau
 est connu, on utilise le mot de passe configuré. On tente alors une connexion
 sur l'AP désigné avec le mot de passe.
 
 Lors d'une connexion établie, on marque le réseau comme connu et on sauvegarde
-la configuration WiFi (si différente d'avant : mot de passe demandé, réseau
-nouvellement connu).
+la configuration WiFi. Si le réseau est connu mais la connexion échoue avec le
+mot de passe configuré, on supprime le réseau de la configuration (un mot de
+passe sera alors deandé à la prochaine tentative de connexion sur ce réseau).
 
 `WIFI ERASE` : Permet d'oublier un réseau connu.
 
 `WIFI DISCONNECT` : Déconnecte le WiFi.
 
 `WIFI STATUS` : Affiche des informations sur l'état du WiFi, l'adresse IP, le
-SSID connecté, etc.
+SSID connecté.
 
 ## Mode connecté
 
-ADU : Si WiFi n'est pas connecté, on peut essayer un `WIFI CONNECT 1` avant. Si
-cette dernière commande échoue, inutile de tenter une connexion réseau.
+`MINITEL [CONNECT] <URN>` ou `MINITEL [CONNECT] <NAME> [, <URN>]` : Supporte les
+protocoles : "tcp", "ws", "wss". Lors d'une connexion réussie, les paramètres de
+connexion sont sauvegardés dans la configuration sous le nom de serveur
+`<NAME>`. Si `<URN>` n'est pas spécifié, le serveur `<NAME>` est recherché dans
+la configuration et, s'il existe, les paramètres de connexion sauvegardés sont
+appliqués.
 
-`CONNECT <NAME> [, <URN>]` : Supporte les protocoles : "tcp", "ws", "wss". Lors
-d'une connexion réussie, les paramètres de connexion sont sauvegardés dans la
-configuration sous le nom de serveur `<NAME>`. Si `<URN>` n'est pas spécifié, le
-serveur `<NAME>` est recherché dans la configuration et, s'il existe, les
-paramètres de connexion sauvegardés sont appliqués.
-
-Si la connexion est acceptée, BASTOS passe en mode connecté : les caractères
+Si la connexion est réussie, BASTOS passe en mode connecté : les caractères
 arrivant depuis le serveur sont envoyés au Minitel (écran ou protocole) et les
 caractères arrivant depuis le Minitel (clavier ou protocole) sont transférés
 vers le serveur.
@@ -290,14 +270,12 @@ envoyé au terminal par l'OS, de façon à remettre le Minitel  en mode non
 connecté (ouverture du relais modem, lettre `F` affichée en ligne 0).
 
 Lors du passage du mode connecté au mode Basic, le programme en cours est
-continué (comme avec `CONT`). Si un programme n'est pas en cours, on revient
-simplement au Basic en mode interactif.
+continué (comme avec `CONT`). Si aucun programme n'est en cours, on revient
+simplement au mode interactif.
 
-`SERVER CONNECT` : Même commande que `CONNECT`.
+`MINITEL LIST` : Liste les serveurs par nom, urn
 
-`SERVER LIST` : Liste les serveurs par nom, urn
-
-`SERVER ERASE <NAME>` : Supprime un serveur de la config
+`MINITEL ERASE <NAME>` : Supprime un serveur de la config
 
 ## Téléchargement de fichier
 

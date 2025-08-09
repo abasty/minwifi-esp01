@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Alain Basty
+ * Copyright © 2023-2025 Alain Basty
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -38,28 +38,40 @@ extern "C" {
 #define ENC_NONE (7)
 #define ENC_AUTO (8)
 
-#define URN_PROTO_TCP  (0)
-#define URN_PROTO_WS   (1)
-#define URN_PROTO_WSS  (2)
-#define URN_PROTO_FTP  (3)
-
 #define NET_BUFFER_MAX (128)
+
+#define WIFI_SSID_ARRAY_SIZE (10)
+#define WIFI_SSID_MAX_SIZE (36)
+#define WIFI_SECRET_MAX_SIZE (64)
+
+#define URN_PROTO_NONE (0)
+#define URN_PROTO_TCP  (1)
+#define URN_PROTO_WS   (2)
+#define URN_PROTO_WSS  (3)
+#define URN_PROTO_FTP  (4)
 
 // OS main functions
 void os_setup(void);
 void os_loop(void);
 
+// OS config function
+void os_db_load(void);
+void os_db_save(void);
+
 // OS Wi-Fi functions
 void os_wifi_list(void);
-void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi);
-int16_t os_wifi_get_id_from_ssid(const char *ssid);
-int os_wifi_connect(int16_t net_id);
-int os_wifi_erase(int16_t net_id);
+void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t rssi);
+int os_wifi_connect(const char* ssid);
+int os_wifi_erase(const char* ssid);
 void os_wifi_status(void);
 void os_wifi_set_info(const char *ssid, const char *ip);
 
+// OS DB functions
+void os_db_list(uint8_t set);
+void os_db_erase(uint8_t set, const char *name);
+
 // OS network functions
-int os_connect(const char *name, const char* urn);
+int os_minitel_connect(const char *name, const char* urn);
 
 // OS keyboard functions
 uint8_t os_get_key(void);

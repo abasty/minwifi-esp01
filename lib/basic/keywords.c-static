@@ -73,4 +73,8 @@ static const char *keywords =
     "DISCONNEC""\xd4"
     "STATU""\xd3"
     "FT""\xd0"
+    "MINITE""\xcc"
+    "GET""\xa4"
+    "PU""\xd4"
+    "D""\xc2"
 ;

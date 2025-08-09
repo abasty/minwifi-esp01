@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Alain Basty
+ * Copyright © 2023-2025 Alain Basty
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -30,6 +30,7 @@
 
 #include "bmemory.h"
 #include "token.h"
+#include "os.h"
 
 bmem_t *bmem;
 
@@ -68,7 +69,6 @@ static char *bmem_string_alloc(uint16_t size)
 static var_t *bmem_var_alloc(uint8_t token, uint16_t size)
 {
     int psize = bmem_align4(size);
-    // printf("Allocating %d bytes\n", psize);
     if (bmem->vars_start - bmem->strings_end < psize)
         return 0;
 
@@ -321,7 +321,7 @@ static char *bmem_var_get_cstr_and_slice(const char *name, uint8_t *dim_count, u
     *len = 0;
 
     // Search simple string variable
-    var_t *var = bmem_var_get(name);
+    var_t *var = (tmp[0] & TOKEN_ARRAY_FLAG) == 0 ? bmem_var_get(name) : 0;
     if (var)
     {
         *len = string_len(var->string);
@@ -532,14 +532,46 @@ static uint16_t bmem_line_count()
     return count;
 }
 
+static const char BMEM_SSID[16] = { TOKEN_ARRAY_STRING, 'S', 'S', 'I', 'D', 0 };
+
+static char *bmem_ssid_get_from_id(int16_t id)
+{
+    uint8_t dim_count = 1;
+    uint32_t dims[B_DIM_MAX] = { id };
+    uint16_t len;
+
+    return bmem_var_get_cstr_and_slice(BMEM_SSID, &dim_count, dims, &len);
+}
+
+static var_t *bmem_ssid_array_new()
+{
+    uint8_t dim = 2;
+    uint32_t dims[B_DIM_MAX] = { WIFI_SSID_ARRAY_SIZE, WIFI_SSID_MAX_SIZE };
+
+    // Remove existing array
+    var_t *var = bmem_var_get(BMEM_SSID);
+    if (var)
+        bmem_var_unset(var);
+
+    // Create array
+    var = bmem_var_new(BMEM_SSID, (uint8_t) BMEM_SSID[0], dim, dims);
+    if (!var)
+        bmem->bstate.error = BERROR_MEMORY;
+
+    return var;
+}
+
 // Initialize the memory
 static void bmem_init(uint8_t *mem, uint16_t size)
 {
     // Init memory
     bmem = (bmem_t *) mem;
     memset(bmem, 0, size);
+    bmem->db_end = (uint8_t *) bmem + size;
+    bmem->db_start = bmem->db_end;
     bmem->prog_start = (uint8_t *) bmem + sizeof(bmem_t);
-    bmem->vars_end = (uint8_t *) bmem + size;
+    bmem->vars_end = (uint8_t *) bmem + size - BASTOS_DB_SIZE;
     bmem->bstate.sock = -1;
     bastos_prog_new();
+    os_db_load();
 }

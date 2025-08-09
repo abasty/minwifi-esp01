@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Alain Basty
+ * Copyright © 2023-2025 Alain Basty
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -50,6 +50,7 @@ File g_file0;
 int g_net_proto = -1;
 WiFiClient g_tcp_socket;
 WebSocketClient *g_web_socket = 0;
+static int g_web_socket_unread_bytes = 0;
 
 void hal_print_oem_string(void)
 {
@@ -176,7 +177,7 @@ int hal_wifi_scan()
     for (int i = 0; i < n; i++)
     {
         WiFi.getNetworkInfo(i, ssid, encryptionType, RSSI, BSSID, channel, isHidden);
-        os_wifi_add_network(ssid.c_str(), encryptionType, RSSI);
+        os_wifi_print_network(i + 1, ssid.c_str(), encryptionType, RSSI);
     }
     return n;
 }
@@ -219,6 +220,15 @@ bool hal_wifi_is_connected()
     return connected;
 }
 
+static void web_socket_terminate()
+{
+    g_web_socket->flush();
+    g_web_socket->stop();
+    delete g_web_socket;
+    g_web_socket = 0;
+    g_web_socket_unread_bytes = 0;
+}
+
 int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path)
 {
     g_net_proto = proto;
@@ -243,9 +253,7 @@ int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char*
         g_web_socket->begin(path);
         if (!g_web_socket->connected())
         {
-            g_web_socket->stop();
-            delete g_web_socket;
-            g_web_socket = 0;
+            web_socket_terminate();
             return -1;
         }
         return 0;
@@ -268,9 +276,7 @@ void hal_net_disconnect(int n)
     {
         if (g_web_socket && g_web_socket->connected())
         {
-            g_web_socket->stop();
-            delete g_web_socket;
-            g_web_socket = 0;
+            web_socket_terminate();
         }
     }
 
@@ -312,20 +318,19 @@ int hal_net_recv(int fd, uint8_t *buffer, int n)
     }
     if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
     {
-        static int unparsed = 0;
         if (!g_web_socket || !g_web_socket->connected())
-        return -1;
-        if (unparsed == 0)
+            return -1;
+        if (g_web_socket_unread_bytes == 0)
         {
-            unparsed = g_web_socket->parseMessage();
-            if (unparsed == 0)
+            g_web_socket_unread_bytes = g_web_socket->parseMessage();
+            if (g_web_socket_unread_bytes == 0)
                 return 0;
         }
-        if (n > unparsed)
+        if (n > g_web_socket_unread_bytes)
         {
-            n = unparsed;
+            n = g_web_socket_unread_bytes;
         }
-        unparsed -= n;
+        g_web_socket_unread_bytes -= n;
         return g_web_socket->read(buffer, n);
     }
     return -1;

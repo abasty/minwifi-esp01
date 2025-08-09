@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Alain Basty
+ * Copyright © 2023-2025 Alain Basty
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -26,6 +26,7 @@
 #include "bio.h"
 #include "bmemory.h"
 #include "os.h"
+#include "bdb.h"
 
 #ifdef MINITEL
 #include "tty-minitel.h"
@@ -36,317 +37,121 @@
 #define BASTOS_NETWORK_COUNT (20)
 #define BASTOS_SERVER_COUNT (20)
 
-#define WIFI_SSID_MAX_SIZE (36)
-#define WIFI_SECRET_MAX_SIZE (64)
-
 #define SERVER_NAME_MAX_SIZE (16)
 #define SERVER_HOST_MAX_SIZE (64)
 #define SERVER_PATH_MAX_SIZE (16)
 #define SERVER_LOGIN_MAX_SIZE (16)
 #define SERVER_SECRET_MAX_SIZE (64)
 
-typedef struct network_s
-{
-    int32_t dBm;                       // rssi in dBm
-    uint8_t encryption;                // Encryption
-    uint8_t count;                     // Count of sucessful connections
-    char ssid[WIFI_SSID_MAX_SIZE];     // ssid
-    char secret[WIFI_SECRET_MAX_SIZE]; // password / passphrase
-    bool available;                    // Available in last scan
-} network_t;
-
-typedef struct server_s
-{
-    int proto;                           // Protocol (TCP, WS, WSS, FTP)
-    int port;                            // Port number
-    char name[SERVER_NAME_MAX_SIZE];     // Name of the server
-    char host[SERVER_HOST_MAX_SIZE];     // IP address / hostname
-    char path[SERVER_PATH_MAX_SIZE];     // Path for WS/WSS
-    char login[SERVER_LOGIN_MAX_SIZE];   // Login for authentication
-    char secret[SERVER_SECRET_MAX_SIZE]; // Password for authentication
-} server_t;
-
 // OS WiFi variables
-int16_t g_net_count = 0;
-int16_t g_known_net_count = 0;
-network_t *g_net_store[BASTOS_NETWORK_COUNT + 1] = {0};
-int16_t g_net_connected_id = -1;
 char g_net_connected_ssid[20] = ""; // 20 first characters of SSID
 char g_net_connected_ip[16] = "";
 
-// OS Server variables
-// TODO: Order servers by protocol then by name
-server_t *g_server_store[BASTOS_NETWORK_COUNT] = {0};
-int16_t g_server_count = 0;
-// int16_t g_minitel_connected_id = -1;
-int16_t g_ftp_connected_id = -1;
-
-typedef int (*os_cell_compare_fn)(int16_t a, int16_t b);
-
-static void os_config_save(void)
+void os_db_save(void)
 {
     int fd = hal_open("CONFIG.$$$", B_CREAT | B_WRONLY);
     if (fd < 0)
         return;
 
-    hal_write(fd, &g_server_count, sizeof(g_server_count));
-    for (int16_t i = 0; i < g_server_count; i++)
-        hal_write(fd, g_server_store[i], sizeof(server_t));
-    for (int16_t i = 0; i < g_known_net_count; i++)
-        hal_write(fd, g_net_store[i], sizeof(network_t));
-    hal_close(fd);
-}
+    // Write DB size
+    uint16_t db_size = bmem->db_end - bmem->db_start;
+    if (hal_write(fd, &db_size, sizeof(db_size)) < 0) {
+        goto err;
+    }
 
-static int os_cell_compare_by_count(int16_t a, int16_t b)
-{
-    return g_net_store[a]->count - g_net_store[b]->count;
-}
+    // Write DB
+    if (hal_write(fd, bmem->db_start, db_size) < 0) {
+        goto err;
+    }
 
-static int os_cell_compare_by_dBm(int16_t a, int16_t b)
-{
-    return g_net_store[a]->dBm - g_net_store[b]->dBm;
-}
-
-static void os_sort_cells(void* array[], int16_t first, int16_t last, os_cell_compare_fn compare_fn)
-{
-    // Sort cells using bubble sort
-    for (int16_t i = first; i < last; i++)
-    {
-        for (int16_t j = i + 1; j <= last; j++)
-        {
-            if (compare_fn(i, j) < 0)
-            {
-                // Swap cells
-                void *temp = array[i];
-                array[i] = array[j];
-                array[j] = temp;
-            }
-        }
+err:
+    if (fd >= 0) {
+        hal_close(fd);
     }
 }
 
-static void os_wifi_sort_networks(void)
-{
-    os_sort_cells((void **)g_net_store, 0, g_net_count - 1, os_cell_compare_by_count);
-    os_sort_cells((void **)g_net_store, 0, g_known_net_count - 1, os_cell_compare_by_dBm);
-    os_sort_cells((void **)g_net_store, g_known_net_count, g_net_count - 1, os_cell_compare_by_dBm);
-}
-
-static network_t *os_wifi_new_network(const char *ssid, uint8_t encryption, int32_t rssi)
-{
-    if (g_net_count >= BASTOS_NETWORK_COUNT)
-        return 0;
-
-    network_t *new_net = (network_t *)malloc(sizeof(network_t));
-    if (!new_net)
-        return 0;
-
-    // Initialize the new network
-    new_net->dBm = rssi;
-    new_net->encryption = encryption;
-    new_net->count = 0;
-    new_net->available = false;
-    strncpy(new_net->ssid, ssid, sizeof(new_net->ssid) - 1);
-    new_net->ssid[sizeof(new_net->ssid) - 1] = '\0';
-    new_net->secret[0] = '\0';
-
-    // Add the new network to the store
-    g_net_store[g_net_count++] = new_net;
-
-    return new_net;
-}
-
-static int16_t os_find_server(const char *name)
-{
-    for (int16_t i = 0; i < g_server_count; i++)
-    {
-        if (g_server_store[i] && strcmp(g_server_store[i]->name, name) == 0)
-            return i;
-    }
-    return -1;
-}
-
-static server_t *os_new_server(server_t *server)
-{
-    if (g_server_count >= BASTOS_SERVER_COUNT)
-        return 0;
-
-    server_t *new_server = (server_t *)malloc(sizeof(server_t));
-    if (!new_server)
-        return 0;
-
-    if (server)
-    {
-        *new_server = *server;
-    }
-
-    g_server_store[g_server_count++] = new_server;
-    return new_server;
-}
-
-static void os_set_server(server_t *server)
-{
-    int16_t id = os_find_server(server->name);
-    if (id >= 0)
-    {
-        *g_server_store[id] = *server;
-    }
-    else
-    {
-        os_new_server(server);
-    }
-    os_config_save();
-}
-
-static void os_wifi_remove_all_networks(void)
-{
-    for (int16_t i = 0; i < g_net_count; i++)
-    {
-        free(g_net_store[i]);
-        g_net_store[i] = 0;
-    }
-    g_net_count = 0;
-    g_known_net_count = 0;
-}
-
-static void os_remove_all_servers(void)
-{
-    for (int16_t i = 0; i < g_server_count; i++)
-    {
-        free(g_server_store[i]);
-        g_server_store[i] = 0;
-    }
-    g_server_count = 0;
-}
-
-static void os_config_load(void)
+void os_db_load(void)
 {
     // Remove memory records
-    os_wifi_remove_all_networks();
-    os_remove_all_servers();
+    bmem_db_clear();
 
     int fd = hal_open("CONFIG.$$$", B_RDONLY);
     if (fd < 0)
         return;
 
-    // Read number of servers
-    int16_t n;
-    if (hal_read(fd, &n, sizeof(n)) != sizeof(n))
-        return;
+    // Read DB size
+    int16_t db_size;
+    if (hal_read(fd, &db_size, sizeof(db_size)) != sizeof(db_size))
+        goto finalize;
 
-    // Read server records from mass storage
-    server_t server;
-    for (int16_t i = 0; i < n; i++)
-    {
-        if (hal_read(fd, &server, sizeof(server_t)) != sizeof(server_t))
-            goto finalize;
-        if (os_new_server(&server) == 0)
-            goto finalize;
-    }
+    // Check DB size
+    if (db_size > BASTOS_DB_SIZE)
+        goto finalize;
 
-    // Read network records from mass storage
-    network_t net;
-    while (hal_read(fd, &net, sizeof(network_t)) == sizeof(network_t))
-    {
-        network_t *new_net = os_wifi_new_network(net.ssid, net.encryption, net.dBm);
-        if (new_net == 0)
-            goto finalize;
-        *new_net = net;
-        g_known_net_count++;
-    }
+    // Read DB records from mass storage
+    bmem->db_start = bmem->db_end - db_size;
+    hal_read(fd, bmem->db_start, db_size);
 
 finalize:
     hal_close(fd);
 }
 
-int16_t os_wifi_get_id_from_ssid(const char *ssid)
+/**
+ * @brief Print network and add it to SSID array
+ *
+ * @param i Index of the network in the list
+ * @param ssid SSID of the network
+ * @param encryption Encryption type (0: None, 1: WEP, 2: WPA, 3: WPA2)
+ * @param rssi Signal strength in dBm
+ */
+void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t rssi)
 {
-    for (int16_t i = 0; i < g_net_count; i++)
-    {
-        if (g_net_store[i] && strcmp(g_net_store[i]->ssid, ssid) == 0)
-        {
-            return i + 1; // Return ID starting from 1
-        }
-    }
-    return -1; // Not found
-}
 
-void os_wifi_add_network(const char *ssid, uint8_t encryption, int32_t rssi)
-{
-    // Check if the network already exists
-    int net_id = os_wifi_get_id_from_ssid(ssid);
-    network_t *net = (net_id > 0 && net_id <= g_net_count) ? g_net_store[net_id - 1] : 0;
-    if (net)
+    // Print the list of networks
+    hal_print_integer("%2d ", i);
+    hal_print_integer("%3d ", rssi);
+    hal_print_string(ssid);
+    hal_print_string("\r\n");
+
+    // Add the network to the SSID array (SSID$(i))
+    // Note: If i does not exist in the array, cstr is 0 and the SSID is not
+    // added to the array
+    uint16_t len = WIFI_SSID_MAX_SIZE;
+    char *cstr = bmem_ssid_get_from_id(i);
+    if (cstr)
     {
-        // Update existing network
-        net->available = true;
-        net->encryption = encryption;
-        net->dBm = rssi;
-        return;
+        strncpy(cstr, ssid, len - 1);
+        cstr[len - 1] = '\0';
     }
-    else
-    {
-        // If the network does not exist, create a new one
-        net = os_wifi_new_network(ssid, encryption, rssi);
-    }
-    net->available = true;
 }
 
 void os_wifi_list(void)
 {
     // Display scanning status
-    hal_print_string(LINE0 INV "Scanning..." CLEOL NORMAL "\n");
+    hal_print_string(LINE0 INV BLINK "Scanning..." CLEOL NORMAL "\n");
 
-    // Remove all networks that are not known
-    for (int16_t i = g_known_net_count; i < g_net_count; i++)
-    {
-        free(g_net_store[i]);
-        g_net_store[i] = 0;
-    }
-    g_net_count = g_known_net_count;
-
-    // Mark all networks as not available
-    for (int16_t i = 0; i < g_net_count; i++)
-    {
-        g_net_store[i]->available = false;
-    }
-
-    // Scan for Wi-Fi networks
-    hal_wifi_scan();
-
-    // Sort networks
-    os_wifi_sort_networks();
-
-    // Print the list of networks
+    // Scan and display Wi-Fi networks
+    bmem_ssid_array_new();
     hal_print_string("\r\n" INV "ID dBm SSID" CLEOL " " NORMAL "\r\n");
-    int n = 0;
-    for (int16_t i = 0; i < g_net_count; i++)
-    {
-        network_t *net = g_net_store[i];
-        if (!net->available)
-        {
-            hal_print_string(INK1);
-        }
-        n++;
-        hal_print_integer("%2d ", n);
-        hal_print_integer("%3d ", net->dBm);
-        hal_print_string(net->ssid);
-        hal_print_string(INK7 "\r\n");
-    }
+    int n = hal_wifi_scan();
+
     hal_print_integer("\r\n%d network(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
 }
 
-int os_wifi_connect(int16_t net_id)
+int os_wifi_connect(const char *ssid)
 {
-    if (net_id < 1 || net_id > g_net_count)
-        return -1;
+    bool known = false;
+    char secret[WIFI_SECRET_MAX_SIZE] = "";
 
-    network_t *net = g_net_store[net_id - 1];
-    if (!net)
-        return -1;
+    entry_t *entry = bdb_entry_get(DB_WIFI_SET, ssid);
+    if (entry)
+    {
+        strncpy(secret, string_cstr(entry->string), WIFI_SECRET_MAX_SIZE - 1);
+        secret[WIFI_SECRET_MAX_SIZE - 1] = 0;
+        known = true;
+    }
 
-    char secret[64];
-    if (net->count == 0)
+    if (!known)
     {
         hal_print_string(LINE0 INV "Password: " CLEOL);
         if (os_get_string(secret, sizeof(secret), '*') < 0)
@@ -355,57 +160,30 @@ int os_wifi_connect(int16_t net_id)
             return -1;
         }
     }
-    else
-    {
-        strncpy(secret, net->secret, sizeof(secret) - 1);
-        secret[sizeof(secret) - 1] = '\0';
-    }
     hal_print_string(LINE0 INV BLINK "Connecting to ");
-    hal_print_string(net->ssid);
+    hal_print_string(ssid);
     hal_print_string(CLEOL NORMAL "\n");
 
-    g_net_connected_id = -1;
-    int ret = hal_wifi_connect(net->ssid, secret);
+    int ret = hal_wifi_connect(ssid, secret);
     if (ret == 0)
     {
-        g_net_connected_id = net_id;
-        strncpy(net->secret, secret, sizeof(net->secret) - 1);
-        net->secret[sizeof(net->secret) - 1] = '\0';
-        if (net->count < 255)
+        if (!known)
         {
-            net->count++;
-            if (net->count == 1)
-                g_known_net_count++;
+            bdb_entry_set(DB_WIFI_SET, ssid, secret, true);
+            os_db_save();
         }
-        os_wifi_sort_networks();
-        os_config_save();
     }
+
 #ifdef MINITEL
     hal_print_string(LINE0 CLEOL "\r\n");
 #endif
     return ret;
 }
 
-int os_wifi_erase(int16_t net_id)
+int os_wifi_erase(const char *ssid)
 {
-    if (net_id < 1 || net_id > g_net_count)
-        return -1;
-
-    // Free the network and remove it from the store
-    free(g_net_store[net_id - 1]);
-
-    // Shift remaining networks down
-    for (int16_t i = net_id - 1; i < g_net_count - 1; i++)
-        g_net_store[i] = g_net_store[i + 1];
-
-    g_net_count--;
-    g_net_store[g_net_count] = 0;
-
-    if (net_id <= g_known_net_count)
-        g_known_net_count--;
-
-    os_config_save();
-
+    bdb_entry_set(DB_WIFI_SET, ssid, 0, true);
+    os_db_save();
     return 0;
 }
 
@@ -425,27 +203,57 @@ void os_wifi_set_info(const char *ssid, const char *ip)
 
 void os_wifi_status(void)
 {
-    hal_print_string("\r\n" INV "ID IP              SSID" CLEOL " " NORMAL "\r\n");
-    g_net_connected_id = hal_wifi_is_connected() ? g_net_connected_id : -1;
-    if (g_net_connected_id < 1)
+    hal_print_string("\r\n" INV "IP              SSID" CLEOL " " NORMAL "\r\n");
+    if (!hal_wifi_is_connected())
     {
-        hal_print_string("-- ---.---.---.--- Not connected");
+        hal_print_string("Not connected");
     }
     else
     {
-        if (g_net_connected_id > g_known_net_count)
-            hal_print_string("-- ");
-        else
-            hal_print_integer("%2d ", g_net_connected_id);
         hal_print_string(g_net_connected_ip);
-        // Print 16 - len(net->ip) spaces
         uint8_t len = strlen(g_net_connected_ip);
         for (int i = 16 - len; i > 0; i--)
             hal_print_string(" ");
         hal_print_string(g_net_connected_ssid);
-
     }
     hal_print_string("\r\n\r\n");
+}
+
+void os_db_list(uint8_t set)
+{
+    if (set != DB_WIFI_SET)
+        hal_print_string("\r\n" INV "Key      Value" CLEOL " " NORMAL "\r\n");
+    else
+        hal_print_string("\r\n" INV "SSID" CLEOL " " NORMAL "\r\n");
+
+    int n = 0;
+    entry_t *entry = bdb_entry_first();
+    while (entry)
+    {
+        if (entry->token == set)
+        {
+            char line[40];
+            if (set != DB_WIFI_SET)
+                snprintf(line, 40, "%-8.8s %-30.30s", entry->bytes + entry->name_ofs, string_cstr(entry->string));
+            else
+                snprintf(line, 40, "%-39.39s", entry->bytes + entry->name_ofs);
+            hal_print_string(line);
+            hal_print_string("\r\n");
+            n++;
+        }
+        entry = bdb_entry_next(entry);
+    }
+    hal_print_integer("\r\n%d record(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
+}
+
+void os_db_erase(uint8_t set, const char *name)
+{
+    entry_t *entry = bdb_entry_get(set, name);
+    if (entry)
+    {
+        bdb_entry_unset(entry);
+        os_db_save();
+    }
 }
 
 int os_get_string(char *buf, int size, char secret_char)
@@ -536,84 +344,31 @@ uint8_t os_get_key()
     return key;
 }
 
-// TODO: refactor URN management, save and close
-int os_connect(const char *name, const char* urn)
+int os_minitel_connect(const char *name, const char* urn)
 {
     int ret = -1;
-    const char *part = urn;
-    server_t server = {
-        .proto = -1,
-        .port = 80,
-        .path[0] = '\0',
-        .host[0] = '\0',
-        .name[0] = '\0',
-        .login[0] = '\0',
-    };
 
-    if (urn == 0)
-    {
-        int16_t id = os_find_server(name);
-        if (id < 0)
-            return -1;
-        server = *g_server_store[id];
-    }
-    else
-    {
-        // Get procol part
-        if (strncasecmp(urn, "tcp:", 4) == 0)
-        {
-            part += 4;
-            server.proto = URN_PROTO_TCP;
-        }
-        else if (strncasecmp(urn, "ws:", 3) == 0)
-        {
-            part += 3;
-            server.proto = URN_PROTO_WS;
-        }
-        else if (strncasecmp(urn, "wss:", 4) == 0)
-        {
-            part += 4;
-            server.proto = URN_PROTO_WSS;
-        }
+    // Get configuration if needed
+    entry_t *entry = bdb_entry_get(DB_MIN_SET, name);
+    bool known = entry != 0 && urn == 0;
+    urn = known ? string_cstr(entry->string) : urn;
+    if (!urn)
+        goto finalize;
 
-        if (server.proto < 0)
-            goto finalize;
+    split_t *split = bdb_urn_split(urn);
+    if (split->proto == 0)
+        goto finalize;
 
-        // Get host
-        const char *start = part;
-        while (*part != 0 && *part != ':')
-            part++;
-        // part refers to '\0' or ':'
-        if (part == start || (part - start) >= sizeof(server.host))
-            goto finalize;
-        strncpy(server.host, start, part - start);
-        server.host[part - start] = 0;
-
-        // Get port
-        if (*part == ':')
-        {
-            part++;
-            char *last;
-            server.port = strtoul(part, &last, 10);
-            part = last;
-
-            // Get path
-            if (*part == ':')
-            {
-                part++;
-                strncpy(server.path, part, SERVER_PATH_MAX_SIZE - 1);
-                server.path[SERVER_PATH_MAX_SIZE - 1] = '\0';
-            }
-        }
-    }
     // Connect to the host
-    ret = hal_net_connect(server.proto, server.host, server.port, server.path);
+    ret = hal_net_connect(split->proto, split->parts[URN_PART_HOST], split->port, split->parts[URN_PART_PATH]);
     if (ret >= 0)
     {
-        strncpy(server.name, name, SERVER_NAME_MAX_SIZE - 1);
-        server.name[SERVER_NAME_MAX_SIZE - 1] = '\0';
-        os_set_server(&server);
         hal_print_string(P_ROULEAU_OFF);
+        if (!known && *name)
+        {
+            bdb_entry_set(DB_MIN_SET, name, (char*) urn, true);
+            os_db_save();
+        }
     }
 
 finalize:
@@ -724,9 +479,6 @@ void os_loop()
 
 void os_setup(void)
 {
-    // Load config
-    os_config_load();
-
     // Init Basic and display BASTOS banner
     bastos_init();
     bastos_send_keys("bastos\n", 7, false);

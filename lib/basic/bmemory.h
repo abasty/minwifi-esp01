@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Alain Basty
+ * Copyright © 2023-2025 Alain Basty
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -32,7 +32,9 @@
 #include "eval.h"
 
 #define BASTOS_MEMORY_SIZE_KB (32)
-#define BASTOS_MEMORY_SIZE (BASTOS_MEMORY_SIZE_KB * 1024)
+#define BASTOS_DB_SIZE_KB (4)
+#define BASTOS_DB_SIZE (BASTOS_DB_SIZE_KB * 1024)
+#define BASTOS_MEMORY_SIZE ((BASTOS_MEMORY_SIZE_KB + BASTOS_DB_SIZE_KB) * 1024)
 #define BASTOS_MEMORY_ALIGN (sizeof(uint32_t))
 #define IO_BUFFER_SIZE  (128)
 #define TOKEN_LINE_SIZE (128)
@@ -92,6 +94,8 @@ typedef struct {
     uint8_t *strings_end;
     uint8_t *vars_start;
     uint8_t *vars_end;
+    uint8_t *db_start;
+    uint8_t *db_end;
     eval_state_t bstate;
     loop_t loops['Z' - 'A' + 1];
     return_t returns[EVAL_RETURNS_SIZE];
@@ -118,8 +122,9 @@ static var_t *bmem_var_next(var_t *var);
 static char *bmem_string_alloc(uint16_t size);
 static void bmem_strings_clear();
 
-static char *string_cstr(char *string);
-static int string_len(char *string);
+static char *string_cstr(const char *string);
+static int string_len(const char *string);
+static char *string_dup(const char *string);
 static void string_slice(char **string, uint16_t start, uint16_t end);
 static void string_concat(char **string1, char *string2);
 
