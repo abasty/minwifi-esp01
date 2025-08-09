@@ -86,6 +86,8 @@ disconnect
 status
 ftp
 minitel
+get$
+put
 EOF
 
 # Do not sort to preserve save/load compatibility

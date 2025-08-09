@@ -561,6 +561,44 @@ static bool eval_string_str()
     return true;
 }
 
+static bool eval_string_get()
+{
+    uint8_t set;
+
+    if (!eval_token(TOKEN_KEYWORD_GET))
+        return false;
+
+    bool brackets = eval_token('(');
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    set = (uint16_t) bmem->bstate.number;
+
+    if (!eval_token(','))
+        return false;
+
+    if (!eval_expr(TOKEN_STRING))
+        return false;
+
+    if (brackets && !eval_token(')'))
+        return false;
+
+    if (bmem->bstate.do_eval)
+    {
+        // Wifi password are write only
+        entry_t *entry = set == DB_WIFI_SET ? 0 : bdb_entry_get(set, string_cstr(bmem->bstate.string));
+        uint16_t len = entry ? string_len(entry->string) : 0;
+        bmem->bstate.string = bmem_string_alloc(len);
+        if (!bmem->bstate.string)
+            return false;
+        if (entry)
+            memcpy(string_cstr(bmem->bstate.string), string_cstr(entry->string), len);
+    }
+
+    return true;
+}
+
 static bool eval_string_inkey()
 {
     if (!eval_token(TOKEN_KEYWORD_INKEY))
@@ -656,6 +694,7 @@ static bool eval_string_term()
         eval_string_chr() ||
         eval_string_tty() ||
         eval_string_str() ||
+        eval_string_get() ||
         eval_string_inkey() ||
         (eval_token('(') && eval_string_expr() && eval_token(')'));
 
