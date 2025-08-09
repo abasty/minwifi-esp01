@@ -3,12 +3,14 @@
 ## Bugs
 
 * [ ] edition de ligne : gérer les séquences de caractères spéciaux (G2, G1)
-* [ ] Memory leak quand on enchaine connexions et déconnexions à un serveur
-  Minitel.
+* [x] Crash avec connexion en boucle sur WS "3615" ou "hacker" (pages lourdes)
+  lorsque qu'on coupe la communication alors qu'on reçoit des données
+* [ ] Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
+  serveur Minitel.
 * [x] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
   même les chaines de caractères sont terminées par `\0`, notamment dans les
-  tableaux. Ce n'est pas compatibles avec le Basic ZX81 car on ne peut accéder
-  au dernier caractère (qui est forcément `\0`) => chaine de caractères
+  tableaux. Ce n'est pas compatible avec le Basic ZX81 car on ne peut accéder au
+  dernier caractère (qui est forcément `\0`) => chaine de caractères
   représentées par longueur (16 bits) + contenu
 
 ## Fonctionnalités
@@ -16,8 +18,8 @@
 * [x] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
   mode connecté / basic / boot au mode interactif)
 * [x] Augmenter la mémoire BASTOS (32KB), reste 12KB pour l'OS (wifi / db)
-* [ ] Config database, "key":"value", dans un espace protégé de `CLEAR` et `NEW`
-  (`HIMEM` ou zone mémoire). `PUT "key", "value"`, `GET "key"`, `KEY ERASE
+* [ ] Config database, set, "key":"value", dans un espace protégé de `CLEAR` et `NEW`
+  (`HIMEM` ou zone mémoire). `DB PUT set, "key", "value"`, `DB GET set, "key"`, `DB ERASE
   "key"`.
 * [x] L'OS se sert de la database pour stocker la config
   * [x] Mettre en place la gestion de la mémoire DB
