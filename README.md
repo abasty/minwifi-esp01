@@ -18,9 +18,9 @@
 * [x] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
   mode connecté / basic / boot au mode interactif)
 * [x] Augmenter la mémoire BASTOS (32KB), reste 12KB pour l'OS (wifi / db)
-* [ ] Config database, set, "key":"value", dans un espace protégé de `CLEAR` et `NEW`
-  (`HIMEM` ou zone mémoire). `DB PUT set, "key", "value"`, `DB GET set, "key"`, `DB ERASE
-  "key"`.
+* [x] Commandes `DB`: `PUT <SET>, <KEY>, <VALUE>`, `GET$ <SET>, <KEY>` (Basic
+  VBA)
+* [x] `DB ERASE <SET>, <KEY>`, `DB LIST <SET>`
 * [x] L'OS se sert de la database pour stocker la config
   * [x] Mettre en place la gestion de la mémoire DB
   * [x] Gestion Wifi : sauvegarder les mots de passe avec comme clé le SSID
@@ -53,7 +53,6 @@
   `hal_print_*` sont remplacées par `os_print_*` ou `os_printf`. Ces dernières
   utilisent un buffer et `hal_print_buffer` ou, si OUTPUT est une variable,
   ajoute le buffer à la variable.
-* [ ] MODE
 * [ ] BIP, INV, NORM, CLEOL, AI, AN, REP, etc. (voir MIN).
 * [ ] con, coff, echo on/off
 * [ ] TAB

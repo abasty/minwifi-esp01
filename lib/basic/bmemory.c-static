@@ -573,5 +573,5 @@ static void bmem_init(uint8_t *mem, uint16_t size)
     bmem->vars_end = (uint8_t *) bmem + size - BASTOS_DB_SIZE;
     bmem->bstate.sock = -1;
     bastos_prog_new();
-    os_config_load();
+    os_db_load();
 }

@@ -76,3 +76,4 @@
 #define TOKEN_KEYWORD_MINITEL ((uint8_t) (74 | 0b10000000))
 #define TOKEN_KEYWORD_GET ((uint8_t) (75 | 0b10000000))
 #define TOKEN_KEYWORD_PUT ((uint8_t) (76 | 0b10000000))
+#define TOKEN_KEYWORD_DB ((uint8_t) (77 | 0b10000000))

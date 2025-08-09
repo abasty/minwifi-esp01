@@ -138,6 +138,12 @@ uint8_t minitel_func[] = {
     0,
 };
 
+uint8_t db_func[] = {
+    TOKEN_KEYWORD_LIST,
+    TOKEN_KEYWORD_ERASE,
+    0,
+};
+
 static void running_state_clear()
 {
     bmem->bstate.pc = 0;
@@ -923,8 +929,8 @@ static bool eval_put()
 
     if (bmem->bstate.do_eval)
     {
-        // FIXME: Save to file after "DB ERASE / LIST" implementation
         bdb_entry_set(set, string_cstr(key), bmem->bstate.string, false);
+        os_db_save();
     }
 
     return true;
@@ -1766,6 +1772,34 @@ static bool eval_db_erase(uint8_t set)
     return true;
 }
 
+static bool eval_db()
+{
+    if (!eval_token(TOKEN_KEYWORD_DB))
+        return false;
+
+    uint8_t func = eval_token_one_of((char *)db_func);
+    if (func == 0)
+        return false;
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    uint8_t set = (uint8_t) bmem->bstate.number;
+
+    if (func == TOKEN_KEYWORD_LIST)
+        return eval_db_list(set);
+
+    if (func == TOKEN_KEYWORD_ERASE)
+    {
+        if (!eval_token(','))
+            return false;
+
+        return eval_db_erase(set);
+    }
+
+    return false;
+}
+
 static bool eval_minitel()
 {
     if (!eval_token(TOKEN_KEYWORD_MINITEL))
@@ -1793,6 +1827,7 @@ static bool eval_instruction()
            eval_dim() ||
            eval_list() ||
            eval_put() ||
+           eval_db() ||
            eval_wifi() ||
            eval_minitel() ||
            eval_let();

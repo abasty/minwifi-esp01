@@ -47,7 +47,7 @@
 char g_net_connected_ssid[20] = ""; // 20 first characters of SSID
 char g_net_connected_ip[16] = "";
 
-static void os_config_save(void)
+void os_db_save(void)
 {
     int fd = hal_open("CONFIG.$$$", B_CREAT | B_WRONLY);
     if (fd < 0)
@@ -70,7 +70,7 @@ err:
     }
 }
 
-void os_config_load(void)
+void os_db_load(void)
 {
     // Remove memory records
     bmem_db_clear();
@@ -170,13 +170,8 @@ int os_wifi_connect(const char *ssid)
         if (!known)
         {
             bdb_entry_set(DB_WIFI_SET, ssid, secret, true);
-            os_config_save();
+            os_db_save();
         }
-    }
-    else if (entry)
-    {
-        bdb_entry_unset(entry);
-        os_config_save();
     }
 
 #ifdef MINITEL
@@ -188,7 +183,7 @@ int os_wifi_connect(const char *ssid)
 int os_wifi_erase(const char *ssid)
 {
     bdb_entry_set(DB_WIFI_SET, ssid, 0, true);
-    os_config_save();
+    os_db_save();
     return 0;
 }
 
@@ -226,7 +221,11 @@ void os_wifi_status(void)
 
 void os_db_list(uint8_t set)
 {
-    hal_print_string("\r\n" INV "Name     URN" CLEOL " " NORMAL "\r\n");
+    if (set != DB_WIFI_SET)
+        hal_print_string("\r\n" INV "Key      Value" CLEOL " " NORMAL "\r\n");
+    else
+        hal_print_string("\r\n" INV "SSID" CLEOL " " NORMAL "\r\n");
+
     int n = 0;
     entry_t *entry = bdb_entry_first();
     while (entry)
@@ -234,21 +233,27 @@ void os_db_list(uint8_t set)
         if (entry->token == set)
         {
             char line[40];
-            snprintf(line, 40, "%-8.8s %-30.30s", entry->bytes + entry->name_ofs, string_cstr(entry->string));
+            if (set != DB_WIFI_SET)
+                snprintf(line, 40, "%-8.8s %-30.30s", entry->bytes + entry->name_ofs, string_cstr(entry->string));
+            else
+                snprintf(line, 40, "%-39.39s", entry->bytes + entry->name_ofs);
             hal_print_string(line);
             hal_print_string("\r\n");
             n++;
         }
         entry = bdb_entry_next(entry);
     }
-    hal_print_integer("\r\n%d servers(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
+    hal_print_integer("\r\n%d record(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
 }
 
 void os_db_erase(uint8_t set, const char *name)
 {
     entry_t *entry = bdb_entry_get(set, name);
     if (entry)
+    {
         bdb_entry_unset(entry);
+        os_db_save();
+    }
 }
 
 int os_get_string(char *buf, int size, char secret_char)
@@ -362,7 +367,7 @@ int os_minitel_connect(const char *name, const char* urn)
         if (!known && *name)
         {
             bdb_entry_set(DB_MIN_SET, name, (char*) urn, true);
-            os_config_save();
+            os_db_save();
         }
     }
 

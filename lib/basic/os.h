@@ -55,7 +55,8 @@ void os_setup(void);
 void os_loop(void);
 
 // OS config function
-void os_config_load(void);
+void os_db_load(void);
+void os_db_save(void);
 
 // OS Wi-Fi functions
 void os_wifi_list(void);

@@ -14,7 +14,7 @@ wifi list     | 446835
 
 -110 KB
 
-## DB
+## WIFI / MINITEL dans DB
 
 implem        | flash  | RAM ESP
 --------------|--------|---------
@@ -29,3 +29,10 @@ Passage en DB + URN :
 
 * 1316 octets gagnés en flash
 * 640 octets gagnés en RAM
+
+## Généralisation DB : PUT / GET / LIST / ERASE
+
+Avec set 255 (WIFI) en write only.
+
+Flash: 340907 (+984 octets sans instructions DB, -332 par rapport à l'implem
+initiale, sans DB, sans URN).

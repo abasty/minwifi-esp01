@@ -76,4 +76,5 @@ static const char *keywords =
     "MINITE""\xcc"
     "GET""\xa4"
     "PU""\xd4"
+    "D""\xc2"
 ;
