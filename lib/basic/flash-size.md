@@ -34,5 +34,5 @@ Passage en DB + URN :
 
 Avec set 255 (WIFI) en write only.
 
-Flash: 340907 (+984 octets sans instructions DB, -332 par rapport à l'implem
+Flash: 340899 (+976 octets sans instructions DB, -340 par rapport à l'implem
 initiale, sans DB, sans URN).
