@@ -77,4 +77,6 @@ static const char *keywords =
     "GET""\xa4"
     "PU""\xd4"
     "D""\xc2"
+    "DOW""\xce"
+    "U""\xd0"
 ;

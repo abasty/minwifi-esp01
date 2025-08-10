@@ -283,18 +283,18 @@ Le téléchargement permet de charger un fichier depuis le réseau et de le plac
 sur le disque. Le téléversement permet d'envoyer un fichier depuis le disque
 vers le réseau.
 
-* `FTP LIST`
+* `FTP LIST` : Liste les sites FTP configurés
 
-* `FTP CONNECT <URN>|<ID>|<NAME>` : Établit une connexion avec un serveur FTP.
-  `<URN>` est de la forme `host:port:login:password`.
+* `FTP [CONNECT] <URN>|<NAME>` : Établit une connexion avec un serveur FTP.
+  `<URN>` est de la forme `ftp:host:port:path:login:password`.
 
 * `FTP CAT` : Liste les fichiers du serveur ftp.
 
-* `FTP DOWNLOAD <FILENAME>` : Télécharge un ficher depuis le serveur FTP vers le
+* `FTP DOWN <FILENAME>` : Télécharge un ficher depuis le serveur FTP vers le
   disque A local.
 
-* `FTP UPLOAD <FILENAME>` : Téléverse un fichier depuis le disque A local vers
-  le serveur FTP.
+* `FTP UP <FILENAME>` : Téléverse un fichier depuis le disque A local vers le
+  serveur FTP.
 
 * `FTP DISCONNECT` : Déconnecte le serveur FTP.
 

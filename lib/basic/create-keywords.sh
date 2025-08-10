@@ -89,6 +89,8 @@ minitel
 get$
 put
 db
+down
+up
 EOF
 
 # Do not sort to preserve save/load compatibility
