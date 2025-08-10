@@ -1831,6 +1831,61 @@ static bool eval_minitel()
     return false;
 }
 
+// FIXME: Implement eval_connect() / os_connect() / hal_connect() with a <SET>
+// parameter: MINITEL CONNECT and FTP CONNECT should use the same code.
+// Use string_dup() insteed of eval_string_copy()
+static bool eval_ftp_connect()
+{
+    char name[16] = "";
+    char *urn = 0;
+    int n = 1;
+
+    if (!eval_string_expr())
+        return false;
+
+    if (eval_token(','))
+    {
+        if (bmem->bstate.do_eval)
+        {
+            eval_copy_string(name, string_cstr(bmem->bstate.string), sizeof(name) - 1);
+        }
+
+        if (!eval_string_expr())
+            return false;
+
+        n++;
+    }
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    char *param = string_cstr(bmem->bstate.string);
+    if (n == 1 && !bdb_is_urn(param))
+    {
+        eval_copy_string(name, param, sizeof(name) - 1);
+    }
+    else
+    {
+        urn = param;
+    }
+
+    // bmem->bstate.sock = os_minitel_connect(name, urn);
+    // if (bmem->bstate.sock < 0)
+    // {
+    //     bmem->bstate.error = BERROR_SOCK;
+    // }
+
+    // return bmem->bstate.sock >= 0;
+
+    if (*name)
+    {
+        bdb_entry_set(DB_FTP_SET, name, (char*) urn, true);
+        os_db_save();
+    }
+
+    return true;
+}
+
 static bool eval_ftp()
 {
     if (!eval_token(TOKEN_KEYWORD_FTP))
@@ -1838,13 +1893,13 @@ static bool eval_ftp()
 
     uint8_t func = eval_token_one_of((char *)ftp_func);
     if (func == 0 || func == TOKEN_KEYWORD_CONNECT)
-        return true;
+        return eval_ftp_connect();
 
     if (func == TOKEN_KEYWORD_LIST)
-        return true;
+        return eval_db_list(DB_FTP_SET);
 
     if (func == TOKEN_KEYWORD_ERASE)
-        return true;
+        return eval_db_erase(DB_FTP_SET);
 
     if (func == TOKEN_KEYWORD_DISCONNECT)
         return true;

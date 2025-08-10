@@ -285,8 +285,9 @@ vers le réseau.
 
 * `FTP LIST` : Liste les sites FTP configurés
 
-* `FTP [CONNECT] <URN>|<NAME>` : Établit une connexion avec un serveur FTP.
-  `<URN>` est de la forme `ftp:host:port:path:login:password`.
+* `FTP [CONNECT] <URN>` ou `FTP [CONNECT] <NAME> [, <URN>]` : Établit une
+  connexion avec un serveur FTP. `<URN>` est de la forme
+  `ftp:host:port:path:login:password`.
 
 * `FTP CAT` : Liste les fichiers du serveur ftp.
 
