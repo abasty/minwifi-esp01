@@ -219,12 +219,7 @@ char *untokenize(uint8_t *input)
                 hal_print_string(" ");
             }
             untokenize_keyword(&state, keywords);
-            if (token == TOKEN_KEYWORD_REM)
-            {
-                hal_print_string((char *)state.read_ptr);
-                state.read_ptr += strlen((char *)state.read_ptr);
-            }
-            else if (*state.read_ptr != '(' && token != TOKEN_KEYWORD_PI && token != TOKEN_KEYWORD_RND)
+            if (*state.read_ptr != '(' && token != TOKEN_KEYWORD_PI && token != TOKEN_KEYWORD_RND)
             {
                 hal_print_string(" ");
             }
@@ -292,11 +287,6 @@ int8_t tokenize(tokenizer_state_t *state, char *input)
 
     while ((c = *state->read_ptr))
     {
-        if (instr_keyword == TOKEN_KEYWORD_REM)
-        {
-            while ((*state->write_ptr++ = *state->read_ptr++)) {};
-            continue;
-        }
         // first char => type
         if (c == ' ')
         {

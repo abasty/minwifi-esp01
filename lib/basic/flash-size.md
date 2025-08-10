@@ -36,3 +36,10 @@ Avec set 255 (WIFI) en write only.
 
 Flash: 340899 (+976 octets sans instructions DB, -340 par rapport à l'implem
 initiale, sans DB, sans URN).
+
+## REM "string"
+
+`REM` n'est plus une exception : le commentaire est une chaine de caractères
+constante.
+
+Flash : 340819 (-80 octets)

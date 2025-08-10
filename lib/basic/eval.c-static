@@ -1583,7 +1583,8 @@ static bool eval_rem()
     if (!eval_token(TOKEN_KEYWORD_REM))
         return false;
 
-    bmem->bstate.read_ptr = bmem->bstate.prog->line + bmem->bstate.prog->len;
+    if (!eval_string_const())
+        return false;
 
     return true;
 }
