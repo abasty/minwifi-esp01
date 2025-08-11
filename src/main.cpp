@@ -26,6 +26,7 @@
 #include <ESP8266WiFi.h>
 #include <LittleFS.h>
 #include <ArduinoHttpClient.h>
+#include <FTPClient.h>
 
 #ifdef MINITEL
 #include "tty-minitel.h"
@@ -46,11 +47,12 @@ const int relayPin = 12;
 const int ledPin = 13;
 
 // Files and sockets
-File g_file0;
-int g_net_proto = -1;
-WiFiClient g_tcp_socket;
-WebSocketClient *g_web_socket = 0;
+static File g_file0;
+static int g_net_proto = -1;
+static WiFiClient g_tcp_socket;
+static WebSocketClient *g_web_socket = 0;
 static int g_web_socket_unread_bytes = 0;
+static FTPClient g_ftp_client;
 
 void hal_print_oem_string(void)
 {

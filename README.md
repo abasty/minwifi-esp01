@@ -3,10 +3,10 @@
 ## Bugs
 
 * [ ] edition de ligne : gérer les séquences de caractères spéciaux (G2, G1)
+* [ ] Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
+  serveur Minitel. Voir avec une websocket statique (pas de new / delete)
 * [x] Crash avec connexion en boucle sur WS "3615" ou "hacker" (pages lourdes)
   lorsque qu'on coupe la communication alors qu'on reçoit des données
-* [ ] Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
-  serveur Minitel.
 * [x] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
   même les chaines de caractères sont terminées par `\0`, notamment dans les
   tableaux. Ce n'est pas compatible avec le Basic ZX81 car on ne peut accéder au
@@ -27,7 +27,18 @@
   * [x] Gestion serveurs : clé=nom, valeur=urn
 * [x] Passage des paramètres de config en URN
 * [x] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
-  urn)). `MINITEL LIST / ERASE / CONNECT <URN>|<NAME>|<ID>`
+  urn)). `MINITEL LIST / ERASE / [CONNECT] [<URN>] [,] [<NAME>]`
+* [x] Caractères spéciaux dans chaines de caractères ("\n \x41 \"" ...)
+* [ ] FTP (https://github.com/Exocet22/TinyFTPClient / MIT)
+  * [x] Implémenter DB FTP (set 253), `FTP LIST, FTP ERASE`
+  * [x] Intégrer TinyFTPClient dans les sources du projet
+  * [ ] SPIFS => LittleFS
+  * [ ] Généraliser os_net_connect, passer le `split_t` en paramètre
+  * [ ] `FTP CONNECT/DISCONNECT`
+  * [ ] `FTP CAT`
+  * [ ] `FTP UP/DOWN`
+  * [ ] Optimisation (retrait des commandes qu'on utilise pas, etc)
+* [ ] Load/Save ASCII
 
 * [ ] Gérer l'historique avec la DB config
 * [ ] Ramener les variables OS dans le bstate
