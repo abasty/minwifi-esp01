@@ -36,6 +36,10 @@ extern bmem_t *bmem;
 
 static bool bdb_is_urn(char* str)
 {
+    if (!str)
+        return false;
+
+    str  = string_cstr(str);
     while (*str)
     {
         if (*str++ == ':')

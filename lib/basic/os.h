@@ -71,7 +71,7 @@ void os_db_list(uint8_t set);
 void os_db_erase(uint8_t set, const char *name);
 
 // OS network functions
-int os_minitel_connect(const char *name, const char* urn);
+int os_connect(uint8_t set, const char *name, const char* urn);
 
 // OS keyboard functions
 uint8_t os_get_key(void);

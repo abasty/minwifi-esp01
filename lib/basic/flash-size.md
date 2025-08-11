@@ -43,3 +43,5 @@ initiale, sans DB, sans URN).
 constante.
 
 Flash : 340819 (-80 octets)
+
+# FTP commands w/o FTP client

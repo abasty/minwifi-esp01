@@ -140,7 +140,7 @@ void os_wifi_list(void)
 
 int os_wifi_connect(const char *ssid)
 {
-    bool known = false;
+    bool use_db = false;
     char secret[WIFI_SECRET_MAX_SIZE] = "";
 
     entry_t *entry = bdb_entry_get(DB_WIFI_SET, ssid);
@@ -148,10 +148,10 @@ int os_wifi_connect(const char *ssid)
     {
         strncpy(secret, string_cstr(entry->string), WIFI_SECRET_MAX_SIZE - 1);
         secret[WIFI_SECRET_MAX_SIZE - 1] = 0;
-        known = true;
+        use_db = true;
     }
 
-    if (!known)
+    if (!use_db)
     {
         hal_print_string(LINE0 INV "Password: " CLEOL);
         if (os_get_string(secret, sizeof(secret), '*') < 0)
@@ -167,7 +167,7 @@ int os_wifi_connect(const char *ssid)
     int ret = hal_wifi_connect(ssid, secret);
     if (ret == 0)
     {
-        if (!known)
+        if (!use_db)
         {
             bdb_entry_set(DB_WIFI_SET, ssid, secret, true);
             os_db_save();
@@ -344,14 +344,14 @@ uint8_t os_get_key()
     return key;
 }
 
-int os_minitel_connect(const char *name, const char* urn)
+int os_connect(uint8_t set, const char *name, const char* urn)
 {
     int ret = -1;
 
     // Get configuration if needed
-    entry_t *entry = bdb_entry_get(DB_MIN_SET, name);
-    bool known = entry != 0 && urn == 0;
-    urn = known ? string_cstr(entry->string) : urn;
+    entry_t *entry = name ? bdb_entry_get(set, name) : 0;
+    bool use_db = entry != 0 && urn == 0;
+    urn = use_db ? string_cstr(entry->string) : urn;
     if (!urn)
         goto finalize;
 
@@ -364,9 +364,9 @@ int os_minitel_connect(const char *name, const char* urn)
     if (ret >= 0)
     {
         hal_print_string(P_ROULEAU_OFF);
-        if (!known && *name)
+        if (!use_db && name && *name > 0)
         {
-            bdb_entry_set(DB_MIN_SET, name, (char*) urn, true);
+            bdb_entry_set(set, name, (char*) urn, true);
             os_db_save();
         }
     }

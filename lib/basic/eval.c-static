@@ -1714,15 +1714,9 @@ static bool eval_wifi()
     return false;
 }
 
-static void eval_copy_string(char *dst, char *src, uint16_t len)
+static bool eval_connect(uint8_t set)
 {
-    strncpy(dst, src, len - 1);
-    dst[len - 1] = 0;
-}
-
-static bool eval_minitel_connect()
-{
-    char name[16] = "";
+    char *name = 0;
     char *urn = 0;
     int n = 1;
 
@@ -1733,7 +1727,7 @@ static bool eval_minitel_connect()
     {
         if (bmem->bstate.do_eval)
         {
-            eval_copy_string(name, string_cstr(bmem->bstate.string), sizeof(name) - 1);
+            name = string_dup(bmem->bstate.string);
         }
 
         if (!eval_string_expr())
@@ -1745,17 +1739,17 @@ static bool eval_minitel_connect()
     if (!bmem->bstate.do_eval)
         return true;
 
-    char *param = string_cstr(bmem->bstate.string);
+    char *param = bmem->bstate.string;
     if (n == 1 && !bdb_is_urn(param))
     {
-        eval_copy_string(name, param, sizeof(name) - 1);
+        name = string_dup(param);
     }
     else
     {
         urn = param;
     }
 
-    bmem->bstate.sock = os_minitel_connect(name, urn);
+    bmem->bstate.sock = os_connect(set, string_cstr(name), string_cstr(urn));
     if (bmem->bstate.sock < 0)
     {
         bmem->bstate.error = BERROR_SOCK;
@@ -1813,6 +1807,7 @@ static bool eval_db()
     return false;
 }
 
+// FIXME: Implement eval_connect() / os_connect() / hal_connect() with a <SET>
 static bool eval_minitel()
 {
     if (!eval_token(TOKEN_KEYWORD_MINITEL))
@@ -1820,7 +1815,7 @@ static bool eval_minitel()
 
     uint8_t func = eval_token_one_of((char *)minitel_func);
     if (func == 0 || func == TOKEN_KEYWORD_CONNECT)
-        return eval_minitel_connect();
+        return eval_connect(DB_MIN_SET);
 
     if (func == TOKEN_KEYWORD_LIST)
         return eval_db_list(DB_MIN_SET);
@@ -1831,61 +1826,6 @@ static bool eval_minitel()
     return false;
 }
 
-// FIXME: Implement eval_connect() / os_connect() / hal_connect() with a <SET>
-// parameter: MINITEL CONNECT and FTP CONNECT should use the same code.
-// Use string_dup() insteed of eval_string_copy()
-static bool eval_ftp_connect()
-{
-    char name[16] = "";
-    char *urn = 0;
-    int n = 1;
-
-    if (!eval_string_expr())
-        return false;
-
-    if (eval_token(','))
-    {
-        if (bmem->bstate.do_eval)
-        {
-            eval_copy_string(name, string_cstr(bmem->bstate.string), sizeof(name) - 1);
-        }
-
-        if (!eval_string_expr())
-            return false;
-
-        n++;
-    }
-
-    if (!bmem->bstate.do_eval)
-        return true;
-
-    char *param = string_cstr(bmem->bstate.string);
-    if (n == 1 && !bdb_is_urn(param))
-    {
-        eval_copy_string(name, param, sizeof(name) - 1);
-    }
-    else
-    {
-        urn = param;
-    }
-
-    // bmem->bstate.sock = os_minitel_connect(name, urn);
-    // if (bmem->bstate.sock < 0)
-    // {
-    //     bmem->bstate.error = BERROR_SOCK;
-    // }
-
-    // return bmem->bstate.sock >= 0;
-
-    if (*name)
-    {
-        bdb_entry_set(DB_FTP_SET, name, (char*) urn, true);
-        os_db_save();
-    }
-
-    return true;
-}
-
 static bool eval_ftp()
 {
     if (!eval_token(TOKEN_KEYWORD_FTP))
@@ -1893,7 +1833,7 @@ static bool eval_ftp()
 
     uint8_t func = eval_token_one_of((char *)ftp_func);
     if (func == 0 || func == TOKEN_KEYWORD_CONNECT)
-        return eval_ftp_connect();
+        return eval_connect(DB_FTP_SET);
 
     if (func == TOKEN_KEYWORD_LIST)
         return eval_db_list(DB_FTP_SET);
