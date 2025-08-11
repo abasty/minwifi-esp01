@@ -203,7 +203,7 @@ int hal_wifi_connect(const char* ssid, const char* secret)
         wifi_ssid[sizeof(wifi_ssid) - 1] = '\0';
         wifi_connected = true;
         // Get IP address
-        hal_net_disconnect(hal_net_connect(0, "google.com", 80, ""));
+        // hal_net_disconnect(hal_net_connect(0, "google.com", 80, ""));
         return 0;
     }
     wifi_connected = false;
@@ -231,21 +231,21 @@ bool hal_wifi_is_connected()
     return wifi_connected;
 }
 
-int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path)
+int hal_net_connect(split_t *urn)
 {
     // Do the connection (TCP socket or WebSocket)
     // Disable nagle's algo
     struct sockaddr_in addr;
     struct sockaddr_in addr_local;
 
-    struct hostent *hp = gethostbyname(host);
+    struct hostent *hp = gethostbyname(urn->parts[URN_PART_HOST]);
     if (hp == 0)
         return -1;
 
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     addr.sin_family = AF_INET;
     memcpy(&addr.sin_addr, hp->h_addr_list[0], hp->h_length);
-    addr.sin_port = htons(port);
+    addr.sin_port = htons(urn->port);
 
     if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
     {

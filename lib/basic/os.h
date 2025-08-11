@@ -50,6 +50,24 @@ extern "C" {
 #define URN_PROTO_WSS  (3)
 #define URN_PROTO_FTP  (4)
 
+#define URN_SIZE_MAX   (192)
+
+#define URN_PART_PROTO (0)
+#define URN_PART_HOST  (1)
+#define URN_PART_PORT  (2)
+#define URN_PART_PATH  (3)
+#define URN_PART_LOGIN (4)
+#define URN_PART_PASS  (5)
+#define URN_PARTS_MAX  (8)
+
+typedef struct split_s {
+    uint8_t n;
+    uint8_t proto;
+    uint16_t port;
+    char *parts[URN_PARTS_MAX];
+    char urn[URN_SIZE_MAX];
+} split_t;
+
 // OS main functions
 void os_setup(void);
 void os_loop(void);
@@ -104,7 +122,7 @@ int hal_wifi_connect(const char* ssid, const char* secret);
 void hal_wifi_disconnect(void);
 bool hal_wifi_is_connected(void);
 
-int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path);
+int hal_net_connect(split_t *urn_split);
 void hal_net_disconnect(int n);
 int hal_net_send(int fd, const uint8_t *buffer, int n);
 int hal_net_recv(int fd, uint8_t *buffer, int n);

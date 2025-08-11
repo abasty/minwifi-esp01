@@ -360,7 +360,7 @@ int os_connect(uint8_t set, const char *name, const char* urn)
         goto finalize;
 
     // Connect to the host
-    ret = hal_net_connect(split->proto, split->parts[URN_PART_HOST], split->port, split->parts[URN_PART_PATH]);
+    ret = hal_net_connect(split);
     if (ret >= 0)
     {
         hal_print_string(P_ROULEAU_OFF);

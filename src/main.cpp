@@ -229,13 +229,14 @@ static void web_socket_terminate()
     g_web_socket_unread_bytes = 0;
 }
 
-int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path)
+int hal_net_connect(split_t *urn)
+    //uint16_t proto, const char* host, uint16_t port, const char* path)
 {
-    g_net_proto = proto;
+    g_net_proto = urn->proto;
 
     if (g_net_proto == URN_PROTO_TCP)
     {
-        g_tcp_socket.connect(host, port);
+        g_tcp_socket.connect(urn->parts[URN_PART_HOST], urn->port);
         if (!g_tcp_socket.connected())
         {
             g_tcp_socket.stop();
@@ -249,8 +250,8 @@ int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char*
 
     if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
     {
-        g_web_socket = new WebSocketClient(g_tcp_socket, host, port);
-        g_web_socket->begin(path);
+        g_web_socket = new WebSocketClient(g_tcp_socket, urn->parts[URN_PART_HOST], urn->port);
+        g_web_socket->begin(urn->parts[URN_PART_PATH]);
         if (!g_web_socket->connected())
         {
             web_socket_terminate();
