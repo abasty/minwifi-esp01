@@ -123,6 +123,7 @@ uint8_t instr1n[] = {
 };
 
 uint8_t wifi_func[] = {
+    TOKEN_KEYWORD_SCAN,
     TOKEN_KEYWORD_LIST,
     TOKEN_KEYWORD_CONNECT,
     TOKEN_KEYWORD_ERASE,
@@ -1601,12 +1602,12 @@ static bool eval_rem()
     return true;
 }
 
-static bool eval_wifi_list(void)
+static bool eval_wifi_scan(void)
 {
     if (!bmem->bstate.do_eval)
         return true;
 
-    os_wifi_list();
+    os_wifi_scan();
     return true;
 }
 
@@ -1690,6 +1691,15 @@ static bool eval_wifi_status(void)
     return true;
 }
 
+static bool eval_db_list(uint8_t set)
+{
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    os_db_list(set);
+    return true;
+}
+
 static bool eval_wifi()
 {
     if (!eval_token(TOKEN_KEYWORD_WIFI))
@@ -1699,8 +1709,11 @@ static bool eval_wifi()
     if (func == 0 || func == TOKEN_KEYWORD_CONNECT)
         return eval_wifi_connect();
 
+    if (func == TOKEN_KEYWORD_SCAN)
+        return eval_wifi_scan();
+
     if (func == TOKEN_KEYWORD_LIST)
-        return eval_wifi_list();
+        return eval_db_list(DB_WIFI_SET);
 
     if (func == TOKEN_KEYWORD_ERASE)
         return eval_wifi_erase();
@@ -1756,15 +1769,6 @@ static bool eval_connect(uint8_t set)
     }
 
     return bmem->bstate.sock >= 0;
-}
-
-static bool eval_db_list(uint8_t set)
-{
-    if (!bmem->bstate.do_eval)
-        return true;
-
-    os_db_list(set);
-    return true;
 }
 
 static bool eval_db_erase(uint8_t set)

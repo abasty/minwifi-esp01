@@ -79,4 +79,5 @@ static const char *keywords =
     "D""\xc2"
     "DOW""\xce"
     "U""\xd0"
+    "SCA""\xce"
 ;

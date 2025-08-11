@@ -125,7 +125,7 @@ void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t 
     }
 }
 
-void os_wifi_list(void)
+void os_wifi_scan(void)
 {
     // Display scanning status
     hal_print_string(LINE0 INV BLINK "Scanning..." CLEOL NORMAL "\n");
@@ -234,9 +234,10 @@ void os_db_list(uint8_t set)
         {
             char line[40];
             if (set != DB_WIFI_SET)
-                snprintf(line, 40, "%-8.8s %-30.30s", entry->bytes + entry->name_ofs, string_cstr(entry->string));
+                snprintf(line, 40, "%-8.8s %s", entry->bytes + entry->name_ofs, string_cstr(entry->string));
             else
-                snprintf(line, 40, "%-39.39s", entry->bytes + entry->name_ofs);
+                snprintf(line, 40, "%s", entry->bytes + entry->name_ofs);
+            line[39] = 0;
             hal_print_string(line);
             hal_print_string("\r\n");
             n++;

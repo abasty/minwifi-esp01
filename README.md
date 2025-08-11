@@ -232,28 +232,28 @@ WiFi ou à un serveur, la configuration est automatiquement sauvegardée.
 
 ## WiFi
 
-`WIFI LIST` : Scanne les réseaux WiFi, les affiche et stocke les 10 premiers
+`WIFI SCAN` : Scanne les réseaux WiFi, les affiche et stocke les 10 premiers
 SSIDs dans le tableau Basic `DIM SSID$(10)`.
 
 Chaque réseau est précédé d'un numéro indiquant son index dans `SSID$`.
 
 La liste (et son ordre) est retenue dans les variables OS.
 
-`WIFI CONNECT <SSID>|<N>` : Connexion à un réseau WiFi.
+`WIFI [CONNECT] <SSID>|<N>` : Connexion à un réseau WiFi.
 
-Si `<N>`, on choisit `SSID$(N)` comme SSID (il faut avoir fait `WIFI LIST`
+Si `<N>`, on choisit `SSID$(N)` comme SSID (il faut avoir fait `WIFI SCAN`
 avant).
 
 Si le réseau n'est pas connu on demande le mot de passe en ligne 0. Si le réseau
 est connu, on utilise le mot de passe configuré. On tente alors une connexion
-sur l'AP désigné avec le mot de passe.
+sur le SSID désigné avec le mot de passe.
 
-Lors d'une connexion établie, on marque le réseau comme connu et on sauvegarde
-la configuration WiFi. Si le réseau est connu mais la connexion échoue avec le
-mot de passe configuré, on supprime le réseau de la configuration (un mot de
-passe sera alors deandé à la prochaine tentative de connexion sur ce réseau).
+Lors d'une connexion établie, on sauvegarde sa configuration (SSID et mot de
+passe associé).
 
-`WIFI ERASE` : Permet d'oublier un réseau connu.
+`WIFI LIST` : Liste les réseaux connus de la configuration.
+
+`WIFI ERASE <SSID>` : Permet de supprimer un réseau de la configuration.
 
 `WIFI DISCONNECT` : Déconnecte le WiFi.
 

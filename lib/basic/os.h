@@ -77,7 +77,7 @@ void os_db_load(void);
 void os_db_save(void);
 
 // OS Wi-Fi functions
-void os_wifi_list(void);
+void os_wifi_scan(void);
 void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t rssi);
 int os_wifi_connect(const char* ssid);
 int os_wifi_erase(const char* ssid);
