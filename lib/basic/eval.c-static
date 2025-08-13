@@ -1842,6 +1842,15 @@ static bool eval_disconnect(uint8_t set)
     return true;
 }
 
+static bool eval_ftp_status(void)
+{
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    os_ftp_status();
+    return true;
+}
+
 static bool eval_ftp()
 {
     if (!eval_token(TOKEN_KEYWORD_FTP))
@@ -1861,7 +1870,7 @@ static bool eval_ftp()
         return eval_disconnect(DB_FTP_SET);
 
     if (func == TOKEN_KEYWORD_STATUS)
-        return true;
+        return eval_ftp_status();
 
     if (func == TOKEN_KEYWORD_CAT)
         return true;

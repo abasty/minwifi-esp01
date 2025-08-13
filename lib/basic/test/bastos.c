@@ -240,10 +240,11 @@ int hal_net_connect(split_t *urn)
         if (g_ftp_connected)
             return -1;
 
-        uint16_t port = urn->port ? urn->port : 21;
-        const char *login = *urn->parts[URN_PART_LOGIN] ? urn->parts[URN_PART_LOGIN] : "anonymous";
-        const char *pass = *urn->parts[URN_PART_PASS] ? urn->parts[URN_PART_PASS] : "pat@frites.be";
+        // uint16_t port = urn->port ? urn->port : 21;
+        // const char *login = *urn->parts[URN_PART_LOGIN] ? urn->parts[URN_PART_LOGIN] : "anonymous";
+        // const char *pass = *urn->parts[URN_PART_PASS] ? urn->parts[URN_PART_PASS] : "pat@frites.be";
         // g_ftp_client.open(urn->parts[URN_PART_HOST], port, login, pass);
+        sleep(1);
         g_ftp_connected = true;
         if (!g_ftp_connected)
             return -1;
@@ -251,14 +252,14 @@ int hal_net_connect(split_t *urn)
         // if (*urn->parts[URN_PART_PATH])
         //     g_ftp_client.change_directory(urn->parts[URN_PART_PATH]);
 
-        hal_print_string(urn->parts[URN_PART_HOST]);
-        hal_print_integer(":%d:", port);
-        hal_print_string(urn->parts[URN_PART_PATH]);
-        hal_print_string(":");
-        hal_print_string(login);
-        hal_print_string(":");
-        hal_print_string(pass);
-        hal_print_string("\r\n");
+        // hal_print_string(urn->parts[URN_PART_HOST]);
+        // hal_print_integer(":%d:", port);
+        // hal_print_string(urn->parts[URN_PART_PATH]);
+        // hal_print_string(":");
+        // hal_print_string(login);
+        // hal_print_string(":");
+        // hal_print_string(pass);
+        // hal_print_string("\r\n");
 
         return 0;
     }

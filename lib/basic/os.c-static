@@ -44,8 +44,10 @@
 #define SERVER_SECRET_MAX_SIZE (64)
 
 // OS WiFi variables
-char g_net_connected_ssid[20] = ""; // 20 first characters of SSID
-char g_net_connected_ip[16] = "";
+// FIXME (Move to Basic memory)
+char g_wifi_connected_ssid[20] = ""; // 20 first characters of SSID
+char g_wifi_connected_ip[16] = "";
+char g_ftp_connected_host[36] = "";
 
 void os_db_save(void)
 {
@@ -191,13 +193,13 @@ void os_wifi_set_info(const char *ssid, const char *ip)
 {
     if (ssid)
     {
-        strncpy(g_net_connected_ssid, ssid, sizeof(g_net_connected_ssid) - 1);
-        g_net_connected_ssid[sizeof(g_net_connected_ssid) - 1] = '\0';
+        strncpy(g_wifi_connected_ssid, ssid, sizeof(g_wifi_connected_ssid) - 1);
+        g_wifi_connected_ssid[sizeof(g_wifi_connected_ssid) - 1] = '\0';
     }
     if (ip)
     {
-        strncpy(g_net_connected_ip, ip, sizeof(g_net_connected_ip) - 1);
-        g_net_connected_ip[sizeof(g_net_connected_ip) - 1] = '\0';
+        strncpy(g_wifi_connected_ip, ip, sizeof(g_wifi_connected_ip) - 1);
+        g_wifi_connected_ip[sizeof(g_wifi_connected_ip) - 1] = '\0';
     }
 }
 
@@ -210,11 +212,25 @@ void os_wifi_status(void)
     }
     else
     {
-        hal_print_string(g_net_connected_ip);
-        uint8_t len = strlen(g_net_connected_ip);
+        hal_print_string(g_wifi_connected_ip);
+        uint8_t len = strlen(g_wifi_connected_ip);
         for (int i = 16 - len; i > 0; i--)
             hal_print_string(" ");
-        hal_print_string(g_net_connected_ssid);
+        hal_print_string(g_wifi_connected_ssid);
+    }
+    hal_print_string("\r\n\r\n");
+}
+
+void os_ftp_status(void)
+{
+    hal_print_string("\r\n" INV "FTP Host" CLEOL " " NORMAL "\r\n");
+    if (*g_ftp_connected_host == 0)
+    {
+        hal_print_string("Not connected");
+    }
+    else
+    {
+        hal_print_string(g_ftp_connected_host);
     }
     hal_print_string("\r\n\r\n");
 }
@@ -363,11 +379,21 @@ int os_connect(uint8_t set, const char *name, const char* urn)
     // Connect to the host
     ret = hal_net_connect(split);
     if (ret >= 0) {
-        if (set == DB_MIN_SET) {
+        if (set == DB_MIN_SET)
+        {
             hal_print_string(P_ROULEAU_OFF);
-        } else {
+        }
+        else
+        {
+            if (set == DB_FTP_SET)
+            {
+                strncpy(g_ftp_connected_host, split->parts[URN_PART_HOST], sizeof(g_ftp_connected_host) - 1);
+                g_ftp_connected_host[sizeof(g_ftp_connected_host) - 1] = 0;
+            }
             if (!eval_running())
+            {
                 hal_print_string("Connected\r\n");
+            }
         }
     }
 
@@ -391,6 +417,7 @@ void os_disconnect(uint8_t set)
     else if (set == DB_FTP_SET)
     {
         hal_net_disconnect(set, -1);
+        *g_ftp_connected_host = 0;
     }
 
     if (!eval_running())
