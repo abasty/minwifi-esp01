@@ -362,14 +362,17 @@ int os_connect(uint8_t set, const char *name, const char* urn)
 
     // Connect to the host
     ret = hal_net_connect(split);
-    if (ret >= 0)
-    {
-        hal_print_string(P_ROULEAU_OFF);
-        if (!use_db && name && *name > 0)
-        {
-            bdb_entry_set(set, name, (char*) urn, true);
-            os_db_save();
+    if (ret >= 0) {
+        if (set == DB_MIN_SET) {
+            hal_print_string(P_ROULEAU_OFF);
+        } else {
+            hal_print_string("Connected\r\n");
         }
+    }
+
+    if (!use_db && name && *name > 0) {
+        bdb_entry_set(set, name, (char*) urn, true);
+        os_db_save();
     }
 
 finalize:
@@ -384,7 +387,7 @@ static void os_disconnect(void)
     hal_print_string("\r\n" P_ROULEAU_ON);
     if (!eval_running())
     {
-        hal_print_string(CON G0 INK7 "Ready\r\n");
+        hal_print_string(CON G0 INK7 "Pourquoi Ready\r\n");
     }
 }
 

@@ -1762,13 +1762,15 @@ static bool eval_connect(uint8_t set)
         urn = param;
     }
 
-    bmem->bstate.sock = os_connect(set, string_cstr(name), string_cstr(urn));
-    if (bmem->bstate.sock < 0)
-    {
-        bmem->bstate.error = BERROR_SOCK;
+    int fd = os_connect(set, string_cstr(name), string_cstr(urn));
+    if (set != DB_FTP_SET) {
+        bmem->bstate.sock = fd;
+        if (bmem->bstate.sock < 0) {
+            bmem->bstate.error = BERROR_SOCK;
+        }
     }
 
-    return bmem->bstate.sock >= 0;
+    return fd >= 0;
 }
 
 static bool eval_db_erase(uint8_t set)

@@ -53,6 +53,7 @@ static WiFiClient g_tcp_socket;
 static WebSocketClient *g_web_socket = 0;
 static int g_web_socket_unread_bytes = 0;
 static FTPClient g_ftp_client;
+static bool g_ftp_connected = false;
 
 void hal_print_oem_string(void)
 {
@@ -232,12 +233,10 @@ static void web_socket_terminate()
 }
 
 int hal_net_connect(split_t *urn)
-    //uint16_t proto, const char* host, uint16_t port, const char* path)
 {
-    g_net_proto = urn->proto;
-
-    if (g_net_proto == URN_PROTO_TCP)
+    if (urn->proto == URN_PROTO_TCP)
     {
+        g_net_proto = urn->proto;
         g_tcp_socket.connect(urn->parts[URN_PART_HOST], urn->port);
         if (!g_tcp_socket.connected())
         {
@@ -250,8 +249,9 @@ int hal_net_connect(split_t *urn)
         return 0;
     }
 
-    if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
+    if (urn->proto == URN_PROTO_WS || urn->proto == URN_PROTO_WSS)
     {
+        g_net_proto = urn->proto;
         g_web_socket = new WebSocketClient(g_tcp_socket, urn->parts[URN_PART_HOST], urn->port);
         g_web_socket->begin(urn->parts[URN_PART_PATH]);
         if (!g_web_socket->connected())
@@ -259,6 +259,21 @@ int hal_net_connect(split_t *urn)
             web_socket_terminate();
             return -1;
         }
+        return 0;
+    }
+
+    if (urn->proto == URN_PROTO_FTP)
+    {
+        uint16_t port = urn->port ? urn->port : 21;
+        const char *login = *urn->parts[URN_PART_LOGIN] ? urn->parts[URN_PART_LOGIN] : "anonymous";
+        const char *pass = *urn->parts[URN_PART_PASS] ? urn->parts[URN_PART_PASS] : "pat@frites.be";
+        g_ftp_connected = g_ftp_client.open(urn->parts[URN_PART_HOST], port, login, pass);
+        if (!g_ftp_connected)
+            return -1;
+
+        if (*urn->parts[URN_PART_PATH])
+            g_ftp_client.change_directory(urn->parts[URN_PART_PATH]);
+
         return 0;
     }
     return -1;
