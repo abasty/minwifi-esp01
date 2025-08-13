@@ -56,7 +56,8 @@ void bastos_init(void)
 
 void bastos_done()
 {
-    hal_net_disconnect(bmem->bstate.sock);
+    hal_net_disconnect(DB_MIN_SET, bmem->bstate.sock);
+    hal_net_disconnect(DB_FTP_SET, -1);
     hal_wifi_disconnect();
     hal_speed(TOKEN_KEYWORD_SLOW);
     free(bmem);

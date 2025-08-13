@@ -366,7 +366,8 @@ int os_connect(uint8_t set, const char *name, const char* urn)
         if (set == DB_MIN_SET) {
             hal_print_string(P_ROULEAU_OFF);
         } else {
-            hal_print_string("Connected\r\n");
+            if (!eval_running())
+                hal_print_string("Connected\r\n");
         }
     }
 
@@ -379,16 +380,21 @@ finalize:
     return ret;
 }
 
-static void os_disconnect(void)
+void os_disconnect(uint8_t set)
 {
-    hal_net_disconnect(bmem->bstate.sock);
-    bmem->bstate.sock = -1;
-
-    hal_print_string("\r\n" P_ROULEAU_ON);
-    if (!eval_running())
+    if (set == DB_MIN_SET)
     {
-        hal_print_string(CON G0 INK7 "Pourquoi Ready\r\n");
+        hal_net_disconnect(set, bmem->bstate.sock);
+        bmem->bstate.sock = -1;
+        hal_print_string("\r\n" P_ROULEAU_ON CON G0 INK7);
     }
+    else if (set == DB_FTP_SET)
+    {
+        hal_net_disconnect(set, -1);
+    }
+
+    if (!eval_running())
+        hal_print_string("Disconnected\r\n");
 }
 
 void os_cat(void)
@@ -418,7 +424,7 @@ static void os_loop_connected()
     if (ret < 0)
     {
         // If error on socket: exit the connected mode
-        os_disconnect();
+        os_disconnect(DB_MIN_SET);
     }
     else if (ret > 0)
     {
@@ -436,7 +442,7 @@ static void os_loop_connected()
     if (ret < 0)
     {
         // If error on socket: exit the connected mode
-        os_disconnect();
+        os_disconnect(DB_MIN_SET);
     }
 
     // If Cx/Fin: close socket [exit the connected mode]
@@ -450,7 +456,7 @@ static void os_loop_connected()
         {
             if (key == 'Y') // CX/Fin
             {
-                os_disconnect();
+                os_disconnect(DB_MIN_SET);
             }
             fkey = false;
         }

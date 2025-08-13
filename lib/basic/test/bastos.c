@@ -237,6 +237,9 @@ int hal_net_connect(split_t *urn)
 {
     if (urn->proto == URN_PROTO_FTP)
     {
+        if (g_ftp_connected)
+            return -1;
+
         uint16_t port = urn->port ? urn->port : 21;
         const char *login = *urn->parts[URN_PART_LOGIN] ? urn->parts[URN_PART_LOGIN] : "anonymous";
         const char *pass = *urn->parts[URN_PART_PASS] ? urn->parts[URN_PART_PASS] : "pat@frites.be";
@@ -291,10 +294,21 @@ int hal_net_connect(split_t *urn)
     return fd;
 }
 
-void hal_net_disconnect(int n)
+void hal_net_disconnect(uint8_t set, int n)
 {
     // If connected, disconnect and remove associated resources
-    close(n);
+
+    if (set == DB_MIN_SET)
+    {
+        close(n);
+    }
+    else if (set == DB_FTP_SET)
+    {
+        if (!g_ftp_connected)
+            return;
+
+        g_ftp_connected = false;
+    }
 }
 
 int hal_net_send(int fd, const uint8_t *buffer, int n)

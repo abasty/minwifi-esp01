@@ -31,11 +31,6 @@
 #include "bmemory.h"
 #include "os.h"
 
-// Init entry
-#define DB_WIFI_SET ((uint8_t) 255)
-#define DB_MIN_SET ((uint8_t) 254)
-#define DB_FTP_SET ((uint8_t) 253)
-
 typedef var_t entry_t;
 
 static bool bdb_is_urn(char* str);

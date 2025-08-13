@@ -60,6 +60,11 @@ extern "C" {
 #define URN_PART_PASS  (5)
 #define URN_PARTS_MAX  (8)
 
+// Init entry
+#define DB_WIFI_SET ((uint8_t) 255)
+#define DB_MIN_SET ((uint8_t) 254)
+#define DB_FTP_SET ((uint8_t) 253)
+
 typedef struct split_s {
     uint8_t n;
     uint8_t proto;
@@ -90,6 +95,7 @@ void os_db_erase(uint8_t set, const char *name);
 
 // OS network functions
 int os_connect(uint8_t set, const char *name, const char* urn);
+void os_disconnect(uint8_t set);
 
 // OS keyboard functions
 uint8_t os_get_key(void);
@@ -123,7 +129,7 @@ void hal_wifi_disconnect(void);
 bool hal_wifi_is_connected(void);
 
 int hal_net_connect(split_t *urn_split);
-void hal_net_disconnect(int n);
+void hal_net_disconnect(uint8_t set, int fd);
 int hal_net_send(int fd, const uint8_t *buffer, int n);
 int hal_net_recv(int fd, uint8_t *buffer, int n);
 

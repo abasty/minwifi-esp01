@@ -1763,11 +1763,14 @@ static bool eval_connect(uint8_t set)
     }
 
     int fd = os_connect(set, string_cstr(name), string_cstr(urn));
-    if (set != DB_FTP_SET) {
+    if (fd < 0)
+    {
+        bmem->bstate.error = BERROR_SOCK;
+    }
+
+    if (set == DB_MIN_SET)
+    {
         bmem->bstate.sock = fd;
-        if (bmem->bstate.sock < 0) {
-            bmem->bstate.error = BERROR_SOCK;
-        }
     }
 
     return fd >= 0;
@@ -1813,7 +1816,6 @@ static bool eval_db()
     return false;
 }
 
-// FIXME: Implement eval_connect() / os_connect() / hal_connect() with a <SET>
 static bool eval_minitel()
 {
     if (!eval_token(TOKEN_KEYWORD_MINITEL))
@@ -1832,6 +1834,14 @@ static bool eval_minitel()
     return false;
 }
 
+static bool eval_disconnect(uint8_t set)
+{
+    if (bmem->bstate.do_eval)
+        os_disconnect(set);
+
+    return true;
+}
+
 static bool eval_ftp()
 {
     if (!eval_token(TOKEN_KEYWORD_FTP))
@@ -1848,7 +1858,7 @@ static bool eval_ftp()
         return eval_db_erase(DB_FTP_SET);
 
     if (func == TOKEN_KEYWORD_DISCONNECT)
-        return true;
+        return eval_disconnect(DB_FTP_SET);
 
     if (func == TOKEN_KEYWORD_STATUS)
         return true;
