@@ -169,6 +169,10 @@ int os_wifi_connect(const char *ssid)
     int ret = hal_wifi_connect(ssid, secret);
     if (ret == 0)
     {
+        if (!eval_running())
+        {
+            hal_print_string("OK\r\n");
+        }
         if (!use_db)
         {
             bdb_entry_set(DB_WIFI_SET, ssid, secret, true);
@@ -400,7 +404,7 @@ int os_connect(uint8_t set, const char *name, const char* urn)
             }
             if (!eval_running())
             {
-                hal_print_string("Connected\r\n");
+                hal_print_string("OK\r\n");
             }
         }
     }
@@ -427,9 +431,6 @@ void os_disconnect(uint8_t set)
         hal_net_disconnect(set, -1);
         *g_ftp_connected_host = 0;
     }
-
-    if (!eval_running())
-        hal_print_string("Disconnected\r\n");
 }
 
 void os_cat(void)
@@ -457,7 +458,7 @@ bool os_ftp_cat(void)
         return false;
     }
 
-    hal_print_integer("\r\n%3zd files\r\n\r\n", total);
+    hal_print_integer("\r\n%3zd file(s)\r\n\r\n", total);
 
     return true;
 }

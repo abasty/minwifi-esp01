@@ -167,6 +167,11 @@ ssize_t hal_ftp_cat()
     return 1;
 }
 
+bool hal_ftp_files(uint8_t func, const char *filename)
+{
+    return true;
+}
+
 int hal_erase(const char *pathname)
 {
     return unlink(pathname);

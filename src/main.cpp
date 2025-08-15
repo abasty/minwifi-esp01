@@ -144,6 +144,20 @@ ssize_t hal_ftp_cat()
     return n;
 }
 
+bool hal_ftp_files(uint8_t func, const char *filename)
+{
+    if (!hal_ftp_is_connected())
+        return false;
+
+    if (func == TOKEN_KEYWORD_PUT)
+        return g_ftp_client.write_file(filename, filename);
+
+    if (func == TOKEN_KEYWORD_GET)
+        return g_ftp_client.read_file(filename, filename);
+
+    return false;
+}
+
 int hal_erase(const char *pathname)
 {
     bool ret = LittleFS.remove(pathname);

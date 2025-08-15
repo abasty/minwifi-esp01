@@ -1842,6 +1842,34 @@ static bool eval_disconnect(uint8_t set)
     return true;
 }
 
+static bool eval_ftp_file(uint8_t func)
+{
+    if (!eval_string_expr())
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    if (!hal_ftp_is_connected())
+    {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    if (!hal_ftp_files(func, string_cstr(bmem->bstate.string)))
+    {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    if (!eval_running())
+    {
+        hal_print_string("OK\r\n");
+    }
+
+    return true;
+}
+
 static bool eval_ftp()
 {
     if (!eval_token(TOKEN_KEYWORD_FTP))
@@ -1855,10 +1883,10 @@ static bool eval_ftp()
         return eval_db_erase(DB_FTP_SET);
 
     if (func == TOKEN_KEYWORD_PUT)
-        return true;
+        return eval_ftp_file(TOKEN_KEYWORD_PUT);
 
     if (func == TOKEN_KEYWORD_GET)
-        return true;
+        return eval_ftp_file(TOKEN_KEYWORD_GET);
 
     if (func == TOKEN_KEYWORD_LIST)
         return eval_db_list(DB_FTP_SET);
