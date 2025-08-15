@@ -44,6 +44,6 @@ constante.
 
 Flash : 340819 (-80 octets)
 
-# FTP commands and code
+# FTP commands and implementation
 
-flash: 344355 (3536)
+flash: 344539 (3720)

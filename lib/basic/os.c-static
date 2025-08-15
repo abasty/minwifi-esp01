@@ -431,6 +431,9 @@ void os_disconnect(uint8_t set)
         hal_net_disconnect(set, -1);
         *g_ftp_connected_host = 0;
     }
+
+    if (!eval_running())
+        hal_print_string("Disconnected\r\n");
 }
 
 void os_cat(void)
