@@ -19,5 +19,6 @@
         "bdb.h": "c",
         "tty-minitel.h": "c",
         "stdbool.h": "c"
-    }
+    },
+    "editor.detectIndentation": false
 }

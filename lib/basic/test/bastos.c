@@ -158,6 +158,11 @@ size_t hal_cat()
     return 524288 - total;
 }
 
+ssize_t hal_ftp_cat()
+{
+    return 0;
+}
+
 int hal_erase(const char *pathname)
 {
     return unlink(pathname);
@@ -326,6 +331,11 @@ int hal_net_recv(int fd, uint8_t *buffer, int n)
         return read(fd, buffer, n);
 
     return 0;
+}
+
+bool hal_ftp_is_connected()
+{
+    return g_ftp_connected;
 }
 
 void setup()

@@ -1842,15 +1842,6 @@ static bool eval_disconnect(uint8_t set)
     return true;
 }
 
-static bool eval_ftp_status(void)
-{
-    if (!bmem->bstate.do_eval)
-        return true;
-
-    os_ftp_status();
-    return true;
-}
-
 static bool eval_ftp()
 {
     if (!eval_token(TOKEN_KEYWORD_FTP))
@@ -1860,20 +1851,8 @@ static bool eval_ftp()
     if (func == 0 || func == TOKEN_KEYWORD_CONNECT)
         return eval_connect(DB_FTP_SET);
 
-    if (func == TOKEN_KEYWORD_LIST)
-        return eval_db_list(DB_FTP_SET);
-
     if (func == TOKEN_KEYWORD_ERASE)
         return eval_db_erase(DB_FTP_SET);
-
-    if (func == TOKEN_KEYWORD_DISCONNECT)
-        return eval_disconnect(DB_FTP_SET);
-
-    if (func == TOKEN_KEYWORD_STATUS)
-        return eval_ftp_status();
-
-    if (func == TOKEN_KEYWORD_CAT)
-        return true;
 
     if (func == TOKEN_KEYWORD_UP)
         return true;
@@ -1881,7 +1860,22 @@ static bool eval_ftp()
     if (func == TOKEN_KEYWORD_DOWN)
         return true;
 
-    return false;
+    if (func == TOKEN_KEYWORD_LIST)
+        return eval_db_list(DB_FTP_SET);
+
+    if (func == TOKEN_KEYWORD_DISCONNECT)
+        return eval_disconnect(DB_FTP_SET);
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    if (func == TOKEN_KEYWORD_STATUS)
+        os_ftp_status();
+
+    if (func == TOKEN_KEYWORD_CAT)
+        return os_ftp_cat();
+
+    return true;
 }
 
 static bool eval_instruction()

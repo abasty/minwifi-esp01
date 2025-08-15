@@ -47,7 +47,7 @@
 // FIXME (Move to Basic memory)
 char g_wifi_connected_ssid[20] = ""; // 20 first characters of SSID
 char g_wifi_connected_ip[16] = "";
-char g_ftp_connected_host[36] = "";
+char g_ftp_connected_host[32] = "";
 
 void os_db_save(void)
 {
@@ -224,6 +224,14 @@ void os_wifi_status(void)
 void os_ftp_status(void)
 {
     hal_print_string("\r\n" INV "FTP Host" CLEOL " " NORMAL "\r\n");
+
+    // Check connection status
+    if (*g_ftp_connected_host != 0 && !hal_ftp_is_connected())
+    {
+        *g_ftp_connected_host = 0;
+    }
+
+    // Display connection status message
     if (*g_ftp_connected_host == 0)
     {
         hal_print_string("Not connected");
@@ -431,14 +439,57 @@ void os_cat(void)
     hal_print_integer("\r\n%3uK free\r\n\r\n", total / 1024);
 }
 
+bool os_ftp_cat(void)
+{
+    if (!hal_ftp_is_connected())
+    {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+    hal_print_string("\r\nDrive: ");
+    hal_print_string(g_ftp_connected_host);
+    hal_print_string("\r\n\r\n");
+
+    ssize_t total = hal_ftp_cat();
+    if (total < 0)
+    {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    hal_print_integer("\r\n%3zd files\r\n\r\n", total);
+
+    return true;
+}
+
 void os_cat_file(const char *filename, size_t size)
 {
     char buffer[40];
-    char *ext = strchr(filename, '.');
+    char *ext = strrchr(filename, '.');
     int n = ext ? (ext - filename) : strlen(filename);
     ext = ext ? ext + 1 : "";
-    snprintf(buffer, sizeof(buffer), "%-8.*s.%-3s %zu\r\n", n, filename, ext, size);
+    snprintf(buffer, sizeof(buffer), "%-16.*s.%-4s %zu\r\n", n, filename, ext, size);
     hal_print_string(buffer);
+}
+
+void os_ftp_cat_file(const char* line)
+{
+    uint16_t len = strlen(line);
+    const char* src = len > 0 ? line + len - 1 : line;
+    while (src > line &&  *src <= ' ') src--;
+    while (src > line &&  *src > ' ') src--;
+    if (*src <= ' ') src++;
+    char filename[16];
+    char *dst = filename;
+    for (int i = 0; i < sizeof(filename); i++)
+    {
+        if (*src <= ' ')
+            break;
+        *dst++ = *src++;
+    }
+    *dst = 0;
+    // FIXME: Get size
+    os_cat_file(filename, 0);
 }
 
 static void os_loop_connected()

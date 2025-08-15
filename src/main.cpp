@@ -135,6 +135,12 @@ size_t hal_cat()
     return info.totalBytes - info.usedBytes;
 }
 
+ssize_t hal_ftp_cat()
+{
+    ssize_t n = g_ftp_client.list_directory();
+    return n;
+}
+
 int hal_erase(const char *pathname)
 {
     bool ret = LittleFS.remove(pathname);
@@ -223,6 +229,20 @@ bool hal_wifi_is_connected()
     return connected;
 }
 
+bool hal_ftp_is_connected()
+{
+    if (!g_ftp_connected)
+        return false;
+
+    if (!g_ftp_client.connected())
+    {
+        g_ftp_client.close();
+        g_ftp_connected = false;
+    }
+
+    return g_ftp_connected;
+}
+
 static void web_socket_terminate()
 {
     g_web_socket->flush();
@@ -264,7 +284,7 @@ int hal_net_connect(split_t *urn)
 
     if (urn->proto == URN_PROTO_FTP)
     {
-        if (g_ftp_connected)
+        if (hal_ftp_is_connected())
             return -1;
 
         uint16_t port = urn->port ? urn->port : 21;

@@ -26,6 +26,8 @@
 #ifndef __OS_H__
 #define __OS_H__
 
+#include <sys/types.h>
+
 #include "bio.h"
 
 #ifdef __cplusplus
@@ -97,6 +99,8 @@ void os_db_erase(uint8_t set, const char *name);
 int os_connect(uint8_t set, const char *name, const char* urn);
 void os_disconnect(uint8_t set);
 void os_ftp_status(void);
+bool os_ftp_cat(void);
+void os_ftp_cat_file(const char* line);
 
 // OS keyboard functions
 uint8_t os_get_key(void);
@@ -133,6 +137,9 @@ int hal_net_connect(split_t *urn_split);
 void hal_net_disconnect(uint8_t set, int fd);
 int hal_net_send(int fd, const uint8_t *buffer, int n);
 int hal_net_recv(int fd, uint8_t *buffer, int n);
+
+ssize_t hal_ftp_cat();
+bool hal_ftp_is_connected();
 
 void hal_speed(uint8_t fn);
 void hal_reset(void);
