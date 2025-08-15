@@ -86,7 +86,7 @@ scan
 status
 ftp
 minitel
-get$
+get
 put
 db
 down

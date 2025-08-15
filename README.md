@@ -18,7 +18,7 @@
 * [x] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
   mode connecté / basic / boot au mode interactif)
 * [x] Augmenter la mémoire BASTOS (32KB), reste 12KB pour l'OS (wifi / db)
-* [x] Commandes `DB`: `PUT <SET>, <KEY>, <VALUE>`, `GET$ <SET>, <KEY>` (Basic
+* [x] Commandes `DB`: `PUT <SET>, <KEY>, <VALUE>`, `GET <SET>, <KEY>` (Basic
   VBA)
 * [x] `DB ERASE <SET>, <KEY>`, `DB LIST <SET>`
 * [x] L'OS se sert de la database pour stocker la config

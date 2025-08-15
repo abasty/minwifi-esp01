@@ -74,7 +74,7 @@ static const char *keywords =
     "STATU""\xd3"
     "FT""\xd0"
     "MINITE""\xcc"
-    "GET""\xa4"
+    "GE""\xd4"
     "PU""\xd4"
     "D""\xc2"
     "DOW""\xce"
