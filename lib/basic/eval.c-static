@@ -125,29 +125,29 @@ uint8_t instr1n[] = {
 uint8_t wifi_func[] = {
     TOKEN_KEYWORD_SCAN,
     TOKEN_KEYWORD_LIST,
-    TOKEN_KEYWORD_CONNECT,
+    TOKEN_KEYWORD_START,
     TOKEN_KEYWORD_ERASE,
-    TOKEN_KEYWORD_DISCONNECT,
+    TOKEN_KEYWORD_STOP,
     TOKEN_KEYWORD_STATUS,
     0,
 };
 
 uint8_t minitel_func[] = {
     TOKEN_KEYWORD_LIST,
-    TOKEN_KEYWORD_CONNECT,
+    TOKEN_KEYWORD_START,
     TOKEN_KEYWORD_ERASE,
     0,
 };
 
 uint8_t ftp_func[] = {
     TOKEN_KEYWORD_LIST,
-    TOKEN_KEYWORD_CONNECT,
+    TOKEN_KEYWORD_START,
     TOKEN_KEYWORD_ERASE,
-    TOKEN_KEYWORD_DISCONNECT,
+    TOKEN_KEYWORD_STOP,
     TOKEN_KEYWORD_STATUS,
     TOKEN_KEYWORD_CAT,
-    TOKEN_KEYWORD_UP,
-    TOKEN_KEYWORD_DOWN,
+    TOKEN_KEYWORD_PUT,
+    TOKEN_KEYWORD_GET,
     0,
 };
 
@@ -1706,7 +1706,7 @@ static bool eval_wifi()
         return false;
 
     uint8_t func = eval_token_one_of((char *)wifi_func);
-    if (func == 0 || func == TOKEN_KEYWORD_CONNECT)
+    if (func == 0 || func == TOKEN_KEYWORD_START)
         return eval_wifi_connect();
 
     if (func == TOKEN_KEYWORD_SCAN)
@@ -1721,7 +1721,7 @@ static bool eval_wifi()
     if (func == TOKEN_KEYWORD_STATUS)
         return eval_wifi_status();
 
-    if (func == TOKEN_KEYWORD_DISCONNECT)
+    if (func == TOKEN_KEYWORD_STOP)
         return eval_wifi_disconnect();
 
     return false;
@@ -1822,7 +1822,7 @@ static bool eval_minitel()
         return false;
 
     uint8_t func = eval_token_one_of((char *)minitel_func);
-    if (func == 0 || func == TOKEN_KEYWORD_CONNECT)
+    if (func == 0 || func == TOKEN_KEYWORD_START)
         return eval_connect(DB_MIN_SET);
 
     if (func == TOKEN_KEYWORD_LIST)
@@ -1848,22 +1848,22 @@ static bool eval_ftp()
         return false;
 
     uint8_t func = eval_token_one_of((char *)ftp_func);
-    if (func == 0 || func == TOKEN_KEYWORD_CONNECT)
+    if (func == 0 || func == TOKEN_KEYWORD_START)
         return eval_connect(DB_FTP_SET);
 
     if (func == TOKEN_KEYWORD_ERASE)
         return eval_db_erase(DB_FTP_SET);
 
-    if (func == TOKEN_KEYWORD_UP)
+    if (func == TOKEN_KEYWORD_PUT)
         return true;
 
-    if (func == TOKEN_KEYWORD_DOWN)
+    if (func == TOKEN_KEYWORD_GET)
         return true;
 
     if (func == TOKEN_KEYWORD_LIST)
         return eval_db_list(DB_FTP_SET);
 
-    if (func == TOKEN_KEYWORD_DISCONNECT)
+    if (func == TOKEN_KEYWORD_STOP)
         return eval_disconnect(DB_FTP_SET);
 
     if (!bmem->bstate.do_eval)

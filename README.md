@@ -27,16 +27,16 @@
   * [x] Gestion serveurs : clé=nom, valeur=urn
 * [x] Passage des paramètres de config en URN
 * [x] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
-  urn)). `MINITEL LIST / ERASE / [CONNECT] [<URN>] [,] [<NAME>]`
+  urn)). `MINITEL LIST / ERASE / [START] [<URN>] [,] [<NAME>]`
 * [x] Caractères spéciaux dans chaines de caractères ("\n \x41 \"" ...)
 * [ ] FTP (https://github.com/Exocet22/TinyFTPClient / MIT)
   * [x] Implémenter DB FTP (set 253), `FTP LIST, FTP ERASE`
   * [x] Intégrer TinyFTPClient dans les sources du projet
-  * [ ] SPIFS => LittleFS
-  * [ ] Généraliser os_net_connect, passer le `split_t` en paramètre
-  * [ ] `FTP CONNECT/DISCONNECT`
-  * [ ] `FTP CAT`
-  * [ ] `FTP UP/DOWN`
+  * [x] SPIFS => LittleFS
+  * [x] Généraliser os_net_connect, passer le `split_t` en paramètre
+  * [x] `FTP START/STOP`
+  * [x] `FTP CAT`
+  * [ ] `FTP PUT/GET`
   * [ ] Optimisation (retrait des commandes qu'on utilise pas, etc)
 * [ ] Load/Save ASCII
 
@@ -89,7 +89,6 @@
   sur 16 bits => on pourrait modifier vars_start / vars_end. `@<VAR>`,
   `@<LINE_NO>`, `@DB <SET>,<KEY>`
 
-* [x] `CONNECT` devrait suffire : TELNET / TELNET WS
 * ~~SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs~~
 
 # Idées futures
@@ -181,8 +180,8 @@ Après avoir chargé la config, le système vérifie s'il existe un fichier nomm
 Si oui, il charge ce fichier et l'exécute. Exemple de fichier `BONJOUR.BAS` :
 
 ```basic
-10 WIFI CONNECT "Maison"
-20 CONNECT "ZBOUB", "tcp://abasty-retro.fr:1967"
+10 WIFI "Maison"
+20 MINITEL "ZBOUB", "tcp://abasty-retro.fr:1967"
 30 BASTOS
 ```
 
@@ -239,7 +238,7 @@ Chaque réseau est précédé d'un numéro indiquant son index dans `SSID$`.
 
 La liste (et son ordre) est retenue dans les variables OS.
 
-`WIFI [CONNECT] <SSID>|<N>` : Connexion à un réseau WiFi.
+`WIFI [START] <SSID>|<N>` : Connexion à un réseau WiFi.
 
 Si `<N>`, on choisit `SSID$(N)` comme SSID (il faut avoir fait `WIFI SCAN`
 avant).
@@ -255,14 +254,14 @@ passe associé).
 
 `WIFI ERASE <SSID>` : Permet de supprimer un réseau de la configuration.
 
-`WIFI DISCONNECT` : Déconnecte le WiFi.
+`WIFI STOP` : Déconnecte le WiFi.
 
 `WIFI STATUS` : Affiche des informations sur l'état du WiFi, l'adresse IP, le
 SSID connecté.
 
 ## Mode connecté
 
-`MINITEL [CONNECT] <URN>` ou `MINITEL [CONNECT] <NAME> [, <URN>]` : Supporte les
+`MINITEL [START] <URN>` ou `MINITEL [START] <NAME> [, <URN>]` : Supporte les
 protocoles : "tcp", "ws", "wss". Lors d'une connexion réussie, les paramètres de
 connexion sont sauvegardés dans la configuration sous le nom de serveur
 `<NAME>`. Si `<URN>` n'est pas spécifié, le serveur `<NAME>` est recherché dans
@@ -296,19 +295,19 @@ vers le réseau.
 
 * `FTP LIST` : Liste les sites FTP configurés
 
-* `FTP [CONNECT] <URN>` ou `FTP [CONNECT] <NAME> [, <URN>]` : Établit une
-  connexion avec un serveur FTP. `<URN>` est de la forme
+* `FTP [START] <URN>` ou `FTP [START] <NAME> [, <URN>]` : Établit une connexion
+  avec un serveur FTP. `<URN>` est de la forme
   `ftp:host:port:path:login:password`.
 
 * `FTP CAT` : Liste les fichiers du serveur ftp.
 
-* `FTP DOWN <FILENAME>` : Télécharge un ficher depuis le serveur FTP vers le
+* `FTP GET <FILENAME>` : Télécharge un ficher depuis le serveur FTP vers le
   disque A local.
 
-* `FTP UP <FILENAME>` : Téléverse un fichier depuis le disque A local vers le
+* `FTP PUT <FILENAME>` : Téléverse un fichier depuis le disque A local vers le
   serveur FTP.
 
-* `FTP DISCONNECT` : Déconnecte le serveur FTP.
+* `FTP STOP` : Déconnecte le serveur FTP.
 
 * `FTP STATUS` : Affiche le status et les détails de la connexion avec le
   serveur FTP (sauf le mot de passe).
