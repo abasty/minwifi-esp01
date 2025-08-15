@@ -3,10 +3,10 @@
 ## Bugs
 
 * [ ] edition de ligne : gérer les séquences de caractères spéciaux (G2, G1)
+* [ ] Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
+  serveur Minitel. Voir avec une websocket statique (pas de new / delete)
 * [x] Crash avec connexion en boucle sur WS "3615" ou "hacker" (pages lourdes)
   lorsque qu'on coupe la communication alors qu'on reçoit des données
-* [ ] Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
-  serveur Minitel.
 * [x] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
   même les chaines de caractères sont terminées par `\0`, notamment dans les
   tableaux. Ce n'est pas compatible avec le Basic ZX81 car on ne peut accéder au
@@ -18,7 +18,7 @@
 * [x] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
   mode connecté / basic / boot au mode interactif)
 * [x] Augmenter la mémoire BASTOS (32KB), reste 12KB pour l'OS (wifi / db)
-* [x] Commandes `DB`: `PUT <SET>, <KEY>, <VALUE>`, `GET$ <SET>, <KEY>` (Basic
+* [x] Commandes `DB`: `PUT <SET>, <KEY>, <VALUE>`, `GET <SET>, <KEY>` (Basic
   VBA)
 * [x] `DB ERASE <SET>, <KEY>`, `DB LIST <SET>`
 * [x] L'OS se sert de la database pour stocker la config
@@ -27,7 +27,18 @@
   * [x] Gestion serveurs : clé=nom, valeur=urn
 * [x] Passage des paramètres de config en URN
 * [x] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
-  urn)). `MINITEL LIST / ERASE / CONNECT <URN>|<NAME>|<ID>`
+  urn)). `MINITEL LIST / ERASE / [START] [<URN>] [,] [<NAME>]`
+* [x] Caractères spéciaux dans chaines de caractères ("\n \x41 \"" ...)
+* [ ] FTP (https://github.com/Exocet22/TinyFTPClient / MIT)
+  * [x] Implémenter DB FTP (set 253), `FTP LIST, FTP ERASE`
+  * [x] Intégrer TinyFTPClient dans les sources du projet
+  * [x] SPIFS => LittleFS
+  * [x] Généraliser os_net_connect, passer le `split_t` en paramètre
+  * [x] `FTP START/STOP`
+  * [x] `FTP CAT`
+  * [ ] `FTP PUT/GET`
+  * [ ] Optimisation (retrait des commandes qu'on utilise pas, etc)
+* [ ] Load/Save ASCII
 
 * [ ] Gérer l'historique avec la DB config
 * [ ] Ramener les variables OS dans le bstate
@@ -78,7 +89,6 @@
   sur 16 bits => on pourrait modifier vars_start / vars_end. `@<VAR>`,
   `@<LINE_NO>`, `@DB <SET>,<KEY>`
 
-* [x] `CONNECT` devrait suffire : TELNET / TELNET WS
 * ~~SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs~~
 
 # Idées futures
@@ -170,8 +180,8 @@ Après avoir chargé la config, le système vérifie s'il existe un fichier nomm
 Si oui, il charge ce fichier et l'exécute. Exemple de fichier `BONJOUR.BAS` :
 
 ```basic
-10 WIFI CONNECT "Maison"
-20 CONNECT "ZBOUB", "tcp://abasty-retro.fr:1967"
+10 WIFI "Maison"
+20 MINITEL "ZBOUB", "tcp://abasty-retro.fr:1967"
 30 BASTOS
 ```
 
@@ -221,37 +231,37 @@ WiFi ou à un serveur, la configuration est automatiquement sauvegardée.
 
 ## WiFi
 
-`WIFI LIST` : Scanne les réseaux WiFi, les affiche et stocke les 10 premiers
+`WIFI SCAN` : Scanne les réseaux WiFi, les affiche et stocke les 10 premiers
 SSIDs dans le tableau Basic `DIM SSID$(10)`.
 
 Chaque réseau est précédé d'un numéro indiquant son index dans `SSID$`.
 
 La liste (et son ordre) est retenue dans les variables OS.
 
-`WIFI CONNECT <SSID>|<N>` : Connexion à un réseau WiFi.
+`WIFI [START] <SSID>|<N>` : Connexion à un réseau WiFi.
 
-Si `<N>`, on choisit `SSID$(N)` comme SSID (il faut avoir fait `WIFI LIST`
+Si `<N>`, on choisit `SSID$(N)` comme SSID (il faut avoir fait `WIFI SCAN`
 avant).
 
 Si le réseau n'est pas connu on demande le mot de passe en ligne 0. Si le réseau
 est connu, on utilise le mot de passe configuré. On tente alors une connexion
-sur l'AP désigné avec le mot de passe.
+sur le SSID désigné avec le mot de passe.
 
-Lors d'une connexion établie, on marque le réseau comme connu et on sauvegarde
-la configuration WiFi. Si le réseau est connu mais la connexion échoue avec le
-mot de passe configuré, on supprime le réseau de la configuration (un mot de
-passe sera alors deandé à la prochaine tentative de connexion sur ce réseau).
+Lors d'une connexion établie, on sauvegarde sa configuration (SSID et mot de
+passe associé).
 
-`WIFI ERASE` : Permet d'oublier un réseau connu.
+`WIFI LIST` : Liste les réseaux connus de la configuration.
 
-`WIFI DISCONNECT` : Déconnecte le WiFi.
+`WIFI ERASE <SSID>` : Permet de supprimer un réseau de la configuration.
+
+`WIFI STOP` : Déconnecte le WiFi.
 
 `WIFI STATUS` : Affiche des informations sur l'état du WiFi, l'adresse IP, le
 SSID connecté.
 
 ## Mode connecté
 
-`MINITEL [CONNECT] <URN>` ou `MINITEL [CONNECT] <NAME> [, <URN>]` : Supporte les
+`MINITEL [START] <URN>` ou `MINITEL [START] <NAME> [, <URN>]` : Supporte les
 protocoles : "tcp", "ws", "wss". Lors d'une connexion réussie, les paramètres de
 connexion sont sauvegardés dans la configuration sous le nom de serveur
 `<NAME>`. Si `<URN>` n'est pas spécifié, le serveur `<NAME>` est recherché dans
@@ -283,20 +293,21 @@ Le téléchargement permet de charger un fichier depuis le réseau et de le plac
 sur le disque. Le téléversement permet d'envoyer un fichier depuis le disque
 vers le réseau.
 
-* `FTP LIST`
+* `FTP LIST` : Liste les sites FTP configurés
 
-* `FTP CONNECT <URN>|<ID>|<NAME>` : Établit une connexion avec un serveur FTP.
-  `<URN>` est de la forme `host:port:login:password`.
+* `FTP [START] <URN>` ou `FTP [START] <NAME> [, <URN>]` : Établit une connexion
+  avec un serveur FTP. `<URN>` est de la forme
+  `ftp:host:port:path:login:password`.
 
 * `FTP CAT` : Liste les fichiers du serveur ftp.
 
-* `FTP DOWNLOAD <FILENAME>` : Télécharge un ficher depuis le serveur FTP vers le
+* `FTP GET <FILENAME>` : Télécharge un ficher depuis le serveur FTP vers le
   disque A local.
 
-* `FTP UPLOAD <FILENAME>` : Téléverse un fichier depuis le disque A local vers
-  le serveur FTP.
+* `FTP PUT <FILENAME>` : Téléverse un fichier depuis le disque A local vers le
+  serveur FTP.
 
-* `FTP DISCONNECT` : Déconnecte le serveur FTP.
+* `FTP STOP` : Déconnecte le serveur FTP.
 
 * `FTP STATUS` : Affiche le status et les détails de la connexion avec le
   serveur FTP (sauf le mot de passe).

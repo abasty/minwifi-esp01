@@ -36,6 +36,10 @@ extern bmem_t *bmem;
 
 static bool bdb_is_urn(char* str)
 {
+    if (!str)
+        return false;
+
+    str  = string_cstr(str);
     while (*str)
     {
         if (*str++ == ':')
@@ -71,7 +75,6 @@ static split_t *bdb_urn_split(const char *urn)
         new_part = *src++ == ':';
         *dst++ = '\0';
     }
-    split.parts[split.n] = 0;
 
     uint8_t n = 0;
     for (const char **proto = g_urn_protos; *proto ; proto++)

@@ -158,6 +158,20 @@ size_t hal_cat()
     return 524288 - total;
 }
 
+ssize_t hal_ftp_cat()
+{
+    if (!hal_ftp_is_connected())
+        return -1;
+
+    os_ftp_cat_file("-rw-------    1 116      127            72 Aug 14 00:21 inkey.bst\r\n");
+    return 1;
+}
+
+bool hal_ftp_files(uint8_t func, const char *filename)
+{
+    return true;
+}
+
 int hal_erase(const char *pathname)
 {
     return unlink(pathname);
@@ -203,7 +217,7 @@ int hal_wifi_connect(const char* ssid, const char* secret)
         wifi_ssid[sizeof(wifi_ssid) - 1] = '\0';
         wifi_connected = true;
         // Get IP address
-        hal_net_disconnect(hal_net_connect(0, "google.com", 80, ""));
+        // hal_net_disconnect(hal_net_connect(0, "google.com", 80, ""));
         return 0;
     }
     wifi_connected = false;
@@ -231,21 +245,52 @@ bool hal_wifi_is_connected()
     return wifi_connected;
 }
 
-int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path)
+bool g_ftp_connected = false;
+
+int hal_net_connect(split_t *urn)
 {
+    if (urn->proto == URN_PROTO_FTP)
+    {
+        if (g_ftp_connected)
+            return -1;
+
+        // uint16_t port = urn->port ? urn->port : 21;
+        // const char *login = *urn->parts[URN_PART_LOGIN] ? urn->parts[URN_PART_LOGIN] : "anonymous";
+        // const char *pass = *urn->parts[URN_PART_PASS] ? urn->parts[URN_PART_PASS] : "pat@frites.be";
+        // g_ftp_client.open(urn->parts[URN_PART_HOST], port, login, pass);
+        sleep(1);
+        g_ftp_connected = true;
+        if (!g_ftp_connected)
+            return -1;
+
+        // if (*urn->parts[URN_PART_PATH])
+        //     g_ftp_client.change_directory(urn->parts[URN_PART_PATH]);
+
+        // hal_print_string(urn->parts[URN_PART_HOST]);
+        // hal_print_integer(":%d:", port);
+        // hal_print_string(urn->parts[URN_PART_PATH]);
+        // hal_print_string(":");
+        // hal_print_string(login);
+        // hal_print_string(":");
+        // hal_print_string(pass);
+        // hal_print_string("\r\n");
+
+        return 0;
+    }
+
     // Do the connection (TCP socket or WebSocket)
     // Disable nagle's algo
     struct sockaddr_in addr;
     struct sockaddr_in addr_local;
 
-    struct hostent *hp = gethostbyname(host);
+    struct hostent *hp = gethostbyname(urn->parts[URN_PART_HOST]);
     if (hp == 0)
         return -1;
 
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     addr.sin_family = AF_INET;
     memcpy(&addr.sin_addr, hp->h_addr_list[0], hp->h_length);
-    addr.sin_port = htons(port);
+    addr.sin_port = htons(urn->port);
 
     if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
     {
@@ -264,10 +309,21 @@ int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char*
     return fd;
 }
 
-void hal_net_disconnect(int n)
+void hal_net_disconnect(uint8_t set, int n)
 {
     // If connected, disconnect and remove associated resources
-    close(n);
+
+    if (set == DB_MIN_SET)
+    {
+        close(n);
+    }
+    else if (set == DB_FTP_SET)
+    {
+        if (!g_ftp_connected)
+            return;
+
+        g_ftp_connected = false;
+    }
 }
 
 int hal_net_send(int fd, const uint8_t *buffer, int n)
@@ -284,6 +340,11 @@ int hal_net_recv(int fd, uint8_t *buffer, int n)
         return read(fd, buffer, n);
 
     return 0;
+}
+
+bool hal_ftp_is_connected()
+{
+    return g_ftp_connected;
 }
 
 void setup()

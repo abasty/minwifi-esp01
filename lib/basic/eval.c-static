@@ -119,22 +119,36 @@ uint8_t instr1s[] = {
 uint8_t instr1n[] = {
     TOKEN_KEYWORD_GOSUB,
     TOKEN_KEYWORD_GOTO,
+    TOKEN_KEYWORD_DEBUG,
     0,
 };
 
 uint8_t wifi_func[] = {
+    TOKEN_KEYWORD_SCAN,
     TOKEN_KEYWORD_LIST,
-    TOKEN_KEYWORD_CONNECT,
+    TOKEN_KEYWORD_START,
     TOKEN_KEYWORD_ERASE,
-    TOKEN_KEYWORD_DISCONNECT,
+    TOKEN_KEYWORD_STOP,
     TOKEN_KEYWORD_STATUS,
     0,
 };
 
 uint8_t minitel_func[] = {
     TOKEN_KEYWORD_LIST,
-    TOKEN_KEYWORD_CONNECT,
+    TOKEN_KEYWORD_START,
     TOKEN_KEYWORD_ERASE,
+    0,
+};
+
+uint8_t ftp_func[] = {
+    TOKEN_KEYWORD_LIST,
+    TOKEN_KEYWORD_START,
+    TOKEN_KEYWORD_ERASE,
+    TOKEN_KEYWORD_STOP,
+    TOKEN_KEYWORD_STATUS,
+    TOKEN_KEYWORD_CAT,
+    TOKEN_KEYWORD_PUT,
+    TOKEN_KEYWORD_GET,
     0,
 };
 
@@ -1495,6 +1509,11 @@ EVAL:
     if (!bmem->bstate.do_eval)
         return true;
 
+    if (instr == TOKEN_KEYWORD_DEBUG)
+    {
+        bmem->bstate.debug = bmem->bstate.number != 0.0;
+        return true;
+    }
     if (instr == TOKEN_KEYWORD_GOTO)
     {
         eval_goto();
@@ -1589,12 +1608,12 @@ static bool eval_rem()
     return true;
 }
 
-static bool eval_wifi_list(void)
+static bool eval_wifi_scan(void)
 {
     if (!bmem->bstate.do_eval)
         return true;
 
-    os_wifi_list();
+    os_wifi_scan();
     return true;
 }
 
@@ -1678,17 +1697,29 @@ static bool eval_wifi_status(void)
     return true;
 }
 
+static bool eval_db_list(uint8_t set)
+{
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    os_db_list(set);
+    return true;
+}
+
 static bool eval_wifi()
 {
     if (!eval_token(TOKEN_KEYWORD_WIFI))
         return false;
 
     uint8_t func = eval_token_one_of((char *)wifi_func);
-    if (func == 0 || func == TOKEN_KEYWORD_CONNECT)
+    if (func == 0 || func == TOKEN_KEYWORD_START)
         return eval_wifi_connect();
 
+    if (func == TOKEN_KEYWORD_SCAN)
+        return eval_wifi_scan();
+
     if (func == TOKEN_KEYWORD_LIST)
-        return eval_wifi_list();
+        return eval_db_list(DB_WIFI_SET);
 
     if (func == TOKEN_KEYWORD_ERASE)
         return eval_wifi_erase();
@@ -1696,21 +1727,15 @@ static bool eval_wifi()
     if (func == TOKEN_KEYWORD_STATUS)
         return eval_wifi_status();
 
-    if (func == TOKEN_KEYWORD_DISCONNECT)
+    if (func == TOKEN_KEYWORD_STOP)
         return eval_wifi_disconnect();
 
     return false;
 }
 
-static void eval_copy_string(char *dst, char *src, uint16_t len)
+static bool eval_connect(uint8_t set)
 {
-    strncpy(dst, src, len - 1);
-    dst[len - 1] = 0;
-}
-
-static bool eval_minitel_connect()
-{
-    char name[16] = "";
+    char *name = 0;
     char *urn = 0;
     int n = 1;
 
@@ -1721,7 +1746,7 @@ static bool eval_minitel_connect()
     {
         if (bmem->bstate.do_eval)
         {
-            eval_copy_string(name, string_cstr(bmem->bstate.string), sizeof(name) - 1);
+            name = string_dup(bmem->bstate.string);
         }
 
         if (!eval_string_expr())
@@ -1733,32 +1758,28 @@ static bool eval_minitel_connect()
     if (!bmem->bstate.do_eval)
         return true;
 
-    char *param = string_cstr(bmem->bstate.string);
+    char *param = bmem->bstate.string;
     if (n == 1 && !bdb_is_urn(param))
     {
-        eval_copy_string(name, param, sizeof(name) - 1);
+        name = string_dup(param);
     }
     else
     {
         urn = param;
     }
 
-    bmem->bstate.sock = os_minitel_connect(name, urn);
-    if (bmem->bstate.sock < 0)
+    int fd = os_connect(set, string_cstr(name), string_cstr(urn));
+    if (fd < 0)
     {
         bmem->bstate.error = BERROR_SOCK;
     }
 
-    return bmem->bstate.sock >= 0;
-}
+    if (set == DB_MIN_SET)
+    {
+        bmem->bstate.sock = fd;
+    }
 
-static bool eval_db_list(uint8_t set)
-{
-    if (!bmem->bstate.do_eval)
-        return true;
-
-    os_db_list(set);
-    return true;
+    return fd >= 0;
 }
 
 static bool eval_db_erase(uint8_t set)
@@ -1807,8 +1828,8 @@ static bool eval_minitel()
         return false;
 
     uint8_t func = eval_token_one_of((char *)minitel_func);
-    if (func == 0 || func == TOKEN_KEYWORD_CONNECT)
-        return eval_minitel_connect();
+    if (func == 0 || func == TOKEN_KEYWORD_START)
+        return eval_connect(DB_MIN_SET);
 
     if (func == TOKEN_KEYWORD_LIST)
         return eval_db_list(DB_MIN_SET);
@@ -1817,6 +1838,78 @@ static bool eval_minitel()
         return eval_db_erase(DB_MIN_SET);
 
     return false;
+}
+
+static bool eval_disconnect(uint8_t set)
+{
+    if (bmem->bstate.do_eval)
+        os_disconnect(set);
+
+    return true;
+}
+
+static bool eval_ftp_file(uint8_t func)
+{
+    if (!eval_string_expr())
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    if (!hal_ftp_is_connected())
+    {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    if (!hal_ftp_files(func, string_cstr(bmem->bstate.string)))
+    {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    if (!eval_running())
+    {
+        hal_print_string("OK\r\n");
+    }
+
+    return true;
+}
+
+static bool eval_ftp()
+{
+    if (!eval_token(TOKEN_KEYWORD_FTP))
+        return false;
+
+    uint8_t func = eval_token_one_of((char *)ftp_func);
+    if (func == 0 || func == TOKEN_KEYWORD_START)
+        return eval_connect(DB_FTP_SET);
+
+    if (func == TOKEN_KEYWORD_ERASE)
+        return eval_db_erase(DB_FTP_SET);
+
+    if (func == TOKEN_KEYWORD_PUT)
+        return eval_ftp_file(TOKEN_KEYWORD_PUT);
+
+    if (func == TOKEN_KEYWORD_GET)
+        return eval_ftp_file(TOKEN_KEYWORD_GET);
+
+    if (func == TOKEN_KEYWORD_LIST)
+        return eval_db_list(DB_FTP_SET);
+
+    if (func == TOKEN_KEYWORD_STOP)
+        return eval_disconnect(DB_FTP_SET);
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    if (func == TOKEN_KEYWORD_STATUS)
+        os_ftp_status();
+
+    if (func == TOKEN_KEYWORD_CAT)
+        return os_ftp_cat();
+
+    return true;
 }
 
 static bool eval_instruction()
@@ -1831,6 +1924,7 @@ static bool eval_instruction()
            eval_db() ||
            eval_wifi() ||
            eval_minitel() ||
+           eval_ftp() ||
            eval_let();
 }
 

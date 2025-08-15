@@ -26,6 +26,7 @@
 #include <ESP8266WiFi.h>
 #include <LittleFS.h>
 #include <ArduinoHttpClient.h>
+#include <FTPClient.h>
 
 #ifdef MINITEL
 #include "tty-minitel.h"
@@ -46,11 +47,13 @@ const int relayPin = 12;
 const int ledPin = 13;
 
 // Files and sockets
-File g_file0;
-int g_net_proto = -1;
-WiFiClient g_tcp_socket;
-WebSocketClient *g_web_socket = 0;
+static File g_file0;
+static int g_net_proto = -1;
+static WiFiClient g_tcp_socket;
+static WebSocketClient *g_web_socket = 0;
 static int g_web_socket_unread_bytes = 0;
+static FTPClient g_ftp_client;
+static bool g_ftp_connected = false;
 
 void hal_print_oem_string(void)
 {
@@ -130,6 +133,29 @@ size_t hal_cat()
     FSInfo info;
     LittleFS.info(info);
     return info.totalBytes - info.usedBytes;
+}
+
+ssize_t hal_ftp_cat()
+{
+    if (!hal_ftp_is_connected())
+        return -1;
+
+    ssize_t n = g_ftp_client.list_directory();
+    return n;
+}
+
+bool hal_ftp_files(uint8_t func, const char *filename)
+{
+    if (!hal_ftp_is_connected())
+        return false;
+
+    if (func == TOKEN_KEYWORD_PUT)
+        return g_ftp_client.write_file(filename, filename);
+
+    if (func == TOKEN_KEYWORD_GET)
+        return g_ftp_client.read_file(filename, filename);
+
+    return false;
 }
 
 int hal_erase(const char *pathname)
@@ -220,6 +246,20 @@ bool hal_wifi_is_connected()
     return connected;
 }
 
+bool hal_ftp_is_connected()
+{
+    if (!g_ftp_connected)
+        return false;
+
+    if (!g_ftp_client.connected())
+    {
+        g_ftp_client.close();
+        g_ftp_connected = false;
+    }
+
+    return g_ftp_connected;
+}
+
 static void web_socket_terminate()
 {
     g_web_socket->flush();
@@ -229,13 +269,12 @@ static void web_socket_terminate()
     g_web_socket_unread_bytes = 0;
 }
 
-int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char* path)
+int hal_net_connect(split_t *urn)
 {
-    g_net_proto = proto;
-
-    if (g_net_proto == URN_PROTO_TCP)
+    if (urn->proto == URN_PROTO_TCP)
     {
-        g_tcp_socket.connect(host, port);
+        g_net_proto = urn->proto;
+        g_tcp_socket.connect(urn->parts[URN_PART_HOST], urn->port);
         if (!g_tcp_socket.connected())
         {
             g_tcp_socket.stop();
@@ -247,10 +286,11 @@ int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char*
         return 0;
     }
 
-    if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
+    if (urn->proto == URN_PROTO_WS || urn->proto == URN_PROTO_WSS)
     {
-        g_web_socket = new WebSocketClient(g_tcp_socket, host, port);
-        g_web_socket->begin(path);
+        g_net_proto = urn->proto;
+        g_web_socket = new WebSocketClient(g_tcp_socket, urn->parts[URN_PART_HOST], urn->port);
+        g_web_socket->begin(urn->parts[URN_PART_PATH]);
         if (!g_web_socket->connected())
         {
             web_socket_terminate();
@@ -258,29 +298,57 @@ int hal_net_connect(uint16_t proto, const char* host, uint16_t port, const char*
         }
         return 0;
     }
+
+    if (urn->proto == URN_PROTO_FTP)
+    {
+        if (hal_ftp_is_connected())
+            return -1;
+
+        uint16_t port = urn->port ? urn->port : 21;
+        const char *login = *urn->parts[URN_PART_LOGIN] ? urn->parts[URN_PART_LOGIN] : "anonymous";
+        const char *pass = *urn->parts[URN_PART_PASS] ? urn->parts[URN_PART_PASS] : "pat@frites.be";
+        g_ftp_connected = g_ftp_client.open(urn->parts[URN_PART_HOST], port, login, pass);
+        if (!g_ftp_connected)
+            return -1;
+
+        if (*urn->parts[URN_PART_PATH])
+            g_ftp_client.change_directory(urn->parts[URN_PART_PATH]);
+
+        return 0;
+    }
     return -1;
 }
 
-void hal_net_disconnect(int n)
+void hal_net_disconnect(uint8_t set, int n)
 {
     // If connected, disconnect and remove associated resources
-    if (g_net_proto == URN_PROTO_TCP)
+    if (set == DB_MIN_SET)
     {
-        if (g_tcp_socket.connected())
+        if (g_net_proto == URN_PROTO_TCP)
         {
-            g_tcp_socket.stop();
+            if (g_tcp_socket.connected())
+            {
+                g_tcp_socket.stop();
+            }
+        }
+
+        if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
+        {
+            if (g_web_socket && g_web_socket->connected())
+            {
+                web_socket_terminate();
+            }
+        }
+        g_net_proto = -1;
+    }
+    else if (set == DB_FTP_SET)
+    {
+        if (g_ftp_connected)
+        {
+            g_ftp_client.close();
+            g_ftp_connected = false;
         }
     }
-
-    if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
-    {
-        if (g_web_socket && g_web_socket->connected())
-        {
-            web_socket_terminate();
-        }
-    }
-
-    g_net_proto = -1;
 }
 
 int hal_net_send(int fd, const uint8_t *buffer, int n)

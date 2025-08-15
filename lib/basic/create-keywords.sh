@@ -76,19 +76,22 @@ unplot
 test
 mode
 wifi
-connect
+start
 peek
 poke
 usr
 eval
 bastos
-disconnect
+scan
 status
 ftp
 minitel
-get$
+get
 put
 db
+down
+up
+debug
 EOF
 
 # Do not sort to preserve save/load compatibility

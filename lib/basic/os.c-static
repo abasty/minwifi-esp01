@@ -44,8 +44,10 @@
 #define SERVER_SECRET_MAX_SIZE (64)
 
 // OS WiFi variables
-char g_net_connected_ssid[20] = ""; // 20 first characters of SSID
-char g_net_connected_ip[16] = "";
+// FIXME (Move to Basic memory)
+char g_wifi_connected_ssid[20] = ""; // 20 first characters of SSID
+char g_wifi_connected_ip[16] = "";
+char g_ftp_connected_host[32] = "";
 
 void os_db_save(void)
 {
@@ -125,7 +127,7 @@ void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t 
     }
 }
 
-void os_wifi_list(void)
+void os_wifi_scan(void)
 {
     // Display scanning status
     hal_print_string(LINE0 INV BLINK "Scanning..." CLEOL NORMAL "\n");
@@ -140,7 +142,7 @@ void os_wifi_list(void)
 
 int os_wifi_connect(const char *ssid)
 {
-    bool known = false;
+    bool use_db = false;
     char secret[WIFI_SECRET_MAX_SIZE] = "";
 
     entry_t *entry = bdb_entry_get(DB_WIFI_SET, ssid);
@@ -148,10 +150,10 @@ int os_wifi_connect(const char *ssid)
     {
         strncpy(secret, string_cstr(entry->string), WIFI_SECRET_MAX_SIZE - 1);
         secret[WIFI_SECRET_MAX_SIZE - 1] = 0;
-        known = true;
+        use_db = true;
     }
 
-    if (!known)
+    if (!use_db)
     {
         hal_print_string(LINE0 INV "Password: " CLEOL);
         if (os_get_string(secret, sizeof(secret), '*') < 0)
@@ -167,7 +169,11 @@ int os_wifi_connect(const char *ssid)
     int ret = hal_wifi_connect(ssid, secret);
     if (ret == 0)
     {
-        if (!known)
+        if (!eval_running())
+        {
+            hal_print_string("OK\r\n");
+        }
+        if (!use_db)
         {
             bdb_entry_set(DB_WIFI_SET, ssid, secret, true);
             os_db_save();
@@ -191,13 +197,13 @@ void os_wifi_set_info(const char *ssid, const char *ip)
 {
     if (ssid)
     {
-        strncpy(g_net_connected_ssid, ssid, sizeof(g_net_connected_ssid) - 1);
-        g_net_connected_ssid[sizeof(g_net_connected_ssid) - 1] = '\0';
+        strncpy(g_wifi_connected_ssid, ssid, sizeof(g_wifi_connected_ssid) - 1);
+        g_wifi_connected_ssid[sizeof(g_wifi_connected_ssid) - 1] = '\0';
     }
     if (ip)
     {
-        strncpy(g_net_connected_ip, ip, sizeof(g_net_connected_ip) - 1);
-        g_net_connected_ip[sizeof(g_net_connected_ip) - 1] = '\0';
+        strncpy(g_wifi_connected_ip, ip, sizeof(g_wifi_connected_ip) - 1);
+        g_wifi_connected_ip[sizeof(g_wifi_connected_ip) - 1] = '\0';
     }
 }
 
@@ -210,11 +216,33 @@ void os_wifi_status(void)
     }
     else
     {
-        hal_print_string(g_net_connected_ip);
-        uint8_t len = strlen(g_net_connected_ip);
+        hal_print_string(g_wifi_connected_ip);
+        uint8_t len = strlen(g_wifi_connected_ip);
         for (int i = 16 - len; i > 0; i--)
             hal_print_string(" ");
-        hal_print_string(g_net_connected_ssid);
+        hal_print_string(g_wifi_connected_ssid);
+    }
+    hal_print_string("\r\n\r\n");
+}
+
+void os_ftp_status(void)
+{
+    hal_print_string("\r\n" INV "FTP Host" CLEOL " " NORMAL "\r\n");
+
+    // Check connection status
+    if (*g_ftp_connected_host != 0 && !hal_ftp_is_connected())
+    {
+        *g_ftp_connected_host = 0;
+    }
+
+    // Display connection status message
+    if (*g_ftp_connected_host == 0)
+    {
+        hal_print_string("Not connected");
+    }
+    else
+    {
+        hal_print_string(g_ftp_connected_host);
     }
     hal_print_string("\r\n\r\n");
 }
@@ -234,9 +262,10 @@ void os_db_list(uint8_t set)
         {
             char line[40];
             if (set != DB_WIFI_SET)
-                snprintf(line, 40, "%-8.8s %-30.30s", entry->bytes + entry->name_ofs, string_cstr(entry->string));
+                snprintf(line, 40, "%-8.8s %s", entry->bytes + entry->name_ofs, string_cstr(entry->string));
             else
-                snprintf(line, 40, "%-39.39s", entry->bytes + entry->name_ofs);
+                snprintf(line, 40, "%s", entry->bytes + entry->name_ofs);
+            line[39] = 0;
             hal_print_string(line);
             hal_print_string("\r\n");
             n++;
@@ -344,14 +373,14 @@ uint8_t os_get_key()
     return key;
 }
 
-int os_minitel_connect(const char *name, const char* urn)
+int os_connect(uint8_t set, const char *name, const char* urn)
 {
     int ret = -1;
 
     // Get configuration if needed
-    entry_t *entry = bdb_entry_get(DB_MIN_SET, name);
-    bool known = entry != 0 && urn == 0;
-    urn = known ? string_cstr(entry->string) : urn;
+    entry_t *entry = name ? bdb_entry_get(set, name) : 0;
+    bool use_db = entry != 0 && urn == 0;
+    urn = use_db ? string_cstr(entry->string) : urn;
     if (!urn)
         goto finalize;
 
@@ -360,30 +389,47 @@ int os_minitel_connect(const char *name, const char* urn)
         goto finalize;
 
     // Connect to the host
-    ret = hal_net_connect(split->proto, split->parts[URN_PART_HOST], split->port, split->parts[URN_PART_PATH]);
-    if (ret >= 0)
-    {
-        hal_print_string(P_ROULEAU_OFF);
-        if (!known && *name)
+    ret = hal_net_connect(split);
+    if (ret >= 0) {
+        if (set == DB_MIN_SET)
         {
-            bdb_entry_set(DB_MIN_SET, name, (char*) urn, true);
-            os_db_save();
+            hal_print_string(P_ROULEAU_OFF);
         }
+        else
+        {
+            if (set == DB_FTP_SET)
+            {
+                strncpy(g_ftp_connected_host, split->parts[URN_PART_HOST], sizeof(g_ftp_connected_host) - 1);
+                g_ftp_connected_host[sizeof(g_ftp_connected_host) - 1] = 0;
+            }
+            if (!eval_running())
+            {
+                hal_print_string("OK\r\n");
+            }
+        }
+    }
+
+    if (!use_db && name && *name > 0) {
+        bdb_entry_set(set, name, (char*) urn, true);
+        os_db_save();
     }
 
 finalize:
     return ret;
 }
 
-static void os_disconnect(void)
+void os_disconnect(uint8_t set)
 {
-    hal_net_disconnect(bmem->bstate.sock);
-    bmem->bstate.sock = -1;
-
-    hal_print_string("\r\n" P_ROULEAU_ON);
-    if (!eval_running())
+    if (set == DB_MIN_SET)
     {
-        hal_print_string(CON G0 INK7 "Ready\r\n");
+        hal_net_disconnect(set, bmem->bstate.sock);
+        bmem->bstate.sock = -1;
+        hal_print_string("\r\n" P_ROULEAU_ON CON G0 INK7);
+    }
+    else if (set == DB_FTP_SET)
+    {
+        hal_net_disconnect(set, -1);
+        *g_ftp_connected_host = 0;
     }
 }
 
@@ -394,14 +440,86 @@ void os_cat(void)
     hal_print_integer("\r\n%3uK free\r\n\r\n", total / 1024);
 }
 
+bool os_ftp_cat(void)
+{
+    if (!hal_ftp_is_connected())
+    {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+    hal_print_string("\r\nDrive: ");
+    hal_print_string(g_ftp_connected_host);
+    hal_print_string("\r\n\r\n");
+
+    ssize_t total = hal_ftp_cat();
+    if (total < 0)
+    {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    hal_print_integer("\r\n%3zd file(s)\r\n\r\n", total);
+
+    return true;
+}
+
 void os_cat_file(const char *filename, size_t size)
 {
     char buffer[40];
-    char *ext = strchr(filename, '.');
+    char *ext = strrchr(filename, '.');
     int n = ext ? (ext - filename) : strlen(filename);
     ext = ext ? ext + 1 : "";
-    snprintf(buffer, sizeof(buffer), "%-8.*s.%-3s %zu\r\n", n, filename, ext, size);
+    snprintf(buffer, sizeof(buffer), "%-16.*s.%-4s %zu\r\n", n, filename, ext, size);
     hal_print_string(buffer);
+}
+
+/**
+ * @brief Parse a printable string from src to dst
+ *
+ * This function copies printable characters from src to dst, skipping
+ * non-printable characters. It returns a pointer to the first non-printable
+ * character after the copied characters in src.
+ *
+ * @param dst Destination buffer for the printable string
+ * @param dst_size Size of the destination buffer
+ * @param src Source string to parse
+ * @return Pointer to the first non-printable character in src after copying
+ */
+static char* parse_printable(char *dst, size_t dst_size, const char *src)
+{
+    // Count of copied chars
+    int32_t n = 0;
+    // Jump over non printable chars from src
+    while (*src && (*src <= 32))
+        src++;
+    // Copy printable chars from src to dst
+    while (*src && dst_size > 1 && (*src > 32)) {
+        *dst++ = *src++;
+        dst_size--;
+        n++;
+    }
+    // Null-terminate the string
+    if (n > 0)
+        *dst = '\0';
+    // Return pointer to first non printable char after copied chars
+    while (*src && (*src > 32))
+        src++;
+    return (char *)src;
+}
+
+void os_ftp_cat_file(const char* line)
+{
+    char part[32];
+    const char *src = line;
+    int32_t n = 0;
+    size_t size = 0;
+    while (*src) {
+        src = parse_printable(part, sizeof(part), src);
+        n++;
+        if (n == 5)
+            size = strtoul(part, 0, 10);
+    }
+    os_cat_file(part, size);
 }
 
 static void os_loop_connected()
@@ -414,7 +532,7 @@ static void os_loop_connected()
     if (ret < 0)
     {
         // If error on socket: exit the connected mode
-        os_disconnect();
+        os_disconnect(DB_MIN_SET);
     }
     else if (ret > 0)
     {
@@ -432,7 +550,7 @@ static void os_loop_connected()
     if (ret < 0)
     {
         // If error on socket: exit the connected mode
-        os_disconnect();
+        os_disconnect(DB_MIN_SET);
     }
 
     // If Cx/Fin: close socket [exit the connected mode]
@@ -446,7 +564,7 @@ static void os_loop_connected()
         {
             if (key == 'Y') // CX/Fin
             {
-                os_disconnect();
+                os_disconnect(DB_MIN_SET);
             }
             fkey = false;
         }
@@ -475,6 +593,13 @@ void os_loop()
     {
         os_loop_basic();
     }
+}
+
+bool os_debug(void)
+{
+    if (!bmem)
+        return false;
+    return bmem->bstate.debug != 0.0;
 }
 
 void os_setup(void)

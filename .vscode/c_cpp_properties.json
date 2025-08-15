@@ -10,8 +10,8 @@
             "includePath": [
                 "/home/alain/Projects/minitel/minwifi-esp01/include",
                 "/home/alain/Projects/minitel/minwifi-esp01/src",
-                "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/LittleFS/src",
                 "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266WiFi/src",
+                "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/LittleFS/src",
                 "/home/alain/Projects/minitel/minwifi-esp01/lib/basic",
                 "/home/alain/Projects/minitel/minwifi-esp01/.pio/libdeps/esp01_1m_nodecmu/ArduinoHttpClient/src",
                 "/home/alain/.platformio/packages/framework-arduinoespressif8266/tools/sdk/include",
@@ -61,8 +61,8 @@
                 "path": [
                     "/home/alain/Projects/minitel/minwifi-esp01/include",
                     "/home/alain/Projects/minitel/minwifi-esp01/src",
-                    "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/LittleFS/src",
                     "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/ESP8266WiFi/src",
+                    "/home/alain/.platformio/packages/framework-arduinoespressif8266/libraries/LittleFS/src",
                     "/home/alain/Projects/minitel/minwifi-esp01/lib/basic",
                     "/home/alain/Projects/minitel/minwifi-esp01/.pio/libdeps/esp01_1m_nodecmu/ArduinoHttpClient/src",
                     "/home/alain/.platformio/packages/framework-arduinoespressif8266/tools/sdk/include",

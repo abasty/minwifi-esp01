@@ -25,6 +25,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -181,15 +182,66 @@ static int8_t tokenize_string(tokenizer_state_t *state)
     uint16_t len = 0;
     state->write_ptr += 2; // reserve space for length
     char c = *++state->read_ptr;
-    // TODO: check for escape sequences \n, \\, \", \222, \x23, etc.
-    while (c != 0 && c != '"')
+    uint8_t escape = 0;
+    while (c != 0)
     {
-        *state->write_ptr++ = c;
-        len++;
+        if (escape == 0) {
+            if (c == '"')
+                break;
+
+            if (c == '\\') {
+                escape = 1;
+            }
+        } else if (escape == 1) {
+            escape = 0;
+            switch (c) {
+            case 'a':   //	07	Alert (Beep, Bell) (added in C89)[1]
+                c = 0x07;
+                break;
+            case 'b':   //	08	Backspace
+                c = 0x08;
+                break;
+            case 'e':   //  1B	Escape character
+                c = 0x1b;
+                break;
+            case 'f':   //	0C	Formfeed Page Break
+                c = 0x0c;
+                break;
+            case 'n':   //	0A	Newline (Line Feed); see below
+                c = 0x0a;
+                break;
+            case 'r':   //	0D	Carriage Return
+                c = 0x0d;
+                break;
+            case 't':   //	09	Horizontal Tab
+                c = 0x09;
+                break;
+            case 'v':   //	0B	Vertical Tab
+                c = 0x0b;
+                break;
+            case 'x':
+                escape = 2; // Hexadécimal byte
+                break;
+            default:
+                break;
+            }
+        } else if (escape == 2) {
+            char hex[3] = { c, *(state->read_ptr + 1), 0 };
+            if (isxdigit(hex[0]) && isxdigit(hex[1])) {
+                c = strtol(hex, 0, 16);
+                state->read_ptr++;
+            }
+            escape = 0;
+        }
+
+        if (escape == 0) {
+            *state->write_ptr++ = c;
+            len++;
+        }
+
         c = *++state->read_ptr;
     }
-    if (c == 0)
-    {
+    if (c == 0) {
         return BERROR_SYNTAX;
     }
     *state->write_ptr++ = 0;

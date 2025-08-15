@@ -29,29 +29,7 @@
 #include <stdbool.h>
 #include "token.h"
 #include "bmemory.h"
-
-#define URN_SIZE_MAX   (192)
-
-#define URN_PART_PROTO (0)
-#define URN_PART_HOST  (1)
-#define URN_PART_PORT  (2)
-#define URN_PART_PATH  (3)
-#define URN_PART_LOGIN (4)
-#define URN_PART_PASS  (5)
-#define URN_PARTS_MAX  (8)
-
-typedef struct split_s {
-    uint8_t n;
-    uint8_t proto;
-    uint16_t port;
-    char *parts[URN_PARTS_MAX];
-    char urn[URN_SIZE_MAX];
-} split_t;
-
-    // Init entry
-#define DB_WIFI_SET ((uint8_t) 255)
-#define DB_MIN_SET ((uint8_t) 254)
-#define DB_FTP_SET ((uint8_t) 253)
+#include "os.h"
 
 typedef var_t entry_t;
 
