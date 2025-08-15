@@ -160,7 +160,11 @@ size_t hal_cat()
 
 ssize_t hal_ftp_cat()
 {
-    return 0;
+    if (!hal_ftp_is_connected())
+        return -1;
+
+    os_ftp_cat_file("-rw-------    1 116      127            72 Aug 14 00:21 inkey.bst\r\n");
+    return 1;
 }
 
 int hal_erase(const char *pathname)

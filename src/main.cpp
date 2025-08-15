@@ -137,6 +137,9 @@ size_t hal_cat()
 
 ssize_t hal_ftp_cat()
 {
+    if (!hal_ftp_is_connected())
+        return -1;
+
     ssize_t n = g_ftp_client.list_directory();
     return n;
 }

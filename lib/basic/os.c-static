@@ -472,24 +472,53 @@ void os_cat_file(const char *filename, size_t size)
     hal_print_string(buffer);
 }
 
+/**
+ * @brief Parse a printable string from src to dst
+ *
+ * This function copies printable characters from src to dst, skipping
+ * non-printable characters. It returns a pointer to the first non-printable
+ * character after the copied characters in src.
+ *
+ * @param dst Destination buffer for the printable string
+ * @param dst_size Size of the destination buffer
+ * @param src Source string to parse
+ * @return Pointer to the first non-printable character in src after copying
+ */
+static char* parse_printable(char *dst, size_t dst_size, const char *src)
+{
+    // Count of copied chars
+    int32_t n = 0;
+    // Jump over non printable chars from src
+    while (*src && (*src <= 32))
+        src++;
+    // Copy printable chars from src to dst
+    while (*src && dst_size > 1 && (*src > 32)) {
+        *dst++ = *src++;
+        dst_size--;
+        n++;
+    }
+    // Null-terminate the string
+    if (n > 0)
+        *dst = '\0';
+    // Return pointer to first non printable char after copied chars
+    while (*src && (*src > 32))
+        src++;
+    return (char *)src;
+}
+
 void os_ftp_cat_file(const char* line)
 {
-    uint16_t len = strlen(line);
-    const char* src = len > 0 ? line + len - 1 : line;
-    while (src > line &&  *src <= ' ') src--;
-    while (src > line &&  *src > ' ') src--;
-    if (*src <= ' ') src++;
-    char filename[16];
-    char *dst = filename;
-    for (int i = 0; i < sizeof(filename); i++)
-    {
-        if (*src <= ' ')
-            break;
-        *dst++ = *src++;
+    char part[32];
+    const char *src = line;
+    int32_t n = 0;
+    size_t size = 0;
+    while (*src) {
+        src = parse_printable(part, sizeof(part), src);
+        n++;
+        if (n == 5)
+            size = strtoul(part, 0, 10);
     }
-    *dst = 0;
-    // FIXME: Get size
-    os_cat_file(filename, 0);
+    os_cat_file(part, size);
 }
 
 static void os_loop_connected()
