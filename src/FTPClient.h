@@ -42,13 +42,16 @@ private:
     uint16_t run_command(const char *command, const char *param = "",
                          char *answer = NULL);
 
+    // Flush available chars
+    void flush_available();
+
     // Get server answer
     uint16_t get_server_answer(char *answer = NULL);
 
     // Passive mode
     bool open_passive_mode();
     bool close_passive_mode();
-    void receive(File &destination_file);
+    void receive(File &destination_file, ssize_t size);
     void send(File &source_file);
 
     // Public methods

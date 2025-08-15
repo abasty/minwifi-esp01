@@ -25,8 +25,11 @@ bool FTPClient::open(const char *server_address, const uint16_t server_port,
     // Connect to server
     if (m_client.connect(server_address, server_port)) {
         // Check if server is ready for a new user
-        // FIXME: Store server banner
-        if (get_server_answer() == 220) {
+        char banner[FTP_CLIENT_BUFFER_SIZE];
+        if (get_server_answer(banner) == 220) {
+            // Flush banner
+            flush_available();
+            hal_print_string(banner);
             // Run USER command
             if (run_command("USER ", user_name) == 331) {
                 // Run PASS command
@@ -79,8 +82,16 @@ bool FTPClient::write_file(const char *file_name,
 
 // Read file
 bool FTPClient::read_file(const char *file_name, const char *fs_file_name) {
+    // Get file size
+    char size_str[FTP_CLIENT_BUFFER_SIZE];
+    if (run_command("SIZE ", file_name, size_str) != 213)
+        return false;
+
+    ssize_t size = strtol(size_str, 0, 10);
+    if (size <= 0)
+        return false;
+
     // Open destination file
-    // FIXME: only create local file if RETR is OK
     File destination_file = LittleFS.open(fs_file_name, "w");
     if (destination_file) {
         run_command("TYPE I");
@@ -89,11 +100,8 @@ bool FTPClient::read_file(const char *file_name, const char *fs_file_name) {
             // Run RETR command
             if (run_command("RETR ", file_name) == 150) {
                 // Receive file
-                receive(destination_file);
+                receive(destination_file, size);
             }
-
-            // Stop passive client
-            // m_passive_client.stop();
 
             // Close passive mode
             // return
@@ -211,6 +219,16 @@ uint16_t FTPClient::run_command(const char *command, const char *param,
     return m_last_error_code;
 }
 
+void FTPClient::flush_available() {
+    int available = m_client.available();
+    while (available > 0) {
+        uint8_t buffer[FTP_CLIENT_BUFFER_SIZE];
+        available = available > FTP_CLIENT_BUFFER_SIZE ? FTP_CLIENT_BUFFER_SIZE : available;
+        m_client.read(buffer, available);
+        available = m_client.available();
+    }
+}
+
 // Get answer from server
 uint16_t FTPClient::get_server_answer(char *answer) {
     // Wait for server answer
@@ -262,7 +280,7 @@ uint16_t FTPClient::get_server_answer(char *answer) {
 
 // Open passive mode
 bool FTPClient::open_passive_mode() {
-    // Run MLSD command
+    // Run PASV command
     char buffer[FTP_CLIENT_BUFFER_SIZE];
     if (run_command("PASV", "", buffer) == 227) {
         // Initialize error code
@@ -300,29 +318,28 @@ bool FTPClient::close_passive_mode() {
 }
 
 // Receive file
-void FTPClient::receive(File &destination_file) {
-    // Wait for passive server answer
+void FTPClient::receive(File &destination_file, ssize_t size) {
     if (os_debug())
-        hal_print_string("*** Waiting\r\n");
+        hal_print_integer("*** Receiving %zd bytes\r\n", size);
 
-    uint32_t timeout = millis() + m_timeout;
-    while ((!m_passive_client.available()) && (millis() < timeout))
-        delay(5);
-
-    // FIXME: read until m_client is available (transfert complete)
-    if (os_debug())
-        hal_print_string("*** Receiving\r\n");
     // Read all data from passive server
     uint8_t block[FTP_CLIENT_TRANSFER_BLOCK_SIZE];
-    while (m_passive_client.available() > 0) {
+    ssize_t read_size = 0;
+    while (read_size < size) {
         int available = m_passive_client.available();
+        if (available == 0) {
+            delay(5);
+            continue;
+        }
 
         if (available > FTP_CLIENT_TRANSFER_BLOCK_SIZE)
             available = FTP_CLIENT_TRANSFER_BLOCK_SIZE;
 
         size_t block_size = m_passive_client.readBytes(block, available);
-        if (block_size > 0)
+        if (block_size > 0) {
             destination_file.write(block, block_size);
+            read_size += block_size;
+        }
     }
 
     if (os_debug())
