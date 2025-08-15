@@ -81,6 +81,7 @@ typedef struct
     bool running;
     bool inputting;
     bool reset;
+    bool debug;
     int sp;
     int sock;
     char *string;

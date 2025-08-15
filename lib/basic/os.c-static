@@ -595,6 +595,13 @@ void os_loop()
     }
 }
 
+bool os_debug(void)
+{
+    if (!bmem)
+        return false;
+    return bmem->bstate.debug != 0.0;
+}
+
 void os_setup(void)
 {
     // Init Basic and display BASTOS banner

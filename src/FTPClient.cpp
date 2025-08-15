@@ -25,6 +25,7 @@ bool FTPClient::open(const char *server_address, const uint16_t server_port,
     // Connect to server
     if (m_client.connect(server_address, server_port)) {
         // Check if server is ready for a new user
+        // FIXME: Store server banner
         if (get_server_answer() == 220) {
             // Run USER command
             if (run_command("USER ", user_name) == 331) {
@@ -47,137 +48,58 @@ void FTPClient::close() {
     m_client.stop();
 }
 
-bool FTPClient::connected() {
-    return m_client.connected();
-}
-
-// Write data to file
-bool FTPClient::write_file(const char *file_name, uint8_t *buffer,
-                           size_t buffer_size) {
-    // Open passive mode
-    if (open_passive_mode()) {
-        // Run STOR command
-        if (run_command("STOR ", file_name) == 150) {
-            // Send buffer
-            send(buffer, buffer_size);
-        }
-
-        // Close passive mode
-        return close_passive_mode();
-    }
-
-    // Return: error
-    return false;
-}
+bool FTPClient::connected() { return m_client.connected(); }
 
 // Write data to file
 bool FTPClient::write_file(const char *file_name,
-                           const char *spiffs_file_name) {
+                           const char *fs_file_name) {
     // Mount file system
-    if (LittleFS.begin()) {
-        // Open source file
-        File source_file = LittleFS.open(spiffs_file_name, "r");
-        if (source_file) {
-            // Open passive mode
-            if (open_passive_mode()) {
-                // Run STOR command
-                if (run_command("STOR ", file_name) == 150) {
-                    // Send file
-                    send(source_file);
-                }
-
-                // Close passive mode
-                return close_passive_mode();
+    // if (LittleFS.begin()) {
+    // Open source file
+    File source_file = LittleFS.open(fs_file_name, "r");
+    if (source_file) {
+        run_command("TYPE I");
+        // Open passive mode
+        if (open_passive_mode()) {
+            // Run STOR command
+            if (run_command("STOR ", file_name) == 150) {
+                // Send file
+                send(source_file);
             }
+
+            // Close passive mode
+            return close_passive_mode();
         }
     }
-
-    // Return: error
-    return false;
-}
-
-// Append data to file
-bool FTPClient::append_file(const char *file_name, uint8_t *buffer,
-                            size_t buffer_size) {
-    // Open passive mode
-    if (open_passive_mode()) {
-        // Run APPE command
-        if (run_command("APPE ", file_name) == 150) {
-            // Send buffer
-            send(buffer, buffer_size);
-        }
-
-        // Close passive mode
-        return close_passive_mode();
-    }
-
-    // Return: error
-    return false;
-}
-
-// Append data to file
-bool FTPClient::append_file(const char *file_name,
-                            const char *spiffs_file_name) {
-    // Mount file system
-    if (LittleFS.begin()) {
-        // Open source file
-        File source_file = LittleFS.open(spiffs_file_name, "r");
-        if (source_file) {
-            // Open passive mode
-            if (open_passive_mode()) {
-                // Run APPE command
-                if (run_command("APPE ", file_name) == 150) {
-                    // Send file
-                    send(source_file);
-                }
-
-                // Close passive mode
-                return close_passive_mode();
-            }
-        }
-    }
+    // }
 
     // Return: error
     return false;
 }
 
 // Read file
-bool FTPClient::read_file(const char *file_name, uint8_t *buffer,
-                          size_t buffer_size) {
-    // Open passive mode
-    if (open_passive_mode()) {
-        // Run RETR command
-        if (run_command("RETR ", file_name) == 150) {
-            // Receive buffer
-            receive(buffer, buffer_size);
-        }
-
-        // Close passive mode
-        return close_passive_mode();
-    }
-
-    // Return: error
-    return false;
-}
-
-// Read file
-bool FTPClient::read_file(const char *file_name, const char *spiffs_file_name) {
-    // Mount file system
-    if (LittleFS.begin()) {
-        // Open destination file
-        File destination_file = LittleFS.open(spiffs_file_name, "w");
-        if (destination_file) {
-            // Open passive mode
-            if (open_passive_mode()) {
-                // Run RETR command
-                if (run_command("RETR ", file_name) == 150) {
-                    // Receive file
-                    receive(destination_file);
-                }
-
-                // Close passive mode
-                return close_passive_mode();
+bool FTPClient::read_file(const char *file_name, const char *fs_file_name) {
+    // Open destination file
+    // FIXME: only create local file if RETR is OK
+    File destination_file = LittleFS.open(fs_file_name, "w");
+    if (destination_file) {
+        run_command("TYPE I");
+        // Open passive mode
+        if (open_passive_mode()) {
+            // Run RETR command
+            if (run_command("RETR ", file_name) == 150) {
+                // Receive file
+                receive(destination_file);
             }
+
+            // Stop passive client
+            // m_passive_client.stop();
+
+            // Close passive mode
+            // return
+            close_passive_mode();
+
+            return true;
         }
     }
 
@@ -250,10 +172,10 @@ ssize_t FTPClient::list_directory(void) {
         }
 
         // Stop passive client
-        m_passive_client.stop();
+        // m_passive_client.stop();
 
         // Close passive mode
-        // close_passive_mode();
+        close_passive_mode();
         return n;
     }
 
@@ -271,6 +193,12 @@ uint16_t FTPClient::run_command(const char *command, const char *param,
 
     // Check connection status
     if (m_client.connected()) {
+        if (os_debug()) {
+            hal_print_string(command);
+            hal_print_string(param);
+            hal_print_string("\r\n");
+        }
+
         // Send command
         m_client.print(command);
         m_client.println(param);
@@ -308,8 +236,16 @@ uint16_t FTPClient::get_server_answer(char *answer) {
                 buffer[buffer_count] = '\0';
             }
 
+            // FIXME: Problem with 220 (can have CRLF chars)
+            if (byte_received == '\n')
+                break;
+
             // Delay
             delay(5);
+        }
+
+        if (os_debug()) {
+            hal_print_string(buffer);
         }
 
         // Copy answer
@@ -359,57 +295,38 @@ bool FTPClient::close_passive_mode() {
     m_passive_client.stop();
 
     // Return
-    return (get_server_answer() == 226);
-}
-
-// Receive buffer
-void FTPClient::receive(uint8_t *buffer, size_t buffer_size) {
-    // Wait for passive server answer
-    uint32_t timeout = millis() + m_timeout;
-    while ((!m_passive_client.available()) && (millis() < timeout))
-        delay(5);
-
-    // Read all data from passive server
-    uint8_t data_byte;
-    uint8_t data_byte_count = 0;
-    while (m_passive_client.available()) {
-        m_passive_client.readBytes((uint8_t *)&data_byte, 1);
-        if (data_byte_count < buffer_size)
-            buffer[data_byte_count++] = data_byte;
-    }
+    uint16_t ret = get_server_answer();
+    return (ret == 226);
 }
 
 // Receive file
 void FTPClient::receive(File &destination_file) {
     // Wait for passive server answer
+    if (os_debug())
+        hal_print_string("*** Waiting\r\n");
+
     uint32_t timeout = millis() + m_timeout;
     while ((!m_passive_client.available()) && (millis() < timeout))
         delay(5);
 
+    // FIXME: read until m_client is available (transfert complete)
+    if (os_debug())
+        hal_print_string("*** Receiving\r\n");
     // Read all data from passive server
     uint8_t block[FTP_CLIENT_TRANSFER_BLOCK_SIZE];
-    while (m_passive_client.available()) {
-        size_t block_size =
-            m_passive_client.readBytes(block, FTP_CLIENT_TRANSFER_BLOCK_SIZE);
+    while (m_passive_client.available() > 0) {
+        int available = m_passive_client.available();
+
+        if (available > FTP_CLIENT_TRANSFER_BLOCK_SIZE)
+            available = FTP_CLIENT_TRANSFER_BLOCK_SIZE;
+
+        size_t block_size = m_passive_client.readBytes(block, available);
         if (block_size > 0)
             destination_file.write(block, block_size);
     }
-}
 
-// Send buffer
-void FTPClient::send(uint8_t *buffer, size_t buffer_size) {
-    // Write buffer block by block
-    uint8_t block[FTP_CLIENT_TRANSFER_BLOCK_SIZE];
-    uint32_t block_size = 0;
-    for (uint32_t i = 0; i < buffer_size; i++) {
-        block[block_size++] = buffer[i];
-        if (block_size == FTP_CLIENT_TRANSFER_BLOCK_SIZE) {
-            m_passive_client.write(block, block_size);
-            block_size = 0;
-        }
-    }
-    if (block_size > 0)
-        m_passive_client.write(block, block_size);
+    if (os_debug())
+        hal_print_string("*** Received end\r\n");
 }
 
 // Send file

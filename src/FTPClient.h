@@ -48,9 +48,7 @@ private:
     // Passive mode
     bool open_passive_mode();
     bool close_passive_mode();
-    void receive(uint8_t *buffer, size_t buffer_size);
     void receive(File &destination_file);
-    void send(uint8_t *buffer, size_t buffer_size);
     void send(File &source_file);
 
     // Public methods
@@ -65,13 +63,8 @@ public:
     bool connected();
 
     // File management
-    bool write_file(const char *file_name, uint8_t *buffer, size_t buffer_size);
-    bool write_file(const char *file_name, const char *spiffs_file_name);
-    bool append_file(const char *file_name, uint8_t *buffer,
-                     size_t buffer_size);
-    bool append_file(const char *file_name, const char *spiffs_file_name);
-    bool read_file(const char *file_name, uint8_t *buffer, size_t buffer_size);
-    bool read_file(const char *file_name, const char *spiffs_file_name);
+    bool write_file(const char *file_name, const char *fs_file_name);
+    bool read_file(const char *file_name, const char *fs_file_name);
     bool rename_file(const char *from, const char *to);
     bool delete_file(const char *file_name);
     bool get_last_modified_time(const char *file_name, char *result);

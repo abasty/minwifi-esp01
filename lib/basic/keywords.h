@@ -79,3 +79,4 @@
 #define TOKEN_KEYWORD_DB ((uint8_t) (77 | 0b10000000))
 #define TOKEN_KEYWORD_DOWN ((uint8_t) (78 | 0b10000000))
 #define TOKEN_KEYWORD_UP ((uint8_t) (79 | 0b10000000))
+#define TOKEN_KEYWORD_DEBUG ((uint8_t) (80 | 0b10000000))

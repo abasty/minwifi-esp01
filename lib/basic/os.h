@@ -78,6 +78,7 @@ typedef struct split_s {
 // OS main functions
 void os_setup(void);
 void os_loop(void);
+bool os_debug(void);
 
 // OS config function
 void os_db_load(void);

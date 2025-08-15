@@ -119,6 +119,7 @@ uint8_t instr1s[] = {
 uint8_t instr1n[] = {
     TOKEN_KEYWORD_GOSUB,
     TOKEN_KEYWORD_GOTO,
+    TOKEN_KEYWORD_DEBUG,
     0,
 };
 
@@ -1508,6 +1509,11 @@ EVAL:
     if (!bmem->bstate.do_eval)
         return true;
 
+    if (instr == TOKEN_KEYWORD_DEBUG)
+    {
+        bmem->bstate.debug = bmem->bstate.number != 0.0;
+        return true;
+    }
     if (instr == TOKEN_KEYWORD_GOTO)
     {
         eval_goto();
