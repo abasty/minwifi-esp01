@@ -525,6 +525,47 @@ void os_ftp_cat_file(const char* line)
     os_cat_file(part, size);
 }
 
+#define FILE_EXT_BAS ".bas"
+#define FILE_EXT_BST ".bst"
+#define FILE_EXT_VAR ".var"
+
+char *os_filename(const char *name, int16_t *type)
+{
+    static const char *g_files_exts[4] = {
+        FILE_EXT_BAS, FILE_EXT_BST, FILE_EXT_VAR, 0,
+    };
+
+    static char filename[FILE_NAME_SIZE];
+
+    const char *dst_ext = FILE_EXT_BAS;
+    *type = 0;
+    char *src_ext = strrchr(name, '.');
+    uint16_t len = src_ext ? src_ext - name : strlen(name);
+    len = len > FILE_BASE_MAX ? FILE_BASE_MAX : len;
+
+    if (src_ext) {
+        dst_ext = 0;
+        for (const char **i_ext = g_files_exts; *i_ext ; i_ext++) {
+            if (strcasecmp(*i_ext, src_ext) == 0) {
+                dst_ext = *i_ext;
+                break;
+            }
+            (*type)++;
+        }
+        // Invalid source extension
+        if (!dst_ext) {
+            *type = -1;
+            return 0;
+        }
+    }
+
+    strncpy(filename, name, len);
+    filename[len] = 0;
+    strcat(filename, dst_ext);
+
+    return filename;
+}
+
 static void os_loop_connected()
 {
     static bool fkey = false;

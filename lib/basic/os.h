@@ -67,6 +67,15 @@ extern "C" {
 #define DB_MIN_SET ((uint8_t) 254)
 #define DB_FTP_SET ((uint8_t) 253)
 
+// Files constants
+#define FILE_TYPE_BAS (0)
+#define FILE_TYPE_BST (1)
+#define FILE_TYPE_VAR (2)
+
+#define FILE_NAME_SIZE (16)
+#define FILE_BASE_MAX (8)
+#define FILE_EXT_MAX (3)
+
 typedef struct split_s {
     uint8_t n;
     uint8_t proto;
@@ -108,6 +117,7 @@ uint8_t os_get_key(void);
 int os_get_string(char *buf, int size, char secret_char);
 
 // OS file functions
+char *os_filename(const char *name, int16_t *type);
 void os_cat_file(const char *filename, size_t size);
 void os_cat(void);
 

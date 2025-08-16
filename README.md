@@ -29,18 +29,34 @@
 * [x] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
   urn)). `MINITEL LIST / ERASE / [START] [<URN>] [,] [<NAME>]`
 * [x] Caractères spéciaux dans chaines de caractères ("\n \x41 \"" ...)
-* [ ] FTP (https://github.com/Exocet22/TinyFTPClient / MIT)
+* [x] FTP (https://github.com/Exocet22/TinyFTPClient / MIT)
   * [x] Implémenter DB FTP (set 253), `FTP LIST, FTP ERASE`
   * [x] Intégrer TinyFTPClient dans les sources du projet
   * [x] SPIFS => LittleFS
   * [x] Généraliser os_net_connect, passer le `split_t` en paramètre
   * [x] `FTP START/STOP`
   * [x] `FTP CAT`
-  * [ ] `FTP PUT/GET`
-  * [ ] Optimisation (retrait des commandes qu'on utilise pas, etc)
-* [ ] Load/Save ASCII
+  * [x] `FTP PUT/GET`
+  * [x] Optimisation (retrait des commandes qu'on utilise pas, etc)
+* [ ] Load / Save ASCII. Selon l'extension. Extension par défaut `.bst`. Si
+  `.bas`, Sauvegarde uniquement du programme en mode ASCII. Si `.var`,
+  uniquement variables. Au load : on rajoute les variables aux nouvelles
+  variables.
+    * [x] `SAVE` sans extension rajoute `.bas`
+    * [x] Les extensions autres que `.bas`, `.bst` et `.var` sont interdites
+      (erreur)
+    * [x] `SAVE` `.var` ne sauve que les variables avec un programme à 0
+    * [ ] `SAVE` `.bas` similaire à `LIST` mais dans un fichier
+    * [ ] `LOAD` sans extension => `.bas`.
+    * [ ] `LOAD` `bst` ou `var` c'est le load actuel car le format avec ou sans
+      prog, avec ou sans var est le même, par contre lorsqu'on load des vars, il
+      ne faut pas supprimer le programme existant
+    * [ ] `LOAD` `.bas`. Lire ligne par ligne, Similaire au mode interactif
+    * [ ] `LOAD` `.bas` : Conversion UTF-8 vers MIN
+* [ ] `autoexec.bas/bst`
 
-* [ ] Gérer l'historique avec la DB config
+* [ ] Gérer l'historique avec la DB config (une seule chaîne, séparée par des
+  "\0", ou "HIST_0" à "HIST_9")
 * [ ] Ramener les variables OS dans le bstate
 * [ ] Uniquement majuscules noms de fichiers 8+3
 * [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
@@ -48,7 +64,7 @@
   `.BAS` ?
 
 * [ ] RUN line, RUN "autorun.bst", RUN "program.bst", line
-* [ ] SAVE, LOAD : pouvoir faire du `.BAS` et du `.BST`. Majuscules / Minucules
+* [ ] `SAVE`, `LOAD` : pouvoir faire du `.BAS` et du `.BST`. Majuscules / Minucules
   : toujours en majuscules sur disque, pour faire plus rétro.
 * [ ] Sauvegarder uniquement les variables et pouvoir recharger uniquement les
   variables (ça peut remplacer des fichiers). Exemple : on crée des variables
@@ -616,7 +632,9 @@ $ pio run -e minwifi -t clean
 ## 8266 / 8285
 
 * Flash : <https://nodemcu.readthedocs.io/en/latest/flash/>
-* 8266 / 8285 diff + flash + example : <https://itead.cc/diy-kits-guides/using-esp8266-esp8285-to-blink-an-led/#:~:text=Differences%20between%20ESP8285%20and%20ESP8266&text=ESP8285%20integrates%201MB%20Flash%20in,work%20even%20after%20successfully%20download.>
+* 8266 / 8285 diff + flash + example :
+  <https://itead.cc/diy-kits-guides/using-esp8266-esp8285-to-blink-an-led/#:~:text=Differences%20between%20ESP8285%20and%20ESP8266&text=ESP8285%20integrates%201MB%20Flash%20in,work%20even%20after%20successfully%20download.>
+* Assembleur : <http://cholla.mmto.org/esp8266/xtensa.html>
 
 ## ZX
 

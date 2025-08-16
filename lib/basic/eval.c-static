@@ -1380,12 +1380,18 @@ static void eval_return()
     bmem->bstate.running = bmem->bstate.pc != 0;
 }
 
-static void eval_save()
+static bool eval_save()
 {
-    if (bmem->bstate.string == 0)
-        return;
+    if (string_len(bmem->bstate.string) == 0)
+        return false;
 
-    bastos_save(string_cstr(bmem->bstate.string));
+    if (bastos_save(string_cstr(bmem->bstate.string)) < 0)
+    {
+        bmem->bstate.error = BERROR_IO;
+        return false;
+    }
+
+    return true;
 }
 
 static void eval_load()
@@ -1531,8 +1537,7 @@ EVAL:
     }
     if (instr == TOKEN_KEYWORD_SAVE)
     {
-        eval_save();
-        return true;
+        return eval_save();
     }
     if (instr == TOKEN_KEYWORD_LOAD)
     {

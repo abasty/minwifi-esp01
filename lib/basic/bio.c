@@ -238,35 +238,61 @@ finalize:
     return err;
 }
 
-int8_t bastos_save(const char *name)
+static int32_t os_save_bin(int fd, int16_t type)
 {
-    int fd = hal_open(name, B_CREAT | B_RDWR);
-    if (fd < 0) {
-        goto err;
-    }
+    if (type == FILE_TYPE_BST) {
+        // save prog
+        // Write prog total size
+        uint16_t prog_size = bmem->prog_end - bmem->prog_start;
+        if (hal_write(fd, &prog_size, sizeof(prog_size)) < 0) {
+            return -1;
+        }
 
-    // save prog
-    // Write prog total size
-    uint16_t prog_size = bmem->prog_end - bmem->prog_start;
-    if (hal_write(fd, &prog_size, sizeof(prog_size)) < 0) {
-        goto err;
+        // Write prog
+        if (hal_write(fd, bmem->prog_start, prog_size) < 0) {
+            return -1;
+        }
     }
-
-    // Write prog
-    if (hal_write(fd, bmem->prog_start, prog_size) < 0) {
-        goto err;
+    else {
+        // Save empty prog
+        uint16_t prog_size = 0;
+        if (hal_write(fd, &prog_size, sizeof(prog_size)) < 0) {
+            return -1;
+        }
     }
 
     // save vars
     // Write vars total size
     uint16_t vars_size = bmem->vars_end - bmem->vars_start;
     if (hal_write(fd, &vars_size, sizeof(vars_size)) < 0) {
-        goto err;
+        return -1;
     }
 
     // Write vars
     if (hal_write(fd, bmem->vars_start, vars_size) < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+int8_t bastos_save(const char *i_name)
+{
+    int16_t type = -1;
+    const char *name = os_filename(i_name, &type);
+    if (name == 0 || type < 0)
+        return -1;
+
+    int fd = hal_open(name, B_CREAT | B_RDWR);
+    if (fd < 0) {
         goto err;
+    }
+
+    if (type == FILE_TYPE_BST || type == FILE_TYPE_VAR) {
+        if (os_save_bin(fd, type) < 0)
+            goto err;
+    } else if (type == FILE_TYPE_BAS) {
+        // os_save_ascii(fd)
     }
 
     hal_close(fd);
@@ -275,6 +301,7 @@ int8_t bastos_save(const char *name)
 err:
     if (fd >= 0) {
         hal_close(fd);
+        hal_erase(name);
     }
     return -1;
 }
