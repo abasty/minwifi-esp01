@@ -252,8 +252,7 @@ static int32_t os_save_bin(int fd, int16_t type)
         if (hal_write(fd, bmem->prog_start, prog_size) < 0) {
             return -1;
         }
-    }
-    else {
+    } else {
         // Save empty prog
         uint16_t prog_size = 0;
         if (hal_write(fd, &prog_size, sizeof(prog_size)) < 0) {
@@ -276,51 +275,13 @@ static int32_t os_save_bin(int fd, int16_t type)
     return 0;
 }
 
-int8_t bastos_save(const char *i_name)
-{
-    int16_t type = -1;
-    const char *name = os_filename(i_name, &type);
-    if (name == 0 || type < 0)
-        return -1;
-
-    int fd = hal_open(name, B_CREAT | B_RDWR);
-    if (fd < 0) {
-        goto err;
-    }
-
-    if (type == FILE_TYPE_BST || type == FILE_TYPE_VAR) {
-        if (os_save_bin(fd, type) < 0)
-            goto err;
-    } else if (type == FILE_TYPE_BAS) {
-        // os_save_ascii(fd)
-    }
-
-    hal_close(fd);
-    return 0;
-
-err:
-    if (fd >= 0) {
-        hal_close(fd);
-        hal_erase(name);
-    }
-    return -1;
-}
-
-int8_t bastos_load(const char *name)
+static int8_t os_load_bin(int fd, int16_t type)
 {
     int8_t err = BERROR_NONE;
-    int fd = hal_open(name, B_RDONLY);
-
-    if (fd < 0)
-        return BERROR_IO;
-
-    bastos_prog_new();
-
-    int bread;
 
     // load prog
     uint16_t prog_size;
-    bread = hal_read(fd, &prog_size, sizeof(prog_size));
+    int bread = hal_read(fd, &prog_size, sizeof(prog_size));
     if (bread != sizeof(prog_size))
     {
         err = BERROR_IO;
@@ -331,13 +292,21 @@ int8_t bastos_load(const char *name)
         err = BERROR_IO;
         goto finalize;
     }
-    if (hal_read(fd, bmem->prog_start, prog_size) != prog_size)
+    if (type == FILE_TYPE_VAR && prog_size != 0)
     {
         err = BERROR_IO;
         goto finalize;
     }
-    bmem->prog_end = bmem->prog_start + prog_size;
-    bmem_strings_clear();
+    if (type == FILE_TYPE_BST)
+    {
+        if (hal_read(fd, bmem->prog_start, prog_size) != prog_size)
+        {
+            err = BERROR_IO;
+            goto finalize;
+        }
+        bmem->prog_end = bmem->prog_start + prog_size;
+        bmem_strings_clear();
+    }
 
     // load vars
     uint16_t vars_size;
@@ -361,6 +330,65 @@ int8_t bastos_load(const char *name)
     }
 
 finalize:
+    return err;
+}
+
+int8_t bastos_save(const char *i_name)
+{
+    int16_t type = -1;
+    const char *name = os_filename(i_name, &type);
+    if (name == 0 || type < 0)
+        return -1;
+
+    int fd = hal_open(name, B_CREAT | B_RDWR);
+    if (fd < 0) {
+        goto err;
+    }
+
+    if (type == FILE_TYPE_BST || type == FILE_TYPE_VAR) {
+        if (os_save_bin(fd, type) < 0)
+            goto err;
+    } else if (type == FILE_TYPE_BAS) {
+        // os_save_ascii(fd)
+        goto err;
+    }
+
+    hal_close(fd);
+    return 0;
+
+err:
+    if (fd >= 0) {
+        hal_close(fd);
+        hal_erase(name);
+    }
+    return -1;
+}
+
+int8_t bastos_load(const char *i_name)
+{
+    int16_t type = -1;
+    const char *name = os_filename(i_name, &type);
+    if (name == 0 || type < 0)
+        return BERROR_RANGE;
+
+    int8_t err = BERROR_NONE;
+    int fd = hal_open(name, B_RDONLY);
+
+    if (fd < 0)
+        return BERROR_IO;
+
+    // Remove existing blocks
+    if (type == FILE_TYPE_BAS || type == FILE_TYPE_BST)
+        bastos_prog_new();
+    else // FILE_TYPE_VAR
+        bastos_vars_clear();
+
+    // Load file
+    if (type == FILE_TYPE_VAR || type == FILE_TYPE_BST)
+        err = os_load_bin(fd, type);
+    else // FILE_TYPE_BAS
+        err = BERROR_IO; // os_load_ascii()
+
     hal_close(fd);
     bmem->bstate.read_ptr = 0;
     return err;

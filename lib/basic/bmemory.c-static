@@ -400,6 +400,12 @@ void bastos_prog_new()
     bmem_strings_clear();
 }
 
+void bastos_vars_clear()
+{
+    bmem_vars_clear();
+    bmem_strings_clear();
+}
+
 // Free a program line
 static void bmem_prog_line_free(prog_t *prog)
 {
