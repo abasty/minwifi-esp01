@@ -238,6 +238,12 @@ finalize:
     return err;
 }
 
+static int32_t os_save_ascii(int fd)
+{
+    return BERROR_IO;
+}
+
+
 static int32_t os_save_bin(int fd, int16_t type)
 {
     if (type == FILE_TYPE_BST) {
@@ -273,6 +279,11 @@ static int32_t os_save_bin(int fd, int16_t type)
     }
 
     return 0;
+}
+
+static int8_t os_load_ascii(int fd)
+{
+    return BERROR_IO;
 }
 
 static int8_t os_load_bin(int fd, int16_t type)
@@ -341,17 +352,16 @@ int8_t bastos_save(const char *i_name)
         return -1;
 
     int fd = hal_open(name, B_CREAT | B_RDWR);
-    if (fd < 0) {
+    if (fd < 0)
         goto err;
-    }
 
-    if (type == FILE_TYPE_BST || type == FILE_TYPE_VAR) {
+    if (type == FILE_TYPE_BST || type == FILE_TYPE_VAR)
         if (os_save_bin(fd, type) < 0)
             goto err;
-    } else if (type == FILE_TYPE_BAS) {
-        // os_save_ascii(fd)
-        goto err;
-    }
+
+    if (type == FILE_TYPE_BAS)
+        if (os_save_ascii(fd) < 0)
+            goto err;
 
     hal_close(fd);
     return 0;
@@ -380,14 +390,16 @@ int8_t bastos_load(const char *i_name)
     // Remove existing blocks
     if (type == FILE_TYPE_BAS || type == FILE_TYPE_BST)
         bastos_prog_new();
-    else // FILE_TYPE_VAR
+
+    if (type == FILE_TYPE_VAR)
         bastos_vars_clear();
 
     // Load file
     if (type == FILE_TYPE_VAR || type == FILE_TYPE_BST)
         err = os_load_bin(fd, type);
-    else // FILE_TYPE_BAS
-        err = BERROR_IO; // os_load_ascii()
+
+    if (type == FILE_TYPE_BAS)
+        err = os_load_ascii(fd);
 
     hal_close(fd);
     bmem->bstate.read_ptr = 0;
