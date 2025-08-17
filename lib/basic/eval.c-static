@@ -472,9 +472,15 @@ static bool eval_compare_expr()
             if (!eval_string_expr())
                 return false;
 
-            char *string2 = string_cstr(bmem->bstate.string);
-
-            result = strcmp(string1, string2);
+            if (bmem->bstate.do_eval)
+            {
+                char *string2 = string_cstr(bmem->bstate.string);
+                result = strcmp(string1, string2);
+            }
+            else
+            {
+                result = 0;
+            }
         }
         switch (op)
         {
