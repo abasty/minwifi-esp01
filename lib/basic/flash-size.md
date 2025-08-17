@@ -47,3 +47,24 @@ Flash : 340819 (-80 octets)
 # FTP commands and implementation
 
 flash: 344539 (3720)
+
+# bst/bas/var : ext and SAVE/LOAD var
+
+implem        | flash  | RAM ESP
+--------------|--------|---------
+ext & var     | 343767 |
+
+# os-private.h
+
+Gain : 8 octets par appel de fonction (46).
+
+343399 (-368)
+
+# bas : SAVE/LOAD
+
+// 345123
+
+implem        | flash  | RAM ESP
+--------------|--------|---------
+redir / SAVE  | 345347 |
+LOAD          |        |

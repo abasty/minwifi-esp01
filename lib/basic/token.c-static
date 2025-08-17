@@ -85,7 +85,7 @@ static const char *untokenize_keyword(tokenizer_state_t *state, const char *keyw
     {
         c = *keyword_char++;
         char char_str[2] = {c & ~KEYWORD_END_TAG, 0};
-        hal_print_string(char_str);
+        os_redir_print_string(char_str);
     } while ((c & KEYWORD_END_TAG) == 0);
 
     return keyword;
@@ -269,24 +269,24 @@ char *untokenize(uint8_t *input)
         {
             if (token == TOKEN_KEYWORD_TO || token == TOKEN_KEYWORD_STEP || token == TOKEN_KEYWORD_THEN || token == TOKEN_KEYWORD_OR || token == TOKEN_KEYWORD_AND)
             {
-                hal_print_string(" ");
+                os_redir_print_string(" ");
             }
             untokenize_keyword(&state, keywords);
             if (*state.read_ptr != '(' && token != TOKEN_KEYWORD_PI && token != TOKEN_KEYWORD_RND)
             {
-                hal_print_string(" ");
+                os_redir_print_string(" ");
             }
         }
         else if (token == TOKEN_NUMBER)
         {
             float value = token_number_get_value(&state);
-            hal_print_float(value);
+            os_redir_print_float(value);
         }
         else if (token == TOKEN_STRING)
         {
-            hal_print_string("\"");
+            os_redir_print_string("\"");
             untokenize_string(&state);
-            hal_print_string("\"");
+            os_redir_print_string("\"");
         }
         else if (token == TOKEN_VARIABLE_NUMBER || token == TOKEN_VARIABLE_STRING)
         {
@@ -295,30 +295,30 @@ char *untokenize(uint8_t *input)
             {
                 *char_str = (char) *state.read_ptr++;
                 *char_str |= 32;
-                hal_print_string(char_str);
+                os_redir_print_string(char_str);
             }
             state.read_ptr++;
             if (token == TOKEN_VARIABLE_STRING)
             {
-                hal_print_string("$");
+                os_redir_print_string("$");
             }
         }
         else if (token == TOKEN_COMPARE_NE)
         {
-            hal_print_string("<>");
+            os_redir_print_string("<>");
         }
         else if (token == TOKEN_COMPARE_LE)
         {
-            hal_print_string("<=");
+            os_redir_print_string("<=");
         }
         else if (token == TOKEN_COMPARE_GE)
         {
-            hal_print_string(">=");
+            os_redir_print_string(">=");
         }
         else
         {
             char token_str[2] = {token, 0};
-            hal_print_string(token_str);
+            os_redir_print_string(token_str);
         }
     }
 
@@ -445,46 +445,46 @@ static void untokenize_string(tokenizer_state_t *state)
         switch (c)
         {
         case 0x07: // Beep
-            hal_print_string("\\a");
+            os_redir_print_string("\\a");
             break;
         case 0x08: // Backspace
-            hal_print_string("\\b");
+            os_redir_print_string("\\b");
             break;
         case 0x1b: // Escape
-            hal_print_string("\\e");
+            os_redir_print_string("\\e");
             break;
         case 0x0c: // Formfeed
-            hal_print_string("\\f");
+            os_redir_print_string("\\f");
             break;
         case 0x0a: // Newline
-            hal_print_string("\\n");
+            os_redir_print_string("\\n");
             break;
         case 0x0d: // Carriage Return
-            hal_print_string("\\r");
+            os_redir_print_string("\\r");
             break;
         case 0x09: // Horizontal Tab
-            hal_print_string("\\t");
+            os_redir_print_string("\\t");
             break;
         case 0x0b: // Vertical Tab
-            hal_print_string("\\v");
+            os_redir_print_string("\\v");
             break;
         case '\\': // Backslash
-            hal_print_string("\\\\");
+            os_redir_print_string("\\\\");
             break;
         case '"': // Double quote
-            hal_print_string("\\\"");
+            os_redir_print_string("\\\"");
             break;
         case 0x00: // Null character
-            hal_print_string("\\0");
+            os_redir_print_string("\\0");
             break;
         default:
             if (c < 32) {
                 char hex[5];
                 sprintf(hex, "\\x%02x", c);
-                hal_print_string(hex);
+                os_redir_print_string(hex);
             } else {
                 char char_str[2] = {c, 0};
-                hal_print_string(char_str);
+                os_redir_print_string(char_str);
             }
             break;
         }

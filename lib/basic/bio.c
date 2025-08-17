@@ -33,13 +33,18 @@
 #include "tty-vt100.h"
 #endif
 
+#include "os-private.h"
+
+// External interface (extern functions)
+#include "bio.h"
+#include "os.h"
+
+// Internal interface (static functions)
 #include "berror.h"
 #include "bmemory.h"
 #include "bdb.h"
 #include "token.h"
 #include "eval.h"
-#include "bio.h"
-#include "os.h"
 
 #include "keywords.c-static"
 #include "token.c-static"
@@ -73,7 +78,7 @@ static void bastos_handle_ctrl_c()
 {
     bastos_stop();
     *bmem->io_buffer = 0;
-    hal_print_string("**Break**\r\n");
+    os_redir_print_string("**Break**\r\n");
 }
 
 void bastos_send_keys(const char *keys, size_t n, bool echo)
@@ -114,7 +119,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo)
         size--;
         dst--;
         *dst = 0;
-        if (echo) hal_print_string(DEL);
+        if (echo) os_redir_print_string(DEL);
         return;
     }
 
@@ -130,7 +135,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo)
         {
             *dst++ = '\n';
             src++;
-            if (echo) hal_print_string("\r\n");
+            if (echo) os_redir_print_string("\r\n");
         }
         else if (*src == 127)
         {
@@ -138,7 +143,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo)
             {
                 dst--;
                 *dst = 0;
-                if (echo) hal_print_string(DEL);
+                if (echo) os_redir_print_string(DEL);
             }
         }
         else
@@ -147,7 +152,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo)
             *dst++ = *src++;
             *dst = 0;
             size++;
-            if (echo) hal_print_string((char *) c);
+            if (echo) os_redir_print_string((char *) c);
         }
         size = dst - bmem->io_buffer;
         n--;
@@ -232,7 +237,7 @@ finalize:
     // Handle error
     if (err != BERROR_NONE)
     {
-        hal_print_integer("Error %d\r\n", (int)-err);
+        os_redir_print_integer("Error %d\r\n", (int)-err);
     }
 
     return err;
@@ -240,14 +245,16 @@ finalize:
 
 static int32_t os_save_ascii(int fd)
 {
+    os_set_redirect(fd);
     prog_t *prog = bmem_prog_first_line();
     while (prog)
     {
-        hal_print_integer("%d ", prog->line_no);
+        os_redir_print_integer("%d ", prog->line_no);
         untokenize(prog->line);
-        hal_print_string("\r\n");
+        os_redir_print_string("\r\n");
         prog = bmem_prog_next_line(prog);
     }
+    os_set_redirect(-1);
     return 0;
 }
 
@@ -431,7 +438,7 @@ void bastos_loop()
 
         if (!eval_running())
         {
-            hal_print_string("Ready\r\n");
+            os_redir_print_string("Ready\r\n");
         }
         return;
     }
