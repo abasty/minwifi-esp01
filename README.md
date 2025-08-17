@@ -38,17 +38,19 @@
   * [x] `FTP CAT`
   * [x] `FTP PUT/GET`
   * [x] Optimisation (retrait des commandes qu'on utilise pas, etc)
-* [ ] Load / Save ASCII. Selon l'extension. Extension par défaut `.bst`. Si
+* [ ] Load / Save ASCII. Selon l'extension. Extension par défaut `.bas`. Si
   `.bas`, Sauvegarde uniquement du programme en mode ASCII. Si `.var`,
-  uniquement variables. Au load : on rajoute les variables aux nouvelles
-  variables.
+  uniquement variables.
     * [x] `SAVE` sans extension rajoute `.bas`
     * [x] Les extensions autres que `.bas`, `.bst` et `.var` sont interdites
       (erreur)
     * [x] `SAVE` `.var` ne sauve que les variables avec un programme à 0
     * [ ] `SAVE` `.bas` similaire à `LIST` mais dans un fichier
+        * [ ] Untokenize : doit supporter les caractères "\x.." dans les chaînes
+        * [ ] Pouvoir rediriger hal_print_* vers fichier (os_print_xxx + flag
+          redirect)
     * [ ] `LOAD` sans extension => `.bas`.
-    * [ ] `LOAD` `bst` ou `var` c'est le load actuel car le format avec ou sans
+    * [x] `LOAD` `bst` ou `var` c'est le load actuel car le format avec ou sans
       prog, avec ou sans var est le même, par contre lorsqu'on load des vars, il
       ne faut pas supprimer le programme existant
     * [ ] `LOAD` `.bas`. Lire ligne par ligne, Similaire au mode interactif

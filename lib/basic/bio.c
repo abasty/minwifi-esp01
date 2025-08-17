@@ -240,9 +240,16 @@ finalize:
 
 static int32_t os_save_ascii(int fd)
 {
-    return BERROR_IO;
+    prog_t *prog = bmem_prog_first_line();
+    while (prog)
+    {
+        hal_print_integer("%d ", prog->line_no);
+        untokenize(prog->line);
+        hal_print_string("\r\n");
+        prog = bmem_prog_next_line(prog);
+    }
+    return 0;
 }
-
 
 static int32_t os_save_bin(int fd, int16_t type)
 {
