@@ -251,7 +251,7 @@ static int32_t os_save_ascii(int fd)
     {
         os_redir_print_integer("%d ", prog->line_no);
         untokenize(prog->line);
-        os_redir_print_string("\r\n");
+        os_redir_print_string("\n");
         prog = bmem_prog_next_line(prog);
     }
     os_set_redirect(-1);
@@ -295,9 +295,88 @@ static int32_t os_save_bin(int fd, int16_t type)
     return 0;
 }
 
+static int os_eval_string(char *str)
+{
+    // Tokenize command and handle tokenize error case
+    tokenizer_state_t line;
+    int err = tokenize(&line, str);
+    if (err < 0)
+        goto finalize;
+
+    // Allocate memory for the prog line
+    uint16_t len = line.write_ptr - line.read_ptr;
+    prog_t *prog = bmem_prog_line_new(line.line_no, line.read_ptr, len);
+    if (prog == 0)
+    {
+        if (len != 0)
+        {
+            err = BERROR_MEMORY;
+        }
+        goto finalize;
+    }
+
+    // Check syntax
+    err = eval_prog(prog, false);
+    if (err != BERROR_NONE)
+    {
+        bmem_prog_line_free(prog);
+        goto finalize;
+    }
+
+    // If line number is 0, evaluate and remove
+    if (prog->line_no == 0)
+    {
+        bool is_load = prog->line[0] == TOKEN_KEYWORD_LOAD;
+        err = eval_prog(prog, true);
+        if (!is_load)
+        {
+            bmem_prog_line_free(prog);
+        }
+    }
+
+finalize:
+    // Handle error
+    if (err != BERROR_NONE && line.line_no != 0)
+        os_redir_print_integer("Line %d: ", (int)line.line_no);
+
+    return err;
+
+}
+
 static int8_t os_load_ascii(int fd)
 {
-    return BERROR_IO;
+    // Read lines from file
+    char line[IO_BUFFER_SIZE + 1] = {0};
+    char *read_ptr = line;
+    int32_t remains = hal_read(fd, line, IO_BUFFER_SIZE);
+    while (remains > 0)
+    {
+        // Find LF in line
+        char *lf = strchr(line, '\n');
+        // If no LF in line, return BERROR_IO
+        if (lf == 0)
+            return BERROR_IO;
+        // replace LF with 0
+        *lf = 0;
+        // If CR just before LF, replace CR with 0
+        if (lf > line && *(lf - 1) == '\r')
+            *(lf - 1) = 0;
+        // If line is empty, continue
+        int err = os_eval_string(read_ptr);
+        if (err < 0)
+            return err;
+
+        remains -= (lf + 1 - line);
+        memmove(line, lf + 1, remains + 1);
+        int n = hal_read(fd, line + remains, IO_BUFFER_SIZE - remains);
+        if (n < 0)
+            return BERROR_IO;
+        remains += n;
+    }
+    if (remains < 0)
+        return BERROR_IO;
+
+    return BERROR_NONE;
 }
 
 static int8_t os_load_bin(int fd, int16_t type)

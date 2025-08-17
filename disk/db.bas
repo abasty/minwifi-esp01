@@ -1,0 +1,2 @@
+10 PUT(254,"X",GET(254,"zboub"))
+20 PRINT GET 254,"X"
