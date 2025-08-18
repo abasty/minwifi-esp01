@@ -33,13 +33,18 @@
 #include "tty-vt100.h"
 #endif
 
+#include "os-private.h"
+
+// External interface (extern functions)
+#include "bio.h"
+#include "os.h"
+
+// Internal interface (static functions)
 #include "berror.h"
 #include "bmemory.h"
 #include "bdb.h"
 #include "token.h"
 #include "eval.h"
-#include "bio.h"
-#include "os.h"
 
 #include "keywords.c-static"
 #include "token.c-static"
@@ -73,7 +78,7 @@ static void bastos_handle_ctrl_c()
 {
     bastos_stop();
     *bmem->io_buffer = 0;
-    hal_print_string("**Break**\r\n");
+    os_redir_print_string("**Break**\r\n");
 }
 
 void bastos_send_keys(const char *keys, size_t n, bool echo)
@@ -114,7 +119,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo)
         size--;
         dst--;
         *dst = 0;
-        if (echo) hal_print_string(DEL);
+        if (echo) os_redir_print_string(DEL);
         return;
     }
 
@@ -130,7 +135,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo)
         {
             *dst++ = '\n';
             src++;
-            if (echo) hal_print_string("\r\n");
+            if (echo) os_redir_print_string("\r\n");
         }
         else if (*src == 127)
         {
@@ -138,7 +143,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo)
             {
                 dst--;
                 *dst = 0;
-                if (echo) hal_print_string(DEL);
+                if (echo) os_redir_print_string(DEL);
             }
         }
         else
@@ -147,7 +152,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo)
             *dst++ = *src++;
             *dst = 0;
             size++;
-            if (echo) hal_print_string((char *) c);
+            if (echo) os_redir_print_string((char *) c);
         }
         size = dst - bmem->io_buffer;
         n--;
@@ -232,68 +237,155 @@ finalize:
     // Handle error
     if (err != BERROR_NONE)
     {
-        hal_print_integer("Error %d\r\n", (int)-err);
+        os_redir_print_integer("Error %d\r\n", (int)-err);
     }
 
     return err;
 }
 
-int8_t bastos_save(const char *name)
+static int32_t os_save_ascii(int fd)
 {
-    int fd = hal_open(name, B_CREAT | B_RDWR);
-    if (fd < 0) {
-        goto err;
+    os_set_redirect(fd);
+    prog_t *prog = bmem_prog_first_line();
+    while (prog)
+    {
+        os_redir_print_integer("%d ", prog->line_no);
+        untokenize(prog->line);
+        os_redir_print_string("\n");
+        prog = bmem_prog_next_line(prog);
     }
+    os_set_redirect(-1);
+    return 0;
+}
 
-    // save prog
-    // Write prog total size
-    uint16_t prog_size = bmem->prog_end - bmem->prog_start;
-    if (hal_write(fd, &prog_size, sizeof(prog_size)) < 0) {
-        goto err;
-    }
+static int32_t os_save_bin(int fd, int16_t type)
+{
+    if (type == FILE_TYPE_BST) {
+        // save prog
+        // Write prog total size
+        uint16_t prog_size = bmem->prog_end - bmem->prog_start;
+        if (hal_write(fd, &prog_size, sizeof(prog_size)) < 0) {
+            return -1;
+        }
 
-    // Write prog
-    if (hal_write(fd, bmem->prog_start, prog_size) < 0) {
-        goto err;
+        // Write prog
+        if (hal_write(fd, bmem->prog_start, prog_size) < 0) {
+            return -1;
+        }
+    } else {
+        // Save empty prog
+        uint16_t prog_size = 0;
+        if (hal_write(fd, &prog_size, sizeof(prog_size)) < 0) {
+            return -1;
+        }
     }
 
     // save vars
     // Write vars total size
     uint16_t vars_size = bmem->vars_end - bmem->vars_start;
     if (hal_write(fd, &vars_size, sizeof(vars_size)) < 0) {
-        goto err;
+        return -1;
     }
 
     // Write vars
     if (hal_write(fd, bmem->vars_start, vars_size) < 0) {
-        goto err;
+        return -1;
     }
 
-    hal_close(fd);
     return 0;
-
-err:
-    if (fd >= 0) {
-        hal_close(fd);
-    }
-    return -1;
 }
 
-int8_t bastos_load(const char *name)
+static int os_eval_string(char *str)
 {
-    int8_t err = BERROR_NONE;
-    int fd = hal_open(name, B_RDONLY);
+    // Tokenize command and handle tokenize error case
+    tokenizer_state_t line;
+    int err = tokenize(&line, str);
+    if (err < 0)
+        goto finalize;
 
-    if (fd < 0)
+    // Allocate memory for the prog line
+    uint16_t len = line.write_ptr - line.read_ptr;
+    prog_t *prog = bmem_prog_line_new(line.line_no, line.read_ptr, len);
+    if (prog == 0)
+    {
+        if (len != 0)
+        {
+            err = BERROR_MEMORY;
+        }
+        goto finalize;
+    }
+
+    // Check syntax
+    err = eval_prog(prog, false);
+    if (err != BERROR_NONE)
+    {
+        bmem_prog_line_free(prog);
+        goto finalize;
+    }
+
+    // If line number is 0, evaluate and remove
+    if (prog->line_no == 0)
+    {
+        bool is_load = prog->line[0] == TOKEN_KEYWORD_LOAD;
+        err = eval_prog(prog, true);
+        if (!is_load)
+        {
+            bmem_prog_line_free(prog);
+        }
+    }
+
+finalize:
+    // Handle error
+    if (err != BERROR_NONE && line.line_no != 0)
+        os_redir_print_integer("Line %d: ", (int)line.line_no);
+
+    return err;
+
+}
+
+static int8_t os_load_ascii(int fd)
+{
+    // Read lines from file
+    char line[IO_BUFFER_SIZE + 1] = {0};
+    char *read_ptr = line;
+    int32_t remains = hal_read(fd, line, IO_BUFFER_SIZE);
+    while (remains > 0)
+    {
+        // Find LF in line
+        char *lf = strchr(line, '\n');
+        // If no LF in line, return BERROR_IO
+        if (lf == 0)
+            return BERROR_IO;
+        // replace LF with 0
+        *lf = 0;
+        // If CR just before LF, replace CR with 0
+        if (lf > line && *(lf - 1) == '\r')
+            *(lf - 1) = 0;
+        // If line is empty, continue
+        int err = os_eval_string(read_ptr);
+        if (err < 0)
+            return err;
+
+        remains -= (lf + 1 - line);
+        memmove(line, lf + 1, remains + 1);
+        int n = hal_read(fd, line + remains, IO_BUFFER_SIZE - remains);
+        if (n < 0)
+            return BERROR_IO;
+        remains += n;
+    }
+    if (remains < 0)
         return BERROR_IO;
 
-    bastos_prog_new();
+    return BERROR_NONE;
+}
 
-    int bread;
+static int8_t os_load_bin(int fd, int16_t type)
+{
+    int8_t err = BERROR_NONE;
 
     // load prog
     uint16_t prog_size;
-    bread = hal_read(fd, &prog_size, sizeof(prog_size));
+    int bread = hal_read(fd, &prog_size, sizeof(prog_size));
     if (bread != sizeof(prog_size))
     {
         err = BERROR_IO;
@@ -304,13 +396,21 @@ int8_t bastos_load(const char *name)
         err = BERROR_IO;
         goto finalize;
     }
-    if (hal_read(fd, bmem->prog_start, prog_size) != prog_size)
+    if (type == FILE_TYPE_VAR && prog_size != 0)
     {
         err = BERROR_IO;
         goto finalize;
     }
-    bmem->prog_end = bmem->prog_start + prog_size;
-    bmem_strings_clear();
+    if (type == FILE_TYPE_BST)
+    {
+        if (hal_read(fd, bmem->prog_start, prog_size) != prog_size)
+        {
+            err = BERROR_IO;
+            goto finalize;
+        }
+        bmem->prog_end = bmem->prog_start + prog_size;
+        bmem_strings_clear();
+    }
 
     // load vars
     uint16_t vars_size;
@@ -334,6 +434,66 @@ int8_t bastos_load(const char *name)
     }
 
 finalize:
+    return err;
+}
+
+int8_t bastos_save(const char *i_name)
+{
+    int16_t type = -1;
+    const char *name = os_filename(i_name, &type);
+    if (name == 0 || type < 0)
+        return -1;
+
+    int fd = hal_open(name, B_CREAT | B_RDWR);
+    if (fd < 0)
+        goto err;
+
+    if (type == FILE_TYPE_BST || type == FILE_TYPE_VAR)
+        if (os_save_bin(fd, type) < 0)
+            goto err;
+
+    if (type == FILE_TYPE_BAS)
+        if (os_save_ascii(fd) < 0)
+            goto err;
+
+    hal_close(fd);
+    return 0;
+
+err:
+    if (fd >= 0) {
+        hal_close(fd);
+        hal_erase(name);
+    }
+    return -1;
+}
+
+int8_t bastos_load(const char *i_name)
+{
+    int16_t type = -1;
+    const char *name = os_filename(i_name, &type);
+    if (name == 0 || type < 0)
+        return BERROR_RANGE;
+
+    int8_t err = BERROR_NONE;
+    int fd = hal_open(name, B_RDONLY);
+
+    if (fd < 0)
+        return BERROR_IO;
+
+    // Remove existing blocks
+    if (type == FILE_TYPE_BAS || type == FILE_TYPE_BST)
+        bastos_prog_new();
+
+    if (type == FILE_TYPE_VAR)
+        bastos_vars_clear();
+
+    // Load file
+    if (type == FILE_TYPE_VAR || type == FILE_TYPE_BST)
+        err = os_load_bin(fd, type);
+
+    if (type == FILE_TYPE_BAS)
+        err = os_load_ascii(fd);
+
     hal_close(fd);
     bmem->bstate.read_ptr = 0;
     return err;
@@ -357,7 +517,7 @@ void bastos_loop()
 
         if (!eval_running())
         {
-            hal_print_string("Ready\r\n");
+            os_redir_print_string("Ready\r\n");
         }
         return;
     }

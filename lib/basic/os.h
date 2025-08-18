@@ -67,6 +67,15 @@ extern "C" {
 #define DB_MIN_SET ((uint8_t) 254)
 #define DB_FTP_SET ((uint8_t) 253)
 
+// Files constants
+#define FILE_TYPE_BAS (0)
+#define FILE_TYPE_BST (1)
+#define FILE_TYPE_VAR (2)
+
+#define FILE_NAME_SIZE (16)
+#define FILE_BASE_MAX (8)
+#define FILE_EXT_MAX (3)
+
 typedef struct split_s {
     uint8_t n;
     uint8_t proto;
@@ -80,36 +89,15 @@ void os_setup(void);
 void os_loop(void);
 bool os_debug(void);
 
-// OS config function
-void os_db_load(void);
-void os_db_save(void);
-
 // OS Wi-Fi functions
-void os_wifi_scan(void);
 void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t rssi);
-int os_wifi_connect(const char* ssid);
-int os_wifi_erase(const char* ssid);
-void os_wifi_status(void);
 void os_wifi_set_info(const char *ssid, const char *ip);
 
-// OS DB functions
-void os_db_list(uint8_t set);
-void os_db_erase(uint8_t set, const char *name);
-
 // OS network functions
-int os_connect(uint8_t set, const char *name, const char* urn);
-void os_disconnect(uint8_t set);
-void os_ftp_status(void);
-bool os_ftp_cat(void);
 void os_ftp_cat_file(const char* line);
-
-// OS keyboard functions
-uint8_t os_get_key(void);
-int os_get_string(char *buf, int size, char secret_char);
 
 // OS file functions
 void os_cat_file(const char *filename, size_t size);
-void os_cat(void);
 
 // HAL functions
 void hal_print_oem_string(void);

@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "keywords.h"
 #include "bmemory.h"
@@ -39,7 +40,7 @@ extern bmem_t *bmem;
 
 static uint8_t token_get_next(tokenizer_state_t *state);
 static float token_number_get_value(tokenizer_state_t *state);
-static char* token_string_get_value(tokenizer_state_t *state);
+static void untokenize_string(tokenizer_state_t *state);
 
 static bool is_char_of_keyword(char test_char)
 {
@@ -84,7 +85,7 @@ static const char *untokenize_keyword(tokenizer_state_t *state, const char *keyw
     {
         c = *keyword_char++;
         char char_str[2] = {c & ~KEYWORD_END_TAG, 0};
-        hal_print_string(char_str);
+        os_redir_print_string(char_str);
     } while ((c & KEYWORD_END_TAG) == 0);
 
     return keyword;
@@ -268,25 +269,24 @@ char *untokenize(uint8_t *input)
         {
             if (token == TOKEN_KEYWORD_TO || token == TOKEN_KEYWORD_STEP || token == TOKEN_KEYWORD_THEN || token == TOKEN_KEYWORD_OR || token == TOKEN_KEYWORD_AND)
             {
-                hal_print_string(" ");
+                os_redir_print_string(" ");
             }
             untokenize_keyword(&state, keywords);
             if (*state.read_ptr != '(' && token != TOKEN_KEYWORD_PI && token != TOKEN_KEYWORD_RND)
             {
-                hal_print_string(" ");
+                os_redir_print_string(" ");
             }
         }
         else if (token == TOKEN_NUMBER)
         {
             float value = token_number_get_value(&state);
-            hal_print_float(value);
+            os_redir_print_float(value);
         }
         else if (token == TOKEN_STRING)
         {
-            char *value = token_string_get_value(&state);
-            hal_print_string("\"");
-            hal_print_string(value);
-            hal_print_string("\"");
+            os_redir_print_string("\"");
+            untokenize_string(&state);
+            os_redir_print_string("\"");
         }
         else if (token == TOKEN_VARIABLE_NUMBER || token == TOKEN_VARIABLE_STRING)
         {
@@ -295,30 +295,30 @@ char *untokenize(uint8_t *input)
             {
                 *char_str = (char) *state.read_ptr++;
                 *char_str |= 32;
-                hal_print_string(char_str);
+                os_redir_print_string(char_str);
             }
             state.read_ptr++;
             if (token == TOKEN_VARIABLE_STRING)
             {
-                hal_print_string("$");
+                os_redir_print_string("$");
             }
         }
         else if (token == TOKEN_COMPARE_NE)
         {
-            hal_print_string("<>");
+            os_redir_print_string("<>");
         }
         else if (token == TOKEN_COMPARE_LE)
         {
-            hal_print_string("<=");
+            os_redir_print_string("<=");
         }
         else if (token == TOKEN_COMPARE_GE)
         {
-            hal_print_string(">=");
+            os_redir_print_string(">=");
         }
         else
         {
             char token_str[2] = {token, 0};
-            hal_print_string(token_str);
+            os_redir_print_string(token_str);
         }
     }
 
@@ -434,11 +434,60 @@ static float token_number_get_value(tokenizer_state_t *state)
     return value;
 }
 
-static char *token_string_get_value(tokenizer_state_t *state)
+static void untokenize_string(tokenizer_state_t *state)
 {
     uint16_t len = string_len((char *)(state->read_ptr));
     state->read_ptr += 2;
-    char *value = (char *)(state->read_ptr);
-    state->read_ptr += len + 1;
-    return value;
+
+    for (uint16_t i = 0; i < len; i++)
+    {
+        char c = *state->read_ptr++;
+        switch (c)
+        {
+        case 0x07: // Beep
+            os_redir_print_string("\\a");
+            break;
+        case 0x08: // Backspace
+            os_redir_print_string("\\b");
+            break;
+        case 0x1b: // Escape
+            os_redir_print_string("\\e");
+            break;
+        case 0x0c: // Formfeed
+            os_redir_print_string("\\f");
+            break;
+        case 0x0a: // Newline
+            os_redir_print_string("\\n");
+            break;
+        case 0x0d: // Carriage Return
+            os_redir_print_string("\\r");
+            break;
+        case 0x09: // Horizontal Tab
+            os_redir_print_string("\\t");
+            break;
+        case 0x0b: // Vertical Tab
+            os_redir_print_string("\\v");
+            break;
+        case '\\': // Backslash
+            os_redir_print_string("\\\\");
+            break;
+        case '"': // Double quote
+            os_redir_print_string("\\\"");
+            break;
+        case 0x00: // Null character
+            os_redir_print_string("\\0");
+            break;
+        default:
+            if (c < 32 && c != 0x19) {
+                char hex[5];
+                sprintf(hex, "\\x%02x", c);
+                os_redir_print_string(hex);
+            } else {
+                char char_str[2] = {c, 0};
+                os_redir_print_string(char_str);
+            }
+            break;
+        }
+    }
+    state->read_ptr++;
 }

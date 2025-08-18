@@ -27,6 +27,7 @@
 #include "bmemory.h"
 #include "os.h"
 #include "bdb.h"
+#include "os-private.h"
 
 #ifdef MINITEL
 #include "tty-minitel.h"
@@ -49,7 +50,40 @@ char g_wifi_connected_ssid[20] = ""; // 20 first characters of SSID
 char g_wifi_connected_ip[16] = "";
 char g_ftp_connected_host[32] = "";
 
-void os_db_save(void)
+static void os_set_redirect(int fd)
+{
+    bmem->bstate.redirect = fd;
+}
+
+static int os_redir_print_string(const char *s)
+{
+    if (bmem->bstate.redirect >= 0) {
+        return hal_write(bmem->bstate.redirect, s, strlen(s));
+    }
+    return hal_print_string(s);
+}
+
+static int os_redir_print_integer(const char *format, int i)
+{
+    if (bmem->bstate.redirect >= 0) {
+        char buffer[80];
+        int len = snprintf(buffer, sizeof(buffer), format, i);
+        return hal_write(bmem->bstate.redirect, buffer, len);
+    }
+    return hal_print_integer(format, i);
+}
+
+static int os_redir_print_float(float f)
+{
+    if (bmem->bstate.redirect >= 0) {
+        char buffer[16];
+        int len = snprintf(buffer, sizeof(buffer), "%g", f);
+        return hal_write(bmem->bstate.redirect, buffer, len);
+    }
+    return hal_print_float(f);
+}
+
+static void os_db_save(void)
 {
     int fd = hal_open("CONFIG.$$$", B_CREAT | B_WRONLY);
     if (fd < 0)
@@ -72,7 +106,7 @@ err:
     }
 }
 
-void os_db_load(void)
+static void os_db_load(void)
 {
     // Remove memory records
     bmem_db_clear();
@@ -110,10 +144,10 @@ void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t 
 {
 
     // Print the list of networks
-    hal_print_integer("%2d ", i);
-    hal_print_integer("%3d ", rssi);
-    hal_print_string(ssid);
-    hal_print_string("\r\n");
+    os_redir_print_integer("%2d ", i);
+    os_redir_print_integer("%3d ", rssi);
+    os_redir_print_string(ssid);
+    os_redir_print_string("\r\n");
 
     // Add the network to the SSID array (SSID$(i))
     // Note: If i does not exist in the array, cstr is 0 and the SSID is not
@@ -127,20 +161,20 @@ void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t 
     }
 }
 
-void os_wifi_scan(void)
+static void os_wifi_scan(void)
 {
     // Display scanning status
-    hal_print_string(LINE0 INV BLINK "Scanning..." CLEOL NORMAL "\n");
+    os_redir_print_string(LINE0 INV BLINK "Scanning..." CLEOL NORMAL "\n");
 
     // Scan and display Wi-Fi networks
     bmem_ssid_array_new();
-    hal_print_string("\r\n" INV "ID dBm SSID" CLEOL " " NORMAL "\r\n");
+    os_redir_print_string("\r\n" INV "ID dBm SSID" CLEOL " " NORMAL "\r\n");
     int n = hal_wifi_scan();
 
-    hal_print_integer("\r\n%d network(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
+    os_redir_print_integer("\r\n%d network(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
 }
 
-int os_wifi_connect(const char *ssid)
+static int os_wifi_connect(const char *ssid)
 {
     bool use_db = false;
     char secret[WIFI_SECRET_MAX_SIZE] = "";
@@ -155,23 +189,23 @@ int os_wifi_connect(const char *ssid)
 
     if (!use_db)
     {
-        hal_print_string(LINE0 INV "Password: " CLEOL);
+        os_redir_print_string(LINE0 INV "Password: " CLEOL);
         if (os_get_string(secret, sizeof(secret), '*') < 0)
         {
-            hal_print_string(LINE0 CLEOL "\r\n");
+            os_redir_print_string(LINE0 CLEOL "\r\n");
             return -1;
         }
     }
-    hal_print_string(LINE0 INV BLINK "Connecting to ");
-    hal_print_string(ssid);
-    hal_print_string(CLEOL NORMAL "\n");
+    os_redir_print_string(LINE0 INV BLINK "Connecting to ");
+    os_redir_print_string(ssid);
+    os_redir_print_string(CLEOL NORMAL "\n");
 
     int ret = hal_wifi_connect(ssid, secret);
     if (ret == 0)
     {
         if (!eval_running())
         {
-            hal_print_string("OK\r\n");
+            os_redir_print_string("OK\r\n");
         }
         if (!use_db)
         {
@@ -181,12 +215,12 @@ int os_wifi_connect(const char *ssid)
     }
 
 #ifdef MINITEL
-    hal_print_string(LINE0 CLEOL "\r\n");
+    os_redir_print_string(LINE0 CLEOL "\r\n");
 #endif
     return ret;
 }
 
-int os_wifi_erase(const char *ssid)
+static int os_wifi_erase(const char *ssid)
 {
     bdb_entry_set(DB_WIFI_SET, ssid, 0, true);
     os_db_save();
@@ -207,27 +241,27 @@ void os_wifi_set_info(const char *ssid, const char *ip)
     }
 }
 
-void os_wifi_status(void)
+static void os_wifi_status(void)
 {
-    hal_print_string("\r\n" INV "IP              SSID" CLEOL " " NORMAL "\r\n");
+    os_redir_print_string("\r\n" INV "IP              SSID" CLEOL " " NORMAL "\r\n");
     if (!hal_wifi_is_connected())
     {
-        hal_print_string("Not connected");
+        os_redir_print_string("Not connected");
     }
     else
     {
-        hal_print_string(g_wifi_connected_ip);
+        os_redir_print_string(g_wifi_connected_ip);
         uint8_t len = strlen(g_wifi_connected_ip);
         for (int i = 16 - len; i > 0; i--)
-            hal_print_string(" ");
-        hal_print_string(g_wifi_connected_ssid);
+            os_redir_print_string(" ");
+        os_redir_print_string(g_wifi_connected_ssid);
     }
-    hal_print_string("\r\n\r\n");
+    os_redir_print_string("\r\n\r\n");
 }
 
-void os_ftp_status(void)
+static void os_ftp_status(void)
 {
-    hal_print_string("\r\n" INV "FTP Host" CLEOL " " NORMAL "\r\n");
+    os_redir_print_string("\r\n" INV "FTP Host" CLEOL " " NORMAL "\r\n");
 
     // Check connection status
     if (*g_ftp_connected_host != 0 && !hal_ftp_is_connected())
@@ -238,21 +272,21 @@ void os_ftp_status(void)
     // Display connection status message
     if (*g_ftp_connected_host == 0)
     {
-        hal_print_string("Not connected");
+        os_redir_print_string("Not connected");
     }
     else
     {
-        hal_print_string(g_ftp_connected_host);
+        os_redir_print_string(g_ftp_connected_host);
     }
-    hal_print_string("\r\n\r\n");
+    os_redir_print_string("\r\n\r\n");
 }
 
-void os_db_list(uint8_t set)
+static void os_db_list(uint8_t set)
 {
     if (set != DB_WIFI_SET)
-        hal_print_string("\r\n" INV "Key      Value" CLEOL " " NORMAL "\r\n");
+        os_redir_print_string("\r\n" INV "Key      Value" CLEOL " " NORMAL "\r\n");
     else
-        hal_print_string("\r\n" INV "SSID" CLEOL " " NORMAL "\r\n");
+        os_redir_print_string("\r\n" INV "SSID" CLEOL " " NORMAL "\r\n");
 
     int n = 0;
     entry_t *entry = bdb_entry_first();
@@ -266,16 +300,16 @@ void os_db_list(uint8_t set)
             else
                 snprintf(line, 40, "%s", entry->bytes + entry->name_ofs);
             line[39] = 0;
-            hal_print_string(line);
-            hal_print_string("\r\n");
+            os_redir_print_string(line);
+            os_redir_print_string("\r\n");
             n++;
         }
         entry = bdb_entry_next(entry);
     }
-    hal_print_integer("\r\n%d record(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
+    os_redir_print_integer("\r\n%d record(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
 }
 
-void os_db_erase(uint8_t set, const char *name)
+static void os_db_erase(uint8_t set, const char *name)
 {
     entry_t *entry = bdb_entry_get(set, name);
     if (entry)
@@ -285,7 +319,7 @@ void os_db_erase(uint8_t set, const char *name)
     }
 }
 
-int os_get_string(char *buf, int size, char secret_char)
+static int os_get_string(char *buf, int size, char secret_char)
 {
     int i = 0;
     while (i < size - 1)
@@ -302,7 +336,7 @@ int os_get_string(char *buf, int size, char secret_char)
             if (i > 0)
             {
                 i--;
-                hal_print_string("\b \b"); // Erase last character
+                os_redir_print_string("\b \b"); // Erase last character
             }
             continue;
         }
@@ -314,14 +348,14 @@ int os_get_string(char *buf, int size, char secret_char)
         {
             buf[i++] = key;
             const char key_str[2] = {secret_char ? secret_char : key, '\0'};
-            hal_print_string(key_str);
+            os_redir_print_string(key_str);
         }
     }
     buf[i] = '\0'; // Null-terminate the string
     return i;      // Return the number of characters read
 }
 
-uint8_t os_get_key()
+static uint8_t os_get_key()
 {
     static bool fkey = false;
     uint8_t key = hal_get_key();
@@ -350,7 +384,7 @@ uint8_t os_get_key()
             else if (key == 0x59)
             {            // CX/FIN key
                 key = 0; // Ignore it
-                hal_print_string("\x13\x59"); // Send CX/Fin to terminal
+                os_redir_print_string("\x13\x59"); // Send CX/Fin to terminal
             }
             else
             {               // ENVOI and other function keys
@@ -373,7 +407,7 @@ uint8_t os_get_key()
     return key;
 }
 
-int os_connect(uint8_t set, const char *name, const char* urn)
+static int os_connect(uint8_t set, const char *name, const char* urn)
 {
     int ret = -1;
 
@@ -393,7 +427,7 @@ int os_connect(uint8_t set, const char *name, const char* urn)
     if (ret >= 0) {
         if (set == DB_MIN_SET)
         {
-            hal_print_string(P_ROULEAU_OFF);
+            os_redir_print_string(P_ROULEAU_OFF);
         }
         else
         {
@@ -404,7 +438,7 @@ int os_connect(uint8_t set, const char *name, const char* urn)
             }
             if (!eval_running())
             {
-                hal_print_string("OK\r\n");
+                os_redir_print_string("OK\r\n");
             }
         }
     }
@@ -418,13 +452,13 @@ finalize:
     return ret;
 }
 
-void os_disconnect(uint8_t set)
+static void os_disconnect(uint8_t set)
 {
     if (set == DB_MIN_SET)
     {
         hal_net_disconnect(set, bmem->bstate.sock);
         bmem->bstate.sock = -1;
-        hal_print_string("\r\n" P_ROULEAU_ON CON G0 INK7);
+        os_redir_print_string("\r\n" P_ROULEAU_ON CON G0 INK7);
     }
     else if (set == DB_FTP_SET)
     {
@@ -433,26 +467,26 @@ void os_disconnect(uint8_t set)
     }
 
     if (!eval_running())
-        hal_print_string("Disconnected\r\n");
+        os_redir_print_string("Disconnected\r\n");
 }
 
-void os_cat(void)
+static void os_cat(void)
 {
-    hal_print_string("\r\nDrive: A\r\n\r\n");
+    os_redir_print_string("\r\nDrive: A\r\n\r\n");
     size_t total = hal_cat();
-    hal_print_integer("\r\n%3uK free\r\n\r\n", total / 1024);
+    os_redir_print_integer("\r\n%3uK free\r\n\r\n", total / 1024);
 }
 
-bool os_ftp_cat(void)
+static bool os_ftp_cat(void)
 {
     if (!hal_ftp_is_connected())
     {
         bmem->bstate.error = BERROR_SOCK;
         return false;
     }
-    hal_print_string("\r\nDrive: ");
-    hal_print_string(g_ftp_connected_host);
-    hal_print_string("\r\n\r\n");
+    os_redir_print_string("\r\nDrive: ");
+    os_redir_print_string(g_ftp_connected_host);
+    os_redir_print_string("\r\n\r\n");
 
     ssize_t total = hal_ftp_cat();
     if (total < 0)
@@ -461,7 +495,7 @@ bool os_ftp_cat(void)
         return false;
     }
 
-    hal_print_integer("\r\n%3zd file(s)\r\n\r\n", total);
+    os_redir_print_integer("\r\n%3zd file(s)\r\n\r\n", total);
 
     return true;
 }
@@ -473,7 +507,7 @@ void os_cat_file(const char *filename, size_t size)
     int n = ext ? (ext - filename) : strlen(filename);
     ext = ext ? ext + 1 : "";
     snprintf(buffer, sizeof(buffer), "%-16.*s.%-4s %zu\r\n", n, filename, ext, size);
-    hal_print_string(buffer);
+    os_redir_print_string(buffer);
 }
 
 /**
@@ -523,6 +557,47 @@ void os_ftp_cat_file(const char* line)
             size = strtoul(part, 0, 10);
     }
     os_cat_file(part, size);
+}
+
+#define FILE_EXT_BAS ".bas"
+#define FILE_EXT_BST ".bst"
+#define FILE_EXT_VAR ".var"
+
+static char *os_filename(const char *name, int16_t *type)
+{
+    static const char *g_files_exts[4] = {
+        FILE_EXT_BAS, FILE_EXT_BST, FILE_EXT_VAR, 0,
+    };
+
+    static char filename[FILE_NAME_SIZE];
+
+    const char *dst_ext = FILE_EXT_BAS;
+    *type = 0;
+    char *src_ext = strrchr(name, '.');
+    uint16_t len = src_ext ? src_ext - name : strlen(name);
+    len = len > FILE_BASE_MAX ? FILE_BASE_MAX : len;
+
+    if (src_ext) {
+        dst_ext = 0;
+        for (const char **i_ext = g_files_exts; *i_ext ; i_ext++) {
+            if (strcasecmp(*i_ext, src_ext) == 0) {
+                dst_ext = *i_ext;
+                break;
+            }
+            (*type)++;
+        }
+        // Invalid source extension
+        if (!dst_ext) {
+            *type = -1;
+            return 0;
+        }
+    }
+
+    strncpy(filename, name, len);
+    filename[len] = 0;
+    strcat(filename, dst_ext);
+
+    return filename;
 }
 
 static void os_loop_connected()

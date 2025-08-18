@@ -80,6 +80,7 @@ int8_t bastos_save(const char *name);
 int8_t bastos_load(const char *name);
 
 void bastos_prog_new(void);
+void bastos_vars_clear(void);
 var_t *bastos_var_get(const char *name);
 
 // void bmem_test();

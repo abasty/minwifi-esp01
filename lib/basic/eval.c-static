@@ -472,9 +472,15 @@ static bool eval_compare_expr()
             if (!eval_string_expr())
                 return false;
 
-            char *string2 = string_cstr(bmem->bstate.string);
-
-            result = strcmp(string1, string2);
+            if (bmem->bstate.do_eval)
+            {
+                char *string2 = string_cstr(bmem->bstate.string);
+                result = strcmp(string1, string2);
+            }
+            else
+            {
+                result = 0;
+            }
         }
         switch (op)
         {
@@ -1137,7 +1143,7 @@ static bool eval_print(bool implicit)
             {
                 if (bmem->bstate.token == TOKEN_NUMBER)
                 {
-                    hal_print_float(bmem->bstate.number);
+                    os_redir_print_float(bmem->bstate.number);
                 }
                 else // TOKEN_STRING
                 {
@@ -1149,14 +1155,14 @@ static bool eval_print(bool implicit)
         {
             if (bmem->bstate.do_eval)
             {
-                hal_print_string(string_cstr(bmem->bstate.string));
+                os_redir_print_string(string_cstr(bmem->bstate.string));
             }
         }
         else if (eval_token(','))
         {
             if (bmem->bstate.do_eval)
             {
-                hal_print_string(" ");
+                os_redir_print_string(" ");
             }
         }
         else if (eval_token(';'))
@@ -1173,7 +1179,7 @@ static bool eval_print(bool implicit)
     {
         if (ln && !implicit)
         {
-            hal_print_string("\r\n");
+            os_redir_print_string("\r\n");
         }
     }
 
@@ -1207,13 +1213,13 @@ static bool eval_list()
         {
             if (prog->line_no >= start)
             {
-                hal_print_integer("%4d", (int)prog->line_no);
+                os_redir_print_integer("%4d", (int)prog->line_no);
                 char c[2];
                 c[0] = bmem->bstate.pc == prog ? '>' : ' ';
                 c[1] = 0;
-                hal_print_string(c);
-                hal_print_string(untokenize(prog->line));
-                hal_print_string("\r\n");
+                os_redir_print_string(c);
+                os_redir_print_string(untokenize(prog->line));
+                os_redir_print_string("\r\n");
                 n--;
             }
             prog = bmem_prog_next_line(prog);
@@ -1251,7 +1257,7 @@ static int8_t eval_prog_next()
     {
         char buffer[32];
         snprintf(buffer, sizeof(buffer), "On line %d: Error %d\r\n", bmem->bstate.pc->line_no, (int)-err);
-        hal_print_string(buffer);
+        os_redir_print_string(buffer);
     }
 
     bmem->bstate.pc = 0;
@@ -1284,11 +1290,11 @@ static void eval_reset()
 static void eval_free()
 {
     char info[40];
-    hal_print_string("       sys  prog  vars    db       free\r\n");
+    os_redir_print_string("       sys  prog  vars    db       free\r\n");
 
     snprintf(info, sizeof(info), "obj:       %5d %5d %5d\r\n",
              bmem_line_count(), bmem_var_count(), bdb_entry_count());
-    hal_print_string(info);
+    os_redir_print_string(info);
 
     // The info string is max 39 chars length
     snprintf(info, sizeof(info), "mem: %5d %5d %5d %5d %5d+%4d",
@@ -1298,26 +1304,26 @@ static void eval_free()
              (int)(bmem->db_end - bmem->db_start),
              (int)(bmem->vars_start - bmem->strings_end),
              (int)(BASTOS_DB_SIZE - (bmem->db_end - bmem->db_start)));
-    hal_print_string(info);
+    os_redir_print_string(info);
 
-    hal_print_string("\r\n\r\n");
+    os_redir_print_string("\r\n\r\n");
 }
 
 static void eval_bastos()
 {
-    hal_print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU_ON LINE0 CLEOL CLS " BASTOS ");
-    hal_print_integer("%dK", BASTOS_MEMORY_SIZE_KB);
-    hal_print_string(" Microcontroller (v1)\r\n Basic for Terminal Operating System\r\n on ");
+    os_redir_print_string(COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU_ON LINE0 CLEOL CLS " BASTOS ");
+    os_redir_print_integer("%dK", BASTOS_MEMORY_SIZE_KB);
+    os_redir_print_string(" Microcontroller (v1)\r\n Basic for Terminal Operating System\r\n on ");
     hal_print_oem_string();
     char info[64];
     snprintf(info, sizeof(info), "\r\n\r\n (c) 2024-2025 ABa\r\n\r\n %d+%d bytes free\r\n\r\n" CON,
              (int)(bmem->vars_start - bmem->strings_end),
              (int)(BASTOS_DB_SIZE - (bmem->db_end - bmem->db_start)));
-    hal_print_string(info);
+    os_redir_print_string(info);
 
     if (!eval_running())
     {
-        hal_print_string("Ready\r\n");
+        os_redir_print_string("Ready\r\n");
     }
 }
 
@@ -1380,12 +1386,18 @@ static void eval_return()
     bmem->bstate.running = bmem->bstate.pc != 0;
 }
 
-static void eval_save()
+static bool eval_save()
 {
-    if (bmem->bstate.string == 0)
-        return;
+    if (string_len(bmem->bstate.string) == 0)
+        return false;
 
-    bastos_save(string_cstr(bmem->bstate.string));
+    if (bastos_save(string_cstr(bmem->bstate.string)) < 0)
+    {
+        bmem->bstate.error = BERROR_IO;
+        return false;
+    }
+
+    return true;
 }
 
 static void eval_load()
@@ -1531,8 +1543,7 @@ EVAL:
     }
     if (instr == TOKEN_KEYWORD_SAVE)
     {
-        eval_save();
-        return true;
+        return eval_save();
     }
     if (instr == TOKEN_KEYWORD_LOAD)
     {
@@ -1870,7 +1881,7 @@ static bool eval_ftp_file(uint8_t func)
 
     if (!eval_running())
     {
-        hal_print_string("OK\r\n");
+        os_redir_print_string("OK\r\n");
     }
 
     return true;
