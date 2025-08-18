@@ -38,31 +38,33 @@
   * [x] `FTP CAT`
   * [x] `FTP PUT/GET`
   * [x] Optimisation (retrait des commandes qu'on utilise pas, etc)
-* [ ] Load / Save ASCII. Selon l'extension. Extension par défaut `.bas`. Si
+* [x] Load / Save ASCII. Selon l'extension. Extension par défaut `.bas`. Si
   `.bas`, Sauvegarde uniquement du programme en mode ASCII. Si `.var`,
   uniquement variables.
     * [x] `SAVE` sans extension rajoute `.bas`
     * [x] Les extensions autres que `.bas`, `.bst` et `.var` sont interdites
       (erreur)
     * [x] `SAVE` `.var` ne sauve que les variables avec un programme à 0
-    * [ ] `SAVE` `.bas` similaire à `LIST` mais dans un fichier
-        * [ ] Untokenize : doit supporter les caractères "\x.." dans les chaînes
-        * [ ] Pouvoir rediriger hal_print_* vers fichier (os_print_xxx + flag
+    * [x] `SAVE` `.bas` similaire à `LIST` mais dans un fichier
+        * [x] Untokenize : doit supporter les caractères "\x.." dans les chaînes
+        * [x] Pouvoir rediriger hal_print_* vers fichier (os_print_xxx + flag
           redirect)
-    * [ ] `LOAD` sans extension => `.bas`.
+    * [x] `LOAD` sans extension => `.bas`.
     * [x] `LOAD` `bst` ou `var` c'est le load actuel car le format avec ou sans
       prog, avec ou sans var est le même, par contre lorsqu'on load des vars, il
       ne faut pas supprimer le programme existant
-    * [ ] `LOAD` `.bas`. Lire ligne par ligne, Similaire au mode interactif
-    * [ ] `LOAD` `.bas` : Conversion UTF-8 vers MIN
+    * [x] `LOAD` `.bas`. Lire ligne par ligne, Similaire au mode interactif
+* [ ] `LOAD` `.bas` : Conversion UTF-8 vers MIN
 * [ ] `autoexec.bas/bst`
 
+* [ ] Fichiers ".db" => "config.db"
 * [ ] Gérer l'historique avec la DB config (une seule chaîne, séparée par des
   "\0", ou "HIST_0" à "HIST_9")
 * [ ] Ramener les variables OS dans le bstate
-* [ ] Uniquement majuscules noms de fichiers 8+3
-* [ ] CAT ne doit pas afficher les fichiers finissant par "$$$"
-* [ ] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.BST` /
+
+* [x] Non: ~~Uniquement majuscules noms de fichiers 8+3~~
+* [x] Non: ~~CAT ne doit pas afficher les fichiers finissant par "$$$"~~
+* [x] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.BST` /
   `.BAS` ?
 
 * [ ] RUN line, RUN "autorun.bst", RUN "program.bst", line
@@ -72,16 +74,18 @@
   variables (ça peut remplacer des fichiers). Exemple : on crée des variables
   contenant des codes videotex et on sauve ces variables.
 
-* [ ] Pouvoir lire un fichier `.BAS` sur la ligne d'entrée et l'envoyer à
-  `bastos_send_keys`. Ce serait bien aussi de pouvoir construire un disque à
-  distance
+* [x] Couvert par l'extension `.bas` et `FTP` : Pouvoir lire un fichier `.BAS`
+  sur la ligne d'entrée et l'envoyer à `bastos_send_keys`. Ce serait bien aussi
+  de pouvoir construire un disque à distance
+* [x] Remplacé par :`FTP GET / PUT`.`FTP DOWNLOAD` / `FTP UPLOAD` et autres
+  fonctions FTP.
 
-* [ ] `FTP DOWNLOAD` / `FTP UPLOAD` et autres fonctions FTP.
 
 * [ ] Pouvoir rediriger PRINT vers une variable. `OUTPUT a$`. Les fonctions
   `hal_print_*` sont remplacées par `os_print_*` ou `os_printf`. Ces dernières
   utilisent un buffer et `hal_print_buffer` ou, si OUTPUT est une variable,
   ajoute le buffer à la variable.
+
 * [ ] BIP, INV, NORM, CLEOL, AI, AN, REP, etc. (voir MIN).
 * [ ] con, coff, echo on/off
 * [ ] TAB
@@ -99,7 +103,7 @@
 * [ ] EVAL / EVAL$
 * [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
   seule commande print.
-* [ ] Ajouter edit, integration "edit_min" ?
+* [ ] Ajouter `EDIT <LINE_NO>`, integration "edit_min" ?
 
 * [ ] PEEK (y compris variables OS ?) / POKE / USR : adresses converties par
   rapport au début du bloc (0 à 32K+4K). PEEK16 / POKE16. Les pointeurs
