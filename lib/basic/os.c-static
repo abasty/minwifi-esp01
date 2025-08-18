@@ -35,14 +35,8 @@
 #include "tty-vt100.h"
 #endif
 
-#define BASTOS_NETWORK_COUNT (20)
-#define BASTOS_SERVER_COUNT (20)
-
-#define SERVER_NAME_MAX_SIZE (16)
-#define SERVER_HOST_MAX_SIZE (64)
-#define SERVER_PATH_MAX_SIZE (16)
-#define SERVER_LOGIN_MAX_SIZE (16)
-#define SERVER_SECRET_MAX_SIZE (64)
+#define AUTOEXEC_FILE "autoexec.bas"
+#define AUTOLOAD_DB_FILE "autoload.db"
 
 // OS WiFi variables
 // FIXME (Move to Basic memory)
@@ -85,7 +79,7 @@ static int os_redir_print_float(float f)
 
 static void os_db_save(void)
 {
-    int fd = hal_open("CONFIG.$$$", B_CREAT | B_WRONLY);
+    int fd = hal_open(AUTOLOAD_DB_FILE, B_CREAT | B_WRONLY);
     if (fd < 0)
         return;
 
@@ -111,7 +105,7 @@ static void os_db_load(void)
     // Remove memory records
     bmem_db_clear();
 
-    int fd = hal_open("CONFIG.$$$", B_RDONLY);
+    int fd = hal_open(AUTOLOAD_DB_FILE, B_RDONLY);
     if (fd < 0)
         return;
 
