@@ -67,4 +67,4 @@ Gain : 8 octets par appel de fonction (46).
 implem        | flash  | RAM ESP
 --------------|--------|---------
 redir / SAVE  | 345347 |
-LOAD          |        |
+LOAD          | 345835 |

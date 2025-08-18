@@ -478,7 +478,7 @@ static void untokenize_string(tokenizer_state_t *state)
             os_redir_print_string("\\0");
             break;
         default:
-            if (c < 32) {
+            if (c < 32 && c != 0x19) {
                 char hex[5];
                 sprintf(hex, "\\x%02x", c);
                 os_redir_print_string(hex);
