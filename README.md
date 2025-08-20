@@ -3,6 +3,7 @@
 ## Bugs
 
 * [ ] edition de ligne : gérer les séquences de caractères spéciaux (G2, G1)
+* [x] INPUT vide
 * [x] ~~Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
   serveur Minitel. Voir avec une websocket statique (pas de new / delete)~~
 * [x] Crash avec connexion en boucle sur WS "3615" ou "hacker" (pages lourdes)
