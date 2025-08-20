@@ -3,8 +3,8 @@
 ## Bugs
 
 * [ ] edition de ligne : gérer les séquences de caractères spéciaux (G2, G1)
-* [ ] Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
-  serveur Minitel. Voir avec une websocket statique (pas de new / delete)
+* [x] ~~Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
+  serveur Minitel. Voir avec une websocket statique (pas de new / delete)~~
 * [x] Crash avec connexion en boucle sur WS "3615" ou "hacker" (pages lourdes)
   lorsque qu'on coupe la communication alors qu'on reçoit des données
 * [x] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
@@ -54,8 +54,10 @@
       prog, avec ou sans var est le même, par contre lorsqu'on load des vars, il
       ne faut pas supprimer le programme existant
     * [x] `LOAD` `.bas`. Lire ligne par ligne, Similaire au mode interactif
+
+* [x] `RUN [<FILE> [, <NO_LINE> ]]` ou `RUN [<NO_LINE>]`
+* [ ] `autoexec.bas`
 * [ ] `LOAD` `.bas` : Conversion UTF-8 vers MIN
-* [ ] `autoexec.bas/bst`
 
 * [ ] Fichiers ".db" => "config.db"
 * [ ] Gérer l'historique avec la DB config (une seule chaîne, séparée par des
@@ -67,10 +69,10 @@
 * [x] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.BST` /
   `.BAS` ?
 
-* [ ] RUN line, RUN "autorun.bst", RUN "program.bst", line
-* [ ] `SAVE`, `LOAD` : pouvoir faire du `.BAS` et du `.BST`. Majuscules / Minucules
-  : toujours en majuscules sur disque, pour faire plus rétro.
-* [ ] Sauvegarder uniquement les variables et pouvoir recharger uniquement les
+* [x] RUN line, RUN "autorun.bst", RUN "program.bst", line
+* [x] `SAVE`, `LOAD` : pouvoir faire du `.BAS` et du `.BST`. Non : ~~Majuscules
+  / Minucules : toujours en majuscules sur disque, pour faire plus rétro.~~
+* [x] Sauvegarder uniquement les variables et pouvoir recharger uniquement les
   variables (ça peut remplacer des fichiers). Exemple : on crée des variables
   contenant des codes videotex et on sauve ces variables.
 

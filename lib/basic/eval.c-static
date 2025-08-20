@@ -47,6 +47,7 @@
 static inline void eval_input_mode(bool mode);
 static bool eval_string_tty();
 static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims);
+static void eval_load();
 
 extern bmem_t *bmem;
 
@@ -100,7 +101,6 @@ uint8_t instr0[] = {
     TOKEN_KEYWORD_RESET,
     TOKEN_KEYWORD_STOP,
     TOKEN_KEYWORD_CONT,
-    TOKEN_KEYWORD_RUN,
     TOKEN_KEYWORD_RETURN,
     TOKEN_KEYWORD_FAST,
     TOKEN_KEYWORD_SLOW,
@@ -1332,12 +1332,48 @@ static bool eval_inputting()
     return bmem->bstate.inputting;
 }
 
-static void eval_run()
+static bool eval_run()
 {
+    if (!eval_token(TOKEN_KEYWORD_RUN))
+        return false;
+
+    // Default line is first one
+    bmem->bstate.number = 0;
+
+    // Check args
+    bool arg1 = eval_expr(TOKEN_NUMBER | TOKEN_STRING);
+    bool arg1_is_string = arg1 && bmem->bstate.token == TOKEN_STRING;
+    bool arg2 = false;
+    if (arg1_is_string && eval_token(','))
+    {
+        arg2 = eval_expr(TOKEN_NUMBER);
+        if (!arg2)
+            return false;
+    }
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    int32_t line_no = (int32_t) bmem->bstate.number;
+    if (line_no < 0)
+    {
+        bmem->bstate.error = BERROR_RANGE;
+        return false;
+    }
+
+    if (arg1_is_string)
+    {
+        eval_load();
+        if (bmem->bstate.error != BERROR_NONE)
+            return false;
+    }
+
     running_state_clear();
     bmem_vars_clear();
-    bmem->bstate.pc = bmem_prog_first_line();
-    bmem->bstate.running = true;
+    bmem->bstate.pc = bmem_prog_get_line_or_next(line_no);
+    bmem->bstate.running = bmem->bstate.pc != 0;
+
+    return true;
 }
 
 static void eval_goto()
@@ -1558,11 +1594,6 @@ EVAL:
     if (instr == TOKEN_KEYWORD_CLEAR)
     {
         eval_clear();
-        return true;
-    }
-    if (instr == TOKEN_KEYWORD_RUN)
-    {
-        eval_run();
         return true;
     }
     if (instr == TOKEN_KEYWORD_NEW)
@@ -1928,6 +1959,7 @@ static bool eval_instruction()
     return eval_print(false) ||
            eval_input() ||
            eval_simple_instruction() ||
+           eval_run() ||
            eval_rem() ||
            eval_dim() ||
            eval_list() ||
