@@ -454,7 +454,7 @@ static bool eval_compare_expr()
     if (eval_token_one_of(compare_tokens))
     {
         uint8_t op = bmem->bstate.token;
-        int result = 0;
+        float result = 0;
 
         if (type_token == TOKEN_NUMBER)
         {
