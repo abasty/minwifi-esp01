@@ -58,10 +58,14 @@ static int os_get_string(char *buf, int size, char secret_char);
 static char *os_filename(const char *name, int16_t *type);
 static void os_cat(void);
 
+// OS printing and redirect functions
 static void os_set_redirect(int fd);
 static int os_redir_print_string(const char *s);
 static int os_redir_print_integer(const char *format, int i);
 static int os_redir_print_float(float f);
+
+// OS startup function
+static void os_autoexec(void);
 
 #ifdef __cplusplus
 }

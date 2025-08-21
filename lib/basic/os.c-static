@@ -126,6 +126,20 @@ finalize:
     hal_close(fd);
 }
 
+static void os_autoexec(void)
+{
+    if (bastos_load(AUTOEXEC_FILE) == BERROR_NONE)
+    {
+        running_state_clear();
+        bmem->bstate.pc = bmem_prog_first_line();
+        bmem->bstate.running = bmem->bstate.pc != 0;
+    }
+    else
+    {
+        bastos_send_keys("bastos\n", 7, false);
+    }
+}
+
 /**
  * @brief Print network and add it to SSID array
  *
@@ -678,5 +692,4 @@ void os_setup(void)
 {
     // Init Basic and display BASTOS banner
     bastos_init();
-    bastos_send_keys("bastos\n", 7, false);
 }

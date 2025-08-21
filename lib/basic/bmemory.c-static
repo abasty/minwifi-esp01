@@ -581,4 +581,5 @@ static void bmem_init(uint8_t *mem, uint16_t size)
     bmem->bstate.redirect = -1;
     bastos_prog_new();
     os_db_load();
+    os_autoexec();
 }

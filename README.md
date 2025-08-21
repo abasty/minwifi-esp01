@@ -59,10 +59,10 @@
     * [x] `LOAD` `.bas`. Lire ligne par ligne, Similaire au mode interactif
 
 * [x] `RUN [<FILE> [, <NO_LINE> ]]` ou `RUN [<NO_LINE>]`
-* [ ] `autoexec.bas`
+* [x] `autoexec.bas`
 * [ ] `LOAD` `.bas` : Conversion UTF-8 vers MIN
 
-* [ ] Fichiers ".db" => "config.db"
+* [x] Fichiers ".db" => "autoload.db"
 * [ ] Gérer l'historique avec la DB config (une seule chaîne, séparée par des
   "\0", ou "HIST_0" à "HIST_9")
 * [ ] Ramener les variables OS dans le bstate
@@ -359,7 +359,7 @@ vers le réseau.
 * [x] Remettre en 1200-7E1 pas 115200
 * [x] Après un reset sur l'ESP : Bannière BASTOS
 * [x] ~~repasser en SPIFS~~
-* [x] Revoir la machine d'état boot : `config.db`, `autoexec.bas`
+* [x] Revoir la machine d'état boot : `autoload.db`, `autoexec.bas`
 * [ ] Manuel utilisateur BASTOS (à commencer, à l'ancienne)
 * [ ] Commandes FS : <https://www.overtakenbyevents.com/amstrad-cpc-amsdos-commands/>
 
@@ -408,14 +408,14 @@ Doivent être en C pour être intégrés à minwifi.
 * [x] Support Suite / Retour / Sommaire (TAB ou PGDN / SHIFT TAB ou PGDUP/ HOME)
 * [x] Pas de mDSN (plus d'acces telnet ni OTA) ~~Régler le pb du nom mDNS de
   l'ESP quand il vient d'être flashé par USB serial~~
-* [x] `config.db`, `autoexec.bas` : Faire un config manager plus complet
+* [x] `autoload.db`, `autoexec.bas` : Faire un config manager plus complet
   (vitesse port Minitel par exemple) ?
-* [x] Remplacé par `BASTOS`, `config.db`, `autoexec.bas` ~~tty : init string,
+* [x] Remplacé par `BASTOS`, `autoload.db`, `autoexec.bas` ~~tty : init string,
   fast, autoexec => config$$$~~
 * [x] Remplacé par le HAL : ~~Optimisation BIO (une seule structure), 1 fonction
   number (int), 2/3 params (union as_void_ptr, as_char_ptr, as_int, as_float), 1
   result (union like param) => static / extern~~
-* [x] Fichiers `config.db`, `autoexec.bas` ~~Variables WiFi dans fichier
+* [x] Fichiers `autoload.db`, `autoexec.bas` ~~Variables WiFi dans fichier
   invisible par CAT, let, load vars, save vars et init Wifi~~
 * [x] Passer tout en float
 * [x] Coder `eval_factor`
