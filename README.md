@@ -67,17 +67,17 @@
 
 * [x] Non: ~~Uniquement majuscules noms de fichiers 8+3~~
 * [x] Non: ~~CAT ne doit pas afficher les fichiers finissant par "$$$"~~
-* [x] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.BST` /
-  `.BAS` ?
+* [x] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.bst` /
+  `.bas` ?
 
 * [x] RUN line, RUN "autorun.bst", RUN "program.bst", line
-* [x] `SAVE`, `LOAD` : pouvoir faire du `.BAS` et du `.BST`. Non : ~~Majuscules
+* [x] `SAVE`, `LOAD` : pouvoir faire du `.bas` et du `.bst`. Non : ~~Majuscules
   / Minucules : toujours en majuscules sur disque, pour faire plus rétro.~~
 * [x] Sauvegarder uniquement les variables et pouvoir recharger uniquement les
   variables (ça peut remplacer des fichiers). Exemple : on crée des variables
   contenant des codes videotex et on sauve ces variables.
 
-* [x] Couvert par l'extension `.bas` et `FTP` : Pouvoir lire un fichier `.BAS`
+* [x] Couvert par l'extension `.bas` et `FTP` : Pouvoir lire un fichier `.bas`
   sur la ligne d'entrée et l'envoyer à `bastos_send_keys`. Ce serait bien aussi
   de pouvoir construire un disque à distance
 * [x] Remplacé par :`FTP GET / PUT`.`FTP DOWNLOAD` / `FTP UPLOAD` et autres
@@ -200,9 +200,9 @@ le gère directement avec des fonctions du HAL.
 ### Démarrage BASTOS
 
 Après avoir chargé la config, le système vérifie s'il existe un fichier nommé
-`BONJOUR.BAS` ou `. BST`.
+`autoexec.bas`.
 
-Si oui, il charge ce fichier et l'exécute. Exemple de fichier `BONJOUR.BAS` :
+Si oui, il charge ce fichier et l'exécute. Exemple de fichier `autoexec.bas` :
 
 ```basic
 10 WIFI "Maison"
@@ -357,7 +357,7 @@ vers le réseau.
 * [x] Remettre en 1200-7E1 pas 115200
 * [x] Après un reset sur l'ESP : Bannière BASTOS
 * [x] ~~repasser en SPIFS~~
-* [ ] Revoir la machine d'état boot : `CONFIG.$$$`, `BONJOUR.BAS`
+* [x] Revoir la machine d'état boot : `config.db`, `autoexec.bas`
 * [ ] Manuel utilisateur BASTOS (à commencer, à l'ancienne)
 * [ ] Commandes FS : <https://www.overtakenbyevents.com/amstrad-cpc-amsdos-commands/>
 
@@ -406,14 +406,14 @@ Doivent être en C pour être intégrés à minwifi.
 * [x] Support Suite / Retour / Sommaire (TAB ou PGDN / SHIFT TAB ou PGDUP/ HOME)
 * [x] Pas de mDSN (plus d'acces telnet ni OTA) ~~Régler le pb du nom mDNS de
   l'ESP quand il vient d'être flashé par USB serial~~
-* [x] `$$CONFIG$$$` + `BONJOUR.BAS` : Faire un config manager plus complet
+* [x] `config.db`, `autoexec.bas` : Faire un config manager plus complet
   (vitesse port Minitel par exemple) ?
-* [x] Remplacé par `BASTOS, $$CONFIG$$$, BONJOUR.BAS` ~~tty : init string, fast,
-  autoexec => config$$$~~
+* [x] Remplacé par `BASTOS`, `config.db`, `autoexec.bas` ~~tty : init string,
+  fast, autoexec => config$$$~~
 * [x] Remplacé par le HAL : ~~Optimisation BIO (une seule structure), 1 fonction
   number (int), 2/3 params (union as_void_ptr, as_char_ptr, as_int, as_float), 1
   result (union like param) => static / extern~~
-* [x] Fichiers `CONFIG.$$$` et `BONJOUR.BAS` ~~Variables WiFi dans fichier
+* [x] Fichiers `config.db`, `autoexec.bas` ~~Variables WiFi dans fichier
   invisible par CAT, let, load vars, save vars et init Wifi~~
 * [x] Passer tout en float
 * [x] Coder `eval_factor`
