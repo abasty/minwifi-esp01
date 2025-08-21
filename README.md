@@ -16,6 +16,8 @@
 
 ## Fonctionnalités
 
+* [x] `?` pour `PRINT` (PET CBM, MSX, MS Basic) : "Ask to computer : ?2+2"
+  <https://stackoverflow.com/questions/23597690/following-standards-or-not>
 * [x] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
   mode connecté / basic / boot au mode interactif)
 * [x] Augmenter la mémoire BASTOS (32KB), reste 12KB pour l'OS (wifi / db)

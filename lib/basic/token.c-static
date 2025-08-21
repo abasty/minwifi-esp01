@@ -365,6 +365,11 @@ int8_t tokenize(tokenizer_state_t *state, char *input)
                 state->write_ptr = token_buffer;
             }
         }
+        else if (c == '?')
+        {
+            *state->write_ptr++ = TOKEN_KEYWORD_PRINT;
+            state->read_ptr++;
+        }
         else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
         {
             err = tokenize_keyword(state, keywords);
