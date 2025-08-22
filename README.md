@@ -64,8 +64,10 @@
 * [ ] Serveur ftp sur IONOS (changer port par défaut)
 * [ ] `TELNET` : au départ gérer avec un front end `ncat` qui passe en mode
   téléinformatique, et effectue la connexion telnet
+* [ ] Protocole FTP intégré à BASTOS (dispo dans le simu)
 * [ ] Projet serveur en Dart (package / lib minitel + lib server (voir http
-  server))
+  server)). Création de pages Videotex : voir COMPO et EDIMIN (marchent dans
+  DOSbox)
 
 * [x] Fichiers ".db" => `autoload.db`
 * [ ] Gérer l'historique avec la DB config (une seule chaîne, séparée par des
@@ -97,9 +99,10 @@
   ajoute le buffer à la variable.
 
 * [ ] BIP, INV, NORM, CLEOL, AI, AN, REP, etc. (voir MIN).
-* [ ] con, coff, echo on/off
+* [x] `CURSOR 0, 1` ~~con, coff~~
+* [ ] echo on/off
 * [ ] TAB
-* [ ] SCROLL (ON, OFF, UP, DOWN)
+* [ ] SCROLL (START, STOP, UP, DOWN)
 * [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
 
 * [ ] FAST FAST (9600 / Minitel 2)
@@ -110,10 +113,10 @@
   * [ ] Minitel, semi graphique
 * [ ] RAND
 * [ ] EDIT line, EDIT tout seul édite la dernière entrée (raccourci: fleche haut)
-* [ ] EVAL / EVAL$
+* [ ] Ajouter `EDIT <LINE_NO>`, integration "edit_min" ?
+* [ ] EVAL / EVAL$ => Voir `os_eval_string()`, utilisé pour le `LOAD`
 * [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
   seule commande print.
-* [ ] Ajouter `EDIT <LINE_NO>`, integration "edit_min" ?
 
 * [ ] PEEK (y compris variables OS ?) / POKE / USR : adresses converties par
   rapport au début du bloc (0 à 32K+4K). PEEK16 / POKE16. Les pointeurs
