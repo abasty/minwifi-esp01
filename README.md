@@ -64,6 +64,8 @@
 * [ ] Serveur ftp sur IONOS (changer port par défaut)
 * [ ] `TELNET` : au départ gérer avec un front end `ncat` qui passe en mode
   téléinformatique, et effectue la connexion telnet
+* [ ] Projet serveur en Dart (package / lib minitel + lib server (voir http
+  server))
 
 * [x] Fichiers ".db" => `autoload.db`
 * [ ] Gérer l'historique avec la DB config (une seule chaîne, séparée par des
