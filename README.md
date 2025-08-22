@@ -61,8 +61,11 @@
 * [x] `RUN [<FILE> [, <NO_LINE> ]]` ou `RUN [<NO_LINE>]`
 * [x] `autoexec.bas`
 * [ ] `LOAD` `.bas` : Conversion UTF-8 vers MIN
+* [ ] Serveur ftp sur IONOS (changer port par défaut)
+* [ ] `TELNET` : au départ gérer avec un front end `ncat` qui passe en mode
+  téléinformatique, et effectue la connexion telnet
 
-* [x] Fichiers ".db" => "autoload.db"
+* [x] Fichiers ".db" => `autoload.db`
 * [ ] Gérer l'historique avec la DB config (une seule chaîne, séparée par des
   "\0", ou "HIST_0" à "HIST_9")
 * [ ] Ramener les variables OS dans le bstate
@@ -193,11 +196,8 @@ Les ressources pour BASTOS sont initialisées.
 
 ### Configuration
 
-L'OS charge la config au boot (fichier `$$CONFIG$$`) et définit les variables
+L'OS charge la config au boot (fichier `autoload.db`) et définit les variables
 OS, y compris les secrets.
-
-Le fichier `$$CONFIG$$` n'est pas chargeable / visible depuis le Basic. BASTOS
-le gère directement avec des fonctions du HAL.
 
 ### Démarrage BASTOS
 
@@ -217,8 +217,9 @@ Basic en mode interactif.
 
 ## Variables OS
 
-(non accessibles depuis le Basic, à voir si des instructions spéciales
-permettent d'y accéder (liste réseau wifi, serveurs, etc))
+Non accessibles depuis le Basic, à voir si des instructions spéciales permettent
+d'y accéder. Le projet est d'avoir le moins de variables OS, ou de les placer
+dans la memoire système du Basic (bmem).
 
 ### Liste des réseaux WiFi
 
@@ -245,16 +246,17 @@ une fois avec succès, sont sauvegardés dans la configuration.
 Les URNs permettent de définir avec une chaîne de caractères les paramètres de
 connexion aux services Minitel réseau et aux sites FTP.
 
-| type  | syntaxe fichier et basic     |
-|-------|------------------------------|
-| tcp   | `tcp:host:port`              |
-| ws    | `ws:host:port:path`          |
-| wss   | `wss:host:port:path`         |
-| ftp   | `ftp:host:port:login:pass`   |
+| type  | syntaxe fichier et basic        |
+|-------|---------------------------------|
+| tcp   | `tcp:host:port`                 |
+| ws    | `ws:host:port:path`             |
+| wss   | `wss:host:port:path`            |
+| ftp   | `ftp:host:port:path:login:pass` |
 
-À son lancement, BASTOS lit la configuration depuis le fichier `CONFIG.$$$` et
-met à jour ses structures internes. Lors d'une connexion fructueuse à un réseau
-WiFi ou à un serveur, la configuration est automatiquement sauvegardée.
+À son lancement, BASTOS charge la configuration depuis le fichier `autoload.db`
+dans l'espace `DB` (accessible avec les instructions `DB`, `PUT`, `GET`). Lors
+d'une connexion fructueuse à un réseau WiFi ou à un serveur, la configuration
+est automatiquement sauvegardée.
 
 ## WiFi
 
@@ -262,8 +264,6 @@ WiFi ou à un serveur, la configuration est automatiquement sauvegardée.
 SSIDs dans le tableau Basic `DIM SSID$(10)`.
 
 Chaque réseau est précédé d'un numéro indiquant son index dans `SSID$`.
-
-La liste (et son ordre) est retenue dans les variables OS.
 
 `WIFI [START] <SSID>|<N>` : Connexion à un réseau WiFi.
 
