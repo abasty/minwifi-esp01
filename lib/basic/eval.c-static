@@ -1176,6 +1176,7 @@ static bool eval_run() {
     bmem_vars_clear();
     bmem->bstate.pc = bmem_prog_get_line_or_next(line_no);
     bmem->bstate.running = bmem->bstate.pc != 0;
+    bmem->bstate.flags |= B_GOTO_FLAG;
 
     return true;
 }
