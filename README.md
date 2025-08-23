@@ -1,16 +1,15 @@
 # TODO
 
-## Bugs
+## Bugs (show stoppers)
 
 * [ ] edition de ligne : gérer les séquences de caractères spéciaux (G2, G1)
-* [ ] `MINIPAVI` : voir `minipavi-gw.sh`
-* [x] WSS non suporté (connexion sur minipavi impossible): Essayer de voir dans
-  minterm comment ça se passe. Problème de SSL : ça prend plus 100KB... Au
-  niveau mémoire, quand on baisse la mémoire à 8KB pour le basic on n'a plus de
-  crash mais une erreur de connexion. Erreur de connexion aussi en Flutter.
-  Erreur aussi avec websocat, Marche avec
-  `./websocat -b --ws-dont-check-headers wss://go.minipavi.fr:8181/`
-
+* [x] `MINIPAVI` : voir `minipavi-gw.sh`, solution temporaire à l'utilisation de
+  SSL dans le projet : WSS non suporté (connexion sur minipavi impossible):
+  Essayer de voir dans minterm comment ça se passe. Problème de SSL : ça prend
+  plus 100KB... Au niveau mémoire, quand on baisse la mémoire à 8KB pour le
+  basic on n'a plus de crash mais une erreur de connexion. Erreur de connexion
+  aussi en Flutter. Erreur aussi avec websocat, Marche avec `./websocat -b
+  --ws-dont-check-headers wss://go.minipavi.fr:8181/`
 * [x] INPUT vide
 * [x] ~~Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
   serveur Minitel. Voir avec une websocket statique (pas de new / delete)~~
@@ -21,6 +20,24 @@
   tableaux. Ce n'est pas compatible avec le Basic ZX81 car on ne peut accéder au
   dernier caractère (qui est forcément `\0`) => chaine de caractères
   représentées par longueur (16 bits) + contenu
+
+## Backend et doc
+
+* Serveurs sur IONOS (faire framework en Dart, à la flutter éventuellement)
+* FTP sur IONOS
+* WSS/TCP gateway sur IONOS (filter par IP), réflechir à un serveur Dart qui fait le
+  passe plat, liste blanche basée sur IP ?
+* TELNET bouncing sur IONOS
+* Home self hosting possible pour les services de bouncing (éventuellement via
+  ngrock + authentication)
+* Github pages, wiki ?
+* Github releases (dowload et procédure d'install)
+* Doc lyx ou MD, Amazon kindle ou Lulu (ou voir solution Framasoft)
+* Blog / Wordpress ou autre sur Free (page perso retro: Minitel / HP48 / ORIC 1
+  / PalmOS)
+* Réseau social : Mastodon only
+* Forum : page perso free ? + Présence sur le musée du minitel
+* Hackable pour la manip anev le SonOff
 
 ## Fonctionnalités
 
@@ -100,11 +117,12 @@
 * [x] Remplacé par :`FTP GET / PUT`.`FTP DOWNLOAD` / `FTP UPLOAD` et autres
   fonctions FTP.
 
-
 * [ ] Pouvoir rediriger PRINT vers une variable. `OUTPUT a$`. Les fonctions
   `hal_print_*` sont remplacées par `os_print_*` ou `os_printf`. Ces dernières
   utilisent un buffer et `hal_print_buffer` ou, si OUTPUT est une variable,
   ajoute le buffer à la variable.
+
+* [ ] Pouvoir flasher depuis un fichier sur LittleFS téléchargé par FTP ()
 
 * [ ] BIP, INV, NORM, CLEOL, AI, AN, REP, etc. (voir MIN).
 * [x] `CURSOR 0, 1` ~~con, coff~~
