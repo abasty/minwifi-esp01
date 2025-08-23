@@ -81,28 +81,55 @@ static void bastos_handle_ctrl_c()
     os_redir_print_string("**Break**\r\n");
 }
 
-void bastos_send_keys(const char *keys, size_t n, bool echo)
-{
+static bool is_char_mutable(char test_char) {
+    if (test_char == 'a')
+        return true;
+    if (test_char == 'e')
+        return true;
+    if (test_char == 'i')
+        return true;
+    if (test_char == 'o')
+        return true;
+    if (test_char == 'u')
+        return true;
+    if (test_char == 'c')
+        return true;
+    if (test_char == 'C')
+        return true;
+    return false;
+}
+
+static bool is_char_diacritic(char test_char) {
+    if (test_char == 'A')
+        return true;
+    if (test_char == 'B')
+        return true;
+    if (test_char == 'C')
+        return true;
+    if (test_char == 'H')
+        return true;
+    if (test_char == 'K')
+        return true;
+    return false;
+}
+
+void bastos_send_keys(const char *keys, size_t n, bool echo) {
     uint8_t *src = (uint8_t *)keys;
     uint8_t *dst = bmem->io_buffer;
 
     // If no keys, do nothing
     if (n == 0 || src == 0 || *src == 0)
-    {
         return;
-    }
 
     // If key is Ctrl+C, stop the program
-    if (*src == 3)
-    {
+    if (*src == 3) {
         bastos_handle_ctrl_c();
         return;
     }
 
     // If running and not inputting, store the key in inkey state
-    if (eval_running() && !eval_inputting())
-    {
-        bmem->bstate.inkey = (char ) *src;
+    if (eval_running() && !eval_inputting()) {
+        bmem->bstate.inkey = (char)*src;
         return;
     }
 
@@ -114,45 +141,51 @@ void bastos_send_keys(const char *keys, size_t n, bool echo)
     size_t size = dst - bmem->io_buffer;
 
     // If buffer is full, remove the last char
-    if (size == IO_BUFFER_SIZE - 1 && *src == 127)
-    {
+    if (size == IO_BUFFER_SIZE - 1 && *src == 127) {
+        // Do not handle g1 / g2 on the last char (syntax error side effect if
+        // special char in the last io_buffer position)
         size--;
         dst--;
         *dst = 0;
-        if (echo) os_redir_print_string(DEL);
+        if (echo)
+            os_redir_print_string(DEL);
         return;
     }
 
-    while (size < IO_BUFFER_SIZE - 1 && *src && n > 0)
-    {
-        if (*src == 3)
-        {
+    while (size < IO_BUFFER_SIZE - 1 && *src && n > 0) {
+        if (*src == 3) { // Annulation
             bastos_stop();
             *bmem->io_buffer = 0;
             return;
-        }
-        else if (*src == '\r')
-        {
+        } else if (*src == '\r') { // CR
             *dst++ = '\n';
             src++;
-            if (echo) os_redir_print_string("\r\n");
-        }
-        else if (*src == 127)
-        {
-            if (dst - bmem->io_buffer >= 1 && *(dst - 1) != '\n')
-            {
+            if (echo)
+                os_redir_print_string("\r\n");
+        } else if (*src == 127) { // Correction (DEL)
+            int32_t len = dst - bmem->io_buffer;
+            if (len >= 1 && *(dst - 1) != '\n') {
+                if (len >= 2) {
+                    if (*(dst - 2) == SS2) {
+                        dst--;
+                    } else if (len >= 3 && *(dst - 3) == SS2 &&
+                            is_char_diacritic(*(dst - 2)) &&
+                            is_char_mutable(*(dst - 1))) {
+                        dst -= 2;
+                    }
+                }
                 dst--;
                 *dst = 0;
-                if (echo) os_redir_print_string(DEL);
+                if (echo)
+                    os_redir_print_string(DEL);
             }
-        }
-        else
-        {
+        } else {
             uint8_t *c = dst;
             *dst++ = *src++;
             *dst = 0;
             size++;
-            if (echo) os_redir_print_string((char *) c);
+            if (echo)
+                os_redir_print_string((char *)c);
         }
         size = dst - bmem->io_buffer;
         n--;

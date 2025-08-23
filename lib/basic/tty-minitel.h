@@ -38,6 +38,8 @@
 
 #define G0 "\x0F"
 #define G1 "\x0E"
+#define G2 "\x19"
+#define SS2 (0x19)
 
 #define CUR "\x1F%c%c"
 #define CUR_DELTA_V 64

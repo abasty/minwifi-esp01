@@ -13,6 +13,8 @@
 
 #define G0 ""
 #define G1 ""
+#define G2 ""
+#define SS2 (0x19)
 
 #define CUR "\x1B[%d;%dH"
 #define CUR_DELTA_V 0

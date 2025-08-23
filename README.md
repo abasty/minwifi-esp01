@@ -2,14 +2,24 @@
 
 ## Bugs (show stoppers)
 
-* [ ] edition de ligne : gérer les séquences de caractères spéciaux (G2, G1)
+* [ ] Édition de ligne / suppresion du dernier caractère : gérer les séquences
+  de caractères spéciaux (G2, G1)
+    * [x] G2 caractère spécial : tester si le caractère précédent est SS2
+    * [x] G2 accents (aeiuo) / cédille (cC) : tester les séquences admissibles
+      sur 3 chars
+    * [ ] G1 : si le caractère précédent est G1, le supprimer
+    * [ ] G1 : Pouvoir introduire G1 (idéalement Ctrl+G)
+* [ ] CX/Fin : ne doit pas être utilisé pour déconnecter car certains services
+  "Kiosque" l'utilise pour revenir à l'appli principale "3615". Utiliser plutôt
+  la même touche que pour arrêter le programme. Pareillement, la touche pour
+  arrêter le programme ne dois pas être Annulation. Choisir "ESC" ou "Ctrl+c".
+  Annulation pourrait être mappé sur "Ctrl+A"
 * [x] `MINIPAVI` : voir `minipavi-gw.sh`, solution temporaire à l'utilisation de
-  SSL dans le projet : WSS non suporté (connexion sur minipavi impossible):
-  Essayer de voir dans minterm comment ça se passe. Problème de SSL : ça prend
-  plus 100KB... Au niveau mémoire, quand on baisse la mémoire à 8KB pour le
-  basic on n'a plus de crash mais une erreur de connexion. Erreur de connexion
-  aussi en Flutter. Erreur aussi avec websocat, Marche avec `./websocat -b
-  --ws-dont-check-headers wss://go.minipavi.fr:8181/`
+  SSL dans le projet : WSS non suporté (connexion sur minipavi impossible).
+  Problème de SSL : ça prend plus 100KB... Au niveau mémoire, quand on baisse la
+  mémoire à 8KB pour le Basic on n'a plus de crash mais une erreur de connexion.
+  Erreur de connexion aussi en Flutter. Erreur aussi avec websocat, Marche avec
+  `./websocat -b --ws-dont-check-headers wss://go.minipavi.fr:8181/`
 * [x] INPUT vide
 * [x] ~~Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
   serveur Minitel. Voir avec une websocket statique (pas de new / delete)~~
