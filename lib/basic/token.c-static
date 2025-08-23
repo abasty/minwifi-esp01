@@ -317,14 +317,17 @@ int8_t tokenize(tokenizer_state_t *state, char *input) {
             // string
             err = tokenize_string(state);
         } else if (c >= '0' && c <= '9') {
-            // integer
+            // number
             err = tokenize_number(state);
             if (err == 0 && token_count == 0) {
                 // line number
                 uint8_t *read_ptr = state->read_ptr;
                 state->read_ptr = token_buffer;
                 token_get_next(state);
-                state->line_no = token_number_get_value(state);
+                float line_no_f = token_number_get_value(state);
+                if (line_no_f > 65535 || line_no_f < 1)
+                    err = BERROR_RANGE;
+                state->line_no = line_no_f;
                 state->read_ptr = read_ptr;
                 state->write_ptr = token_buffer;
             }
