@@ -24,40 +24,38 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "bmemory.h"
-#include "token.h"
 #include "os.h"
+#include "token.h"
 
 bmem_t *bmem;
 
 // total size in bytes of a var
 // 1 float: sizeof(var_t) + sizeof(float) + (len(name) +  Len(name) % 4)
 // 1 string: sizeof(var_t) + (len(string) + 1) + (len(name) +  Len(name) % 4)
-// # floats: sizeof(var_t) + dim_count * 4 + P(dims) * 4 + (len(name) +  Len(name) % 4)
+// # floats: sizeof(var_t) + dim_count * 4 + P(dims) * 4 + (len(name) +
+// Len(name) % 4)
 //     A(n = P(i0, i1, ...)): numbers[n + #dims]
-// # strings: sizeof(var_t) + dim_count * 4 + P(dims) * 1 + (len(name) +  Len(name) % 4)
+// # strings: sizeof(var_t) + dim_count * 4 + P(dims) * 1 + (len(name) +
+// Len(name) % 4)
 //     A$(n = P(i0, i1, ...)): bytes[n + #dims]
 
 // P() = ((i0 - 1) * dims[1] + (i1 - 1)) * dims[2] + ...
 
 // Clear all strings
-static void bmem_strings_clear()
-{
-    bmem->strings_end = bmem->prog_end;
-}
+static void bmem_strings_clear() { bmem->strings_end = bmem->prog_end; }
 
 // Allocate a string in the memory, set memory to 0 and return the string
-static char *bmem_string_alloc(uint16_t size)
-{
+static char *bmem_string_alloc(uint16_t size) {
     uint16_t storage_size = bmem_align4(size + 3);
     if (bmem->vars_start - bmem->strings_end < storage_size)
         return 0;
 
-    char *str = (char *) bmem->strings_end;
+    char *str = (char *)bmem->strings_end;
     bmem->strings_end += storage_size;
     memset(str, 0, storage_size);
     str[0] = size & 0xff;
@@ -66,8 +64,7 @@ static char *bmem_string_alloc(uint16_t size)
 }
 
 // Allocate a variable in the memory, set memory to 0 and return the variable
-static var_t *bmem_var_alloc(uint8_t token, uint16_t size)
-{
+static var_t *bmem_var_alloc(uint8_t token, uint16_t size) {
     int psize = bmem_align4(size);
     if (bmem->vars_start - bmem->strings_end < psize)
         return 0;
@@ -79,22 +76,18 @@ static var_t *bmem_var_alloc(uint8_t token, uint16_t size)
 }
 
 // Compute the size of an array
-static int bmem_array_size(int cell_size, uint8_t dim_count, uint32_t *dims)
-{
+static int bmem_array_size(int cell_size, uint8_t dim_count, uint32_t *dims) {
     int size = cell_size;
-    for (int i = 0; i < dim_count; i++)
-    {
+    for (int i = 0; i < dim_count; i++) {
         size *= dims[i];
     }
     return size;
 }
 
 // Compute the size of the data of a variable
-static int bmem_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims)
-{
+static int bmem_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims) {
     int size = 0;
-    switch (token)
-    {
+    switch (token) {
     case TOKEN_VARIABLE_NUMBER:
         size = sizeof(float);
         break;
@@ -112,14 +105,15 @@ static int bmem_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims)
 }
 
 // Create a new variable and copy the name
-static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, uint32_t *dims)
-{
+static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count,
+                           uint32_t *dims) {
     int name_size = strlen(name) + 1;
     int data_size = bmem_data_size(token, dim_count, dims);
     int dims_size = dims ? dim_count * sizeof(uint32_t) : 0;
 
     // Allocate var
-    var_t *var = bmem_var_alloc(token, sizeof(var_t) + dims_size + data_size + name_size);
+    var_t *var = bmem_var_alloc(token, sizeof(var_t) + dims_size + data_size +
+                                           name_size);
     if (!var)
         return 0;
 
@@ -128,13 +122,10 @@ static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, u
     var->name_ofs = data_size + dims_size;
 
     // Copy dims
-    if (dims)
-    {
+    if (dims) {
         memcpy(var->dims, dims, dims_size);
         var->dim_count = dim_count;
-    }
-    else
-    {
+    } else {
         var->dim_count = 0;
     }
 
@@ -145,32 +136,30 @@ static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count, u
 }
 
 // Return the size of a variable
-static int bmem_var_size(var_t *var)
-{
-    return bmem_align4(sizeof(var_t) + var->name_ofs + strlen((char *) (var->bytes + var->name_ofs)) + 1);
+static int bmem_var_size(var_t *var) {
+    return bmem_align4(sizeof(var_t) + var->name_ofs +
+                       strlen((char *)(var->bytes + var->name_ofs)) + 1);
 }
 
 // Find a variable by name
-static var_t *bmem_var_get(const char *name)
-{
+static var_t *bmem_var_get(const char *name) {
     var_t *var = bmem_var_first();
-    while (var)
-    {
-        if (strcmp((char *) (var->bytes + var->name_ofs), name) == 0)
+    while (var) {
+        if (strcmp((char *)(var->bytes + var->name_ofs), name) == 0)
             return var;
         var = bmem_var_next(var);
     }
     return 0;
 }
 
-var_t *bastos_var_get(const char *name)
-{
+var_t *bastos_var_get(const char *name) {
     size_t len = strlen(name);
     if (len == 0)
         return 0;
 
     char typed_name[len + 2];
-    typed_name[0] = name[len - 1] == '$' ? TOKEN_VARIABLE_STRING : TOKEN_VARIABLE_NUMBER;
+    typed_name[0] =
+        name[len - 1] == '$' ? TOKEN_VARIABLE_STRING : TOKEN_VARIABLE_NUMBER;
     strncpy(typed_name + 1, name, len - 1);
     typed_name[len] = 0;
 
@@ -178,12 +167,10 @@ var_t *bastos_var_get(const char *name)
 }
 
 // Get count of variables
-static uint16_t bmem_var_count()
-{
+static uint16_t bmem_var_count() {
     uint16_t count = 0;
     var_t *var = bmem_var_first();
-    while (var)
-    {
+    while (var) {
         count++;
         var = bmem_var_next(var);
     }
@@ -191,40 +178,34 @@ static uint16_t bmem_var_count()
 }
 
 // Return the first variable
-static var_t *bmem_var_first()
-{
+static var_t *bmem_var_first() {
     if (bmem->vars_start == bmem->vars_end)
         return 0;
-    return (var_t*) bmem->vars_start;
+    return (var_t *)bmem->vars_start;
 }
 
 // Return the next variable
-static var_t *bmem_var_next(var_t *var)
-{
+static var_t *bmem_var_next(var_t *var) {
     int size = bmem_var_size(var);
-    var_t *next = (var_t *) ((uint8_t *) var + size);
-    if ((uint8_t *) next >= bmem->vars_end)
+    var_t *next = (var_t *)((uint8_t *)var + size);
+    if ((uint8_t *)next >= bmem->vars_end)
         return 0;
     return next;
 }
 
 // Unset a variable
-static void bmem_var_unset(var_t *var)
-{
+static void bmem_var_unset(var_t *var) {
     int size = bmem_var_size(var);
-    memmove(bmem->vars_start + size, bmem->vars_start, (uint8_t *) var - bmem->vars_start);
+    memmove(bmem->vars_start + size, bmem->vars_start,
+            (uint8_t *)var - bmem->vars_start);
     bmem->vars_start += size;
 }
 
 // Clear all variables
-static void bmem_vars_clear()
-{
-    bmem->vars_start = bmem->vars_end;
-}
+static void bmem_vars_clear() { bmem->vars_start = bmem->vars_end; }
 
 // Create a new string variable
-static var_t *bmem_var_string_set(const char *name, char *value, bool is_cstr)
-{
+static var_t *bmem_var_string_set(const char *name, char *value, bool is_cstr) {
     // Remove the variable if it already exists
     var_t *var = bmem_var_get(name);
     if (var != 0)
@@ -258,11 +239,9 @@ finalize:
 }
 
 // Create a new number variable
-static var_t *bmem_var_number_set(const char *name, float value)
-{
+static var_t *bmem_var_number_set(const char *name, float value) {
     var_t *var = bmem_var_get(name);
-    if (var == 0)
-    {
+    if (var == 0) {
         var = bmem_var_new(name, TOKEN_VARIABLE_NUMBER, 0, 0);
     }
 
@@ -273,8 +252,8 @@ static var_t *bmem_var_number_set(const char *name, float value)
     return var;
 }
 
-static float *bmem_number_array_get_cell(const char *name, uint8_t dim_count, uint32_t *indexes)
-{
+static float *bmem_number_array_get_cell(const char *name, uint8_t dim_count,
+                                         uint32_t *indexes) {
     // Copy name in tmp
     char tmp[B_NAME_SIZE_MAX];
     strncpy(tmp, name, B_NAME_SIZE_MAX - 1);
@@ -308,10 +287,11 @@ static float *bmem_number_array_get_cell(const char *name, uint8_t dim_count, ui
  * @param name The name of the string variable or char array
  * @param dim_count The number of dimensions of the request
  * @param indexes The array indexes and / or slice offsets
- * @return Pointer to the first char, dim_count and indexes are updated, len is set
+ * @return Pointer to the first char, dim_count and indexes are updated, len is
+ * set
  */
-static char *bmem_var_get_cstr_and_slice(const char *name, uint8_t *dim_count, uint32_t *indexes, uint16_t *len)
-{
+static char *bmem_var_get_cstr_and_slice(const char *name, uint8_t *dim_count,
+                                         uint32_t *indexes, uint16_t *len) {
     // Copy name in tmp
     char tmp[B_NAME_SIZE_MAX];
     strncpy(tmp, name, B_NAME_SIZE_MAX - 1);
@@ -322,19 +302,13 @@ static char *bmem_var_get_cstr_and_slice(const char *name, uint8_t *dim_count, u
 
     // Search simple string variable
     var_t *var = (tmp[0] & TOKEN_ARRAY_FLAG) == 0 ? bmem_var_get(name) : 0;
-    if (var)
-    {
+    if (var) {
         *len = string_len(var->string);
-        if (dim_asked == 0)
-        {
+        if (dim_asked == 0) {
             return string_cstr(var->string);
-        }
-        else if (dim_asked == 1)
-        {
+        } else if (dim_asked == 1) {
             indexes[1] = indexes[0];
-        }
-        else if (dim_asked != 2)
-        {
+        } else if (dim_asked != 2) {
             return 0;
         }
         *dim_count = 2;
@@ -349,26 +323,19 @@ static char *bmem_var_get_cstr_and_slice(const char *name, uint8_t *dim_count, u
 
     // If asked dims is equal to var->dim_count - 1, the result is a slice of
     // all chars of the string at given index
-    if (dim_asked == var->dim_count - 1)
-    {
+    if (dim_asked == var->dim_count - 1) {
         // If asked for the full string, add 1,<len> as start and end indexes
         indexes[dim_asked] = 1;
         indexes[dim_asked + 1] = var->dims[dim_asked];
-    }
-    else if (dim_asked == var->dim_count)
-    {
+    } else if (dim_asked == var->dim_count) {
         // If asked for a single char, add end index equal to the start index
         // and adjust dims count
         indexes[dim_asked] = indexes[dim_asked - 1];
         dim_asked--;
-    }
-    else if (dim_asked == var->dim_count + 1)
-    {
+    } else if (dim_asked == var->dim_count + 1) {
         // If asked for a slice, adjust dims count
         dim_asked -= 2;
-    }
-    else
-    {
+    } else {
         return 0;
     }
 
@@ -389,36 +356,34 @@ static char *bmem_var_get_cstr_and_slice(const char *name, uint8_t *dim_count, u
 
     // Adjust dims count (splice)
     *dim_count = dim_asked + 2;
-    return (char *) &var->bytes[offset];
+    return (char *)&var->bytes[offset];
 }
 
 // Clear the program and the variables memory
-void bastos_prog_new()
-{
+void bastos_prog_new() {
     bmem_vars_clear();
     bmem->prog_end = bmem->prog_start;
     bmem_strings_clear();
 }
 
-void bastos_vars_clear()
-{
+void bastos_vars_clear() {
     bmem_vars_clear();
     bmem_strings_clear();
 }
 
 // Free a program line
-static void bmem_prog_line_free(prog_t *prog)
-{
+static void bmem_prog_line_free(prog_t *prog) {
     if (!prog || prog->line_no == 0)
         return;
     int size = bmem_align4(sizeof(prog_t) + prog->len + 1);
-    memmove(prog, (uint8_t *) prog + size, bmem->prog_end - ((uint8_t *) prog + size));
+    memmove(prog, (uint8_t *)prog + size,
+            bmem->prog_end - ((uint8_t *)prog + size));
     bmem->prog_end -= size;
 }
 
 // Create a new program line
-static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
-{
+static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line,
+                                  uint16_t len) {
     // When line_no == 0, the new line is inserted at the end of the program, at
     // the prog_end address. The line is not really inserted in the program. It
     // is a temporary line that is used to execute a program instruction without
@@ -432,8 +397,7 @@ static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
     prog_t *prog = bmem_prog_get_line_or_next(line_no);
 
     // Remove the line if it already exists
-    if (prog != 0 && prog->line_no == line_no)
-    {
+    if (prog != 0 && prog->line_no == line_no) {
         bmem_prog_line_free(prog);
     }
 
@@ -449,27 +413,21 @@ static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
         return 0;
 
     // Find where to insert the new line
-    if (line_no == 0)
-    {
-        prog = (prog_t *) &bmem->bstate.token_buffer;
-    }
-    else if (prog == 0)
-    {
+    if (line_no == 0) {
+        prog = (prog_t *)&bmem->bstate.token_buffer;
+    } else if (prog == 0) {
         // Insert at the end of the program
-        prog = (prog_t *) bmem->prog_end;
-    }
-    else
-    {
+        prog = (prog_t *)bmem->prog_end;
+    } else {
         // Insert before "next" line
-        memmove((uint8_t *) prog + size, prog, bmem->prog_end - (uint8_t *) prog);
+        memmove((uint8_t *)prog + size, prog, bmem->prog_end - (uint8_t *)prog);
     }
 
     // If the line is inserted at the end of the program, update the prog_end
     // only if the line number is not zero. In the zero case, the line is a
     // temporary line that is used to execute a program instruction without
     // storing it in the program memory.
-    if (line_no != 0)
-    {
+    if (line_no != 0) {
         bmem->prog_end += size;
         bmem_strings_clear();
     }
@@ -478,8 +436,7 @@ static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
     prog->line_no = line_no;
     prog->len = len;
 
-    if (line_no != 0)
-    {
+    if (line_no != 0) {
         memcpy(prog->line, line, len);
     }
 
@@ -491,22 +448,20 @@ static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len)
 }
 
 // Return the first program line
-static prog_t *bmem_prog_first_line()
-{
+static prog_t *bmem_prog_first_line() {
     if (bmem->prog_start == bmem->prog_end)
         return 0;
-    return (prog_t *) bmem->prog_start;
+    return (prog_t *)bmem->prog_start;
 }
 
 // Return the next program line
-static prog_t *bmem_prog_next_line(prog_t *prog)
-{
+static prog_t *bmem_prog_next_line(prog_t *prog) {
     if (!prog)
         return 0;
 
     int size = bmem_align4(sizeof(prog_t) + prog->len + 1);
-    prog_t *next = (prog_t *) ((uint8_t *) prog + size);
-    if ((uint8_t *) next >= bmem->prog_end)
+    prog_t *next = (prog_t *)((uint8_t *)prog + size);
+    if ((uint8_t *)next >= bmem->prog_end)
         return 0;
 
     return next;
@@ -514,11 +469,9 @@ static prog_t *bmem_prog_next_line(prog_t *prog)
 
 // Return the program line with the given line number or the next line if the
 // line does not exist
-static prog_t *bmem_prog_get_line_or_next(uint16_t line_no)
-{
+static prog_t *bmem_prog_get_line_or_next(uint16_t line_no) {
     prog_t *prog = bmem_prog_first_line();
-    while (prog)
-    {
+    while (prog) {
         if (prog->line_no >= line_no)
             return prog;
         prog = bmem_prog_next_line(prog);
@@ -526,33 +479,29 @@ static prog_t *bmem_prog_get_line_or_next(uint16_t line_no)
     return 0;
 }
 
-static uint16_t bmem_line_count()
-{
+static uint16_t bmem_line_count() {
     uint16_t count = 0;
     prog_t *prog = bmem_prog_first_line();
-    while (prog)
-    {
+    while (prog) {
         count++;
         prog = bmem_prog_next_line(prog);
     }
     return count;
 }
 
-static const char BMEM_SSID[16] = { TOKEN_ARRAY_STRING, 'S', 'S', 'I', 'D', 0 };
+static const char BMEM_SSID[16] = {TOKEN_ARRAY_STRING, 'S', 'S', 'I', 'D', 0};
 
-static char *bmem_ssid_get_from_id(int16_t id)
-{
+static char *bmem_ssid_get_from_id(int16_t id) {
     uint8_t dim_count = 1;
-    uint32_t dims[B_DIM_MAX] = { id };
+    uint32_t dims[B_DIM_MAX] = {id};
     uint16_t len;
 
     return bmem_var_get_cstr_and_slice(BMEM_SSID, &dim_count, dims, &len);
 }
 
-static var_t *bmem_ssid_array_new()
-{
+static var_t *bmem_ssid_array_new() {
     uint8_t dim = 2;
-    uint32_t dims[B_DIM_MAX] = { WIFI_SSID_ARRAY_SIZE, WIFI_SSID_MAX_SIZE };
+    uint32_t dims[B_DIM_MAX] = {WIFI_SSID_ARRAY_SIZE, WIFI_SSID_MAX_SIZE};
 
     // Remove existing array
     var_t *var = bmem_var_get(BMEM_SSID);
@@ -560,7 +509,7 @@ static var_t *bmem_ssid_array_new()
         bmem_var_unset(var);
 
     // Create array
-    var = bmem_var_new(BMEM_SSID, (uint8_t) BMEM_SSID[0], dim, dims);
+    var = bmem_var_new(BMEM_SSID, (uint8_t)BMEM_SSID[0], dim, dims);
     if (!var)
         bmem->bstate.error = BERROR_MEMORY;
 
@@ -568,15 +517,14 @@ static var_t *bmem_ssid_array_new()
 }
 
 // Initialize the memory
-static void bmem_init(uint8_t *mem, uint16_t size)
-{
+static void bmem_init(uint8_t *mem, uint16_t size) {
     // Init memory
-    bmem = (bmem_t *) mem;
+    bmem = (bmem_t *)mem;
     memset(bmem, 0, size);
-    bmem->db_end = (uint8_t *) bmem + size;
+    bmem->db_end = (uint8_t *)bmem + size;
     bmem->db_start = bmem->db_end;
-    bmem->prog_start = (uint8_t *) bmem + sizeof(bmem_t);
-    bmem->vars_end = (uint8_t *) bmem + size - BASTOS_DB_SIZE;
+    bmem->prog_start = (uint8_t *)bmem + sizeof(bmem_t);
+    bmem->vars_end = (uint8_t *)bmem + size - BASTOS_DB_SIZE;
     bmem->bstate.sock = -1;
     bmem->bstate.redirect = -1;
     bastos_prog_new();

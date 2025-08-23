@@ -24,19 +24,17 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "bmemory.h"
 
-static char *string_cstr(const char *string)
-{
-    return string ? ((char *) string) + 2 : 0;
+static char *string_cstr(const char *string) {
+    return string ? ((char *)string) + 2 : 0;
 }
 
-static int string_len(const char *string)
-{
+static int string_len(const char *string) {
     if (!string)
         return 0;
 
@@ -45,8 +43,7 @@ static int string_len(const char *string)
     return len;
 }
 
-static char *string_dup(const char *string)
-{
+static char *string_dup(const char *string) {
     if (!string)
         return 0;
 
@@ -56,8 +53,7 @@ static char *string_dup(const char *string)
     return dup;
 }
 
-static void string_slice(char **string, uint16_t start, uint16_t end)
-{
+static void string_slice(char **string, uint16_t start, uint16_t end) {
     if (!*string)
         return;
 
@@ -72,16 +68,14 @@ static void string_slice(char **string, uint16_t start, uint16_t end)
     uint16_t slice_len = end - start < 0 ? 0 : end - start + 1;
 
     char *slice = bmem_string_alloc(slice_len);
-    if (!slice)
-    {
+    if (!slice) {
         *string = 0;
         return;
     }
 
     char *src = *string + start - 1 + 2;
     char *dst = slice + 2;
-    while (slice_len > 0)
-    {
+    while (slice_len > 0) {
         *dst++ = *src++;
         slice_len--;
     }
@@ -89,16 +83,14 @@ static void string_slice(char **string, uint16_t start, uint16_t end)
     *string = slice;
 }
 
-static void string_concat(char **string1, char *string2)
-{
+static void string_concat(char **string1, char *string2) {
     if (!string2 && !*string2)
         string2 = 0;
 
     if (!string2)
         return;
 
-    if (!*string1)
-    {
+    if (!*string1) {
         *string1 = string2;
         return;
     }
@@ -107,9 +99,11 @@ static void string_concat(char **string1, char *string2)
     char *concat = bmem_string_alloc(len);
     char *dst = concat + 2;
     char *src = *string1 + 2;
-    while (*src) *dst++ = *src++;
+    while (*src)
+        *dst++ = *src++;
     src = string2 + 2;
-    while (*src) *dst++ = *src++;
+    while (*src)
+        *dst++ = *src++;
     *dst = 0;
     *string1 = concat;
 }

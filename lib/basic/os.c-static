@@ -23,11 +23,11 @@
  * SOFTWARE.
  */
 
+#include "bdb.h"
 #include "bio.h"
 #include "bmemory.h"
-#include "os.h"
-#include "bdb.h"
 #include "os-private.h"
+#include "os.h"
 
 #ifdef MINITEL
 #include "tty-minitel.h"
@@ -44,21 +44,16 @@ char g_wifi_connected_ssid[20] = ""; // 20 first characters of SSID
 char g_wifi_connected_ip[16] = "";
 char g_ftp_connected_host[32] = "";
 
-static void os_set_redirect(int fd)
-{
-    bmem->bstate.redirect = fd;
-}
+static void os_set_redirect(int fd) { bmem->bstate.redirect = fd; }
 
-static int os_redir_print_string(const char *s)
-{
+static int os_redir_print_string(const char *s) {
     if (bmem->bstate.redirect >= 0) {
         return hal_write(bmem->bstate.redirect, s, strlen(s));
     }
     return hal_print_string(s);
 }
 
-static int os_redir_print_integer(const char *format, int i)
-{
+static int os_redir_print_integer(const char *format, int i) {
     if (bmem->bstate.redirect >= 0) {
         char buffer[80];
         int len = snprintf(buffer, sizeof(buffer), format, i);
@@ -67,8 +62,7 @@ static int os_redir_print_integer(const char *format, int i)
     return hal_print_integer(format, i);
 }
 
-static int os_redir_print_float(float f)
-{
+static int os_redir_print_float(float f) {
     if (bmem->bstate.redirect >= 0) {
         char buffer[16];
         int len = snprintf(buffer, sizeof(buffer), "%g", f);
@@ -77,8 +71,7 @@ static int os_redir_print_float(float f)
     return hal_print_float(f);
 }
 
-static void os_db_save(void)
-{
+static void os_db_save(void) {
     int fd = hal_open(AUTOLOAD_DB_FILE, B_CREAT | B_WRONLY);
     if (fd < 0)
         return;
@@ -100,8 +93,7 @@ err:
     }
 }
 
-static void os_db_load(void)
-{
+static void os_db_load(void) {
     // Remove memory records
     bmem_db_clear();
 
@@ -126,16 +118,12 @@ finalize:
     hal_close(fd);
 }
 
-static void os_autoexec(void)
-{
-    if (bastos_load(AUTOEXEC_FILE) == BERROR_NONE)
-    {
+static void os_autoexec(void) {
+    if (bastos_load(AUTOEXEC_FILE) == BERROR_NONE) {
         running_state_clear();
         bmem->bstate.pc = bmem_prog_first_line();
         bmem->bstate.running = bmem->bstate.pc != 0;
-    }
-    else
-    {
+    } else {
         bastos_send_keys("bastos\n", 7, false);
     }
 }
@@ -148,8 +136,8 @@ static void os_autoexec(void)
  * @param encryption Encryption type (0: None, 1: WEP, 2: WPA, 3: WPA2)
  * @param rssi Signal strength in dBm
  */
-void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t rssi)
-{
+void os_wifi_print_network(int i, const char *ssid, uint8_t encryption,
+                           int32_t rssi) {
 
     // Print the list of networks
     os_redir_print_integer("%2d ", i);
@@ -162,15 +150,13 @@ void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t 
     // added to the array
     uint16_t len = WIFI_SSID_MAX_SIZE;
     char *cstr = bmem_ssid_get_from_id(i);
-    if (cstr)
-    {
+    if (cstr) {
         strncpy(cstr, ssid, len - 1);
         cstr[len - 1] = '\0';
     }
 }
 
-static void os_wifi_scan(void)
-{
+static void os_wifi_scan(void) {
     // Display scanning status
     os_redir_print_string(LINE0 INV BLINK "Scanning..." CLEOL NORMAL "\n");
 
@@ -179,27 +165,24 @@ static void os_wifi_scan(void)
     os_redir_print_string("\r\n" INV "ID dBm SSID" CLEOL " " NORMAL "\r\n");
     int n = hal_wifi_scan();
 
-    os_redir_print_integer("\r\n%d network(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
+    os_redir_print_integer(
+        "\r\n%d network(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
 }
 
-static int os_wifi_connect(const char *ssid)
-{
+static int os_wifi_connect(const char *ssid) {
     bool use_db = false;
     char secret[WIFI_SECRET_MAX_SIZE] = "";
 
     entry_t *entry = bdb_entry_get(DB_WIFI_SET, ssid);
-    if (entry)
-    {
+    if (entry) {
         strncpy(secret, string_cstr(entry->string), WIFI_SECRET_MAX_SIZE - 1);
         secret[WIFI_SECRET_MAX_SIZE - 1] = 0;
         use_db = true;
     }
 
-    if (!use_db)
-    {
+    if (!use_db) {
         os_redir_print_string(LINE0 INV "Password: " CLEOL);
-        if (os_get_string(secret, sizeof(secret), '*') < 0)
-        {
+        if (os_get_string(secret, sizeof(secret), '*') < 0) {
             os_redir_print_string(LINE0 CLEOL "\r\n");
             return -1;
         }
@@ -209,14 +192,11 @@ static int os_wifi_connect(const char *ssid)
     os_redir_print_string(CLEOL NORMAL "\n");
 
     int ret = hal_wifi_connect(ssid, secret);
-    if (ret == 0)
-    {
-        if (!eval_running())
-        {
+    if (ret == 0) {
+        if (!eval_running()) {
             os_redir_print_string("OK\r\n");
         }
-        if (!use_db)
-        {
+        if (!use_db) {
             bdb_entry_set(DB_WIFI_SET, ssid, secret, true);
             os_db_save();
         }
@@ -228,36 +208,29 @@ static int os_wifi_connect(const char *ssid)
     return ret;
 }
 
-static int os_wifi_erase(const char *ssid)
-{
+static int os_wifi_erase(const char *ssid) {
     bdb_entry_set(DB_WIFI_SET, ssid, 0, true);
     os_db_save();
     return 0;
 }
 
-void os_wifi_set_info(const char *ssid, const char *ip)
-{
-    if (ssid)
-    {
+void os_wifi_set_info(const char *ssid, const char *ip) {
+    if (ssid) {
         strncpy(g_wifi_connected_ssid, ssid, sizeof(g_wifi_connected_ssid) - 1);
         g_wifi_connected_ssid[sizeof(g_wifi_connected_ssid) - 1] = '\0';
     }
-    if (ip)
-    {
+    if (ip) {
         strncpy(g_wifi_connected_ip, ip, sizeof(g_wifi_connected_ip) - 1);
         g_wifi_connected_ip[sizeof(g_wifi_connected_ip) - 1] = '\0';
     }
 }
 
-static void os_wifi_status(void)
-{
-    os_redir_print_string("\r\n" INV "IP              SSID" CLEOL " " NORMAL "\r\n");
-    if (!hal_wifi_is_connected())
-    {
+static void os_wifi_status(void) {
+    os_redir_print_string("\r\n" INV "IP              SSID" CLEOL " " NORMAL
+                          "\r\n");
+    if (!hal_wifi_is_connected()) {
         os_redir_print_string("Not connected");
-    }
-    else
-    {
+    } else {
         os_redir_print_string(g_wifi_connected_ip);
         uint8_t len = strlen(g_wifi_connected_ip);
         for (int i = 16 - len; i > 0; i--)
@@ -267,44 +240,38 @@ static void os_wifi_status(void)
     os_redir_print_string("\r\n\r\n");
 }
 
-static void os_ftp_status(void)
-{
+static void os_ftp_status(void) {
     os_redir_print_string("\r\n" INV "FTP Host" CLEOL " " NORMAL "\r\n");
 
     // Check connection status
-    if (*g_ftp_connected_host != 0 && !hal_ftp_is_connected())
-    {
+    if (*g_ftp_connected_host != 0 && !hal_ftp_is_connected()) {
         *g_ftp_connected_host = 0;
     }
 
     // Display connection status message
-    if (*g_ftp_connected_host == 0)
-    {
+    if (*g_ftp_connected_host == 0) {
         os_redir_print_string("Not connected");
-    }
-    else
-    {
+    } else {
         os_redir_print_string(g_ftp_connected_host);
     }
     os_redir_print_string("\r\n\r\n");
 }
 
-static void os_db_list(uint8_t set)
-{
+static void os_db_list(uint8_t set) {
     if (set != DB_WIFI_SET)
-        os_redir_print_string("\r\n" INV "Key      Value" CLEOL " " NORMAL "\r\n");
+        os_redir_print_string("\r\n" INV "Key      Value" CLEOL " " NORMAL
+                              "\r\n");
     else
         os_redir_print_string("\r\n" INV "SSID" CLEOL " " NORMAL "\r\n");
 
     int n = 0;
     entry_t *entry = bdb_entry_first();
-    while (entry)
-    {
-        if (entry->token == set)
-        {
+    while (entry) {
+        if (entry->token == set) {
             char line[40];
             if (set != DB_WIFI_SET)
-                snprintf(line, 40, "%-8.8s %s", entry->bytes + entry->name_ofs, string_cstr(entry->string));
+                snprintf(line, 40, "%-8.8s %s", entry->bytes + entry->name_ofs,
+                         string_cstr(entry->string));
             else
                 snprintf(line, 40, "%s", entry->bytes + entry->name_ofs);
             line[39] = 0;
@@ -314,24 +281,21 @@ static void os_db_list(uint8_t set)
         }
         entry = bdb_entry_next(entry);
     }
-    os_redir_print_integer("\r\n%d record(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
+    os_redir_print_integer(
+        "\r\n%d record(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
 }
 
-static void os_db_erase(uint8_t set, const char *name)
-{
+static void os_db_erase(uint8_t set, const char *name) {
     entry_t *entry = bdb_entry_get(set, name);
-    if (entry)
-    {
+    if (entry) {
         bdb_entry_unset(entry);
         os_db_save();
     }
 }
 
-static int os_get_string(char *buf, int size, char secret_char)
-{
+static int os_get_string(char *buf, int size, char secret_char) {
     int i = 0;
-    while (i < size - 1)
-    {
+    while (i < size - 1) {
         uint8_t key = os_get_key();
         if (key == 0) // No key pressed
             continue;
@@ -341,8 +305,7 @@ static int os_get_string(char *buf, int size, char secret_char)
         }
         if (key == 0x7F) // DEL key
         {
-            if (i > 0)
-            {
+            if (i > 0) {
                 i--;
                 os_redir_print_string("\b \b"); // Erase last character
             }
@@ -363,51 +326,34 @@ static int os_get_string(char *buf, int size, char secret_char)
     return i;      // Return the number of characters read
 }
 
-static uint8_t os_get_key()
-{
+static uint8_t os_get_key() {
     static bool fkey = false;
     uint8_t key = hal_get_key();
 
     if (key == 0)
         return 0; // No key pressed
 
-    if (key == 0x13)
-    {
+    if (key == 0x13) {
         // Function key pressed
         fkey = true;
         key = 0;
-    }
-    else
-    {
-        if (fkey)
-        {
-            if (key == 0x47)
-            {               // CORRECTION key
-                key = 0x7F; // Convert backspace to DEL
-            }
-            else if (key == 0x45)
-            {            // ANNULATION key
-                key = 3; // Convert to Ctrl+C
-            }
-            else if (key == 0x59)
-            {            // CX/FIN key
-                key = 0; // Ignore it
+    } else {
+        if (fkey) {
+            if (key == 0x47) {                     // CORRECTION key
+                key = 0x7F;                        // Convert backspace to DEL
+            } else if (key == 0x45) {              // ANNULATION key
+                key = 3;                           // Convert to Ctrl+C
+            } else if (key == 0x59) {              // CX/FIN key
+                key = 0;                           // Ignore it
                 os_redir_print_string("\x13\x59"); // Send CX/Fin to terminal
-            }
-            else
-            {               // ENVOI and other function keys
+            } else {        // ENVOI and other function keys
                 key = '\r'; // Convert to Enter
             }
             fkey = false;
-        }
-        else
-        {
-            if (key == 0x08)
-            {
+        } else {
+            if (key == 0x08) {
                 key = 0x7F; // Convert backspace to DEL
-            }
-            else if (key == 0x1b)
-            {
+            } else if (key == 0x1b) {
                 key = 3; // Convert ESC to Ctrl+C
             }
         }
@@ -415,8 +361,7 @@ static uint8_t os_get_key()
     return key;
 }
 
-static int os_connect(uint8_t set, const char *name, const char* urn)
-{
+static int os_connect(uint8_t set, const char *name, const char *urn) {
     int ret = -1;
 
     // Get configuration if needed
@@ -433,26 +378,22 @@ static int os_connect(uint8_t set, const char *name, const char* urn)
     // Connect to the host
     ret = hal_net_connect(split);
     if (ret >= 0) {
-        if (set == DB_MIN_SET)
-        {
+        if (set == DB_MIN_SET) {
             os_redir_print_string(P_ROULEAU_OFF);
-        }
-        else
-        {
-            if (set == DB_FTP_SET)
-            {
-                strncpy(g_ftp_connected_host, split->parts[URN_PART_HOST], sizeof(g_ftp_connected_host) - 1);
+        } else {
+            if (set == DB_FTP_SET) {
+                strncpy(g_ftp_connected_host, split->parts[URN_PART_HOST],
+                        sizeof(g_ftp_connected_host) - 1);
                 g_ftp_connected_host[sizeof(g_ftp_connected_host) - 1] = 0;
             }
-            if (!eval_running())
-            {
+            if (!eval_running()) {
                 os_redir_print_string("OK\r\n");
             }
         }
     }
 
     if (!use_db && name && *name > 0) {
-        bdb_entry_set(set, name, (char*) urn, true);
+        bdb_entry_set(set, name, (char *)urn, true);
         os_db_save();
     }
 
@@ -460,16 +401,12 @@ finalize:
     return ret;
 }
 
-static void os_disconnect(uint8_t set)
-{
-    if (set == DB_MIN_SET)
-    {
+static void os_disconnect(uint8_t set) {
+    if (set == DB_MIN_SET) {
         hal_net_disconnect(set, bmem->bstate.sock);
         bmem->bstate.sock = -1;
         os_redir_print_string("\r\n" P_ROULEAU_ON CON G0 INK7);
-    }
-    else if (set == DB_FTP_SET)
-    {
+    } else if (set == DB_FTP_SET) {
         hal_net_disconnect(set, -1);
         *g_ftp_connected_host = 0;
     }
@@ -478,17 +415,14 @@ static void os_disconnect(uint8_t set)
         os_redir_print_string("Disconnected\r\n");
 }
 
-static void os_cat(void)
-{
+static void os_cat(void) {
     os_redir_print_string("\r\nDrive: A\r\n\r\n");
     size_t total = hal_cat();
     os_redir_print_integer("\r\n%3uK free\r\n\r\n", total / 1024);
 }
 
-static bool os_ftp_cat(void)
-{
-    if (!hal_ftp_is_connected())
-    {
+static bool os_ftp_cat(void) {
+    if (!hal_ftp_is_connected()) {
         bmem->bstate.error = BERROR_SOCK;
         return false;
     }
@@ -497,8 +431,7 @@ static bool os_ftp_cat(void)
     os_redir_print_string("\r\n\r\n");
 
     ssize_t total = hal_ftp_cat();
-    if (total < 0)
-    {
+    if (total < 0) {
         bmem->bstate.error = BERROR_SOCK;
         return false;
     }
@@ -508,13 +441,13 @@ static bool os_ftp_cat(void)
     return true;
 }
 
-void os_cat_file(const char *filename, size_t size)
-{
+void os_cat_file(const char *filename, size_t size) {
     char buffer[40];
     char *ext = strrchr(filename, '.');
     int n = ext ? (ext - filename) : strlen(filename);
     ext = ext ? ext + 1 : "";
-    snprintf(buffer, sizeof(buffer), "%-16.*s.%-4s %zu\r\n", n, filename, ext, size);
+    snprintf(buffer, sizeof(buffer), "%-16.*s.%-4s %zu\r\n", n, filename, ext,
+             size);
     os_redir_print_string(buffer);
 }
 
@@ -530,8 +463,7 @@ void os_cat_file(const char *filename, size_t size)
  * @param src Source string to parse
  * @return Pointer to the first non-printable character in src after copying
  */
-static char* parse_printable(char *dst, size_t dst_size, const char *src)
-{
+static char *parse_printable(char *dst, size_t dst_size, const char *src) {
     // Count of copied chars
     int32_t n = 0;
     // Jump over non printable chars from src
@@ -552,8 +484,7 @@ static char* parse_printable(char *dst, size_t dst_size, const char *src)
     return (char *)src;
 }
 
-void os_ftp_cat_file(const char* line)
-{
+void os_ftp_cat_file(const char *line) {
     char part[32];
     const char *src = line;
     int32_t n = 0;
@@ -571,10 +502,12 @@ void os_ftp_cat_file(const char* line)
 #define FILE_EXT_BST ".bst"
 #define FILE_EXT_VAR ".var"
 
-static char *os_filename(const char *name, int16_t *type)
-{
+static char *os_filename(const char *name, int16_t *type) {
     static const char *g_files_exts[4] = {
-        FILE_EXT_BAS, FILE_EXT_BST, FILE_EXT_VAR, 0,
+        FILE_EXT_BAS,
+        FILE_EXT_BST,
+        FILE_EXT_VAR,
+        0,
     };
 
     static char filename[FILE_NAME_SIZE];
@@ -587,7 +520,7 @@ static char *os_filename(const char *name, int16_t *type)
 
     if (src_ext) {
         dst_ext = 0;
-        for (const char **i_ext = g_files_exts; *i_ext ; i_ext++) {
+        for (const char **i_ext = g_files_exts; *i_ext; i_ext++) {
             if (strcasecmp(*i_ext, src_ext) == 0) {
                 dst_ext = *i_ext;
                 break;
@@ -608,20 +541,16 @@ static char *os_filename(const char *name, int16_t *type)
     return filename;
 }
 
-static void os_loop_connected()
-{
+static void os_loop_connected() {
     static bool fkey = false;
     uint8_t buffer[NET_BUFFER_MAX];
 
     // Read data on socket in a non blocking mode
     int ret = hal_net_recv(bmem->bstate.sock, buffer, sizeof(buffer));
-    if (ret < 0)
-    {
+    if (ret < 0) {
         // If error on socket: exit the connected mode
         os_disconnect(DB_MIN_SET);
-    }
-    else if (ret > 0)
-    {
+    } else if (ret > 0) {
         // If chars on socket: forward chars to screen (print)
         hal_print_buffer(buffer, ret);
     }
@@ -633,21 +562,16 @@ static void os_loop_connected()
 
     // Send char to server through the socket
     ret = hal_net_send(bmem->bstate.sock, &key, 1);
-    if (ret < 0)
-    {
+    if (ret < 0) {
         // If error on socket: exit the connected mode
         os_disconnect(DB_MIN_SET);
     }
 
     // If Cx/Fin: close socket [exit the connected mode]
-    if (key == 0x13)
-    {
+    if (key == 0x13) {
         fkey = true;
-    }
-    else
-    {
-        if (fkey)
-        {
+    } else {
+        if (fkey) {
             if (key == 'Y') // CX/Fin
             {
                 os_disconnect(DB_MIN_SET);
@@ -657,39 +581,31 @@ static void os_loop_connected()
     }
 }
 
-static void os_loop_basic()
-{
+static void os_loop_basic() {
     char key = os_get_key();
     bastos_send_keys((char *)&key, key != 0 ? 1 : 0, true);
     bastos_loop();
-    if (bastos_is_reset())
-    {
+    if (bastos_is_reset()) {
         bastos_done();
         hal_reset();
     }
 }
 
-void os_loop()
-{
-    if (bmem->bstate.sock >= 0)
-    {
+void os_loop() {
+    if (bmem->bstate.sock >= 0) {
         os_loop_connected();
-    }
-    else
-    {
+    } else {
         os_loop_basic();
     }
 }
 
-bool os_debug(void)
-{
+bool os_debug(void) {
     if (!bmem)
         return false;
     return bmem->bstate.debug != 0.0;
 }
 
-void os_setup(void)
-{
+void os_setup(void) {
     // Init Basic and display BASTOS banner
     bastos_init();
 }

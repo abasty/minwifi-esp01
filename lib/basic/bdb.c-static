@@ -24,24 +24,22 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
-#include "os.h"
 #include "bdb.h"
+#include "os.h"
 #include "token.h"
 
 extern bmem_t *bmem;
 
-static bool bdb_is_urn(char* str)
-{
+static bool bdb_is_urn(char *str) {
     if (!str)
         return false;
 
-    str  = string_cstr(str);
-    while (*str)
-    {
+    str = string_cstr(str);
+    while (*str) {
         if (*str++ == ':')
             return true;
     }
@@ -49,15 +47,11 @@ static bool bdb_is_urn(char* str)
 }
 
 // Split a URN into parts
-static split_t *bdb_urn_split(const char *urn)
-{
-    static const char *g_urn_protos[] = {
-        "tcp", "ws", "wss", "ftp", NULL
-    };
+static split_t *bdb_urn_split(const char *urn) {
+    static const char *g_urn_protos[] = {"tcp", "ws", "wss", "ftp", NULL};
 
     static split_t split;
-    for (int i = 0; i < URN_PARTS_MAX; i++)
-    {
+    for (int i = 0; i < URN_PARTS_MAX; i++) {
         split.parts[i] = "";
     }
     split.n = 0;
@@ -67,8 +61,7 @@ static split_t *bdb_urn_split(const char *urn)
     char *dst = split.urn;
     bool new_part = true;
 
-    while (new_part && split.n < URN_PARTS_MAX - 1)
-    {
+    while (new_part && split.n < URN_PARTS_MAX - 1) {
         split.parts[split.n++] = dst;
         while (*src && *src != ':')
             *dst++ = *src++;
@@ -77,11 +70,9 @@ static split_t *bdb_urn_split(const char *urn)
     }
 
     uint8_t n = 0;
-    for (const char **proto = g_urn_protos; *proto ; proto++)
-    {
+    for (const char **proto = g_urn_protos; *proto; proto++) {
         n++;
-        if (strcmp(*proto, split.parts[0]) == 0)
-        {
+        if (strcmp(*proto, split.parts[0]) == 0) {
             split.proto = n;
             break;
         }
@@ -93,32 +84,29 @@ static split_t *bdb_urn_split(const char *urn)
 }
 
 // Return the size of an entry
-static int bdb_entry_size(entry_t *entry)
-{
-    return bmem_align4(sizeof(entry_t) + entry->name_ofs + strlen((char *) (entry->bytes + entry->name_ofs)) + 1);
+static int bdb_entry_size(entry_t *entry) {
+    return bmem_align4(sizeof(entry_t) + entry->name_ofs +
+                       strlen((char *)(entry->bytes + entry->name_ofs)) + 1);
 }
 
 // Return the first entry
-static entry_t *bdb_entry_first()
-{
+static entry_t *bdb_entry_first() {
     if (bmem->db_start == bmem->db_end)
         return 0;
-    return (entry_t*) bmem->db_start;
+    return (entry_t *)bmem->db_start;
 }
 
 // Return the next entry
-static entry_t *bdb_entry_next(entry_t *entry)
-{
+static entry_t *bdb_entry_next(entry_t *entry) {
     int size = bdb_entry_size(entry);
-    entry_t *next = (entry_t *) ((uint8_t *) entry + size);
-    if ((uint8_t *) next >= bmem->db_end)
+    entry_t *next = (entry_t *)((uint8_t *)entry + size);
+    if ((uint8_t *)next >= bmem->db_end)
         return 0;
     return next;
 }
 
 // Allocate an entry in the database, set memory to 0 and return the entry
-static entry_t *bdb_entry_alloc(uint16_t size)
-{
+static entry_t *bdb_entry_alloc(uint16_t size) {
     int psize = bmem_align4(size);
     if (BASTOS_DB_SIZE - (bmem->db_end - bmem->db_start) < psize)
         return 0;
@@ -129,8 +117,8 @@ static entry_t *bdb_entry_alloc(uint16_t size)
 }
 
 // Create a new entry and copy the name
-static entry_t *bdb_entry_new(uint8_t set, const char *key, uint8_t *value, uint16_t size)
-{
+static entry_t *bdb_entry_new(uint8_t set, const char *key, uint8_t *value,
+                              uint16_t size) {
     int key_size = strlen(key) + 1;
     int data_size = size + 2 + 1;
 
@@ -151,14 +139,11 @@ static entry_t *bdb_entry_new(uint8_t set, const char *key, uint8_t *value, uint
 }
 
 // Find an entry by name
-static entry_t *bdb_entry_get(uint8_t set, const char *name)
-{
+static entry_t *bdb_entry_get(uint8_t set, const char *name) {
     entry_t *entry = bdb_entry_first();
-    while (entry)
-    {
-        if (entry->token == set)
-        {
-            if (strcmp((char *) (entry->bytes + entry->name_ofs), name) == 0)
+    while (entry) {
+        if (entry->token == set) {
+            if (strcmp((char *)(entry->bytes + entry->name_ofs), name) == 0)
                 return entry;
         }
         entry = bdb_entry_next(entry);
@@ -167,12 +152,10 @@ static entry_t *bdb_entry_get(uint8_t set, const char *name)
 }
 
 // Get count of DB entries
-static uint16_t bdb_entry_count()
-{
+static uint16_t bdb_entry_count() {
     uint16_t count = 0;
     entry_t *entry = bdb_entry_first();
-    while (entry)
-    {
+    while (entry) {
         count++;
         entry = bdb_entry_next(entry);
     }
@@ -180,22 +163,19 @@ static uint16_t bdb_entry_count()
 }
 
 // Unset/Erase a DB entry
-static void bdb_entry_unset(entry_t *entry)
-{
+static void bdb_entry_unset(entry_t *entry) {
     int size = bdb_entry_size(entry);
-    memmove(bmem->db_start + size, bmem->db_start, (uint8_t *) entry - bmem->db_start);
+    memmove(bmem->db_start + size, bmem->db_start,
+            (uint8_t *)entry - bmem->db_start);
     bmem->db_start += size;
 }
 
 // Clear all entries
-static void bmem_db_clear()
-{
-    bmem->db_start = bmem->db_end;
-}
+static void bmem_db_clear() { bmem->db_start = bmem->db_end; }
 
 // PUT "key", "value": Create a new (key, value) entry
-static entry_t *bdb_entry_set(uint8_t set, const char *name, char *value, bool is_cstr)
-{
+static entry_t *bdb_entry_set(uint8_t set, const char *name, char *value,
+                              bool is_cstr) {
     // Remove the entry if it already exists
     entry_t *entry = bdb_entry_get(set, name);
     if (entry != 0)
@@ -207,7 +187,7 @@ static entry_t *bdb_entry_set(uint8_t set, const char *name, char *value, bool i
 
     // Create the entry
     uint16_t len = is_cstr ? strlen(value) : string_len(value);
-    entry = bdb_entry_new(set, name, (uint8_t *) value, len);
+    entry = bdb_entry_new(set, name, (uint8_t *)value, len);
     if (entry == 0)
         goto finalize;
 
@@ -221,7 +201,8 @@ static entry_t *bdb_entry_set(uint8_t set, const char *name, char *value, bool i
         goto finalize;
 
     // Copy the string value
-    memcpy(string_cstr(entry->string), is_cstr ? value : string_cstr(value), len);
+    memcpy(string_cstr(entry->string), is_cstr ? value : string_cstr(value),
+           len);
 
 finalize:
     return entry;
