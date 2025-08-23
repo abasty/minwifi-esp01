@@ -3,6 +3,14 @@
 ## Bugs
 
 * [ ] edition de ligne : gérer les séquences de caractères spéciaux (G2, G1)
+* [ ] `MINIPAVI` : voir `minipavi-gw.sh`
+* [x] WSS non suporté (connexion sur minipavi impossible): Essayer de voir dans
+  minterm comment ça se passe. Problème de SSL : ça prend plus 100KB... Au
+  niveau mémoire, quand on baisse la mémoire à 8KB pour le basic on n'a plus de
+  crash mais une erreur de connexion. Erreur de connexion aussi en Flutter.
+  Erreur aussi avec websocat, Marche avec
+  `./websocat -b --ws-dont-check-headers wss://go.minipavi.fr:8181/`
+
 * [x] INPUT vide
 * [x] ~~Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
   serveur Minitel. Voir avec une websocket statique (pas de new / delete)~~
@@ -689,6 +697,8 @@ $ pio run -e minwifi -t clean
 * <http://3611.re/> : Dans `minitel-3611.js` on a l'URI de la WebSocket :
   `"ws://3611.re/ws"`
 * <ws://mntl.joher.com:2018>
+* <wss://go.minipavi.fr:8181/> "wss:go.minipavi.fr:8181" erreur sur header.
+  Marche avec `./websocat --ws-dont-check-headers wss://go.minipavi.fr:8181/`
 
 Test avec Python, on installe `sudo apt install python3-websockets`.
 
