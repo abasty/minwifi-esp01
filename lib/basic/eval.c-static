@@ -48,6 +48,7 @@ static inline void eval_input_mode(bool mode);
 static bool eval_string_tty();
 static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims);
 static void eval_load();
+static void eval_goto(uint16_t line_no);
 
 extern bmem_t *bmem;
 
@@ -1174,15 +1175,13 @@ static bool eval_run() {
 
     running_state_clear();
     bmem_vars_clear();
-    bmem->bstate.pc = bmem_prog_get_line_or_next(line_no);
-    bmem->bstate.running = bmem->bstate.pc != 0;
-    bmem->bstate.flags |= B_GOTO_FLAG;
+    eval_goto(line_no);
 
-    return true;
+    return bmem->bstate.error == BERROR_NONE;
 }
 
-static void eval_goto() {
-    bmem->bstate.pc = bmem_prog_get_line_or_next(bmem->bstate.number);
+static void eval_goto(uint16_t line_no) {
+    bmem->bstate.pc = bmem_prog_get_line_or_next(line_no);
     bmem->bstate.running = bmem->bstate.pc != 0;
     bmem->bstate.flags |= B_GOTO_FLAG;
 
@@ -1348,7 +1347,7 @@ EVAL:
         return true;
     }
     if (instr == TOKEN_KEYWORD_GOTO) {
-        eval_goto();
+        eval_goto(bmem->bstate.number);
         return true;
     }
     if (instr == TOKEN_KEYWORD_GOSUB) {
@@ -1718,7 +1717,7 @@ static bool eval_if() {
 
     if (eval_expr(TOKEN_NUMBER)) {
         if (bmem->bstate.do_eval)
-            eval_goto();
+            eval_goto(bmem->bstate.number);
         return true;
     }
 
