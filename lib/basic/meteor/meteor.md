@@ -36,7 +36,16 @@ ZX81 / 16KB)
 
 # Dev
 
+## Code
+
 * Exec dans le simulateur
 * Programme Basic édité dans VSCode, sauvegardé directement dans le disque émulé
 * À chaque impossibilité ou se demande si on peut rajouter quelque chose au Basic
   pour gérer les cas levés par ce PoC
+
+## Sequence videotex / sprites
+
+* EMULMIN
+* COMPO
+* BASTOS
+* Éditeur online ?
