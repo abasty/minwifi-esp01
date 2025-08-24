@@ -84,7 +84,7 @@ typedef struct
     bool debug;
     int sp;
     int sock;
-    int redirect;
+    int redirect_fd;
     char *string;
     prog_buffer_t token_buffer;
 } eval_state_t;

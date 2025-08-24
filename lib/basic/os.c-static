@@ -44,29 +44,29 @@ char g_wifi_connected_ssid[20] = ""; // 20 first characters of SSID
 char g_wifi_connected_ip[16] = "";
 char g_ftp_connected_host[32] = "";
 
-static void os_set_redirect(int fd) { bmem->bstate.redirect = fd; }
+static void os_set_redirect(int fd) { bmem->bstate.redirect_fd = fd; }
 
 static int os_redir_print_string(const char *s) {
-    if (bmem->bstate.redirect >= 0) {
-        return hal_write(bmem->bstate.redirect, s, strlen(s));
+    if (bmem->bstate.redirect_fd >= 0) {
+        return hal_write(bmem->bstate.redirect_fd, s, strlen(s));
     }
     return hal_print_string(s);
 }
 
 static int os_redir_print_integer(const char *format, int i) {
-    if (bmem->bstate.redirect >= 0) {
+    if (bmem->bstate.redirect_fd >= 0) {
         char buffer[80];
         int len = snprintf(buffer, sizeof(buffer), format, i);
-        return hal_write(bmem->bstate.redirect, buffer, len);
+        return hal_write(bmem->bstate.redirect_fd, buffer, len);
     }
     return hal_print_integer(format, i);
 }
 
 static int os_redir_print_float(float f) {
-    if (bmem->bstate.redirect >= 0) {
+    if (bmem->bstate.redirect_fd >= 0) {
         char buffer[16];
         int len = snprintf(buffer, sizeof(buffer), "%g", f);
-        return hal_write(bmem->bstate.redirect, buffer, len);
+        return hal_write(bmem->bstate.redirect_fd, buffer, len);
     }
     return hal_print_float(f);
 }
