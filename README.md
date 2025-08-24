@@ -2,6 +2,9 @@
 
 ## Bugs (show stoppers)
 
+* [ ] Une revue des `hal_print*` / `os_print*` est nécessaire avec `OUTPUT
+  START`, notamment sur les affichages line0 (mots de passe, status,
+  notifications, cat, etc.)
 * [ ] `LOAD` d'un fichier `.var` suspend l'exécution du programme en cours
   d'exécution
 * [ ] Édition de ligne / suppresion du dernier caractère : gérer les séquences
