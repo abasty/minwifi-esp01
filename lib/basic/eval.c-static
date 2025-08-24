@@ -1263,6 +1263,7 @@ static bool eval_string_tty() {
         return false;
 
     uint8_t fn = bmem->bstate.token;
+    bool brackets = false;
     char codes[CODE_SEQUENCE_MAX_SIZE];
     *codes = 0;
 
@@ -1271,6 +1272,8 @@ static bool eval_string_tty() {
         snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CLS);
         goto EVAL;
     }
+
+    brackets = eval_token('(');
 
     if (!eval_float_expr())
         return false;
@@ -1302,6 +1305,10 @@ static bool eval_string_tty() {
              arg2 + CUR_DELTA_H);
 
 EVAL:
+
+    if (brackets && !eval_token(')'))
+        return false;
+
     if (!bmem->bstate.do_eval)
         return true;
 
