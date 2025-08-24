@@ -72,8 +72,8 @@ extern "C" {
 #define FILE_TYPE_BST (1)
 #define FILE_TYPE_VAR (2)
 
-#define FILE_NAME_SIZE (16)
-#define FILE_BASE_MAX (8)
+#define FILE_NAME_SIZE (20)
+#define FILE_BASE_MAX (16)
 #define FILE_EXT_MAX (3)
 
 typedef struct split_s {
