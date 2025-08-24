@@ -84,8 +84,9 @@ typedef struct
     bool debug;
     int sp;
     int sock;
-    int redirect_fd;
+    int output_fd;
     char *string;
+    char output_var[B_NAME_SIZE_MAX];
     prog_buffer_t token_buffer;
 } eval_state_t;
 

@@ -142,7 +142,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
         dst--;
         *dst = 0;
         if (echo)
-            os_redir_print_string(DEL);
+            hal_print_string(DEL);
         return;
     }
 
@@ -155,7 +155,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
             *dst++ = '\n';
             src++;
             if (echo)
-                os_redir_print_string("\r\n");
+                hal_print_string("\r\n");
         } else if (*src == 127) { // Correction (DEL)
             int32_t len = dst - bmem->io_buffer;
             if (len >= 1 && *(dst - 1) != '\n') {
@@ -171,7 +171,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
                 dst--;
                 *dst = 0;
                 if (echo)
-                    os_redir_print_string(DEL);
+                    hal_print_string(DEL);
             }
         } else {
             uint8_t *c = dst;
@@ -179,7 +179,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
             *dst = 0;
             size++;
             if (echo)
-                os_redir_print_string((char *)c);
+                hal_print_string((char *)c);
         }
         size = dst - bmem->io_buffer;
         n--;

@@ -84,17 +84,22 @@ static void string_slice(char **string, uint16_t start, uint16_t end) {
 }
 
 static void string_concat(char **string1, char *string2) {
+    // FIXME: !!!! segfault if string2 == 0 (seems to be a || instead of &&)
+    // FIXME: The test *string2 has no sense w/ bstrings (2 first chars are
+    // length)
     if (!string2 && !*string2)
         string2 = 0;
 
     if (!string2)
         return;
 
+    // FIXME: Test against string_len
     if (!*string1) {
         *string1 = string2;
         return;
     }
 
+    // This line of code needs no null *string1 and string2
     uint16_t len = string_len(*string1) + string_len(string2);
     char *concat = bmem_string_alloc(len);
     char *dst = concat + 2;
@@ -107,3 +112,19 @@ static void string_concat(char **string1, char *string2) {
     *dst = 0;
     *string1 = concat;
 }
+
+#if 0
+static char* string_concat_cstr(char *bstring, char *cstring) {
+    uint16_t len = string_len(*bstring) + strlen(cstring);
+    char *concat = bmem_string_alloc(len);
+    char *dst = concat + 2;
+    char *src = string_cstr(bstring);
+    while (*src)
+        *dst++ = *src++;
+    src = cstring;
+    while (*src)
+        *dst++ = *src++;
+    *dst = 0;
+    return concat;
+}
+#endif

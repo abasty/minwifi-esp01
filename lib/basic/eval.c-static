@@ -131,6 +131,12 @@ uint8_t db_func[] = {
     0,
 };
 
+uint8_t output_func[] = {
+    TOKEN_KEYWORD_START,
+    TOKEN_KEYWORD_STOP,
+    0,
+};
+
 static void running_state_clear() {
     bmem->bstate.pc = 0;
     bmem->bstate.sp = 0;
@@ -830,17 +836,27 @@ static bool eval_output() {
     if (!eval_token(TOKEN_KEYWORD_OUTPUT))
         return false;
 
-    if (!eval_variable_ref())
-        return false;
+    uint8_t func = eval_token_one_of((char *)output_func);
+    func = func == 0 ? TOKEN_KEYWORD_START : func;
 
-    if (bmem->bstate.token != TOKEN_VARIABLE_STRING)
-        return false;
+    if (func == TOKEN_KEYWORD_START) {
+        if (!eval_variable_ref())
+            return false;
+
+        if (bmem->bstate.token != TOKEN_VARIABLE_STRING)
+            return false;
+    }
 
     if (!bmem->bstate.do_eval)
         return true;
 
     // Store var ref ou var name (first N chars)
-
+    if (func == TOKEN_KEYWORD_START) {
+        strncpy(bmem->bstate.output_var, bmem->bstate.var_ref, B_NAME_SIZE_MAX - 1);
+        bmem->bstate.output_var[B_NAME_SIZE_MAX - 1] = 0;
+    } else {
+        *bmem->bstate.output_var = 0;
+    }
     return true;
 }
 
@@ -1005,9 +1021,8 @@ static bool eval_print(bool implicit) {
             if (bmem->bstate.do_eval) {
                 if (bmem->bstate.token == TOKEN_NUMBER) {
                     os_redir_print_float(bmem->bstate.number);
-                } else // TOKEN_STRING
-                {
-                    hal_print_buffer(
+                } else { // TOKEN_STRING
+                    os_redir_print_buffer(
                         (uint8_t *)string_cstr(bmem->bstate.string),
                         string_len(bmem->bstate.string));
                 }
