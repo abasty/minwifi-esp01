@@ -1,2 +1,1 @@
-m$ = cls + at (10, 12) + "*** METEOR ***"
-print m$
+run"meteor.vdt.bas"

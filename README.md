@@ -2,6 +2,8 @@
 
 ## Bugs (show stoppers)
 
+* [ ] `LOAD` d'un fichier `.var` suspend l'exécution du programme en cours
+  d'exécution
 * [ ] Édition de ligne / suppresion du dernier caractère : gérer les séquences
   de caractères spéciaux (G2, G1)
     * [x] G2 caractère spécial : tester si le caractère précédent est SS2

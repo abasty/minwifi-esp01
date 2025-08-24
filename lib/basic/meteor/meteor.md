@@ -69,22 +69,28 @@ Alternatives :
 2. On sauve les variables avec `SAVE "meteor.vdt.var"`
 3. On pourra les utiliser dans le programme principal avec `LOAD
    "meteor.vdt.var"`
-4. On pourra même distribuer le programme et ses variables avec `SAVE
-   "meteor.bst"`
+4. On pourra même distribuer le programme et ses variables en supprimant le
+   `LOAD *.var` et en le sauvant avec `SAVE "meteor.bst"`
 
-Exemple :
+Exemple `meteor.vdt.bas` :
 
 ```basic
-m$ = cls
-m$ = m$ + (at 12, 13) + "*** METEOR ***\r\n"
+m$ = cls + (at 10, 13) + "*** METEOR ***"
 save"meteor.vdt.var"
 run"meteor"
 ```
 
-Le programme `meteor.bas` commence avec :
+Le programme `meteor.bas` commence avec `load "meteor.vdt.var"` :
 
 ```basic
-10 load "meteor.vdt.var"
+10 load"meteor.vdt.var"
+20 ?m$
+```
+
+Dans `autoexec.bas`, on peut automatiser le cycle de dev :
+
+```
+run"meteor.vdt.bas"
 ```
 
 Desiderata BASTOS :

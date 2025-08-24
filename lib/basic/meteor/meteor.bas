@@ -1,2 +1,2 @@
-10 cls
-20 print "** METEOR **"
+10 load"meteor.vdt.var"
+20 ?m$
