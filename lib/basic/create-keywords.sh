@@ -92,6 +92,7 @@ db
 down
 up
 debug
+output
 EOF
 
 # Do not sort to preserve save/load compatibility

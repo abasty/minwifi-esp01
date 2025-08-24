@@ -826,6 +826,24 @@ static bool eval_put() {
     return true;
 }
 
+static bool eval_output() {
+    if (!eval_token(TOKEN_KEYWORD_OUTPUT))
+        return false;
+
+    if (!eval_variable_ref())
+        return false;
+
+    if (bmem->bstate.token != TOKEN_VARIABLE_STRING)
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    // Store var ref ou var name (first N chars)
+
+    return true;
+}
+
 static bool eval_let() {
     eval_token(TOKEN_KEYWORD_LET);
 
@@ -1689,7 +1707,7 @@ static bool eval_instruction() {
     return eval_print(false) || eval_input() || eval_simple_instruction() ||
            eval_run() || eval_rem() || eval_dim() || eval_list() ||
            eval_put() || eval_db() || eval_wifi() || eval_minitel() ||
-           eval_ftp() || eval_let();
+           eval_ftp() || eval_output() || eval_let();
 }
 
 static bool eval_if() {
@@ -1837,6 +1855,11 @@ static int8_t eval_prog(prog_t *prog, bool do_eval) {
 
     // Syntax check end of line.
     eval = eval && (bmem->bstate.read_ptr == 0 || *bmem->bstate.read_ptr == 0);
+
+    // Manage output to var
+    // if (eval && output var && output string) {
+    //     // Concat output string with var
+    // }
 
     // Free evaluator state
     bmem->bstate.string = 0;
