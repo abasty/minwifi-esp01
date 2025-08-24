@@ -45,7 +45,29 @@ ZX81 / 16KB)
 
 ## Sequence videotex / sprites
 
-* EMULMIN
-* COMPO
+### dosbox-staging
+
+:warning: Pour utliser les programmes exécutable sour DOS, utiliser
+`dosbox-staging` plutôt que `dosbox` des repos Debian. Paramètres à changer dans
+`dosbox-staging.conf` :
+
+```ini
+language                    = fr
+...
+[autoexec]
+# Each line in this section is executed at startup as a DOS command.
+mount c "~/Projects/Save Prog/prog/tp7/"
+```
+
+### Outils
+
+À prendre dans le code : l'automate de positionnement, des attributs,
+évetuellement de l'optimisation (curseur, attributs) en vue de faire un SCREEN$
+
+* MINOLD.EXE : Langage macro, assez facile à prendre en main, des bugs, manque
+  de doc
+* COMPO.EXE : Hyper complexe, pas de doc
 * BASTOS
+* Dart + Flutter like Minitel widgets (peut-être pour écrire un serveur, pas
+  forcément pour le Basic)
 * Éditeur online ?

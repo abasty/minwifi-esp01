@@ -389,8 +389,7 @@ static bool eval_compare_expr() {
                 return false;
 
             result = arg1 - bmem->bstate.number;
-        } else // type_token == TOKEN_STRING
-        {
+        } else { // type_token == TOKEN_STRING
             char *string1 = string_cstr(bmem->bstate.string);
 
             if (!eval_string_expr())

@@ -1,1 +1,2 @@
-10 RUN "meteor",1
+m$ = cls + at (10, 12) + "*** METEOR ***"
+print m$

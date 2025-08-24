@@ -160,7 +160,8 @@
   sur 16 bits => on pourrait modifier vars_start / vars_end. `@<VAR>`,
   `@<LINE_NO>`, `@DB <SET>,<KEY>`
 
-* ~~SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs~~
+* SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs
+  (voir dans `MINOLD.PAS`)
 
 # Idées futures
 
