@@ -1235,9 +1235,6 @@ static void eval_load() {
     if (bmem->bstate.string == 0)
         return;
 
-    bmem->bstate.running = false;
-    bmem->bstate.pc = 0;
-    running_state_clear();
     bmem->bstate.error = bastos_load(string_cstr(bmem->bstate.string));
 }
 
