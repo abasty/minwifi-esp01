@@ -1,7 +1,7 @@
 # METEOR
 
-PoC BASTOS sur Minitel avec le jeu METEOR (premier je en assembleur Z80 sur ZX81
-/ 16KB) !
+PoC BASTOS sur Minitel avec le jeu METEOR (premier jeu en assembleur Z80 sur
+ZX81 / 16KB) !
 
 La section "Exigences BASTOS" contient les contraintes et desiderata de
 l'équipe de dev "METEOR". Les exigences marquées d'une case à cocher sont

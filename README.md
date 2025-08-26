@@ -2,10 +2,11 @@
 
 ## Bugs (show stoppers)
 
+* [ ] `MINITEL` sur une URN non connectable => hang
 * [ ] Une revue des `hal_print*` / `os_print*` est nécessaire avec `OUTPUT
   START`, notamment sur les affichages line0 (mots de passe, status,
   notifications, cat, etc.)
-* [ ] `LOAD` d'un fichier `.var` suspend l'exécution du programme en cours
+* [x] `LOAD` d'un fichier `.var` suspend l'exécution du programme en cours
   d'exécution
 * [ ] Édition de ligne / suppresion du dernier caractère : gérer les séquences
   de caractères spéciaux (G2, G1)
@@ -18,7 +19,8 @@
   "Kiosque" l'utilise pour revenir à l'appli principale "3615". Utiliser plutôt
   la même touche que pour arrêter le programme. Pareillement, la touche pour
   arrêter le programme ne dois pas être Annulation. Choisir "ESC" ou "Ctrl+c".
-  Annulation pourrait être mappé sur "Ctrl+A"
+  Annulation pourrait être mappé sur "Ctrl+A" dans minterm, au lieu de ESC
+  actuellement
 * [x] `MINIPAVI` : voir `minipavi-gw.sh`, solution temporaire à l'utilisation de
   SSL dans le projet : WSS non suporté (connexion sur minipavi impossible).
   Problème de SSL : ça prend plus 100KB... Au niveau mémoire, quand on baisse la
