@@ -46,7 +46,11 @@ char g_ftp_connected_host[32] = "";
 
 static void os_set_redirect(int fd) { bmem->bstate.output_fd = fd; }
 
-static int os_redir_print_buffer(uint8_t *buffer, int n) {
+static int os_redir_print_buffer(const char *buffer, int n) {
+    // Redir to fd
+    if (bmem->bstate.output_fd >= 0)
+        return hal_write(bmem->bstate.output_fd, buffer, n);
+
     if (*bmem->bstate.output_var != 0) {
        hal_print_string("os_redir_print_buffer\r\n");
         // Get var string value
@@ -54,38 +58,30 @@ static int os_redir_print_buffer(uint8_t *buffer, int n) {
         // var set with new string
         return n;
     }
-    return hal_print_buffer(buffer, n);
+    return hal_print_buffer((uint8_t *) buffer, n);
 }
 
 static int os_redir_print_string(const char *s) {
-    // Redir to fd
-    if (bmem->bstate.output_fd >= 0)
-        return hal_write(bmem->bstate.output_fd, s, strlen(s));
-    // Redir to var
-    if (*bmem->bstate.output_var != 0) {
-        hal_print_string("os_redir_print_string\r\n");
-        // Get var string value
-        // concat (var string value, cstring s) -> new string
-        // var set with new string
-        return strlen(s);
-    }
+    if (bmem->bstate.output_fd >= 0 || *bmem->bstate.output_var != 0)
+        return os_redir_print_buffer(s, strlen(s));
+
     return hal_print_string(s);
 }
 
 static int os_redir_print_integer(const char *format, int i) {
-    if (bmem->bstate.output_fd >= 0) {
+    if (bmem->bstate.output_fd >= 0 || *bmem->bstate.output_var != 0) {
         char buffer[80];
         int len = snprintf(buffer, sizeof(buffer), format, i);
-        return hal_write(bmem->bstate.output_fd, buffer, len);
+        return os_redir_print_buffer(buffer, len);
     }
     return hal_print_integer(format, i);
 }
 
 static int os_redir_print_float(float f) {
-    if (bmem->bstate.output_fd >= 0) {
+    if (bmem->bstate.output_fd >= 0 || *bmem->bstate.output_var != 0) {
         char buffer[16];
         int len = snprintf(buffer, sizeof(buffer), "%g", f);
-        return hal_write(bmem->bstate.output_fd, buffer, len);
+        return os_redir_print_buffer(buffer, len);
     }
     return hal_print_float(f);
 }

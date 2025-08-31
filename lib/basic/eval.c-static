@@ -1023,7 +1023,7 @@ static bool eval_print(bool implicit) {
                     os_redir_print_float(bmem->bstate.number);
                 } else { // TOKEN_STRING
                     os_redir_print_buffer(
-                        (uint8_t *)string_cstr(bmem->bstate.string),
+                        string_cstr(bmem->bstate.string),
                         string_len(bmem->bstate.string));
                 }
             }

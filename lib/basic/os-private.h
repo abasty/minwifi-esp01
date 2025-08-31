@@ -63,7 +63,7 @@ static void os_set_redirect(int fd);
 static int os_redir_print_string(const char *s);
 static int os_redir_print_integer(const char *format, int i);
 static int os_redir_print_float(float f);
-static int os_redir_print_buffer(uint8_t *buffer, int n);
+static int os_redir_print_buffer(const char *buffer, int n);
 
 // OS startup function
 static void os_autoexec(void);
