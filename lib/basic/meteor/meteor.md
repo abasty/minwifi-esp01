@@ -75,7 +75,10 @@ Alternatives :
 Exemple `meteor.vdt.bas` :
 
 ```basic
-m$ = cls + (at 10, 13) + "*** METEOR ***"
+output m$
+cls
+at 10, 13; "*** METEOR ***"
+output stop
 save"meteor.vdt.var"
 run"meteor"
 ```
@@ -95,7 +98,7 @@ run"meteor.vdt.bas"
 
 Desiderata BASTOS :
 
-* [ ] Pouvoir rediriger la sortie vers un buffer (variable chaîne de caractères)
+* [x] Pouvoir rediriger la sortie vers un buffer (variable chaîne de caractères)
   :
   ```basic
   OUTPUT [START] m$
