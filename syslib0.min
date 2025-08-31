@@ -1,0 +1,119 @@
+NUL     = 0
+SOH     = 1
+STX     = 2
+ETX     = 3
+EOT     = 4
+ENQ     = 5
+BEL     = 7
+BS      = 8
+HT      = 9
+LF      = 10
+VT      = 11
+FF      = 12
+NET     = 12
+CR      = 13
+SO      = 14
+G1      = 14
+G0      = 15
+DLE     = $10
+Con     = $11
+Rep     = $12
+Sep     = $13
+Coff    = $14
+NACK    = $15
+SYN     = $16
+CAN     = $18
+SS2     = $19
+G2      = $19
+SUB     = $1A
+ESC     = $1B
+C1      = $1B
+SS3     = $1D
+RS      = $1E
+US      = $1F
+
+
+Noir     = 0
+Rouge    = 1
+Vert     = 2
+Jaune    = 3
+Bleu     = 4
+Magenta  = 5
+Cyan     = 6
+Blanc    = 7
+
+PRO2     = [$1B $3A]
+START    = $69
+STOP     = $6A
+
+
+CAR [Couleur] = [ $1B $40+Couleur ]
+
+FOND [Couleur] = [ $1B $50+Couleur ]
+
+FLASH = [ $1B $48 ]
+
+FIXE = [ $1B $49 ]
+
+LIGD = [ $1B $5A ]
+
+LIGF = [ $1B $59 ]
+
+NG = [ $1B $4C ]
+
+DH = [ $1B $4D ]
+
+DL = [ $1B $4E ]
+
+DG = [ $1B $4F ]
+
+AN = [ $1B $5C ]
+
+AI = [ $1B $5D ]
+
+MD = [ $1B $58 ]
+
+MF = [ $1B $5F ]
+
+Masque = [ $1B $23 $20 $58 ]
+
+Demasque = [ $1B $23 $20 $5F ]
+
+CUR [Lig Col] = [ $1F $40+Lig $40+Col ]
+
+ModeRouleau = [$1B $3A $69 $43]
+
+ModePage = [$1B $3A $6A $43]
+
+Transparence [Obj]= [PRO2 $66 longueur[Obj] Obj]
+
+INSL = [$1B $5B $4C]
+
+DELC = [$1B $5B $50]
+
+DELL = [$1B $5B $4D]
+
+DINSC = [$1B $5B $34 $68]
+
+FINSC = [$1B $5B $34 $6C]
+
+REPO [n Obj] =
+debut
+  si longueur[Obj]>1 ou n<=3 ou Obj<32  alors
+    repete n Obj
+  sinon
+    debut
+      Obj
+      soit r=n-1
+      tantque r>63 faire
+        debut
+          Rep $40+63
+          soit r=r-63
+        fin
+      si r>2 alors [Rep $40+r]
+      sinon repete r Obj
+    fin
+fin
+
+info = fichier ["SYSINF"]
+
