@@ -84,13 +84,16 @@ static void string_slice(char **string, uint16_t start, uint16_t end) {
 }
 
 static void string_concat(char **string1, char *string2) {
-    if (!string2 && !*string2)
-        string2 = 0;
-
-    if (!string2)
+    if (string1 == 0)
         return;
 
-    if (!*string1) {
+    if (string2 == 0)
+        return;
+
+    if (string_len(string2) == 0)
+        return;
+
+    if (string_len(*string1) == 0) {
         *string1 = string2;
         return;
     }
@@ -99,11 +102,17 @@ static void string_concat(char **string1, char *string2) {
     char *concat = bmem_string_alloc(len);
     char *dst = concat + 2;
     char *src = *string1 + 2;
-    while (*src)
+    int i = string_len(*string1);
+    while (i > 0) {
         *dst++ = *src++;
+        i--;
+    }
     src = string2 + 2;
-    while (*src)
+    i = string_len(string2);
+    while (i > 0) {
         *dst++ = *src++;
+        i--;
+    }
     *dst = 0;
     *string1 = concat;
 }

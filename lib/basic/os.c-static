@@ -44,29 +44,68 @@ char g_wifi_connected_ssid[20] = ""; // 20 first characters of SSID
 char g_wifi_connected_ip[16] = "";
 char g_ftp_connected_host[32] = "";
 
-static void os_set_redirect(int fd) { bmem->bstate.redirect = fd; }
+static void os_set_redirect(int fd) { bmem->bstate.output_fd = fd; }
+
+static int os_concat_buffer(const char *name, const char *buffer, int n) {
+    var_t *var = bmem_var_get(name);
+    if (!var || n == 0)
+        return 0;
+
+    int l = string_len(var->string);
+    char *value = bmem_string_alloc(l + n);
+
+    char *dst = value + 2;
+    const char *src = string_cstr(var->string);
+    int i = l;
+    while (i > 0) {
+        *dst++ = *src++;
+        i--;
+    }
+    src = buffer;
+    i = n;
+    while (i > 0) {
+        *dst++ = *src++;
+        i--;
+    }
+    *dst = 0;
+
+    bmem_var_string_set(name, value, false);
+    return n;
+}
+
+static int os_redir_print_buffer(const char *buffer, int n) {
+    // Redir to fd
+    if (bmem->bstate.output_fd >= 0)
+        return hal_write(bmem->bstate.output_fd, buffer, n);
+
+    // Redir to var
+    if (*bmem->bstate.output_var != 0)
+        return os_concat_buffer(bmem->bstate.output_var, buffer, n);
+
+    return hal_print_buffer((uint8_t *) buffer, n);
+}
 
 static int os_redir_print_string(const char *s) {
-    if (bmem->bstate.redirect >= 0) {
-        return hal_write(bmem->bstate.redirect, s, strlen(s));
-    }
+    if (bmem->bstate.output_fd >= 0 || *bmem->bstate.output_var != 0)
+        return os_redir_print_buffer(s, strlen(s));
+
     return hal_print_string(s);
 }
 
 static int os_redir_print_integer(const char *format, int i) {
-    if (bmem->bstate.redirect >= 0) {
+    if (bmem->bstate.output_fd >= 0 || *bmem->bstate.output_var != 0) {
         char buffer[80];
         int len = snprintf(buffer, sizeof(buffer), format, i);
-        return hal_write(bmem->bstate.redirect, buffer, len);
+        return os_redir_print_buffer(buffer, len);
     }
     return hal_print_integer(format, i);
 }
 
 static int os_redir_print_float(float f) {
-    if (bmem->bstate.redirect >= 0) {
+    if (bmem->bstate.output_fd >= 0 || *bmem->bstate.output_var != 0) {
         char buffer[16];
         int len = snprintf(buffer, sizeof(buffer), "%g", f);
-        return hal_write(bmem->bstate.redirect, buffer, len);
+        return os_redir_print_buffer(buffer, len);
     }
     return hal_print_float(f);
 }

@@ -80,4 +80,5 @@ static const char *keywords =
     "DOW""\xce"
     "U""\xd0"
     "DEBU""\xc7"
+    "OUTPU""\xd4"
 ;

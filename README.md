@@ -2,6 +2,12 @@
 
 ## Bugs (show stoppers)
 
+* [ ] `MINITEL` sur une URN non connectable => hang
+* [x] Une revue des `hal_print*` / `os_print*` est nécessaire avec `OUTPUT
+  START`, notamment sur les affichages line0 (mots de passe, status,
+  notifications, cat, etc.)
+* [x] `LOAD` d'un fichier `.var` suspend l'exécution du programme en cours
+  d'exécution
 * [ ] Édition de ligne / suppresion du dernier caractère : gérer les séquences
   de caractères spéciaux (G2, G1)
     * [x] G2 caractère spécial : tester si le caractère précédent est SS2
@@ -13,7 +19,8 @@
   "Kiosque" l'utilise pour revenir à l'appli principale "3615". Utiliser plutôt
   la même touche que pour arrêter le programme. Pareillement, la touche pour
   arrêter le programme ne dois pas être Annulation. Choisir "ESC" ou "Ctrl+c".
-  Annulation pourrait être mappé sur "Ctrl+A"
+  Annulation pourrait être mappé sur "Ctrl+A" dans minterm, au lieu de ESC
+  actuellement
 * [x] `MINIPAVI` : voir `minipavi-gw.sh`, solution temporaire à l'utilisation de
   SSL dans le projet : WSS non suporté (connexion sur minipavi impossible).
   Problème de SSL : ça prend plus 100KB... Au niveau mémoire, quand on baisse la
@@ -127,7 +134,7 @@
 * [x] Remplacé par :`FTP GET / PUT`.`FTP DOWNLOAD` / `FTP UPLOAD` et autres
   fonctions FTP.
 
-* [ ] Pouvoir rediriger PRINT vers une variable. `OUTPUT a$`. Les fonctions
+* [x] Pouvoir rediriger PRINT vers une variable. `OUTPUT a$`. Les fonctions
   `hal_print_*` sont remplacées par `os_print_*` ou `os_printf`. Ces dernières
   utilisent un buffer et `hal_print_buffer` ou, si OUTPUT est une variable,
   ajoute le buffer à la variable.
