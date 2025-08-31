@@ -1,3 +1,2 @@
-10 load"meteor.vdt.var"
+10 LOAD "meteor.vdt.var"
 20 ?m$
-30 print "toto"

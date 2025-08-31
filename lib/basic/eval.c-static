@@ -854,6 +854,7 @@ static bool eval_output() {
     if (func == TOKEN_KEYWORD_START) {
         strncpy(bmem->bstate.output_var, bmem->bstate.var_ref, B_NAME_SIZE_MAX - 1);
         bmem->bstate.output_var[B_NAME_SIZE_MAX - 1] = 0;
+        bmem_var_string_set(bmem->bstate.output_var, "", true);
     } else {
         *bmem->bstate.output_var = 0;
     }

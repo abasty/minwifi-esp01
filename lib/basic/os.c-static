@@ -46,18 +46,42 @@ char g_ftp_connected_host[32] = "";
 
 static void os_set_redirect(int fd) { bmem->bstate.output_fd = fd; }
 
+static int os_concat_buffer(const char *name, const char *buffer, int n) {
+    var_t *var = bmem_var_get(name);
+    if (!var || n == 0)
+        return 0;
+
+    int l = string_len(var->string);
+    char *value = bmem_string_alloc(l + n);
+
+    char *dst = value + 2;
+    const char *src = string_cstr(var->string);
+    int i = l;
+    while (i > 0) {
+        *dst++ = *src++;
+        i--;
+    }
+    src = buffer;
+    i = n;
+    while (i > 0) {
+        *dst++ = *src++;
+        i--;
+    }
+    *dst = 0;
+
+    bmem_var_string_set(name, value, false);
+    return n;
+}
+
 static int os_redir_print_buffer(const char *buffer, int n) {
     // Redir to fd
     if (bmem->bstate.output_fd >= 0)
         return hal_write(bmem->bstate.output_fd, buffer, n);
 
-    if (*bmem->bstate.output_var != 0) {
-       hal_print_string("os_redir_print_buffer\r\n");
-        // Get var string value
-        // concat (var string value, cstring s) -> new string
-        // var set with new string
-        return n;
-    }
+    // Redir to var
+    if (*bmem->bstate.output_var != 0)
+        return os_concat_buffer(bmem->bstate.output_var, buffer, n);
+
     return hal_print_buffer((uint8_t *) buffer, n);
 }
 

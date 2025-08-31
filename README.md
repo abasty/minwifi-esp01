@@ -3,7 +3,7 @@
 ## Bugs (show stoppers)
 
 * [ ] `MINITEL` sur une URN non connectable => hang
-* [ ] Une revue des `hal_print*` / `os_print*` est nécessaire avec `OUTPUT
+* [x] Une revue des `hal_print*` / `os_print*` est nécessaire avec `OUTPUT
   START`, notamment sur les affichages line0 (mots de passe, status,
   notifications, cat, etc.)
 * [x] `LOAD` d'un fichier `.var` suspend l'exécution du programme en cours
@@ -134,7 +134,7 @@
 * [x] Remplacé par :`FTP GET / PUT`.`FTP DOWNLOAD` / `FTP UPLOAD` et autres
   fonctions FTP.
 
-* [ ] Pouvoir rediriger PRINT vers une variable. `OUTPUT a$`. Les fonctions
+* [x] Pouvoir rediriger PRINT vers une variable. `OUTPUT a$`. Les fonctions
   `hal_print_*` sont remplacées par `os_print_*` ou `os_printf`. Ces dernières
   utilisent un buffer et `hal_print_buffer` ou, si OUTPUT est une variable,
   ajoute le buffer à la variable.
