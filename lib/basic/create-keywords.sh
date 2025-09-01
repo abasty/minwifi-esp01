@@ -93,6 +93,16 @@ down
 up
 debug
 output
+beep
+cleol
+line0
+flash
+inverse
+underline
+rep$
+echo
+size
+edit
 EOF
 
 # Do not sort to preserve save/load compatibility

@@ -3,6 +3,8 @@
 ## Bugs (show stoppers)
 
 * [ ] `MINITEL` sur une URN non connectable => hang
+* [ ] Chaine de caractères 255 OK, si on ajoute un char => bug, pb sur toutes
+  les varaiables chaines de caractères
 * [x] Une revue des `hal_print*` / `os_print*` est nécessaire avec `OUTPUT
   START`, notamment sur les affichages line0 (mots de passe, status,
   notifications, cat, etc.)
@@ -141,9 +143,15 @@
 
 * [ ] Pouvoir flasher depuis un fichier sur LittleFS téléchargé par FTP ()
 
-* [ ] BIP, INV, NORM, CLEOL, AI, AN, REP, etc. (voir MIN).
-* [x] `CURSOR 0, 1` ~~con, coff~~
-* [ ] echo on/off
+* [x] `BEEP`, `CLEOL`,
+* [x] `SIZE 0|1|2|3`
+* [x] `FLASH 0|1`, `INVERSE 0|1`, `UNDERLINE 0|1`
+* [x] `CURSOR 0|1` ~~con, coff~~
+* [ ] `REP <N>,<STRING>`
+* [ ] `ECHO 0|1`
+* [ ] `AT 1,1` => HOME ("\x1E")
+* [x] `LINE0`
+* [x] "\n\r\t\x08\x0b" (LF, CR, HT, BS, VT, etc)
 * [ ] TAB
 * [ ] SCROLL (START, STOP, UP, DOWN)
 * [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)

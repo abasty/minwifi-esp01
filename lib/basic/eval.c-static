@@ -67,8 +67,11 @@ uint8_t variables[] = {
 };
 
 char tty_codes[] = {
-    TOKEN_KEYWORD_AT,     TOKEN_KEYWORD_INK, TOKEN_KEYWORD_PAPER,
-    TOKEN_KEYWORD_CURSOR, TOKEN_KEYWORD_CLS, 0,
+    TOKEN_KEYWORD_AT,      TOKEN_KEYWORD_INK,       TOKEN_KEYWORD_PAPER,
+    TOKEN_KEYWORD_CURSOR,  TOKEN_KEYWORD_CLS,       TOKEN_KEYWORD_BEEP,
+    TOKEN_KEYWORD_CLEOL,   TOKEN_KEYWORD_LINE0,     TOKEN_KEYWORD_FLASH,
+    TOKEN_KEYWORD_INVERSE, TOKEN_KEYWORD_UNDERLINE, TOKEN_KEYWORD_REP,
+    TOKEN_KEYWORD_ECHO,    TOKEN_KEYWORD_SIZE,      0,
 };
 
 const char compare_tokens[] = {
@@ -852,7 +855,8 @@ static bool eval_output() {
 
     // Store var ref ou var name (first N chars)
     if (func == TOKEN_KEYWORD_START) {
-        strncpy(bmem->bstate.output_var, bmem->bstate.var_ref, B_NAME_SIZE_MAX - 1);
+        strncpy(bmem->bstate.output_var, bmem->bstate.var_ref,
+                B_NAME_SIZE_MAX - 1);
         bmem->bstate.output_var[B_NAME_SIZE_MAX - 1] = 0;
         bmem_var_string_set(bmem->bstate.output_var, "", true);
     } else {
@@ -1023,9 +1027,8 @@ static bool eval_print(bool implicit) {
                 if (bmem->bstate.token == TOKEN_NUMBER) {
                     os_redir_print_float(bmem->bstate.number);
                 } else { // TOKEN_STRING
-                    os_redir_print_buffer(
-                        string_cstr(bmem->bstate.string),
-                        string_len(bmem->bstate.string));
+                    os_redir_print_buffer(string_cstr(bmem->bstate.string),
+                                          string_len(bmem->bstate.string));
                 }
             }
         } else if (eval_string_tty()) {
@@ -1302,6 +1305,21 @@ static bool eval_string_tty() {
         goto EVAL;
     }
 
+    if (fn == TOKEN_KEYWORD_CLEOL) {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CLEOL);
+        goto EVAL;
+    }
+
+    if (fn == TOKEN_KEYWORD_BEEP) {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x07");
+        goto EVAL;
+    }
+
+    if (fn == TOKEN_KEYWORD_LINE0) {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x1f\x40\x41");
+        goto EVAL;
+    }
+
     if (!eval_float_expr())
         return false;
 
@@ -1317,6 +1335,30 @@ static bool eval_string_tty() {
     }
     if (fn == TOKEN_KEYWORD_CURSOR) {
         snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s", arg1 ? CON : COFF);
+        goto EVAL;
+    }
+
+    if (fn == TOKEN_KEYWORD_FLASH) {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? "\x1b\x48" : "\x1b\x49");
+        goto EVAL;
+    }
+
+    if (fn == TOKEN_KEYWORD_INVERSE) {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? "\x1b\x5d" : "\x1b\x5c");
+        goto EVAL;
+    }
+
+    if (fn == TOKEN_KEYWORD_UNDERLINE) {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? "\x1b\x5a" : "\x1b\x59");
+        goto EVAL;
+    }
+
+    if (fn == TOKEN_KEYWORD_SIZE) {
+        if (arg1 > 3) {
+            bmem->bstate.error = BERROR_RANGE;
+            return false;
+        }
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x1b%c", arg1 + '\x4c');
         goto EVAL;
     }
 
