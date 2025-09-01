@@ -10,6 +10,24 @@ at 2,13;size 1;"*** METEOR ***"
 ?"5. Quitter"
 ?
 
+output jeu$
+at 0,5;cleol;"SCORE: 000000   RECORD: 000000";cls
+at 20,1;paper 1;" ";cleol
+at 20,37;size 1;"JEU"
+at 23,1;"<Appuie sur une touche>"
+
+output records$
+line0;cleol
+cls;"\n";paper 1;" ";cleol
+at 2,13;size 1;"*** RECORDS ***"
+at 4,1;"<Appuie sur une touche>"
+
+output config$
+line0;cleol
+cls;"\n";paper 1;" ";cleol
+at 2,10;size 1;"*** CONFIGURATION ***"
+at 4,1;"<Appuie sur une touche>"
+
 output credits$
 line0;cleol
 cls;"\n";paper 1;" ";cleol
