@@ -3,7 +3,7 @@
 ## Bugs (show stoppers)
 
 * [ ] `MINITEL` sur une URN non connectable => hang
-* [ ] Chaine de caractères 255 OK, si on ajoute un char => bug, pb sur toutes
+* [x] Chaine de caractères 255 OK, si on ajoute un char => bug, pb sur toutes
   les varaiables chaines de caractères
 * [x] Une revue des `hal_print*` / `os_print*` est nécessaire avec `OUTPUT
   START`, notamment sur les affichages line0 (mots de passe, status,
