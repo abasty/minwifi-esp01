@@ -85,31 +85,31 @@ static int bmem_array_size(int cell_size, uint8_t dim_count, uint32_t *dims) {
 }
 
 // Compute the size of the data of a variable
-static int bmem_data_size(uint8_t token, uint8_t dim_count, uint32_t *dims) {
+static int bmem_data_size(uint8_t token, uint16_t len, uint32_t *dims) {
     int size = 0;
     switch (token) {
     case TOKEN_VARIABLE_NUMBER:
         size = sizeof(float);
         break;
     case TOKEN_VARIABLE_STRING:
-        size = dim_count + 1 + 2;
+        size = len + 1 + 2;
         break;
     case TOKEN_ARRAY_NUMBER:
-        size = bmem_array_size(sizeof(float), dim_count, dims);
+        size = bmem_array_size(sizeof(float), len, dims);
         break;
     case TOKEN_ARRAY_STRING:
-        size = bmem_array_size(1, dim_count, dims);
+        size = bmem_array_size(1, len, dims);
         break;
     }
     return size;
 }
 
 // Create a new variable and copy the name
-static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count,
+static var_t *bmem_var_new(const char *name, uint8_t token, uint16_t len,
                            uint32_t *dims) {
     int name_size = strlen(name) + 1;
-    int data_size = bmem_data_size(token, dim_count, dims);
-    int dims_size = dims ? dim_count * sizeof(uint32_t) : 0;
+    int data_size = bmem_data_size(token, len, dims);
+    int dims_size = dims ? len * sizeof(uint32_t) : 0;
 
     // Allocate var
     var_t *var = bmem_var_alloc(token, sizeof(var_t) + dims_size + data_size +
@@ -124,7 +124,7 @@ static var_t *bmem_var_new(const char *name, uint8_t token, uint8_t dim_count,
     // Copy dims
     if (dims) {
         memcpy(var->dims, dims, dims_size);
-        var->dim_count = dim_count;
+        var->dim_count = len;
     } else {
         var->dim_count = 0;
     }

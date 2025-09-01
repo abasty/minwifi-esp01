@@ -2,7 +2,7 @@ output menu$
 fast
 line0;cleol
 cls;"\n";paper 1;" ";cleol
-size 1;"*** METEOR ***"
+at 2,13;size 1;"*** METEOR ***"
 ?at 4,1;"1.";underline 1;" Jouer";underline 0;" "
 ?"2. Records"
 ?"3. Configuration"
@@ -24,9 +24,8 @@ at 2,13;size 1;"*** CREDITS ***"
 ?at 14,1;size 3;flash 1;"METEOR";
 ?at 16,1;"Inspire par";underline 1;" METEOR";underline 0;" : Premier jeu en"
 ?"assembleur Z80 sur ZX81. Sur Minitel,"
-rem "pas de memoire ecran, juste une ligne"
-
-
+?"pas de memoire ecran, juste une prise"
+?"4800 (1B) / 9600 (2) bps."
 
 output stop
 save"meteor.vdt.var"
