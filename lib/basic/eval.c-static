@@ -70,8 +70,8 @@ char tty_codes[] = {
     TOKEN_KEYWORD_AT,      TOKEN_KEYWORD_INK,       TOKEN_KEYWORD_PAPER,
     TOKEN_KEYWORD_CURSOR,  TOKEN_KEYWORD_CLS,       TOKEN_KEYWORD_BEEP,
     TOKEN_KEYWORD_CLEOL,   TOKEN_KEYWORD_LINE0,     TOKEN_KEYWORD_FLASH,
-    TOKEN_KEYWORD_INVERSE, TOKEN_KEYWORD_UNDERLINE, TOKEN_KEYWORD_REP,
-    TOKEN_KEYWORD_ECHO,    TOKEN_KEYWORD_SIZE,      0,
+    TOKEN_KEYWORD_INVERSE, TOKEN_KEYWORD_UNDERLINE, TOKEN_KEYWORD_ECHO,
+    TOKEN_KEYWORD_SIZE,    0,
 };
 
 const char compare_tokens[] = {
@@ -505,6 +505,66 @@ static bool eval_string_str() {
     return true;
 }
 
+static bool eval_string_rep() {
+    if (!eval_token(TOKEN_KEYWORD_REP))
+        return false;
+
+    if (!eval_term())
+        return false;
+
+    uint8_t n = bmem->bstate.number;
+
+    if (!eval_token(','))
+        return false;
+
+    if (!eval_string_expr())
+        return false;
+
+    if (bmem->bstate.do_eval) {
+        uint16_t len = string_len(bmem->bstate.string);
+        const char *in = string_cstr(bmem->bstate.string);
+        if (len == 0)
+            return true;
+
+        if (len > 1 || n <= 3 || *in < ' ') {
+            char *out = bmem_string_alloc(n * len);
+            if (!out)
+                return false;
+            bmem->bstate.string = out;
+            out += 2;
+            for (int i = 0; i < n; i++) {
+                memcpy(out, in, len);
+                out += len;
+            }
+            *out = 0;
+        } else {
+            char *out = bmem_string_alloc(((n / 63) + 1) * 3);
+            if (!out)
+                return false;
+            bmem->bstate.string = out;
+            out += 2;
+            *out++ = *in;
+            int r = n - 1;
+            while (r > 63) {
+                *out++ = '\x12';
+                *out++ = '\x7f';
+                r -= 63;
+            }
+            if (r > 2) {
+                *out++ = '\x12';
+                *out++ = (char) (0x40 + r);
+            } else {
+                while (r > 0) {
+                    *out++ = *in;
+                    r--;
+                }
+            }
+            *out = 0;
+        }
+    }
+    return true;
+}
+
 static bool eval_string_get() {
     uint8_t set;
 
@@ -621,7 +681,7 @@ static bool eval_string_var() {
 static bool eval_string_term() {
     bool result = eval_string_const() || eval_string_var() ||
                   eval_string_chr() || eval_string_tty() || eval_string_str() ||
-                  eval_string_get() || eval_string_inkey() ||
+                  eval_string_rep() || eval_string_get() || eval_string_inkey() ||
                   (eval_token('(') && eval_string_expr() && eval_token(')'));
 
     if (!result)

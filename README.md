@@ -147,7 +147,7 @@
 * [x] `SIZE 0|1|2|3`
 * [x] `FLASH 0|1`, `INVERSE 0|1`, `UNDERLINE 0|1`
 * [x] `CURSOR 0|1` ~~con, coff~~
-* [ ] `REP$ <N>,<STRING>`
+* [x] `REP$ <N>,<STRING>`
 * [ ] `ECHO 0|1`
 * [x] `AT 1,1` => HOME ("\x1E"), `AT 1,2` => "\x1e\x09", `AT 2,1` => "\x1e\n"
 * [x] `LINE0`
