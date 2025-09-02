@@ -1370,8 +1370,17 @@ static bool eval_string_tty() {
         return false;
 
     uint8_t arg2 = bmem->bstate.number;
-    snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CUR, arg1 + CUR_DELTA_V,
-             arg2 + CUR_DELTA_H);
+    if (arg1 == 1 && arg2 == 1) {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x1e");
+    } else if (arg1 == 1 && arg2 == 2) {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x1e\x09");
+    } else if (arg1 == 2 && arg2 == 1) {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x1e\n");
+    } else {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CUR, arg1 + CUR_DELTA_V,
+                arg2 + CUR_DELTA_H);
+    }
+
 
 EVAL:
     if (!bmem->bstate.do_eval)
