@@ -17,6 +17,8 @@
       sur 3 chars
     * [ ] G1 : si le caractère précédent est G1, le supprimer
     * [ ] G1 : Pouvoir introduire G1 (idéalement Ctrl+G)
+* [x] Ajouter la commande `END` : Ca fait `STOP` et `CLEAR`, on ne peut pas
+  `CONT`
 * [x] Chaine de caractères 255 OK, si on ajoute un char => bug, pb sur toutes
   les varaiables chaines de caractères
 * [x] Une revue des `hal_print*` / `os_print*` est nécessaire avec `OUTPUT

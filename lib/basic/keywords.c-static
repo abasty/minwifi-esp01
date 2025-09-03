@@ -90,5 +90,6 @@ static const char *keywords =
     "REP""\xa4"
     "ECH""\xcf"
     "SIZ""\xc5"
+    "EN""\xc4"
     "EDI""\xd4"
 ;
