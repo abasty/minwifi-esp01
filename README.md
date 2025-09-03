@@ -43,21 +43,25 @@
 
 ## Backend et doc
 
-* Serveurs sur IONOS (faire framework en Dart, à la flutter éventuellement)
-* FTP sur IONOS
-* WSS/TCP gateway sur IONOS (filter par IP), réflechir à un serveur Dart qui fait le
-  passe plat, liste blanche basée sur IP ?
-* TELNET bouncing sur IONOS
-* Home self hosting possible pour les services de bouncing (éventuellement via
-  ngrock + authentication)
-* Github pages, wiki ?
-* Github releases (dowload et procédure d'install)
-* Doc lyx ou MD, Amazon kindle ou Lulu (ou voir solution Framasoft)
-* Blog / Wordpress ou autre sur Free (page perso retro: Minitel / HP48 / ORIC 1
-  / PalmOS)
-* Réseau social : Mastodon only
-* Forum : page perso free ? + Présence sur le musée du minitel
-* Hackable pour la manip anev le SonOff
+* [ ] Réseau social : Mastodon only
+* [ ] Blog : page perso free ?
+* [ ] Présence sur le musée du minitel
+* [ ] Blog / Wordpress ou autre sur Free (page perso retro: Minitel / HP48 /
+  ORIC 1 / PalmOS)
+
+* [ ] Github pages, wiki ?
+* [ ] Github releases (download et procédure d'install)
+
+* [ ] Home self hosting possible pour les services de bouncing (éventuellement
+  via ngrock + authentication)
+* [ ] Serveurs sur IONOS (faire framework en Dart, à la flutter éventuellement)
+* [ ] FTP sur IONOS
+* [ ] WSS/TCP gateway sur IONOS (filter par IP), réflechir à un serveur Dart qui
+  fait le passe plat, liste blanche basée sur IP ?
+* [ ] TELNET bouncing sur IONOS
+
+* [ ] Doc lyx ou MD, Amazon kindle ou Lulu (ou voir solution Framasoft)
+* [ ] Hackable pour la manip avec le SonOff
 
 ## Fonctionnalités
 
