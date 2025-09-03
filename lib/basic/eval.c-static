@@ -1413,6 +1413,11 @@ static bool eval_string_tty() {
         goto EVAL;
     }
 
+    if (fn == TOKEN_KEYWORD_ECHO) {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? P_LOCAL_ECHO_ON : P_LOCAL_ECHO_OFF);
+        goto EVAL;
+    }
+
     if (fn == TOKEN_KEYWORD_SIZE) {
         if (arg1 > 3) {
             bmem->bstate.error = BERROR_RANGE;
@@ -1440,7 +1445,6 @@ static bool eval_string_tty() {
         snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CUR, arg1 + CUR_DELTA_V,
                 arg2 + CUR_DELTA_H);
     }
-
 
 EVAL:
     if (!bmem->bstate.do_eval)
