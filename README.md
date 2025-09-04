@@ -2,8 +2,11 @@
 
 ## Bugs (show stoppers)
 
-* [ ] `MINITEL` sur une URN non connectable => hang
+* [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
+  _crash_ du ESP => À tester en local
 * [ ] `LOAD` `.bas` : Conversion UTF-8 vers MIN (voir `accents-utf8.txt`)
+* [ ] `RUN` d'un `.bst` ne doit pas supprimer les variables => doit faire un
+  `GOTO 0`
 * [ ] CX/Fin : ne doit pas être utilisé pour déconnecter car certains services
   "Kiosque" l'utilise pour revenir à l'appli principale "3615". Utiliser plutôt
   la même touche que pour arrêter le programme. Pareillement, la touche pour

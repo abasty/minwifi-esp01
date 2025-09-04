@@ -1258,6 +1258,7 @@ static bool eval_run() {
     if (!bmem->bstate.do_eval)
         return true;
 
+    bool var_clear = true;
     int32_t line_no = (int32_t)bmem->bstate.number;
     if (line_no < 0) {
         bmem->bstate.error = BERROR_RANGE;
@@ -1268,10 +1269,11 @@ static bool eval_run() {
         eval_load();
         if (bmem->bstate.error != BERROR_NONE)
             return false;
+        var_clear = false;
     }
 
     running_state_clear();
-    bmem_vars_clear();
+    if (var_clear) bmem_vars_clear();
     eval_goto(line_no);
 
     return bmem->bstate.error == BERROR_NONE;

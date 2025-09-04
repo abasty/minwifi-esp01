@@ -31,8 +31,8 @@ TBD : Enchainement des écrans.
 
 * Ligne 0 : SCORE et RECORD, record sauvegardé dans DB.
 * Scroll down, toutes les deux les deux lignes on insère un METEOR
-* vaisseau spacial au bas de l'écran, touches gauche droite, effacé à chaque
-  scroll down, réafficher à la position qu'il faut
+* vaisseau spacial au bas de l'écran, touches gauche droite, effacer à chaque
+  scroll down, rafficher à la position qu'il faut
 * Comment gérer le delay (suivant le mode slow / fast / fast fast) ?
 * Gestion des collisions : dim screen$(24, 40). À chaque scroll down on déplace
   un "offset" qui dit l'index de la ligne 1.
