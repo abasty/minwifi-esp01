@@ -338,7 +338,7 @@ static int os_get_string(char *buf, int size, char secret_char) {
         uint8_t key = os_get_key();
         if (key == 0) // No key pressed
             continue;
-        if (key == 3) // Ctrl+C
+        if (key == 0x1b) // ESC
         {
             return -1; // Cancel the input
         }
@@ -381,7 +381,7 @@ static uint8_t os_get_key() {
             if (key == 0x47) {                     // CORRECTION key
                 key = 0x7F;                        // Convert backspace to DEL
             } else if (key == 0x45) {              // ANNULATION key
-                key = 3;                           // Convert to Ctrl+C
+                key = 1;                           // Convert to Ctrl+A
             } else if (key == 0x59) {              // CX/FIN key
                 key = 0;                           // Ignore it
                 os_redir_print_string("\x13\x59"); // Send CX/Fin to terminal
@@ -392,8 +392,6 @@ static uint8_t os_get_key() {
         } else {
             if (key == 0x08) {
                 key = 0x7F; // Convert backspace to DEL
-            } else if (key == 0x1b) {
-                key = 3; // Convert ESC to Ctrl+C
             }
         }
     }
@@ -451,7 +449,7 @@ static void os_disconnect(uint8_t set) {
     }
 
     if (!eval_running())
-        os_redir_print_string("Disconnected\r\n");
+        os_redir_print_string("Ready\r\n");
 }
 
 static void os_cat(void) {
@@ -581,7 +579,6 @@ static char *os_filename(const char *name, int16_t *type) {
 }
 
 static void os_loop_connected() {
-    static bool fkey = false;
     uint8_t buffer[NET_BUFFER_MAX];
 
     // Read data on socket in a non blocking mode
@@ -606,17 +603,8 @@ static void os_loop_connected() {
         os_disconnect(DB_MIN_SET);
     }
 
-    // If Cx/Fin: close socket [exit the connected mode]
-    if (key == 0x13) {
-        fkey = true;
-    } else {
-        if (fkey) {
-            if (key == 'Y') // CX/Fin
-            {
-                os_disconnect(DB_MIN_SET);
-            }
-            fkey = false;
-        }
+    if (key == '\x1b') {
+        os_disconnect(DB_MIN_SET);
     }
 }
 
