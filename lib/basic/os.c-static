@@ -344,12 +344,14 @@ static int os_get_string(char *buf, int size, char secret_char) {
         }
         if (key == 0x7F) // DEL key
         {
+            // FIXME: Use del_last_key()
             if (i > 0) {
                 i--;
                 os_redir_print_string("\b \b"); // Erase last character
             }
             continue;
         }
+        // FIXME: Manage "Annulation", and use del_last_key()
         if (key == '\r' || key == '\n') // Enter key
         {
             break;
