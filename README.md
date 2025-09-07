@@ -7,15 +7,7 @@
   en main à cause du "autoexec" )
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
-* [ ] Passer en minuscule automatquement
-* [ ] `RUN` d'un `.bst` ne doit pas supprimer les variables => doit faire un
-  `GOTO 0`
-* [ ] CX/Fin : ne doit pas être utilisé pour déconnecter car certains services
-  "Kiosque" l'utilise pour revenir à l'appli principale "3615". Utiliser plutôt
-  la même touche que pour arrêter le programme. Pareillement, la touche pour
-  arrêter le programme ne dois pas être Annulation. Choisir "ESC" ou "Ctrl+c".
-  Annulation pourrait être mappé sur "Ctrl+A" dans minterm, au lieu de ESC
-  actuellement
+* [ ] Passer en minuscule automatiquement
 * [ ] Édition de ligne / suppresion du dernier caractère : gérer les séquences
   de caractères spéciaux (G2, G1)
     * [x] G2 caractère spécial : tester si le caractère précédent est SS2
@@ -23,6 +15,13 @@
       sur 3 chars
     * [ ] G1 : si le caractère précédent est G1, le supprimer
     * [ ] G1 : Pouvoir introduire G1 (idéalement Ctrl+G)
+* [x] `RUN` d'un `.bst` ne doit pas supprimer les variables => doit faire un
+  `GOTO 0`
+* [x] CX/Fin : ne doit pas être utilisé pour déconnecter car certains services
+  "Kiosque" l'utilise pour revenir à l'appli principale "3615". Utiliser plutôt
+  la même touche que pour arrêter le programme (ESC). Pareillement, la touche
+  pour arrêter le programme ne dois pas être Annulation mais "ESC". Annulation
+  pourrait être mappé sur "Ctrl+A" dans minterm, au lieu de ESC actuellement
 * [x] `LOAD` `.bas` : Conversion UTF-8 vers MIN (voir `accents-utf8.txt`)
 * [x] Ajouter la commande `END` : Ca fait `STOP` et `CLEAR`, on ne peut pas
   `CONT`
