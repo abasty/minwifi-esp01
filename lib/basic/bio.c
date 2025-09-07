@@ -163,8 +163,8 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
                     if (*(dst - 2) == SS2) {
                         dst--;
                     } else if (len >= 3 && *(dst - 3) == SS2 &&
-                            is_char_diacritic(*(dst - 2)) &&
-                            is_char_mutable(*(dst - 1))) {
+                               is_char_diacritic(*(dst - 2)) &&
+                               is_char_mutable(*(dst - 1))) {
                         dst -= 2;
                     }
                 }
@@ -340,30 +340,171 @@ finalize:
     return err;
 }
 
+static void parse_utf8_to_minitel(char *dst, size_t dst_size, const char *src) {
+    while (*src && dst_size > 1) {
+        uint8_t prefix = *src;
+        if (prefix == 0xc3 || prefix == 0xc2 || prefix == 0xc5) {
+            uint8_t code = *(src + 1);
+            uint8_t seq[4] = {0};
+            seq[0] = '\x19'; // SS2
+            if (prefix == 0xc3) {
+                switch (code) {
+                case 0xa0: // à
+                    seq[1] = 'A';
+                    seq[2] = 'a';
+                    break;
+                case 0xa8: // è
+                    seq[1] = 'A';
+                    seq[2] = 'e';
+                    break;
+                case 0xb9: // ù
+                    seq[1] = 'A';
+                    seq[2] = 'u';
+                    break;
+                case 0xa9: // é
+                    seq[1] = 'B';
+                    seq[2] = 'e';
+                    break;
+                case 0xa2: // â
+                    seq[1] = 'C';
+                    seq[2] = 'a';
+                    break;
+                case 0xaa: // ê
+                    seq[1] = 'C';
+                    seq[2] = 'e';
+                    break;
+                case 0xae: // î
+                    seq[1] = 'C';
+                    seq[2] = 'i';
+                    break;
+                case 0xb4: // ô
+                    seq[1] = 'C';
+                    seq[2] = 'o';
+                    break;
+                case 0xbb: // û
+                    seq[1] = 'C';
+                    seq[2] = 'u';
+                    break;
+                case 0xa4: // ä
+                    seq[1] = 'H';
+                    seq[2] = 'a';
+                    break;
+                case 0xab: // ë
+                    seq[1] = 'H';
+                    seq[2] = 'e';
+                    break;
+                case 0xaf: // ï
+                    seq[1] = 'H';
+                    seq[2] = 'i';
+                    break;
+                case 0xb6: // ö
+                    seq[1] = 'H';
+                    seq[2] = 'o';
+                    break;
+                case 0xbc: // ü
+                    seq[1] = 'H';
+                    seq[2] = 'u';
+                    break;
+                case 0xa7: // ç
+                    seq[1] = 'K';
+                    seq[2] = 'c';
+                    break;
+                case 0x87: // Ç
+                    seq[1] = 'K';
+                    seq[2] = 'C';
+                    break;
+                case 0x9f: // ß
+                    seq[1] = '\x7b';
+                    break;
+                default:
+                    seq[0] = 0;
+                    break;
+                }
+            } else if (prefix == 0xc2) {
+                switch (code) {
+                case 0xa3: // £
+                    seq[1] = '\x23';
+                    break;
+                case 0xa7: // §
+                    seq[1] = '\x27';
+                    break;
+                case 0xb0: // °
+                    seq[1] = '\x30';
+                    break;
+                case 0xb1: // ±
+                    seq[1] = '\x31';
+                    break;
+                case 0xb7: // ÷
+                    seq[1] = '\x38';
+                    break;
+                case 0xbc: // ¼
+                    seq[1] = '\x34';
+                    break;
+                case 0xbd: // ½
+                    seq[1] = '\x35';
+                    break;
+                case 0xbe: // ¾
+                    seq[1] = '\x36';
+                    break;
+                default:
+                    seq[0] = 0;
+                    break;
+                }
+            } else if (prefix == 0xc5) {
+                switch (code) {
+                case 0x92: // Œ
+                    seq[1] = '\x6a';
+                    break;
+                case 0x93: // œ
+                    seq[1] = '\x7a';
+                    break;
+                default:
+                    seq[0] = 0;
+                    break;
+                }
+            }
+            size_t slen = strlen((char *)seq);
+            if (slen < dst_size) {
+                strcpy(dst, (char *)seq);
+                dst += slen;
+                dst_size -= slen;
+            }
+            src += 2;
+        } else {
+            *dst++ = *src++;
+        }
+    }
+    *dst = 0;
+}
+
 static int8_t os_load_ascii(int fd) {
     // Read lines from file
-    char line[IO_BUFFER_SIZE + 1] = {0};
-    char *read_ptr = line;
-    int32_t remains = hal_read(fd, line, IO_BUFFER_SIZE);
+    char line_utf8[IO_BUFFER_SIZE + 1] = {0};
+    int32_t remains = hal_read(fd, line_utf8, IO_BUFFER_SIZE);
     while (remains > 0) {
         // Find LF in line
-        char *lf = strchr(line, '\n');
+        char *lf = strchr(line_utf8, '\n');
         // If no LF in line, return BERROR_IO
         if (lf == 0)
             return BERROR_IO;
         // replace LF with 0
         *lf = 0;
         // If CR just before LF, replace CR with 0
-        if (lf > line && *(lf - 1) == '\r')
+        if (lf > line_utf8 && *(lf - 1) == '\r')
             *(lf - 1) = 0;
+        char line[IO_BUFFER_SIZE + 1] = {0};
+
+        // Convert utf8 chars into Minitel SS2 chars
+        parse_utf8_to_minitel(line, sizeof(line), line_utf8);
+
         // If line is empty, continue
-        int err = os_eval_string(read_ptr);
+        int err = os_eval_string(line);
         if (err < 0)
             return err;
 
-        remains -= (lf + 1 - line);
-        memmove(line, lf + 1, remains + 1);
-        int n = hal_read(fd, line + remains, IO_BUFFER_SIZE - remains);
+        remains -= (lf + 1 - line_utf8);
+        memmove(line_utf8, lf + 1, remains + 1);
+        int n = hal_read(fd, line_utf8 + remains, IO_BUFFER_SIZE - remains);
         if (n < 0)
             return BERROR_IO;
         remains += n;

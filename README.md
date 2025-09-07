@@ -8,7 +8,6 @@
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
 * [ ] Passer en minuscule automatquement
-* [ ] `LOAD` `.bas` : Conversion UTF-8 vers MIN (voir `accents-utf8.txt`)
 * [ ] `RUN` d'un `.bst` ne doit pas supprimer les variables => doit faire un
   `GOTO 0`
 * [ ] CX/Fin : ne doit pas être utilisé pour déconnecter car certains services
@@ -24,6 +23,7 @@
       sur 3 chars
     * [ ] G1 : si le caractère précédent est G1, le supprimer
     * [ ] G1 : Pouvoir introduire G1 (idéalement Ctrl+G)
+* [x] `LOAD` `.bas` : Conversion UTF-8 vers MIN (voir `accents-utf8.txt`)
 * [x] Ajouter la commande `END` : Ca fait `STOP` et `CLEAR`, on ne peut pas
   `CONT`
 * [x] Chaine de caractères 255 OK, si on ajoute un char => bug, pb sur toutes

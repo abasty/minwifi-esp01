@@ -10,7 +10,7 @@ at 2,13;size 1;"<<< METEOR >>>"
 ?at 4,1;"1.";underline 1;" Jouer";underline 0;" "
 ?"2. Records"
 ?"3. Configuration"
-?"4. Credits"
+?"4. Crédits"
 ?"5. Quitter"
 ?
 rem "----------------------------------------------"
@@ -37,15 +37,15 @@ line0;cleol
 cls;"\n";paper 1;" ";cleol;bottom$
 at 2,13;size 1;"<<< CREDITS >>>"
 ?at 5,20-6;size 3;inverse 1;"BASTOS"
-?at 7,2;"Inspire par :"
+?at 7,2;"Inspiré par :"
 ?" - Sinclair ZX81 / Spectrum"
 ?" - Oric 1 / Atmos"
 ?" - Amstrad CPC"
 ?
 ?at 14,20-6;size 3;flash 1;"METEOR";
-?at 16,1;" Inspire par";underline 1;" METEOR";underline 0;" : Premier jeu en"
+?at 16,1;" Inspiré par";underline 1;" METEOR";underline 0;" : Premier jeu en"
 ?" assembleur Z80 sur ZX81. Sur Minitel,"
-?" pas de memoire ecran, juste une prise"
+?" pas de mémoire écran, juste une prise"
 ?" 4800(M1B)/9600(M2) bps."
 rem "----------------------------------------------"
 output stop
