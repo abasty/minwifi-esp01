@@ -2,8 +2,12 @@
 
 ## Bugs (show stoppers)
 
+* [ ] Sur Minitel/Sonoff : "Error 1" au reset
+* [ ] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
+  en main à cause du "autoexec" )
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
+* [ ] Passer en minuscule automatquement
 * [ ] `LOAD` `.bas` : Conversion UTF-8 vers MIN (voir `accents-utf8.txt`)
 * [ ] `RUN` d'un `.bst` ne doit pas supprimer les variables => doit faire un
   `GOTO 0`
@@ -749,7 +753,7 @@ $ pio run -e minwifi -t clean
 <https://cq94.medium.com/retour-du-minitel-sur-le-web-8b8693ae8c6a>
 * <http://3611.re/> : Dans `minitel-3611.js` on a l'URI de la WebSocket :
   `"ws://3611.re/ws"`
-* <ws://mntl.joher.com:2018>
+* hacker : <ws://mntl.joher.com:2018>
 * <wss://go.minipavi.fr:8181/> "wss:go.minipavi.fr:8181" erreur sur header.
   Marche avec `./websocat --ws-dont-check-headers wss://go.minipavi.fr:8181/`
 
