@@ -69,7 +69,7 @@ void bastos_done() {
 
 bool bastos_is_reset() { return bmem == 0 || bmem->bstate.reset; }
 
-static void bastos_handle_ctrl_c() {
+static void bastos_handle_escape() {
     bastos_stop();
     *bmem->io_buffer = 0;
     os_redir_print_string("**Break**\r\n");
@@ -107,6 +107,25 @@ static bool is_char_diacritic(char test_char) {
     return false;
 }
 
+static void del_last_key(uint8_t **dst, bool echo) {
+    int32_t len = *dst - bmem->io_buffer;
+    if (len >= 1 && *(*dst - 1) != '\n') {
+        if (len >= 2) {
+            if (*(*dst - 2) == SS2) {
+                (*dst)--;
+            } else if (len >= 3 && *(*dst - 3) == SS2 &&
+                        is_char_diacritic(*(*dst - 2)) &&
+                        is_char_mutable(*(*dst - 1))) {
+                *dst -= 2;
+            }
+        }
+        (*dst)--;
+        **dst = 0;
+        if (echo)
+            hal_print_string(DEL);
+    }
+}
+
 void bastos_send_keys(const char *keys, size_t n, bool echo) {
     uint8_t *src = (uint8_t *)keys;
     uint8_t *dst = bmem->io_buffer;
@@ -115,9 +134,9 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
     if (n == 0 || src == 0 || *src == 0)
         return;
 
-    // If key is Ctrl+C, stop the program
-    if (*src == 3) {
-        bastos_handle_ctrl_c();
+    // If key is ESC, stop the program
+    if (*src == '\x1b') {
+        bastos_handle_escape();
         return;
     }
 
@@ -147,9 +166,9 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
     }
 
     while (size < IO_BUFFER_SIZE - 1 && *src && n > 0) {
-        if (*src == 3) { // Annulation
-            bastos_stop();
-            *bmem->io_buffer = 0;
+        if (*src == 1) { // Annulation (ctrl+A)
+            while (dst != bmem->io_buffer)
+                del_last_key(&dst, echo);
             return;
         } else if (*src == '\r') { // CR
             *dst++ = '\n';
@@ -157,22 +176,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
             if (echo)
                 hal_print_string("\r\n");
         } else if (*src == 127) { // Correction (DEL)
-            int32_t len = dst - bmem->io_buffer;
-            if (len >= 1 && *(dst - 1) != '\n') {
-                if (len >= 2) {
-                    if (*(dst - 2) == SS2) {
-                        dst--;
-                    } else if (len >= 3 && *(dst - 3) == SS2 &&
-                               is_char_diacritic(*(dst - 2)) &&
-                               is_char_mutable(*(dst - 1))) {
-                        dst -= 2;
-                    }
-                }
-                dst--;
-                *dst = 0;
-                if (echo)
-                    hal_print_string(DEL);
-            }
+            del_last_key(&dst, echo);
         } else {
             uint8_t *c = dst;
             *dst++ = *src++;
