@@ -8,6 +8,8 @@
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
 * [ ] Passer en minuscule automatiquement
+* [ ] BASTOS ou AUTOEXEC => Init string d'abord
+* [ ] Pour HACKER : Pouvoir faire un `ECHO 1`
 * [ ] Édition de ligne / suppresion du dernier caractère : gérer les séquences
   de caractères spéciaux (G2, G1)
     * [x] G2 caractère spécial : tester si le caractère précédent est SS2

@@ -1,0 +1,3 @@
+10 ECHO 1
+20 MINITEL "local"
+30 ECHO 0
