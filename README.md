@@ -2,14 +2,21 @@
 
 ## Bugs (show stoppers)
 
+* [ ] Chaine d'init à balancer même si autoexec. À rajouter : clavier étendu,
+  minuscules. Chaine d'init après retour mode connecté aussi
+    * [ ] Touche ESC ne fonctionne en mode videotex : passer en clavier étendu
+    (Fnct+C E)
+    * [ ] Passer en minuscule automatiquement (Fnct+C M)
+    * [ ] BASTOS ou AUTOEXEC => Init string d'abord
+* [ ] Passer WebSockets en mode binary sur ESP et pas text : essayer sur
+  minipavi (8182) voir si on est toujours déconnecté. Quand c'est OK avec
+  minipavi, essayer avec hacker, 3615, 3611 voir si ça marche toujours. Si ça
+  marche pas : faire une option binary / text
 * [ ] Sur Minitel/Sonoff : "Error 1" au reset
 * [ ] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
   en main à cause du "autoexec" )
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
-* [ ] Passer en minuscule automatiquement
-* [ ] BASTOS ou AUTOEXEC => Init string d'abord
-* [ ] Pour HACKER : Pouvoir faire un `ECHO 1`
 * [ ] Édition de ligne / suppresion du dernier caractère : gérer les séquences
   de caractères spéciaux (G2, G1)
     * [x] G2 caractère spécial : tester si le caractère précédent est SS2
@@ -17,6 +24,8 @@
       sur 3 chars
     * [ ] G1 : si le caractère précédent est G1, le supprimer
     * [ ] G1 : Pouvoir introduire G1 (idéalement Ctrl+G)
+* [x] Pour HACKER, définir le path de l'URN à `/?echo` ~~: Pouvoir faire un
+  `ECHO 1`~~
 * [x] `RUN` d'un `.bst` ne doit pas supprimer les variables => doit faire un
   `GOTO 0`
 * [x] CX/Fin : ne doit pas être utilisé pour déconnecter car certains services
@@ -34,12 +43,13 @@
   notifications, cat, etc.)
 * [x] `LOAD` d'un fichier `.var` suspend l'exécution du programme en cours
   d'exécution
-* [x] `MINIPAVI` : voir `minipavi-gw.sh`, solution temporaire à l'utilisation de
-  SSL dans le projet : WSS non suporté (connexion sur minipavi impossible).
-  Problème de SSL : ça prend plus 100KB... Au niveau mémoire, quand on baisse la
-  mémoire à 8KB pour le Basic on n'a plus de crash mais une erreur de connexion.
-  Erreur de connexion aussi en Flutter. Erreur aussi avec websocat, Marche avec
-  `./websocat -b --ws-dont-check-headers wss://go.minipavi.fr:8181/`
+* [x] `MINIPAVI` : Utiliser le port 8182 (WS sans SSL) ~~voir `minipavi-gw.sh`,
+  solution temporaire à l'utilisation de SSL dans le projet : WSS non suporté
+  (connexion sur minipavi impossible). Problème de SSL : ça prend plus 100KB...
+  Au niveau mémoire, quand on baisse la mémoire à 8KB pour le Basic on n'a plus
+  de crash mais une erreur de connexion. Erreur de connexion aussi en Flutter.
+  Erreur aussi avec websocat, Marche avec `./websocat -b --ws-dont-check-headers
+  wss://go.minipavi.fr:8181/`~~
 * [x] INPUT vide
 * [x] ~~Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
   serveur Minitel. Voir avec une websocket statique (pas de new / delete)~~

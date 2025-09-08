@@ -81,6 +81,11 @@
 #define P_ROULEAU_ON PRO2 "\x69\x43"
 #define P_ROULEAU_OFF PRO2 "\x6A\x43"
 
+#define P_CLAVIER_MINUSCULE PRO2 "\x69\x45"
+#define P_CLAVIER_MAJUSCULE PRO2 "\x6A\x45"
+#define P_CLAVIER_ETENDU PRO3 "\x69\x59\x41"
+#define P_CLAVIER_VIDEOTEX PRO3 "\x6A\x59\x41"
+
 // Déconnexion
 #define P_DECONNEXION PRO1 "\x67"
 
