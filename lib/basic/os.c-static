@@ -158,6 +158,7 @@ finalize:
 }
 
 static void os_autoexec(void) {
+    hal_print_string(MODE_INIT_STRING);
     if (bastos_load(AUTOEXEC_FILE) == BERROR_NONE) {
         running_state_clear();
         bmem->bstate.pc = bmem_prog_first_line();
@@ -444,7 +445,7 @@ static void os_disconnect(uint8_t set) {
     if (set == DB_MIN_SET) {
         hal_net_disconnect(set, bmem->bstate.sock);
         bmem->bstate.sock = -1;
-        os_redir_print_string("\r\n" P_ROULEAU_ON CON G0 INK7);
+        os_redir_print_string("\r\n" MODE_INIT_STRING CON G0 INK7);
     } else if (set == DB_FTP_SET) {
         hal_net_disconnect(set, -1);
         *g_ftp_connected_host = 0;

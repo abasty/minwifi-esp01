@@ -1217,9 +1217,7 @@ static void eval_free() {
 }
 
 static void eval_bastos() {
-    os_redir_print_string(
-        COFF P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU_ON LINE0 CLEOL CLS
-        " BASTOS ");
+    os_redir_print_string(MODE_INIT_STRING LINE0 CLEOL CLS " BASTOS ");
     os_redir_print_integer("%dK", BASTOS_MEMORY_SIZE_KB);
     os_redir_print_string(" Microcontroller (v1)\r\n Basic for Terminal "
                           "Operating System\r\n on ");
@@ -1759,8 +1757,10 @@ static bool eval_minitel() {
         return false;
 
     uint8_t func = eval_token_one_of((char *)minitel_func);
-    if (func == 0 || func == TOKEN_KEYWORD_START)
+    if (func == 0 || func == TOKEN_KEYWORD_START) {
+        hal_print_string(P_ROULEAU_OFF);
         return eval_connect(DB_MIN_SET);
+    }
 
     if (func == TOKEN_KEYWORD_LIST)
         return eval_db_list(DB_MIN_SET);

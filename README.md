@@ -2,16 +2,7 @@
 
 ## Bugs (show stoppers)
 
-* [ ] Chaine d'init à balancer même si autoexec. À rajouter : clavier étendu,
-  minuscules. Chaine d'init après retour mode connecté aussi
-    * [ ] Touche ESC ne fonctionne en mode videotex : passer en clavier étendu
-    (Fnct+C E)
-    * [ ] Passer en minuscule automatiquement (Fnct+C M)
-    * [ ] BASTOS ou AUTOEXEC => Init string d'abord
-* [ ] Passer WebSockets en mode binary sur ESP et pas text : essayer sur
-  minipavi (8182) voir si on est toujours déconnecté. Quand c'est OK avec
-  minipavi, essayer avec hacker, 3615, 3611 voir si ça marche toujours. Si ça
-  marche pas : faire une option binary / text
+* [ ] Déconnexion provenant d'un serveur websocket : semble ne pas fonctionner
 * [ ] Sur Minitel/Sonoff : "Error 1" au reset
 * [ ] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
   en main à cause du "autoexec" )
@@ -24,6 +15,12 @@
       sur 3 chars
     * [ ] G1 : si le caractère précédent est G1, le supprimer
     * [ ] G1 : Pouvoir introduire G1 (idéalement Ctrl+G)
+* [x] Chaine d'init à balancer même si autoexec. À rajouter : clavier étendu,
+  minuscules. Chaine d'init après retour mode connecté aussi
+    * [x] Touche ESC ne fonctionne en mode videotex : passer en clavier étendu
+    (Fnct+C E)
+    * [x] Passer en minuscule automatiquement (Fnct+C M)
+    * [x] BASTOS ou AUTOEXEC => Init string d'abord
 * [x] Pour HACKER, définir le path de l'URN à `/?echo` ~~: Pouvoir faire un
   `ECHO 1`~~
 * [x] `RUN` d'un `.bst` ne doit pas supprimer les variables => doit faire un
@@ -60,6 +57,13 @@
   tableaux. Ce n'est pas compatible avec le Basic ZX81 car on ne peut accéder au
   dernier caractère (qui est forcément `\0`) => chaine de caractères
   représentées par longueur (16 bits) + contenu
+
+## Bug minipavi
+
+* [ ] Websocket minipavi : ne fonctionne pas en mode ESP (sans gateway) :
+  déconnexion au bout d'un moment. Les touches ne partent pas, en tout cas on ne
+  les a pas en echo local, il semble qu'on doit être en mode binaire => debug
+  avec ludojoey
 
 ## Backend et doc
 
@@ -133,6 +137,7 @@
 * [ ] `TELNET` : au départ gérer avec un front end `ncat` qui passe en mode
   téléinformatique, et effectue la connexion telnet
 * [ ] Protocole FTP intégré à BASTOS (dispo dans le simu)
+* [ ] Websockets (sans SSL) intégrées ?
 * [ ] Projet serveur en Dart (package / lib minitel + lib server (voir http
   server)). Création de pages Videotex : voir COMPO et EDIMIN (marchent dans
   DOSbox)
@@ -588,6 +593,8 @@ Sur la DIN, 3 fils souples papa :
 TODO : Ajouter schéma + photo de sonoff + fils dupont + platine d'essai + dupont
 vers ftdi
 
+Attention sur les fils actuels : on ne croise pas le jaune et le vert.
+
 ```
 $ ls /dev/ttyUSB*
 /dev/ttyUSB0
@@ -750,7 +757,9 @@ $ pio run -e minwifi -t clean
 * <http://pficheux.free.fr/xtel/>
 * <https://forum.museeminitel.fr/t/minitel-esp32-carte-peri-informatique-wifi-ble/711/42>
 * <https://www.tindie.com/products/iodeo/minitel-esp32-dev-board/>
-* Code minitel : <http://millevaches.hydraule.org/info/minitel/specs/codes.htm>
+* Codes minitel :
+  <http://millevaches.hydraule.org/info/minitel/specs/codes.htm>, norme
+  <https://millevaches.hydraule.org/info/minitel/specs/norme.htm>
 * Python minitel avec fonctions et code :
   <https://github.com/Zigazou/PyMinitel/blob/master/minitel/Minitel.py>
 
