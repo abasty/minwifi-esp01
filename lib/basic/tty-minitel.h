@@ -37,7 +37,9 @@
 #define COFF "\x14"
 
 #define G0 "\x0F"
+#define SI (0x0f)
 #define G1 "\x0E"
+#define SO (0x0e)
 #define G2 "\x19"
 #define SS2 (0x19)
 

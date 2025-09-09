@@ -6,19 +6,21 @@
   Minitel / Minterm et la programmer côté ESP (SonOff et carte de dev), voir
   avec les commandes protocoles "non masquables" (position curseur ? Vitesse
   prise ?)
+* [ ] Si possible, `INPUT` vide : ne change pas la valeur de la variable
 * [ ] Déconnexion provenant d'un serveur websocket : semble ne pas fonctionner
 * [ ] Sur Minitel/Sonoff : "Error 1" au reset
 * [ ] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
-  en main à cause du "autoexec" )
+  en main à cause du "autoexec" ).
+* [ ] Bouton reset : détecter appui long, appui court, 2 appuis
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
-* [ ] Édition de ligne / suppresion du dernier caractère : gérer les séquences
+* [x] Édition de ligne / suppresion du dernier caractère : gérer les séquences
   de caractères spéciaux (G2, G1)
     * [x] G2 caractère spécial : tester si le caractère précédent est SS2
     * [x] G2 accents (aeiuo) / cédille (cC) : tester les séquences admissibles
       sur 3 chars
-    * [ ] G1 : si le caractère précédent est G1, le supprimer
-    * [ ] G1 : Pouvoir introduire G1 (idéalement Ctrl+G)
+    * [x] G1 : si le caractère précédent est G1, le supprimer
+    * [x] G1 : Pouvoir introduire G1 (idéalement Ctrl+G)
 * [x] Chaine d'init à balancer même si autoexec. À rajouter : clavier étendu,
   minuscules. Chaine d'init après retour mode connecté aussi
     * [x] Touche ESC ne fonctionne en mode videotex : passer en clavier étendu

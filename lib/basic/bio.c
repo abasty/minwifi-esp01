@@ -108,12 +108,18 @@ static bool is_char_diacritic(char test_char) {
 }
 
 static void del_last_key(uint8_t **dst, bool echo) {
+    // FIXME: handle single SS2 or G1
     int32_t len = *dst - bmem->io_buffer;
     if (len >= 1 && *(*dst - 1) != '\n') {
         if (len >= 2) {
-            if (*(*dst - 2) == SS2) {
+            if (*(*dst - 2) == SS2){
                 (*dst)--;
-            } else if (len >= 3 && *(*dst - 3) == SS2 &&
+            } else if (*(*dst - 2) == SO) {
+                (*dst)--;
+                if (echo)
+                    hal_print_string(G0);
+            }
+            else if (len >= 3 && *(*dst - 3) == SS2 &&
                         is_char_diacritic(*(*dst - 2)) &&
                         is_char_mutable(*(*dst - 1))) {
                 *dst -= 2;
@@ -173,7 +179,13 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
             del_last_key(&dst, echo);
         } else {
             uint8_t *c = dst;
-            *dst++ = *src++;
+            if (*src == 7) { // Ctrl+G
+                bmem->bstate.g_mode = !bmem->bstate.g_mode;
+                *dst++ = bmem->bstate.g_mode ? SO : SI;
+                src++;
+            } else {
+                *dst++ = *src++;
+            }
             *dst = 0;
             size++;
             if (echo)
