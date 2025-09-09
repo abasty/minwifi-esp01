@@ -1,1 +1,1 @@
-run"meteor.vdt.bas"
+10 run"meteor.vdt.bas"
