@@ -116,6 +116,7 @@ static void del_last_key(uint8_t **dst, bool echo) {
                 (*dst)--;
             } else if (*(*dst - 2) == SO) {
                 (*dst)--;
+                bmem->bstate.g_mode = false;
                 if (echo)
                     hal_print_string(G0);
             }
@@ -173,8 +174,9 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
         } else if (*src == '\r') { // CR
             *dst++ = '\n';
             src++;
+            bmem->bstate.g_mode = false;
             if (echo)
-                hal_print_string("\r\n");
+                hal_print_string(G0 "\r\n");
         } else if (*src == 127) { // Correction (DEL)
             del_last_key(&dst, echo);
         } else {
