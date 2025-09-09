@@ -1009,6 +1009,9 @@ static bool eval_let() {
 static int8_t eval_input_store(char *io_string) {
     eval_input_mode(false);
 
+    if (strlen(io_string) == 0)
+        return BERROR_NONE;
+
     if (bmem->bstate.input_var_token == TOKEN_VARIABLE_NUMBER) {
         char *end_ptr = 0;
         float value = strtof(io_string, &end_ptr);
@@ -1053,12 +1056,17 @@ static bool eval_input() {
 
         // Create input variable
         if (bmem->bstate.input_var_token == TOKEN_VARIABLE_NUMBER) {
-            // Create variable with default value of 0
-            bmem->bstate.input_var =
-                bmem_var_number_set(bmem->bstate.var_ref, 0);
+            bmem->bstate.input_var = bmem_var_get(bmem->bstate.var_ref);
+            if (bmem->bstate.input_var == 0) {
+                bmem->bstate.input_var =
+                    bmem_var_number_set(bmem->bstate.var_ref, 0);
+            }
         } else if (bmem->bstate.input_var_token == TOKEN_VARIABLE_STRING) {
-            bmem->bstate.input_var =
-                bmem_var_string_set(bmem->bstate.var_ref, "", true);
+            bmem->bstate.input_var = bmem_var_get(bmem->bstate.var_ref);
+            if (bmem->bstate.input_var == 0) {
+                bmem->bstate.input_var =
+                    bmem_var_string_set(bmem->bstate.var_ref, "", true);
+            }
         }
         if (bmem->bstate.input_var == 0)
             return false;

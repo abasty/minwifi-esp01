@@ -6,7 +6,6 @@
   Minitel / Minterm et la programmer côté ESP (SonOff et carte de dev), voir
   avec les commandes protocoles "non masquables" (position curseur ? Vitesse
   prise ?)
-* [ ] Si possible, `INPUT` vide : ne change pas la valeur de la variable
 * [ ] Déconnexion provenant d'un serveur websocket : semble ne pas fonctionner
 * [ ] Sur Minitel/Sonoff : "Error 1" au reset
 * [ ] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
@@ -14,6 +13,7 @@
 * [ ] Bouton reset : détecter appui long, appui court, 2 appuis
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
+* [x] Si possible, `INPUT` vide : ne change pas la valeur de la variable
 * [x] Édition de ligne / suppresion du dernier caractère : gérer les séquences
   de caractères spéciaux (G2, G1)
     * [x] G2 caractère spécial : tester si le caractère précédent est SS2

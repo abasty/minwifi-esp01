@@ -1,10 +1,16 @@
-5 a=1
-10 a$="a=["+STR$(a)+"]"
-20 PRINT a$;
-30 INPUT ": ",a
-35 PRINT "a=";a
-40 IF a<>0 THEN 10
-100 INPUT "chaine: ",c$
-110 PRINT c$
-120 IF c$<>"" THEN 100
-130 GOTO 10
+1 cls
+
+10 a=1
+20 c$="toto"
+
+40 ? "Entre 'a' [" STR$(a) "]: ";
+50 INPUT a
+60 ? "a: ";a
+70 IF a<>0 THEN 40
+
+100 ? "Entre 'c$' [" c$ "] ou 'fin' : ";
+110 INPUT c$
+120 ? "c$: \"" c$ "\""
+130 IF c$<>"fin" THEN 100
+
+200 GOTO 40
