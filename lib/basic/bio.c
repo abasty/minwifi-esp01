@@ -155,13 +155,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
 
     // If buffer is full, remove the last char
     if (size == IO_BUFFER_SIZE - 1 && *src == 127) {
-        // Do not handle g1 / g2 on the last char (syntax error side effect if
-        // special char in the last io_buffer position)
-        size--;
-        dst--;
-        *dst = 0;
-        if (echo)
-            hal_print_string(DEL);
+        del_last_key(&dst, echo);
         return;
     }
 
