@@ -2,6 +2,10 @@
 
 ## Bugs (show stoppers)
 
+* [ ] AJouter une heuristique pour connaitre la vitesse du port série côté
+  Minitel / Minterm et la programmer côté ESP (SonOff et carte de dev), voir
+  avec les commandes protocoles "non masquables" (position curseur ? Vitesse
+  prise ?)
 * [ ] Déconnexion provenant d'un serveur websocket : semble ne pas fonctionner
 * [ ] Sur Minitel/Sonoff : "Error 1" au reset
 * [ ] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
@@ -67,11 +71,15 @@
 
 ## Backend et doc
 
+* [x] Présence sur le musée du minitel
 * [ ] Réseau social : Mastodon only
-* [ ] Blog : page perso free ?
-* [ ] Présence sur le musée du minitel
-* [ ] Blog / Wordpress ou autre sur Free (page perso retro: Minitel / HP48 /
-  ORIC 1 / PalmOS)
+* [ ] Blog (page perso retro: Minitel / HP48 / ORIC 1 / PalmOS) : page perso
+  free ? Voir
+  <http://les.pages.perso.chez.free.fr/bonnes-pratiques-et-cms-cle-en-main.io>.
+  Ou alors un truc sur mesure fait avec Flutter (possibilité d'y inclure
+  l'émulateur)
+* [ ] TEMU (https://bellard.org/jslinux/), à voir si on peut installer ça sur
+  IONOS et y faire tourner des anciens softs
 
 * [ ] Github pages, wiki ?
 * [ ] Github releases (download et procédure d'install)
