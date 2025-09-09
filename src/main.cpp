@@ -55,6 +55,8 @@ static int g_web_socket_unread_bytes = 0;
 static FTPClient g_ftp_client;
 static bool g_ftp_connected = false;
 
+static void serial_flush();
+
 void hal_print_oem_string(void)
 {
     hal_print_string("ESP8285");
@@ -181,9 +183,11 @@ void hal_speed(uint8_t fn)
     {
 #ifdef MINITEL
         hal_print_string(fn == TOKEN_KEYWORD_FAST ? P_PRISE_4800 : P_PRISE_1200);
-        delay(500);
+        delay(250);
         Serial.end();
         Serial.begin(fn == TOKEN_KEYWORD_FAST ? 4800 : 1200, SERIAL_7E1);
+        delay(250);
+        serial_flush();
 #endif
         return;
     }
