@@ -72,7 +72,7 @@ bool bastos_is_reset() { return bmem == 0 || bmem->bstate.reset; }
 static void bastos_handle_escape() {
     bastos_stop();
     *bmem->io_buffer = 0;
-    os_redir_print_string("**Break**\r\n");
+    os_redir_print_string("*Break*\r\n");
 }
 
 static bool is_char_mutable(char test_char) {

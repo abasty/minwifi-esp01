@@ -71,7 +71,7 @@ char tty_codes[] = {
     TOKEN_KEYWORD_CURSOR,  TOKEN_KEYWORD_CLS,       TOKEN_KEYWORD_BEEP,
     TOKEN_KEYWORD_CLEOL,   TOKEN_KEYWORD_LINE0,     TOKEN_KEYWORD_FLASH,
     TOKEN_KEYWORD_INVERSE, TOKEN_KEYWORD_UNDERLINE, TOKEN_KEYWORD_ECHO,
-    TOKEN_KEYWORD_SIZE,    0,
+    TOKEN_KEYWORD_SIZE,    TOKEN_KEYWORD_SCROLL,    0,
 };
 
 const char compare_tokens[] = {
@@ -1389,8 +1389,25 @@ static bool eval_string_tty() {
         goto EVAL;
     }
 
-    if (!eval_float_expr())
+    // special args
+    if (fn == TOKEN_KEYWORD_SCROLL) {
+        if (eval_token(TOKEN_KEYWORD_UP)) {
+            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CUR "\n", 24 + CUR_DELTA_V, 1 + CUR_DELTA_H);
+            goto EVAL;
+        }
+        if (eval_token(TOKEN_KEYWORD_DOWN)) {
+            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x1e\x0b");
+            goto EVAL;
+        }
+    }
+
+    if (!eval_float_expr()) {
+        if (fn == TOKEN_KEYWORD_SCROLL) {
+            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CUR "\n", 24 + CUR_DELTA_V, 1 + CUR_DELTA_H);
+            goto EVAL;
+        }
         return false;
+    }
 
     // 1 arg
     uint8_t arg1 = bmem->bstate.number;
@@ -1433,6 +1450,11 @@ static bool eval_string_tty() {
             return false;
         }
         snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x1b%c", arg1 + '\x4c');
+        goto EVAL;
+    }
+
+    if (fn == TOKEN_KEYWORD_SCROLL) {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? P_ROULEAU_ON : P_ROULEAU_OFF);
         goto EVAL;
     }
 

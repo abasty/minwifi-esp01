@@ -191,8 +191,8 @@
 * [x] `AT 1,1` => HOME ("\x1E"), `AT 1,2` => "\x1e\x09", `AT 2,1` => "\x1e\n"
 * [x] `LINE0`
 * [x] "\n\r\t\x08\x0b" (LF, CR, HT, BS, VT, etc)
+* [x] `SCROLL 0|1|[UP]|DOWN`
 * [ ] TAB
-* [ ] SCROLL (START, STOP, UP, DOWN)
 * [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
 
 * [ ] FAST FAST (9600 / Minitel 2)
