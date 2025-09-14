@@ -2,6 +2,8 @@
 
 ## Bugs (show stoppers)
 
+* [ ] Touches de direction : génère un ESC + 2 caractères, il faudrait que ça
+  génère des directions (des ctrl H/I/J/K)
 * [ ] AJouter une heuristique pour connaitre la vitesse du port série côté
   Minitel / Minterm et la programmer côté ESP (SonOff et carte de dev), voir
   avec les commandes protocoles "non masquables" (position curseur ? Vitesse
@@ -13,6 +15,7 @@
 * [ ] Bouton reset : détecter appui long, appui court, 2 appuis
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
+
 * [x] Si possible, `INPUT` vide : ne change pas la valeur de la variable
 * [x] Édition de ligne / suppresion du dernier caractère : gérer les séquences
   de caractères spéciaux (G2, G1)
@@ -71,34 +74,44 @@
   les a pas en echo local, il semble qu'on doit être en mode binaire => debug
   avec ludojoey
 
-## Backend et doc
-
-* [x] Présence sur le musée du minitel
-* [ ] Réseau social : Mastodon only
-* [ ] Blog (page perso retro: Minitel / HP48 / ORIC 1 / PalmOS) : page perso
-  free ? Voir
-  <http://les.pages.perso.chez.free.fr/bonnes-pratiques-et-cms-cle-en-main.io>.
-  Ou alors un truc sur mesure fait avec Flutter (possibilité d'y inclure
-  l'émulateur)
-* [ ] TEMU (https://bellard.org/jslinux/), à voir si on peut installer ça sur
-  IONOS et y faire tourner des anciens softs
-
-* [ ] Github pages, wiki ?
-* [ ] Github releases (download et procédure d'install)
-
-* [ ] Home self hosting possible pour les services de bouncing (éventuellement
-  via ngrock + authentication)
-* [ ] Serveurs sur IONOS (faire framework en Dart, à la flutter éventuellement)
-* [ ] FTP sur IONOS
-* [ ] WSS/TCP gateway sur IONOS (filter par IP), réflechir à un serveur Dart qui
-  fait le passe plat, liste blanche basée sur IP ?
-* [ ] TELNET bouncing sur IONOS
-
-* [ ] Doc lyx ou MD, Amazon kindle ou Lulu (ou voir solution Framasoft)
-* [ ] Hackable pour la manip avec le SonOff
-
 ## Fonctionnalités
 
+* [ ] Gérer les codes INSL, DELL, DELC, DINSC, FINSC
+* [ ] PAUSE <N>
+* [ ] PLOT / UNPLOT / TEST (Voir serveur zboub et lib graphique)
+  * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
+  * [ ] Minitel, semi graphique
+* [ ] RAND
+* [ ] TAB
+* [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
+
+* [ ] FAST FAST (9600 / Minitel 2)
+
+* [ ] EDIT line, EDIT tout seul édite la dernière entrée (raccourci: fleche haut)
+* [ ] Ajouter `EDIT <LINE_NO>`, integration "edit_min" ?
+* [ ] EVAL / EVAL$ => Voir `os_eval_string()`, utilisé pour le `LOAD`
+* [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
+  seule commande print.
+
+* SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs
+  (voir dans `MINOLD.PAS`)
+
+* [ ] PEEK (y compris variables OS ?) / POKE / USR : adresses converties par
+  rapport au début du bloc (0 à 32K+4K). PEEK16 / POKE16. Les pointeurs
+  pourraient être à l'extérieur et dans le bstate on ne mettrait que des offsets
+  sur 16 bits => on pourrait modifier vars_start / vars_end. `@<VAR>`,
+  `@<LINE_NO>`, `@DB <SET>,<KEY>`
+
+* [x] `BEEP`, `CLEOL`,
+* [x] `SIZE 0|1|2|3`
+* [x] `FLASH 0|1`, `INVERSE 0|1`, `UNDERLINE 0|1`
+* [x] `CURSOR 0|1` ~~con, coff~~
+* [x] `REP$ <N>,<STRING>`
+* [x] `ECHO 0|1`
+* [x] `AT 1,1` => HOME ("\x1E"), `AT 1,2` => "\x1e\x09", `AT 2,1` => "\x1e\n"
+* [x] `LINE0`
+* [x] "\n\r\t\x08\x0b" (LF, CR, HT, BS, VT, etc)
+* [x] `SCROLL 0|1|[UP]|DOWN`
 * [x] `?` pour `PRINT` (PET CBM, MSX, MS Basic) : "Ask to computer : ?2+2"
   <https://stackoverflow.com/questions/23597690/following-standards-or-not>
 * [x] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
@@ -140,28 +153,9 @@
       prog, avec ou sans var est le même, par contre lorsqu'on load des vars, il
       ne faut pas supprimer le programme existant
     * [x] `LOAD` `.bas`. Lire ligne par ligne, Similaire au mode interactif
-
 * [x] `RUN [<FILE> [, <NO_LINE> ]]` ou `RUN [<NO_LINE>]`
 * [x] `autoexec.bas`
-* [ ] Serveur ftp sur IONOS (changer port par défaut)
-* [ ] `TELNET` : au départ gérer avec un front end `ncat` qui passe en mode
-  téléinformatique, et effectue la connexion telnet
-* [ ] Protocole FTP intégré à BASTOS (dispo dans le simu)
-* [ ] Websockets (sans SSL) intégrées ?
-* [ ] Projet serveur en Dart (package / lib minitel + lib server (voir http
-  server)). Création de pages Videotex : voir COMPO et EDIMIN (marchent dans
-  DOSbox)
-
 * [x] Fichiers ".db" => `autoload.db`
-* [ ] Gérer l'historique avec la DB config (une seule chaîne, séparée par des
-  "\0", ou "HIST_0" à "HIST_9")
-* [ ] Ramener les variables OS dans le bstate
-
-* [x] Non: ~~Uniquement majuscules noms de fichiers 8+3~~
-* [x] Non: ~~CAT ne doit pas afficher les fichiers finissant par "$$$"~~
-* [x] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.bst` /
-  `.bas` ?
-
 * [x] RUN line, RUN "autorun.bst", RUN "program.bst", line
 * [x] `SAVE`, `LOAD` : pouvoir faire du `.bas` et du `.bst`. Non : ~~Majuscules
   / Minucules : toujours en majuscules sur disque, pour faire plus rétro.~~
@@ -180,42 +174,51 @@
   utilisent un buffer et `hal_print_buffer` ou, si OUTPUT est une variable,
   ajoute le buffer à la variable.
 
+* [ ] `TELNET` : au départ gérer avec un front end `ncat` qui passe en mode
+  téléinformatique, et effectue la connexion telnet
+* [ ] Protocole FTP intégré à BASTOS (dispo dans le simu)
+* [ ] Websockets (sans SSL) intégrées ?
+
+* [ ] Gérer l'historique avec la DB config (une seule chaîne, séparée par des
+  "\0", ou "HIST_0" à "HIST_9")
+* [ ] Ramener les variables OS dans le bstate
+
 * [ ] Pouvoir flasher depuis un fichier sur LittleFS téléchargé par FTP ()
 
-* [x] `BEEP`, `CLEOL`,
-* [x] `SIZE 0|1|2|3`
-* [x] `FLASH 0|1`, `INVERSE 0|1`, `UNDERLINE 0|1`
-* [x] `CURSOR 0|1` ~~con, coff~~
-* [x] `REP$ <N>,<STRING>`
-* [ ] `ECHO 0|1`
-* [x] `AT 1,1` => HOME ("\x1E"), `AT 1,2` => "\x1e\x09", `AT 2,1` => "\x1e\n"
-* [x] `LINE0`
-* [x] "\n\r\t\x08\x0b" (LF, CR, HT, BS, VT, etc)
-* [x] `SCROLL 0|1|[UP]|DOWN`
-* [ ] TAB
-* [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
+* [x] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.bst` /
+  `.bas` ?
 
-* [ ] FAST FAST (9600 / Minitel 2)
+* [x] Non: ~~Uniquement majuscules noms de fichiers 8+3~~
+* [x] Non: ~~CAT ne doit pas afficher les fichiers finissant par "$$$"~~
 
-* [ ] PAUSE
-* [ ] PLOT / UNPLOT / TEST (Voir serveur zboub et lib graphique)
-  * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
-  * [ ] Minitel, semi graphique
-* [ ] RAND
-* [ ] EDIT line, EDIT tout seul édite la dernière entrée (raccourci: fleche haut)
-* [ ] Ajouter `EDIT <LINE_NO>`, integration "edit_min" ?
-* [ ] EVAL / EVAL$ => Voir `os_eval_string()`, utilisé pour le `LOAD`
-* [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
-  seule commande print.
+## Backend et doc
 
-* [ ] PEEK (y compris variables OS ?) / POKE / USR : adresses converties par
-  rapport au début du bloc (0 à 32K+4K). PEEK16 / POKE16. Les pointeurs
-  pourraient être à l'extérieur et dans le bstate on ne mettrait que des offsets
-  sur 16 bits => on pourrait modifier vars_start / vars_end. `@<VAR>`,
-  `@<LINE_NO>`, `@DB <SET>,<KEY>`
+* [x] Présence sur le musée du minitel
+* [ ] Réseau social : Mastodon only
+* [ ] Blog (page perso retro: Minitel / HP48 / ORIC 1 / PalmOS) : page perso
+  free ? Voir
+  <http://les.pages.perso.chez.free.fr/bonnes-pratiques-et-cms-cle-en-main.io>.
+  Ou alors un truc sur mesure fait avec Flutter (possibilité d'y inclure
+  l'émulateur)
+* [ ] TEMU (https://bellard.org/jslinux/), à voir si on peut installer ça sur
+  IONOS et y faire tourner des anciens softs
 
-* SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs
-  (voir dans `MINOLD.PAS`)
+* [ ] Github pages, wiki ?
+* [ ] Github releases (download et procédure d'install)
+
+* [ ] Home self hosting possible pour les services de bouncing (éventuellement
+  via ngrock + authentication)
+* [ ] Serveurs sur IONOS (faire framework en Dart, à la flutter éventuellement)
+* [ ] FTP sur IONOS
+* [ ] WSS/TCP gateway sur IONOS (filter par IP), réflechir à un serveur Dart qui
+  fait le passe plat, liste blanche basée sur IP ?
+* [ ] TELNET bouncing sur IONOS
+* [ ] Projet serveur en Dart (package / lib minitel + lib server (voir http
+  server)). Création de pages Videotex : voir COMPO et EDIMIN (marchent dans
+  DOSbox)
+
+* [ ] Doc lyx ou MD, Amazon kindle ou Lulu (ou voir solution Framasoft)
+* [ ] Hackable pour la manip avec le SonOff
 
 # Idées futures
 

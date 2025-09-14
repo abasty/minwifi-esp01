@@ -87,11 +87,17 @@ ModePage = [$1B $3A $6A $43]
 
 Transparence [Obj]= [PRO2 $66 longueur[Obj] Obj]
 
+; Les commandes insl, decl, dell ne prenne pas en compte la taille (1 ligne
+physique, 1 caractère physique)
+
 INSL = [$1B $5B $4C]
 
 DELC = [$1B $5B $50]
 
 DELL = [$1B $5B $4D]
+
+; Le début d'insertion n'est arrêté que par une fin d'insertion. L'insertion se
+; fait au niveau d'un caractère (croisement ligne / colonne)
 
 DINSC = [$1B $5B $34 $68]
 
@@ -116,4 +122,3 @@ debut
 fin
 
 info = fichier ["SYSINF"]
-
