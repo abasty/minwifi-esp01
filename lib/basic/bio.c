@@ -165,8 +165,11 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
         return;
     }
 
-    // If key is not a printable char nor an editing key, ignore it
+    // If key is not a printable char nor an editing key, BASTOS ignores it but
+    // the key is sent to terminal
     if (!is_char_input_key(*src)) {
+        if (echo)
+            hal_print_buffer(src, 1);
         return;
     }
 
