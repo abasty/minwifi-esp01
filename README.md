@@ -195,8 +195,9 @@
 
 * [x] Présence sur le musée du minitel
 * [ ] Réseau social : Mastodon only
-* [ ] Blog / CMS : hugo + [HBS](https://hbs.razonyang.com/) + [mastodon comments]
-  (https://andreas.scherbaum.la/post/2024-05-23_client-side-comments-with-mastodon-on-a-static-hugo-website/)
+* [ ] Blog / CMS : hugo +
+  [hextra](https://imfing.github.io/hextra/docs/guide/organize-files/)
+* [ ] [mastodon comments] (https://andreas.scherbaum.la/post/2024-05-23_client-side-comments-with-mastodon-on-a-static-hugo-website/)
 * [ ] Blog / content : pages perso retro: Minitel / HP48 / ORIC 1 / PalmOS / ...
 * [ ] Blog / hébergement
   * [ ] Free <http://les.pages.perso.chez.free.fr/bonnes-pratiques-et-cms-cle-en-main.io>.

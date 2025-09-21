@@ -372,6 +372,8 @@ static uint8_t os_get_key() {
     static bool fkey = false;
     uint8_t key = hal_get_key();
 
+    // If key == Ox1b then do what must be done
+
     if (key == 0)
         return 0; // No key pressed
 
