@@ -107,6 +107,18 @@ static bool is_char_diacritic(char test_char) {
     return false;
 }
 
+static bool is_char_input_key(char test_char) {
+    if (test_char >= ' ') // Printable chars and DEL
+        return true;
+    if (test_char == '\r') // Enter key
+        return true;
+    if (test_char == '\x01') // Clear entry key (Ctrl+A)
+        return true;
+    if (test_char == '\x07') // Graphic key (Ctrl+G)
+        return true;
+    return false;
+}
+
 static void del_last_key(uint8_t **dst, bool echo) {
     // FIXME: handle single SS2 or G1
     int32_t len = *dst - bmem->io_buffer;
@@ -142,7 +154,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
         return;
 
     // If key is ESC, stop the program
-    if (*src == '\x1b') {
+    if (*src == '\e') {
         bastos_handle_escape();
         return;
     }
@@ -150,6 +162,11 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
     // If running and not inputting, store the key in inkey state
     if (eval_running() && !eval_inputting()) {
         bmem->bstate.inkey = (char)*src;
+        return;
+    }
+
+    // If key is not a printable char nor an editing key, ignore it
+    if (!is_char_input_key(*src)) {
         return;
     }
 
