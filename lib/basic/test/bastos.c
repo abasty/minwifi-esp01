@@ -70,6 +70,10 @@ uint8_t hal_get_key()
     if (n <= 0)
         goto err;
 
+    // Conversion from PC key codes to BASTOS ones
+    if (ch == 0x08) {
+        ch = 0x7f;
+    }
     return ch;
 
 err:

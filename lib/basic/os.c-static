@@ -368,38 +368,96 @@ static int os_get_string(char *buf, int size, char secret_char) {
     return i;      // Return the number of characters read
 }
 
+#define KEY_STATE_NORMAL (0)
+#define KEY_STATE_SEP (1)
+#define KEY_STATE_ESC (2)
+#define KEY_STATE_CSI (3)
+
+#define KEY_CODE_SEP (0x13u)
+#define KEY_CODE_ESC (0x1bu)
+#define KEY_CODE_CSI (0x5bu)
+
 static uint8_t os_get_key() {
-    static bool fkey = false;
+    static int32_t state = KEY_STATE_NORMAL;
+
     uint8_t key = hal_get_key();
 
-    // If key == Ox1b then do what must be done
-
     if (key == 0)
-        return 0; // No key pressed
+        return 0;
 
-    if (key == 0x13) {
-        // Function key pressed
-        fkey = true;
-        key = 0;
-    } else {
-        if (fkey) {
-            if (key == 0x47) {                     // CORRECTION key
-                key = 0x7F;                        // Convert backspace to DEL
-            } else if (key == 0x45) {              // ANNULATION key
-                key = 1;                           // Convert to Ctrl+A
-            } else if (key == 0x59) {              // CX/FIN key
-                key = 0;                           // Ignore it
-                os_redir_print_string("\x13\x59"); // Send CX/Fin to terminal
-            } else {        // ENVOI and other function keys
-                key = '\r'; // Convert to Enter
-            }
-            fkey = false;
+    switch (state) {
+
+    case KEY_STATE_NORMAL:
+        if (key == KEY_CODE_SEP) {
+            state = KEY_STATE_SEP;
+            key = 0;
+        } else if (key == KEY_CODE_ESC)  {
+            state = KEY_STATE_ESC;
+            key = 0;
         } else {
-            if (key == 0x08) {
-                key = 0x7F; // Convert backspace to DEL
-            }
+            // no key conversion
         }
+        break;
+
+    case KEY_STATE_SEP:
+        if (key == 0x41) {
+            // Convert Minitel ENVOI key to BASTOS Enter key
+            key = '\r';
+        } else if (key == 0x47) {
+            // Convert Minitel CORRECTION key to BASTOS DEL key
+            key = 0x7F;
+        } else if (key == 0x45) {
+            // Convert Minitel ANNULATION key to BASTOS Ctrl+A key
+            key = 1;
+        } else if (key == 0x59) {
+            // Take action on Minitel CX/Fin key (send it to Minitel)
+            key = 0;
+            os_redir_print_string("\x13\x59");
+        } else {
+            // Other SEP keys are ignored by BASTOS
+            key = 0;
+        }
+        state = KEY_STATE_NORMAL;
+        break;
+
+    case KEY_STATE_ESC:
+        if (key == KEY_CODE_ESC) {
+            // Double ESC generates BASTOS break (Same as CPC)
+            // key = KEY_CODE_ESC;
+            state = KEY_STATE_NORMAL;
+        } else if (key == KEY_CODE_CSI) {
+            // CSI sequence (arrow keys)
+            key = 0;
+            state = KEY_STATE_CSI;
+        } else {
+            // Forgot ESC sequence
+            // FIXME: Filter ESC sequences w/ more than 2 bytes
+            key = 0;
+            state = KEY_STATE_NORMAL;
+        }
+        break;
+
+    case KEY_STATE_CSI:
+        if (key == 'A') {
+            key = 0x0b;
+        } else if (key == 'B') {
+            key = 0x0a;
+        } else if (key == 'C') {
+            key = 0x09;
+        } else if (key == 'D') {
+            key = 0x08;
+        } else {
+            // Forgot CSI sequence
+            // FIXME: Filter CSI sequences w/ more than 3 bytes
+            key = 0;
+        }
+        state = KEY_STATE_NORMAL;
+        break;
+
+    default:
+        break;
     }
+
     return key;
 }
 
