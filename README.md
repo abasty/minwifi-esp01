@@ -2,8 +2,10 @@
 
 ## Bugs (show stoppers)
 
-* [ ] Touches de direction : génère un ESC + 2 caractères, il faudrait que ça
-  génère des directions (des ctrl H/I/J/K)
+* [ ] Touches de direction : génère un ESC + 2 caractères ([Touches en mode
+  clavier étendu](#touches-en-mode-clavier-%C3%A9tendu))
+  * [ ] Implémenter dans minterm (clavier virtuel et physique)
+  * [ ] Implémenter dans `os_get_key()`
 * [ ] AJouter une heuristique pour connaitre la vitesse du port série côté
   Minitel / Minterm et la programmer côté ESP (SonOff et carte de dev), voir
   avec les commandes protocoles "non masquables" (position curseur ? Vitesse
@@ -12,7 +14,7 @@
 * [ ] Sur Minitel/Sonoff : "Error 1" au reset
 * [ ] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
   en main à cause du "autoexec" ).
-* [ ] Bouton reset : détecter appui long, appui court, 2 appuis
+* [ ] Bouton reset : détecter appui long, appui court, double appui
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
 
@@ -190,6 +192,27 @@
 
 * [x] Non: ~~Uniquement majuscules noms de fichiers 8+3~~
 * [x] Non: ~~CAT ne doit pas afficher les fichiers finissant par "$$$"~~
+
+## Touches en mode clavier étendu
+
+* CSI = `\x1b\x5b` (`'\e['`)
+
+| Touche                    |   CSI                  |   C0    |
+|---------------------------|------------------------|---------|
+| Fleche haut (^)	        | CSI A (41)             | VT (0B) |
+| Fleche bas (v) 	        | CSI B (42)             | LF (0A) |
+| Fleche gauche (<-)	    | CSI D (44)             | BS (08) |
+| Fleche droite (->)	    | CSI C (43)             | HT (09) |
+| Retour chariot (<-')      |                CR (0D) | CR (0D) |
+|  |  |  |
+| TS+Fleche haut (^)        | CSI M (4D)             |	       |
+| TS+Fleche bas (v)         | CSI L (4C)             |	       |
+| TS+Fleche gauche (<-)     | CSI P (50)             |	       |
+| TS+Fleche droite (->)     | CSI 4 (34) h/l (68/6C) |	       |
+| TS+Retour Chariot (<-')   | CSI H (48)             | RS (1E) |
+|  |  |  |
+| Ctrl+Fleche gauche (<-)   |                DEL(7F) | DEL(7F) |
+| Ctrl+Retour Chariot (<-') | CSI 2 (32) J (4A)      | FF (0C) |
 
 ## Backend et doc
 
