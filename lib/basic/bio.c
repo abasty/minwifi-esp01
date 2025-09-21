@@ -112,6 +112,8 @@ static bool is_char_input_key(char test_char) {
         return true;
     if (test_char == '\r') // Enter key
         return true;
+    if (test_char == SS2) // G2 chars prefix
+        return true;
     if (test_char == '\x01') // Clear entry key (Ctrl+A)
         return true;
     if (test_char == '\x07') // Graphic key (Ctrl+G)
