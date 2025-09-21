@@ -6,9 +6,9 @@
   clavier étendu](#touches-en-mode-clavier-%C3%A9tendu))
   * [x] Implémenter dans minterm (clavier virtuel et physique)
   * [x] Implémenter dans `os_get_key()`
-  * [ ] Touches de direction / Enter + Shift (SUPL, INSL,  DEL, SUPC, INSC,
-    HOME)
-  * [ ] Touches de direction / Enter + Ctrl (DEL, CLS)
+  * [x] Touches Enter + Ctrl et Shift (CLS, HOME)
+  * [x] Touche flèche gauche + Ctrl (DEL)
+  * [ ] Touches de direction + Shift (SUPL, INSL, SUPC, INSC)
 * [ ] AJouter une heuristique pour connaitre la vitesse du port série côté
   Minitel / Minterm et la programmer côté ESP (SonOff et carte de dev), voir
   avec les commandes protocoles "non masquables" (position curseur ? Vitesse
