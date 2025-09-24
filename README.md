@@ -9,6 +9,9 @@
   * [x] Touches Enter + Ctrl et Shift (CLS, HOME)
   * [x] Touche flèche gauche + Ctrl (DEL)
   * [ ] Touches de direction + Shift (SUPL, INSL, SUPC, INSC)
+* [x] Fixer les commandes TTY qui nécessitent un ou plusieurs paramètres et qui
+  ne génèrent pas d'erreur de syntaxe quand elles n'ont pas le bon nombre de
+  paramètres (commandes tty)
 * [ ] AJouter une heuristique pour connaitre la vitesse du port série côté
   Minitel / Minterm et la programmer côté ESP (SonOff et carte de dev), voir
   avec les commandes protocoles "non masquables" (position curseur ? Vitesse
@@ -81,7 +84,9 @@
 
 ## Fonctionnalités
 
-* [ ] Gérer les codes INSL, DELL, DELC, DINSC, FINSC
+* [ ] Faire NEXT tout seul remonte au dernier FOR
+* [ ] Gérer les codes INSL, DELL, DELC, DINSC, FINSC et défnir les commandes
+  BASTOS associées
 * [ ] PAUSE <N>
 * [ ] PLOT / UNPLOT / TEST (Voir serveur zboub et lib graphique)
   * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp

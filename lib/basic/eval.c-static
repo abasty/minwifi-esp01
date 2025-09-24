@@ -52,6 +52,16 @@ static void eval_goto(uint16_t line_no);
 
 extern bmem_t *bmem;
 
+static inline uint8_t* eval_store_read_ptr()
+{
+    return bmem->bstate.read_ptr;
+}
+
+static inline void eval_restore_read_ptr(uint8_t *back_ptr)
+{
+    bmem->bstate.read_ptr = back_ptr;
+}
+
 uint8_t functions[] = {
     TOKEN_KEYWORD_ABS, TOKEN_KEYWORD_ACS, TOKEN_KEYWORD_ASN,
     TOKEN_KEYWORD_ATN, TOKEN_KEYWORD_BIN, TOKEN_KEYWORD_COS,
@@ -1361,6 +1371,8 @@ static void eval_new() {
 }
 
 static bool eval_string_tty() {
+    uint8_t *back_ptr = eval_store_read_ptr();
+
     if (!eval_token_one_of(tty_codes))
         return false;
 
@@ -1403,9 +1415,11 @@ static bool eval_string_tty() {
 
     if (!eval_float_expr()) {
         if (fn == TOKEN_KEYWORD_SCROLL) {
+            // 0 arg scroll
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CUR "\n", 24 + CUR_DELTA_V, 1 + CUR_DELTA_H);
             goto EVAL;
         }
+        eval_restore_read_ptr(back_ptr);
         return false;
     }
 
@@ -1459,11 +1473,15 @@ static bool eval_string_tty() {
     }
 
     // 2 args
-    if (!eval_token(','))
+    if (!eval_token(',')) {
+        eval_restore_read_ptr(back_ptr);
         return false;
+    }
 
-    if (!eval_float_expr())
+    if (!eval_float_expr()) {
+        eval_restore_read_ptr(back_ptr);
         return false;
+    }
 
     uint8_t arg2 = bmem->bstate.number;
     if (arg1 == 1 && arg2 == 1) {
@@ -1483,8 +1501,10 @@ EVAL:
 
     uint8_t len = strlen(codes);
     bmem->bstate.string = bmem_string_alloc(len);
-    if (!bmem->bstate.string)
+    if (!bmem->bstate.string) {
+        eval_restore_read_ptr(back_ptr);
         return false;
+    }
 
     // Copy codes to string
     for (uint8_t i = 0; i <= len; i++) {
