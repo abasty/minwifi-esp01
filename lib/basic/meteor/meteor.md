@@ -30,15 +30,19 @@ TBD : Enchainement des écrans.
 ### Écran play
 
 * Ligne 0 : SCORE et RECORD, record sauvegardé dans DB.
-* Scroll down, toutes les deux les deux lignes on insère un METEOR
+* Scroll down, toutes les deux lignes on insère un METEOR
 * vaisseau spacial au bas de l'écran, touches gauche droite, effacer à chaque
   scroll down, rafficher à la position qu'il faut
 * Comment gérer le delay (suivant le mode slow / fast / fast fast) ?
 * Gestion des collisions : dim screen$(24, 40). À chaque scroll down on déplace
   un "offset" qui dit l'index de la ligne 1.
-* Possibilté de tirer : à définir comment
+* Possibilité de tirer : à définir comment
 
 ## Dev
+
+### TODO
+
+1. scroll / inkey / affichage vaisseau
 
 ### Code
 
