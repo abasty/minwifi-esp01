@@ -671,7 +671,7 @@ void bastos_loop() {
     if (bmem->bstate.reset)
         return;
 
-    if (eval_running() && !eval_inputting()) {
+    if (eval_running() && !eval_inputting() && !eval_paused()) {
         eval_prog_next();
         if (bmem->bstate.reset)
             return;

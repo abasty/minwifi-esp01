@@ -1371,18 +1371,17 @@ static void eval_new() {
     bastos_prog_new();
 }
 
-static bool eval_paused() { return bmem->bstate.paused; }
+static bool eval_paused() { return bmem->bstate.pause_delay != 0; }
 
 static void eval_check_pause() {
-    // TODO: Check current time against pause time and initial time, then set
-    // paused bool accordingly
-    bmem->bstate.paused = false;
-    return;
+    if (hal_get_ms() - bmem->bstate.pause_start_time >= bmem->bstate.pause_delay) {
+        bmem->bstate.pause_delay = 0;
+    }
 }
 
 static void eval_pause() {
-    // TODO: Store the pause time as an int, store the initial time as an int
-    bmem->bstate.paused = true;
+    bmem->bstate.pause_delay = bmem->bstate.number;
+    bmem->bstate.pause_start_time = hal_get_ms();
 }
 
 static bool eval_string_tty() {

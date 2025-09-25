@@ -83,7 +83,8 @@ typedef struct
     bool reset;
     bool debug;
     bool g_mode;
-    bool paused;
+    uint32_t pause_delay;
+    uint64_t pause_start_time;
     int sp;
     int sock;
     int output_fd;

@@ -408,6 +408,11 @@ int hal_net_recv(int fd, uint8_t *buffer, int n)
     return -1;
 }
 
+uint64_t hal_get_ms(void)
+{
+    return millis();
+}
+
 static void serial_flush()
 {
     Serial.setTimeout(0);

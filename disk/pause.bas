@@ -1,0 +1,4 @@
+10 FOR i=0 TO 9
+20 PRINT i,"key: ";INKEY$ 
+30 PAUSE 1000
+40 NEXT i
