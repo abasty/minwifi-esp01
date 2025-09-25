@@ -156,6 +156,7 @@ static void running_state_clear() {
     bmem->bstate.pc = 0;
     bmem->bstate.sp = 0;
     memset(bmem->loops, 0, sizeof(bmem->loops));
+    bmem->bstate.inkey = 0;
 }
 
 static bool eval_token(uint8_t c) {
