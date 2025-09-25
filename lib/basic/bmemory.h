@@ -83,6 +83,7 @@ typedef struct
     bool reset;
     bool debug;
     bool g_mode;
+    bool paused;
     int sp;
     int sock;
     int output_fd;

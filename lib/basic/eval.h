@@ -42,4 +42,7 @@ static bool eval_string_expr();
 static bool eval_factor();
 static bool eval_expr(uint8_t type_token);
 
+static bool eval_paused();
+static void eval_check_pause();
+
 #endif // __EVAL_H__

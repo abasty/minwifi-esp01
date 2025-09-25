@@ -112,6 +112,7 @@ uint8_t instr1s[] = {
 uint8_t instr1n[] = {
     TOKEN_KEYWORD_GOSUB,
     TOKEN_KEYWORD_GOTO,
+    TOKEN_KEYWORD_PAUSE,
     TOKEN_KEYWORD_DEBUG,
     0,
 };
@@ -1370,6 +1371,20 @@ static void eval_new() {
     bastos_prog_new();
 }
 
+static bool eval_paused() { return bmem->bstate.paused; }
+
+static void eval_check_pause() {
+    // TODO: Check current time against pause time and initial time, then set
+    // paused bool accordingly
+    bmem->bstate.paused = false;
+    return;
+}
+
+static void eval_pause() {
+    // TODO: Store the pause time as an int, store the initial time as an int
+    bmem->bstate.paused = true;
+}
+
 static bool eval_string_tty() {
     uint8_t *back_ptr = eval_store_read_ptr();
 
@@ -1548,6 +1563,10 @@ EVAL:
     }
     if (instr == TOKEN_KEYWORD_GOSUB) {
         eval_gosub();
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_PAUSE) {
+        eval_pause();
         return true;
     }
     if (instr == TOKEN_KEYWORD_ERASE) {
