@@ -7,7 +7,7 @@
 90 GOSUB c*100
 99 GOTO 20
 100 PRINT jeu$;
-110 IF INKEY$ ="" THEN 110
+110 IF INKEY$ ="" THEN gosub 1000
 120 RETURN
 200 PRINT records$;
 210 IF INKEY$ ="" THEN 210
@@ -20,3 +20,10 @@
 420 RETURN
 500 CLS
 510 END
+999 rem "jeu"
+1000 sx = 20
+1100 scroll down
+1110 k$=INKEY$
+1120 rem "display ship"
+1130 at 24,sx;"HOH"
+1140 goto 1100
