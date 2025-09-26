@@ -152,8 +152,12 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
     uint8_t *dst = bmem->io_buffer;
 
     // If no keys, do nothing
-    if (n == 0 || src == 0 || *src == 0)
+    if (n == 0 || src == 0 || *src == 0) {
+        if (eval_paused()) {
+            eval_check_pause();
+        }
         return;
+    }
 
     // If key is ESC, stop the program
     if (*src == '\e') {
@@ -161,9 +165,12 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
         return;
     }
 
-    // If running and not inputting, store the key in inkey state
-    if (eval_running() && !eval_inputting()) {
+    // If running and not inputting or paused mode, store the key in inkey state
+    if ((eval_running() && !eval_inputting()) || eval_paused()) {
         bmem->bstate.inkey = (char)*src;
+        if (eval_paused()) {
+            eval_check_pause();
+        }
         return;
     }
 
@@ -664,7 +671,7 @@ void bastos_loop() {
     if (bmem->bstate.reset)
         return;
 
-    if (eval_running() && !eval_inputting()) {
+    if (eval_running() && !eval_inputting() && !eval_paused()) {
         eval_prog_next();
         if (bmem->bstate.reset)
             return;

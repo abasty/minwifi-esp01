@@ -134,6 +134,8 @@ bool hal_ftp_files(uint8_t func, const char *filename);
 void hal_speed(uint8_t fn);
 void hal_reset(void);
 
+uint64_t hal_get_ms(void);
+
 #ifdef __cplusplus
 }
 #endif

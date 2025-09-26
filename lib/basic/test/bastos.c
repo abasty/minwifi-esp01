@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #ifdef MINITEL
 #include "tty-minitel.h"
@@ -344,6 +345,13 @@ int hal_net_recv(int fd, uint8_t *buffer, int n)
         return read(fd, buffer, n);
 
     return 0;
+}
+
+uint64_t hal_get_ms(void)
+{
+    struct timeval t;
+    gettimeofday(&t, 0);
+    return t.tv_usec / 1000 + t.tv_sec * 1000;
 }
 
 bool hal_ftp_is_connected()

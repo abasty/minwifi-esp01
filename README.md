@@ -425,6 +425,25 @@ passe associé).
 `WIFI STATUS` : Affiche des informations sur l'état du WiFi, l'adresse IP, le
 SSID connecté.
 
+# `PAUSE` dans modes BASTOS (non connecté)
+
+| running | inputting | paused | key          | comportement |
+|---------|-----------|--------|--------------|--------------|
+|    0    |     0     |   0    |  buffer      |  eval        |
+|    0    |     0     |   1    |  inkey       |  do_pause    |
+|    0    |     1     |   0    |  buffer      |  do_input    |
+|    0    |     1     |   1    |  inkey       |  N/A         |
+|    1    |     0     |   0    |  buffer      |  eval        |
+|    1    |     0     |   1    |  inkey       |  do_pause    |
+|    1    |     1     |   0    |  buffer      |  do_input    |
+|    1    |     1     |   1    |  inkey       |  N/A         |
+
+Dans `bastos_send_keys()`  en mode `paused` :
+
+* si key == 0 => check fin de pause
+* si key != 0 => inkey et check fin de pause
+
+
 ## Mode connecté
 
 `MINITEL [START] <URN>` ou `MINITEL [START] <NAME> [, <URN>]` : Supporte les
