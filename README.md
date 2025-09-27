@@ -36,7 +36,6 @@
   de caractères spéciaux (G2, G1)
     * [x] G2 caractère spécial : tester si le caractère précédent est SS2
     * [x] G2 accents (aeiuo) / cédille (cC) : tester les séquences admissibles
-      sur 3 chars
     * [x] G1 : si le caractère précédent est G1, le supprimer
     * [x] G1 : Pouvoir introduire G1 (idéalement Ctrl+G)
 * [x] Chaine d'init à balancer même si autoexec. À rajouter : clavier étendu,
@@ -91,14 +90,14 @@
 
 ## Fonctionnalités
 
-* [ ] PAUSE <N>
-* [ ] Faire NEXT tout seul remonte au dernier FOR
-* [ ] Gérer les codes INSL, DELL, DELC, DINSC, FINSC et défnir les commandes
-  BASTOS associées
+* [ ] RAND
 * [ ] PLOT / UNPLOT / TEST (Voir serveur zboub et lib graphique)
   * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
   * [ ] Minitel, semi graphique
-* [ ] RAND
+* [x] PAUSE <N>
+* [ ] Faire NEXT tout seul remonte au dernier FOR
+* [ ] Gérer les codes INSL, DELL, DELC, DINSC, FINSC et défnir les commandes
+  BASTOS associées
 * [ ] TAB
 * [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
 
@@ -120,7 +119,6 @@
   `@<LINE_NO>`, `@DB <SET>,<KEY>`
 
 * [x] `BEEP`, `CLEOL`,
-* [x] `SIZE 0|1|2|3`
 * [x] `FLASH 0|1`, `INVERSE 0|1`, `UNDERLINE 0|1`
 * [x] `CURSOR 0|1` ~~con, coff~~
 * [x] `REP$ <N>,<STRING>`
@@ -205,7 +203,6 @@
 * [x] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.bst` /
   `.bas` ?
 
-* [x] Non: ~~Uniquement majuscules noms de fichiers 8+3~~
 * [x] Non: ~~CAT ne doit pas afficher les fichiers finissant par "$$$"~~
 
 ## Touches en mode clavier étendu
@@ -497,6 +494,20 @@ vers le réseau.
 * `FTP STATUS` : Affiche le status et les détails de la connexion avec le
   serveur FTP (sauf le mot de passe).
 
+## Dessiner en semi-graphique
+
+* `PLOT <X>,<Y>`
+
+* `UNPLOT <X>,<Y>`
+
+* `TEST <X>,<Y>`
+
+```calc
+nl = 24
+nc = 40
+chars = nl * nc = 960
+```
+
 # TODO
 
 ## Code Minitel
@@ -571,7 +582,6 @@ Doivent être en C pour être intégrés à minwifi.
 * [x] Remplacé par `BASTOS`, `autoload.db`, `autoexec.bas` ~~tty : init string,
   fast, autoexec => config$$$~~
 * [x] Remplacé par le HAL : ~~Optimisation BIO (une seule structure), 1 fonction
-  number (int), 2/3 params (union as_void_ptr, as_char_ptr, as_int, as_float), 1
   result (union like param) => static / extern~~
 * [x] Fichiers `autoload.db`, `autoexec.bas` ~~Variables WiFi dans fichier
   invisible par CAT, let, load vars, save vars et init Wifi~~
@@ -598,7 +608,6 @@ Doivent être en C pour être intégrés à minwifi.
 * [x] AT, INK, PAPER, CLS
 * [x] Toutes les fonctions qui produisent des codes de commandes => fonctions
   qui renvoient des chaines de caractères (au début .h minitel). On doit pouvoir
-  faire : let a$=cls + at 10,10 + ink 4 + paper 3 + " *DEMO* ".
 * [x] Mettre en "echo" distant (pas d'echo local)
 * [x] Faire que les keywords aient le même ID (possible sans sort ?) afin
   d'assurer la compatibilité "binaire" des `*.bst`
@@ -631,7 +640,6 @@ Doivent être en C pour être intégrés à minwifi.
   * [x] Removed Wifi client and server from MINITEL build
   * [x] N'optimise pas : Unifier load / save methods (read_uint16, read_len_mem0)
   * [x] Unifier FFI (bio.*) : un genre de callback fourre tout à la `ioctl` ?
-  * [x] Versions de platform @ 3.2.0 et xtens8266 au 220621
 
 # Procédures
 
@@ -654,7 +662,6 @@ Sur le fil DIN noir :
 * 9v : Vert
 * OT : Blanc
 
-Sur la DIN, 3 fils souples papa :
 
 * TX : Marron
 * RX : Rouge
@@ -673,7 +680,6 @@ $ ls /dev/ttyUSB*
 $ /home/alain/.platformio/packages/tool-esptoolpy/esptool.py --chip esp8266 --port /dev/ttyUSB0 write_flash --flash_size detect 0x0 0x00000_blank1m.bin
 ```
 
-**ATTENTION AU 3.3v DU FTDI**
 
 ## Build
 
@@ -699,9 +705,7 @@ build_flags = -D MINITEL=1
 
 On passe le SonOff en mode _bootloader_ :
 
-* On branche tout sauf le +3.3v (sur la platine d'essai)
 * Bouton SonOff enfoncé
-* On branche le 3.3v
 * On relâche le bouton
 
 On flashe alors (en mode `dout`, voir `platformio.ini`).
@@ -717,7 +721,6 @@ On flashe alors (en mode `dout`, voir `platformio.ini`).
 > 1. Open the sketch tab in the IoT Cloud
 > 2. Make sure that your USB to Serial converter is connected properly
 >    (otherwise go back to the start of this tutorial).
-> 3. Press and hold the reset button onboard the PCB (see image below), and
 >    connect the USB >Serial converter to your computer.
 > 4. The LED on the Sonoff Basic should now be OFF . If it is red or blinking
 >    blue, try to disconnect and connect again (while holding the reset button).
@@ -773,8 +776,6 @@ $ astyle --style=1tbs -s4 src/*
 
 ```
 Resolving minwifi_ota dependencies...
-Platform espressif8266 @ 3.2.0 (required: espressif8266 @ 3.2.0)
-├── framework-arduinoespressif8266 @ 3.30002.0 (required: platformio/framework-arduinoespressif8266 @ ~3.30002.0)
 ├── tool-esptool @ 1.413.0 (required: platformio/tool-esptool @ <2)
 ├── tool-esptoolpy @ 1.30000.201119 (required: platformio/tool-esptoolpy @ ~1.30000.0)
 ├── tool-mklittlefs @ 1.203.210628 (required: platformio/tool-mklittlefs @ ~1.203.0)
@@ -782,7 +783,6 @@ Platform espressif8266 @ 3.2.0 (required: espressif8266 @ 3.2.0)
 └── toolchain-xtensa @ 2.100300.220621 (required: platformio/toolchain-xtensa @ ~2.100300.0)
 
 Libraries
-└── WebSockets @ 2.4.1 (required: links2004/WebSockets @ ^2.3.7)
 ```
 
 ## Pour l'article
