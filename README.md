@@ -1,43 +1,21 @@
 # TODO
 
-## Bugs (show stoppers)
+## Bugs
 
-* [ ] Comprendre pourquoi il faut appuyer sur des touches pour afficher les
-  caractères (ligne0 score, record) quand on entre dans le GOSUB du jeu METEOR.
-  En mode FAST ça marche, pas en mode SLOW. Faut voir si ça arrive sur device,
-  possibilité que ça arrive avec le nagle aussi, ou que ce soit un pb de minterm
-* [ ] Break qui arrive plus vite (d'abord sur device, flush sur serial, sur TCP
-  il faudrait avoir un autre canal pour dier à l'mu de flusher ce qu'il a déjà
-  reçu)
-* [ ] Touches de direction : génère un ESC + 2 caractères ([Touches en mode
-  clavier étendu](#touches-en-mode-clavier-%C3%A9tendu))
-  * [x] Implémenter dans minterm (clavier virtuel et physique)
-  * [x] Implémenter dans `os_get_key()`
-  * [x] Touches Enter + Ctrl et Shift (CLS, HOME)
-  * [x] Touche flèche gauche + Ctrl (DEL)
-  * [ ] Touches de direction + Shift (SUPL, INSL, SUPC, INSC)
-* [ ] AJouter une heuristique pour connaitre la vitesse du port série côté
-  Minitel / Minterm et la programmer côté ESP (SonOff et carte de dev), voir
-  avec les commandes protocoles "non masquables" (position curseur ? Vitesse
-  prise ?)
-* [ ] Déconnexion provenant d'un serveur websocket : semble ne pas fonctionner
 * [ ] Sur Minitel/Sonoff : "Error 1" au reset
-* [ ] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
-  en main à cause du "autoexec" ).
-* [ ] Bouton reset : détecter appui long, appui court, double appui
+* [ ] Déconnexion provenant d'un serveur websocket : semble ne pas fonctionner
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
 
+* [x] ~~Comprendre pourquoi il faut appuyer sur des touches pour afficher les
+  caractères (ligne0 score, record) quand on entre dans le GOSUB du jeu METEOR.
+  En mode FAST ça marche, pas en mode SLOW. Faut voir si ça arrive sur device,
+  possibilité que ça arrive avec le nagle aussi, ou que ce soit un pb de
+  minterm~~
 * [x] Fixer les commandes TTY qui nécessitent un ou plusieurs paramètres et qui
   ne génèrent pas d'erreur de syntaxe quand elles n'ont pas le bon nombre de
   paramètres (commandes tty)
 * [x] Si possible, `INPUT` vide : ne change pas la valeur de la variable
-* [x] Édition de ligne / suppresion du dernier caractère : gérer les séquences
-  de caractères spéciaux (G2, G1)
-    * [x] G2 caractère spécial : tester si le caractère précédent est SS2
-    * [x] G2 accents (aeiuo) / cédille (cC) : tester les séquences admissibles
-    * [x] G1 : si le caractère précédent est G1, le supprimer
-    * [x] G1 : Pouvoir introduire G1 (idéalement Ctrl+G)
 * [x] Chaine d'init à balancer même si autoexec. À rajouter : clavier étendu,
   minuscules. Chaine d'init après retour mode connecté aussi
     * [x] Touche ESC ne fonctionne en mode videotex : passer en clavier étendu
@@ -90,6 +68,30 @@
 
 ## Fonctionnalités
 
+* [ ] Détection vitesse prise
+* [ ] Touches de direction : génère un ESC + 2 caractères ([Touches en mode
+  clavier étendu](#touches-en-mode-clavier-%C3%A9tendu))
+  * [x] Implémenter dans minterm (clavier virtuel et physique)
+  * [x] Implémenter dans `os_get_key()`
+  * [x] Touches Enter + Ctrl et Shift (CLS, HOME)
+  * [x] Touche flèche gauche + Ctrl (DEL)
+  * [ ] Touches de direction + Shift (SUPL, INSL, SUPC, INSC)
+* [ ] AJouter une heuristique pour connaitre la vitesse du port série côté
+  Minitel / Minterm et la programmer côté ESP (SonOff et carte de dev), voir
+  avec les commandes protocoles "non masquables" (position curseur ? Vitesse
+  prise ?)
+* [ ] Break qui arrive plus vite (d'abord sur device, flush sur serial, sur TCP
+  il faudrait avoir un autre canal pour dier à l'mu de flusher ce qu'il a déjà
+  reçu)
+* [ ] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
+  en main à cause du "autoexec" ).
+* [ ] Bouton reset : détecter appui long, appui court, double appui
+* [x] Édition de ligne / suppresion du dernier caractère : gérer les séquences
+  de caractères spéciaux (G2, G1)
+    * [x] G2 caractère spécial : tester si le caractère précédent est SS2
+    * [x] G2 accents (aeiuo) / cédille (cC) : tester les séquences admissibles
+    * [x] G1 : si le caractère précédent est G1, le supprimer
+    * [x] G1 : Pouvoir introduire G1 (idéalement Ctrl+G)
 * [ ] RAND
 * [ ] PLOT / UNPLOT / TEST (Voir serveur zboub et lib graphique)
   * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
