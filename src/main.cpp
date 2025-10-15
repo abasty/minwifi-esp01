@@ -181,14 +181,12 @@ void hal_speed(uint8_t fn)
 {
     if (fn == TOKEN_KEYWORD_FAST || fn == TOKEN_KEYWORD_SLOW)
     {
-#ifdef MINITEL
         hal_print_string(fn == TOKEN_KEYWORD_FAST ? P_PRISE_4800 : P_PRISE_1200);
         delay(250);
         Serial.end();
         Serial.begin(fn == TOKEN_KEYWORD_FAST ? 4800 : 1200, SERIAL_7E1);
         delay(250);
         serial_flush();
-#endif
         return;
     }
 }
@@ -421,21 +419,38 @@ static void serial_flush()
     {
         uint8_t buffer[32];
         Serial.readBytes(buffer, 32);
+        delay(10);
     }
     Serial.flush();
 }
 
+static bool wait_serial(unsigned long speed, String wait_for)
+{
+    Serial.begin(speed, SERIAL_7E1);
+    serial_flush();
+    hal_print_string("\e9t");
+    delay(500);
+    // Serial.setTimeout(500);
+    String reply = Serial.readString();
+    if (reply == wait_for)
+        return true;
+    Serial.end();
+    return false;
+}
+
 static void setup_serial()
 {
-#ifdef MINITEL
-    Serial.begin(1200, SERIAL_7E1);
-    serial_flush();
-    delay(1000);
-#else
-    Serial.begin(115200);
-    serial_flush();
-    delay(250);
-#endif
+    while (true)
+    {
+        // TODO: Add M2 9600
+
+        if (wait_serial(4800, "\x1b\x3auv"))
+            break;
+        if (wait_serial(1200, "\x1b\x3aud"))
+            break;
+    }
+
+    Serial.setTimeout(0);
 }
 
 void setup()

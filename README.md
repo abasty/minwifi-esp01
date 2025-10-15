@@ -68,7 +68,7 @@
 
 ## Fonctionnalités
 
-* [ ] Détection vitesse prise
+* [x] Détection vitesse prise
 * [ ] Touches de direction : génère un ESC + 2 caractères ([Touches en mode
   clavier étendu](#touches-en-mode-clavier-%C3%A9tendu))
   * [x] Implémenter dans minterm (clavier virtuel et physique)
