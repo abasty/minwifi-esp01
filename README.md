@@ -2,11 +2,17 @@
 
 ## Bugs
 
-* [ ] Sur Minitel/Sonoff : "Error 1" au reset
+* [ ] Sur Minitel/Sonoff en mode clavier étendu : les touches Home et E. Page ne
+  sont pas fonctionnelles. Home: "1b 5b 48" / E. Page = "1b 5b 32 4a" / CX/Fin =
+  "13 59"
 * [ ] Déconnexion provenant d'un serveur websocket : semble ne pas fonctionner
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
 
+* [x] a$="" k$="alain" a$=a$+k$ => len a$ == 5 mais les caractères ne snt pas
+  copiés dans a$
+* [x] Sur Minitel/Sonoff, "Error 1" au reset : Plus visible après déterminiation
+  vitesse au boot
 * [x] ~~Comprendre pourquoi il faut appuyer sur des touches pour afficher les
   caractères (ligne0 score, record) quand on entre dans le GOSUB du jeu METEOR.
   En mode FAST ça marche, pas en mode SLOW. Faut voir si ça arrive sur device,
@@ -73,7 +79,8 @@
   clavier étendu](#touches-en-mode-clavier-%C3%A9tendu))
   * [x] Implémenter dans minterm (clavier virtuel et physique)
   * [x] Implémenter dans `os_get_key()`
-  * [x] Touches Enter + Ctrl et Shift (CLS, HOME)
+  * [ ] Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionne plus sur
+    Minitel
   * [x] Touche flèche gauche + Ctrl (DEL)
   * [ ] Touches de direction + Shift (SUPL, INSL, SUPC, INSC)
 * [ ] AJouter une heuristique pour connaitre la vitesse du port série côté
