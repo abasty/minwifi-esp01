@@ -2,13 +2,13 @@
 
 ## Bugs
 
-* [ ] Sur Minitel/Sonoff en mode clavier étendu : les touches Home et E. Page ne
-  sont pas fonctionnelles. Home: "1b 5b 48" / E. Page = "1b 5b 32 4a" / CX/Fin =
-  "13 59"
 * [ ] Déconnexion provenant d'un serveur websocket : semble ne pas fonctionner
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
 
+* [x] Sur Minitel/Sonoff en mode clavier étendu : les touches Home et E. Page ne
+  sont pas fonctionnelles. Home: "1b 5b 48" / E. Page = "1b 5b 32 4a" / CX/Fin =
+  "13 59"
 * [x] a$="" k$="alain" a$=a$+k$ => len a$ == 5 mais les caractères ne snt pas
   copiés dans a$
 * [x] Sur Minitel/Sonoff, "Error 1" au reset : Plus visible après déterminiation
@@ -79,14 +79,13 @@
   clavier étendu](#touches-en-mode-clavier-%C3%A9tendu))
   * [x] Implémenter dans minterm (clavier virtuel et physique)
   * [x] Implémenter dans `os_get_key()`
-  * [ ] Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionne plus sur
+  * [ ] Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent plus sur
     Minitel
   * [x] Touche flèche gauche + Ctrl (DEL)
-  * [ ] Touches de direction + Shift (SUPL, INSL, SUPC, INSC)
-* [ ] AJouter une heuristique pour connaitre la vitesse du port série côté
-  Minitel / Minterm et la programmer côté ESP (SonOff et carte de dev), voir
-  avec les commandes protocoles "non masquables" (position curseur ? Vitesse
-  prise ?)
+  * [ ] Touches de direction + Shift (SUPL: 1b5b4d, INSL: 1b5b4c, SUPC: 1b5b50,
+    INSC_ON: 1b5b3468, INSC_OFF: 1b5b346c)
+  * [ ] Support pour SUPL, INSL, SUPC, INSC: Même codes que les touches à
+    supporter au niveau BASTOS
 * [ ] Break qui arrive plus vite (d'abord sur device, flush sur serial, sur TCP
   il faudrait avoir un autre canal pour dier à l'mu de flusher ce qu'il a déjà
   reçu)
