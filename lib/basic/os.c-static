@@ -369,9 +369,10 @@ static int os_get_string(char *buf, int size, char secret_char) {
 }
 
 #define KEY_STATE_NORMAL (0)
-#define KEY_STATE_SEP (1)
-#define KEY_STATE_ESC (2)
-#define KEY_STATE_CSI (3)
+#define KEY_STATE_SEP    (1)
+#define KEY_STATE_ESC    (2)
+#define KEY_STATE_CSI    (3)
+#define KEY_STATE_CSI_2  (4)
 
 #define KEY_CODE_SEP (0x13u)
 #define KEY_CODE_ESC (0x1bu)
@@ -446,9 +447,23 @@ static uint8_t os_get_key() {
             key = 0x09;
         } else if (key == 'D') {
             key = 0x08;
+        } else if (key == 'H') {
+            key = 0x1e;
+        } else if (key == '2') {
+            key = 0;
+            state = KEY_STATE_CSI_2;
+            break;
         } else {
             // Forgot CSI sequence
-            // FIXME: Filter CSI sequences w/ more than 3 bytes
+            key = 0;
+        }
+        state = KEY_STATE_NORMAL;
+        break;
+
+    case KEY_STATE_CSI_2:
+        if (key == 'J') {
+            key = 0x0c;
+        } else {
             key = 0;
         }
         state = KEY_STATE_NORMAL;
