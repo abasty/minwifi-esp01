@@ -2,6 +2,8 @@
 
 ## Bugs
 
+* [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
+  plus sur Minitel
 * [ ] Déconnexion provenant d'un serveur websocket : semble ne pas fonctionner
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
@@ -74,13 +76,12 @@
 
 ## Fonctionnalités
 
-* [x] Détection vitesse prise
+* [ ] Gérer les codes INSL, DELL, DELC et définir les commandes BASTOS associées
+* [ ] Gérer les codes DINSC, FINSC et définir les commandes BASTOS associées
 * [ ] Touches de direction : génère un ESC + 2 caractères ([Touches en mode
   clavier étendu](#touches-en-mode-clavier-%C3%A9tendu))
   * [x] Implémenter dans minterm (clavier virtuel et physique)
   * [x] Implémenter dans `os_get_key()`
-  * [ ] Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent plus sur
-    Minitel
   * [x] Touche flèche gauche + Ctrl (DEL)
   * [ ] Touches de direction + Shift (SUPL: 1b5b4d, INSL: 1b5b4c, SUPC: 1b5b50,
     INSC_ON: 1b5b3468, INSC_OFF: 1b5b346c)
@@ -92,6 +93,7 @@
 * [ ] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
   en main à cause du "autoexec" ).
 * [ ] Bouton reset : détecter appui long, appui court, double appui
+* [x] Détection vitesse prise
 * [x] Édition de ligne / suppresion du dernier caractère : gérer les séquences
   de caractères spéciaux (G2, G1)
     * [x] G2 caractère spécial : tester si le caractère précédent est SS2
@@ -104,8 +106,6 @@
   * [ ] Minitel, semi graphique
 * [x] PAUSE <N>
 * [ ] Faire NEXT tout seul remonte au dernier FOR
-* [ ] Gérer les codes INSL, DELL, DELC, DINSC, FINSC et défnir les commandes
-  BASTOS associées
 * [ ] TAB
 * [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
 
