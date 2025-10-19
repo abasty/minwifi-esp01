@@ -454,7 +454,8 @@ static uint8_t os_get_key() {
             state = KEY_STATE_CSI_2;
             break;
         } else {
-            // Forgot CSI sequence
+            // Forgot CSI sequence: INS / DEL sequences are filtered here, so
+            // they are not available to BASTOS input / inkey$ / CLI
             key = 0;
         }
         state = KEY_STATE_NORMAL;

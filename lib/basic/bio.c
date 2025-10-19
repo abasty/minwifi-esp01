@@ -175,9 +175,10 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
     }
 
     // If key is not a printable char nor an editing key, BASTOS ignores it but
-    // the key is sent to terminal
+    // the key is sent to terminal. Some filtered sequences does not come here
+    // anyway (INS/ DEL sequences for example), see os_get_key().
     if (!is_char_input_key(*src)) {
-        if (echo)
+        if (echo && !eval_inputting())
             hal_print_buffer(src, 1);
         return;
     }

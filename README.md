@@ -76,8 +76,10 @@
 
 ## Fonctionnalités
 
-* [ ] Gérer les codes INSL, DELL, DELC et définir les commandes BASTOS associées
+* [x] Gérer les codes INSL, DELL, DELC et définir les commandes BASTOS associées
 * [ ] Gérer les codes DINSC, FINSC et définir les commandes BASTOS associées
+* [ ] Ctrl+C à la place de ESC /ESC ?
+* [ ] Quand on est connécté à un service, voir ce que fait ESC et CX/Fin
 * [ ] À définir : support des touches de mise en pages dans les différents modes
   de BASTOS (CLI, INPUT, INKEY/PAUSE, prévoir un mode EDIT)
 * [ ] Touches de direction : génère un ESC + 2 caractères ([Touches en mode
@@ -85,10 +87,6 @@
   * [x] Implémenter dans minterm (clavier virtuel et physique)
   * [x] Implémenter dans `os_get_key()`
   * [x] Touche flèche gauche + Ctrl (DEL)
-  * [ ] Touches de direction + Shift (SUPL: 1b5b4d, INSL: 1b5b4c, SUPC: 1b5b50,
-    INSC_ON: 1b5b3468, INSC_OFF: 1b5b346c)
-  * [ ] Support pour SUPL, INSL, SUPC, INSC: Même codes que les touches à
-    supporter au niveau BASTOS
 * [ ] Break qui arrive plus vite (d'abord sur device, flush sur serial, sur TCP
   il faudrait avoir un autre canal pour dier à l'mu de flusher ce qu'il a déjà
   reçu)
@@ -107,13 +105,21 @@
   * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
   * [ ] Minitel, semi graphique
 * [x] PAUSE <N>
+* [ ] PAUSE <N>, <LINENO> : Pendant le temps de la pause exécute le
+  sous-programme <LINENO>. Quand `RETURN` est appelé, soit le temps est écoulé
+  et le programme reprend après le `PAUSE`, soit on continue la pause jusqu'à
+  épuisement du temps
 * [ ] Faire NEXT tout seul remonte au dernier FOR
 * [ ] TAB
 * [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
 
 * [ ] FAST FAST (9600 / Minitel 2)
 
-* [ ] EDIT line, EDIT tout seul édite la dernière entrée (raccourci: fleche haut)
+* [ ] EDIT line, EDIT tout seul édite la dernière entrée (raccourci: fleche
+  haut). définir une zone à partir de la ligne actuelle et sur 4 lignes pour
+  pouvoir entrer au max 128 caractères : mode roleau, on se déplace de 3 lignes
+  vers le bas, on demande la position curseur => l, c. On remonte en l-3, 1 ; on
+  cleol ; on insere 4 lignes, on commence l'édition
 * [ ] Ajouter `EDIT <LINE_NO>`, integration "edit_min" ?
 * [ ] EVAL / EVAL$ => Voir `os_eval_string()`, utilisé pour le `LOAD`
 * [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
