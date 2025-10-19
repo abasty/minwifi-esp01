@@ -92,4 +92,8 @@ static const char *keywords =
     "SIZ""\xc5"
     "EN""\xc4"
     "EDI""\xd4"
+    "DE""\xcc"
+    "IN""\xd3"
+    "LIN""\xc5"
+    "CHA""\xd2"
 ;

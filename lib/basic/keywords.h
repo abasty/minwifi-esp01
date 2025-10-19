@@ -92,3 +92,7 @@
 #define TOKEN_KEYWORD_SIZE ((uint8_t) (90 | 0b10000000))
 #define TOKEN_KEYWORD_END ((uint8_t) (91 | 0b10000000))
 #define TOKEN_KEYWORD_EDIT ((uint8_t) (92 | 0b10000000))
+#define TOKEN_KEYWORD_DEL ((uint8_t) (93 | 0b10000000))
+#define TOKEN_KEYWORD_INS ((uint8_t) (94 | 0b10000000))
+#define TOKEN_KEYWORD_LINE ((uint8_t) (95 | 0b10000000))
+#define TOKEN_KEYWORD_CHAR ((uint8_t) (96 | 0b10000000))

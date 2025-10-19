@@ -104,6 +104,10 @@ echo
 size
 end
 edit
+del
+ins
+line
+char
 EOF
 
 # Do not sort to preserve save/load compatibility
