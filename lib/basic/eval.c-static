@@ -1434,6 +1434,20 @@ static bool eval_string_tty() {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x1b\x5b\x4d");
             goto EVAL;
         }
+        if (eval_token(TOKEN_KEYWORD_CHAR)) {
+            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x1b\x5b\x50");
+            goto EVAL;
+        }
+        // TODO: eval DEL CHAR
+        return false;
+    }
+
+    if (fn == TOKEN_KEYWORD_INS) {
+        if (eval_token(TOKEN_KEYWORD_LINE)) {
+            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x1b\x5b\x4c");
+            goto EVAL;
+        }
+        // TODO: eval DEL CHAR
         return false;
     }
 

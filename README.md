@@ -78,6 +78,8 @@
 
 * [ ] Gérer les codes INSL, DELL, DELC et définir les commandes BASTOS associées
 * [ ] Gérer les codes DINSC, FINSC et définir les commandes BASTOS associées
+* [ ] À définir : support des touches de mise en pages dans les différents modes
+  de BASTOS (CLI, INPUT, INKEY/PAUSE, prévoir un mode EDIT)
 * [ ] Touches de direction : génère un ESC + 2 caractères ([Touches en mode
   clavier étendu](#touches-en-mode-clavier-%C3%A9tendu))
   * [x] Implémenter dans minterm (clavier virtuel et physique)
