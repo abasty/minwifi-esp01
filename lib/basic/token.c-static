@@ -425,6 +425,13 @@ static void untokenize_string(tokenizer_state_t *state) {
         case 0x00: // Null character
             os_redir_print_string("\\0");
             break;
+        case '\x0e':
+        case '\x0f':
+            if (bmem->bstate.output_fd < 0) {
+                os_redir_print_buffer(&c, 1);
+                break;
+            }
+
         default:
             if (c < 32 && c != 0x19) {
                 char hex[5];
