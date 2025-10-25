@@ -1251,7 +1251,7 @@ static void eval_bastos() {
     os_redir_print_string(info);
 
     if (!eval_running()) {
-        os_redir_print_string("Ready\r\n");
+        hal_print_string("Ready\r\n");
     }
 }
 
@@ -1888,7 +1888,7 @@ static bool eval_ftp_file(uint8_t func) {
     }
 
     if (!eval_running()) {
-        os_redir_print_string("OK\r\n");
+        hal_print_string("OK\r\n");
     }
 
     return true;
