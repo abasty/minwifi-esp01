@@ -678,7 +678,7 @@ void bastos_loop() {
             return;
 
         if (!eval_running()) {
-            os_redir_print_string("Ready\r\n");
+            hal_print_string("Ready\r\n");
         }
         return;
     }
