@@ -448,7 +448,7 @@ static uint8_t os_get_key() {
         } else if (key == 'D') {
             key = 0x08;
         } else if (key == 'H') {
-            key = 0x1e;
+            key = 0x1e; // Home
         } else if (key == '2') {
             key = 0;
             state = KEY_STATE_CSI_2;
@@ -463,7 +463,7 @@ static uint8_t os_get_key() {
 
     case KEY_STATE_CSI_2:
         if (key == 'J') {
-            key = 0x0c;
+            key = 0x0c; // CLS
         } else {
             key = 0;
         }
