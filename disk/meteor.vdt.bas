@@ -12,13 +12,10 @@ at 2,13;size 1;"<<< METEOR >>>"
 ?"3. Configuration"
 ?"4. Crédits"
 ?"5. Quitter"
-?
+? cursor 1
 rem "----------------------------------------------"
 output jeu$
 at 0,5;cleol;"SCORE: 000000   RECORD: 000000";cls
-at 20,1;paper 1;" ";cleol
-at 20,37;size 1;"JEU"
-at 23,1;"<Appuie sur une touche>"
 rem "----------------------------------------------"
 output records$
 line0;cleol;
