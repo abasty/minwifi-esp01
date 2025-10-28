@@ -135,6 +135,7 @@ void hal_speed(uint8_t fn);
 void hal_reset(void);
 
 uint64_t hal_get_ms(void);
+int hal_get_function_key(void);
 
 #ifdef __cplusplus
 }

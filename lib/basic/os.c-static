@@ -688,9 +688,14 @@ static void os_loop_connected() {
 }
 
 static void os_loop_basic() {
-    char key = os_get_key();
-    bastos_send_keys((char *)&key, key != 0 ? 1 : 0, true);
-    bastos_loop();
+    int fn = hal_get_function_key();
+    if (fn > 0) {
+        bmem->bstate.reset = true;
+    } else {
+        char key = os_get_key();
+        bastos_send_keys((char *)&key, key != 0 ? 1 : 0, true);
+        bastos_loop();
+    }
     if (bastos_is_reset()) {
         bastos_done();
         hal_reset();

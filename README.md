@@ -93,7 +93,7 @@
   reçu)
 * [ ] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
   en main à cause du "autoexec" ).
-* [ ] Bouton reset : détecter appui long, appui court, double appui
+* [x] Bouton reset : détecter appui long, appui court
 * [x] Détection vitesse prise
 * [x] Édition de ligne / suppresion du dernier caractère : gérer les séquences
   de caractères spéciaux (G2, G1)
@@ -263,7 +263,8 @@
 * [ ] Home self hosting possible pour les services de bouncing (éventuellement
   via ngrock + authentication)
 * [ ] Serveurs sur IONOS (faire framework en Dart, à la flutter éventuellement)
-* [ ] FTP sur IONOS
+* [ ] FTP sur IONOS :
+  <https://www.digitalocean.com/community/tutorials/how-to-set-up-vsftpd-for-anonymous-downloads-on-ubuntu-16-04>
 * [ ] WSS/TCP gateway sur IONOS (filter par IP), réflechir à un serveur Dart qui
   fait le passe plat, liste blanche basée sur IP ?
 * [ ] TELNET bouncing sur IONOS

@@ -42,9 +42,9 @@
 // 13:	LED
 // 14:	EXTRA GPIO
 
-const int buttonPin = 0;
-const int relayPin = 12;
-const int ledPin = 13;
+const int button_pin = 0;
+const int relay_pin = 12;
+const int led_pin = 13;
 
 // Files and sockets
 static File g_file0;
@@ -170,10 +170,9 @@ int hal_erase(const char *pathname)
 
 void hal_reset()
 {
-#ifdef MINITEL
+    digitalWrite(led_pin, HIGH);
     hal_print_string(P_ACK_OFF_PRISE P_PRISE_1200);
     delay(250);
-#endif
     ESP.restart();
 }
 
@@ -411,6 +410,38 @@ uint64_t hal_get_ms(void)
     return millis();
 }
 
+int hal_get_function_key(void)
+{
+    static unsigned long t_tap = 0;
+    static unsigned long t_untap = 0;
+    static int last_state = 0;
+
+    int function = 0;
+    int current_state = 1 - digitalRead(button_pin);
+    if (current_state != last_state) {
+        if (current_state == 0) {
+            t_untap = millis();
+            if (t_untap - t_tap < 100) {
+                // Avoid bouncing
+                function = 0;
+            } else if (t_untap - t_tap < 2000) {
+                function = 1;
+            } else {
+                function = 2;
+            }
+        } else {
+            t_tap = millis();
+        }
+        last_state = current_state;
+    }
+
+    if (function != 0) {
+        digitalWrite(led_pin, HIGH);
+        delay(200);
+    }
+    return function;
+}
+
 static void serial_flush()
 {
     Serial.setTimeout(0);
@@ -456,10 +487,11 @@ static void setup_serial()
 void setup()
 {
     // Setup sonoff pins
-    pinMode(relayPin, OUTPUT);
-    pinMode(ledPin, OUTPUT);
-    digitalWrite(relayPin, HIGH); // On R2, light the red led (relay state)
-    digitalWrite(ledPin, HIGH);   // On R2, light the blue led (red + blue => purple)
+    pinMode(relay_pin, OUTPUT);
+    pinMode(led_pin, OUTPUT);
+    pinMode(button_pin, INPUT_PULLUP);
+    digitalWrite(relay_pin, HIGH); // On R2, light the red led (relay state)
+    digitalWrite(led_pin, LOW);   // On R2, light the blue led (red + blue => purple)
 
     setup_serial();
 

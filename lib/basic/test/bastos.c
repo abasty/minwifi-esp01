@@ -354,6 +354,11 @@ uint64_t hal_get_ms(void)
     return t.tv_usec / 1000 + t.tv_sec * 1000;
 }
 
+int hal_get_function_key(void)
+{
+    return 0;
+}
+
 bool hal_ftp_is_connected()
 {
     return g_ftp_connected;
