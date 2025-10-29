@@ -96,5 +96,6 @@
 // Serial 4800bds
 #define P_PRISE_1200 PRO2 "\x6B\x64"
 #define P_PRISE_4800 PRO2 "\x6B\x76"
+#define P_PRISE_9600 PRO2 "\x6B\x7f"
 
 #endif // TTY_MINITEL_H

@@ -55,7 +55,7 @@ static int g_web_socket_unread_bytes = 0;
 static FTPClient g_ftp_client;
 static bool g_ftp_connected = false;
 
-static void serial_flush();
+static void serial_flush_rx();
 
 void hal_print_oem_string(void)
 {
@@ -178,16 +178,18 @@ void hal_reset()
 
 void hal_speed(uint8_t fn)
 {
-    if (fn == TOKEN_KEYWORD_FAST || fn == TOKEN_KEYWORD_SLOW)
-    {
-        hal_print_string(fn == TOKEN_KEYWORD_FAST ? P_PRISE_4800 : P_PRISE_1200);
-        delay(250);
-        Serial.end();
-        Serial.begin(fn == TOKEN_KEYWORD_FAST ? 4800 : 1200, SERIAL_7E1);
-        delay(250);
-        serial_flush();
-        return;
-    }
+    const char *p_speed = fn == TOKEN_KEYWORD_FAST2  ? P_PRISE_9600
+                          : fn == TOKEN_KEYWORD_FAST ? P_PRISE_4800
+                                                     : P_PRISE_1200;
+    unsigned long speed = fn == TOKEN_KEYWORD_FAST2  ? 9600
+                          : fn == TOKEN_KEYWORD_FAST ? 4800
+                                                     : 1200;
+    hal_print_string(p_speed);
+    delay(250);
+    Serial.end();
+    Serial.begin(speed, SERIAL_7E1);
+    delay(250);
+    serial_flush_rx();
 }
 
 int hal_wifi_scan()
@@ -442,7 +444,7 @@ int hal_get_function_key(void)
     return function;
 }
 
-static void serial_flush()
+static void serial_flush_rx()
 {
     Serial.setTimeout(0);
     // Empty Serial buffer
@@ -458,7 +460,7 @@ static void serial_flush()
 static bool wait_serial(unsigned long speed, String wait_for)
 {
     Serial.begin(speed, SERIAL_7E1);
-    serial_flush();
+    serial_flush_rx();
     hal_print_string("\e9t");
     delay(500);
     // Serial.setTimeout(500);

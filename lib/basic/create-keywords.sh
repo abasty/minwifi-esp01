@@ -108,6 +108,7 @@ del
 ins
 line
 char
+fast2
 EOF
 
 # Do not sort to preserve save/load compatibility
