@@ -460,10 +460,10 @@ static void serial_flush_rx()
 static bool wait_serial(unsigned long speed, String wait_for)
 {
     Serial.begin(speed, SERIAL_7E1);
+    Serial.setTimeout(0);
     serial_flush_rx();
     hal_print_string("\e9t");
     delay(500);
-    // Serial.setTimeout(500);
     String reply = Serial.readString();
     if (reply == wait_for)
         return true;
@@ -475,15 +475,13 @@ static void setup_serial()
 {
     while (true)
     {
-        // TODO: Add M2 9600
-
+        if (wait_serial(9600, "\x1b\x3au\x7f"))
+            break;
         if (wait_serial(4800, "\x1b\x3auv"))
             break;
         if (wait_serial(1200, "\x1b\x3aud"))
             break;
     }
-
-    Serial.setTimeout(0);
 }
 
 void setup()
