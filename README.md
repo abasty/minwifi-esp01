@@ -243,6 +243,19 @@
 | Ctrl+Fleche gauche (<-)   |                DEL(7F) | DEL(7F) |
 | Ctrl+Retour Chariot (<-') | CSI 2 (32) J (4A)      | FF (0C) |
 
+## Hardware SonOff
+
+Composant        |Connexion du schéma  |ESP8266      |Note
+-----------------|---------------------|-------------|------------------
+bouton-poussoir  |EFW                  |GPIO0        |logique 0 active
+relais           |PWM0                 |GPIO12       |logique 1 active
+DEL vert         |PWM1                 |GPIO13       |logique 0 active
+connexion        |J1-1                 |             |Vcc 3,3V
+connexion        |J1-2                 |U0RXD/GPIO1  |Pour programmer
+connexion        |J1-3                 |U0TXD/GPIO3  |Pour programmer
+connexion        |J1-4                 |             |Gnd, 0V
+connexion        |J1-5                 |GPIO14       |logique 0 active
+
 ## Backend et doc
 
 * [x] Présence sur le musée du minitel
