@@ -97,4 +97,5 @@ static const char *keywords =
     "LIN""\xc5"
     "CHA""\xd2"
     "FAST""\xb2"
+    """\xcc"
 ;

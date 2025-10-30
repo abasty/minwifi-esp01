@@ -109,6 +109,7 @@ ins
 line
 char
 fast2
+l
 EOF
 
 # Do not sort to preserve save/load compatibility

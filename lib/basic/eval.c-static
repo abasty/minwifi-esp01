@@ -156,6 +156,7 @@ uint8_t output_func[] = {
 static void running_state_clear() {
     bmem->bstate.pc = 0;
     bmem->bstate.sp = 0;
+    bmem->bstate.list_start = 0;
     memset(bmem->loops, 0, sizeof(bmem->loops));
     bmem->bstate.inkey = 0;
 }
@@ -1138,7 +1139,7 @@ static bool eval_print(bool implicit) {
 }
 
 static bool eval_list() {
-    if (!eval_token(TOKEN_KEYWORD_LIST))
+    if (!eval_token(TOKEN_KEYWORD_LIST) && !eval_token(TOKEN_KEYWORD_L))
         return false;
 
     uint16_t start = 0;
@@ -1152,6 +1153,9 @@ static bool eval_list() {
 
             n = bmem->bstate.number;
         }
+    }
+    else {
+        start = bmem->bstate.list_start;
     }
 
     if (bmem->bstate.do_eval) {
@@ -1168,6 +1172,7 @@ static bool eval_list() {
                 n--;
             }
             prog = bmem_prog_next_line(prog);
+            bmem->bstate.list_start = prog ? prog->line_no : 0;
         }
     }
 

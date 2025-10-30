@@ -72,6 +72,7 @@ typedef struct
     var_t *input_var;
     float number;
     uint8_t *read_ptr;
+    uint16_t list_start;
     uint8_t token;
     uint8_t input_var_token;
     int8_t error;
