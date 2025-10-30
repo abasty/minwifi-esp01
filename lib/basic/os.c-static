@@ -659,11 +659,13 @@ static char *os_filename(const char *name, int16_t *type) {
 
 static void os_loop_connected() {
     uint8_t buffer[NET_BUFFER_MAX];
+    static uint8_t ESC_count = 0;
 
     // Read data on socket in a non blocking mode
     int ret = hal_net_recv(bmem->bstate.sock, buffer, sizeof(buffer));
     if (ret < 0) {
         // If error on socket: exit the connected mode
+        ESC_count = 0;
         os_disconnect(DB_MIN_SET);
     } else if (ret > 0) {
         // If chars on socket: forward chars to screen (print)
@@ -679,11 +681,19 @@ static void os_loop_connected() {
     ret = hal_net_send(bmem->bstate.sock, &key, 1);
     if (ret < 0) {
         // If error on socket: exit the connected mode
+        ESC_count = 0;
         os_disconnect(DB_MIN_SET);
     }
 
     if (key == '\x1b') {
-        os_disconnect(DB_MIN_SET);
+        ESC_count++;
+        if (ESC_count >= 2) {
+            // If 2 ESC pressed: exit the connected mode
+            ESC_count = 0;
+            os_disconnect(DB_MIN_SET);
+        }
+    } else {
+        ESC_count = 0;
     }
 }
 
