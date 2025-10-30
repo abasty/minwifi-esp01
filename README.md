@@ -270,14 +270,14 @@ connexion        |J1-5                 |GPIO14       |logique 0 active
   * [ ] TEMU (https://bellard.org/jslinux/), à voir si on peut installer ça sur
   IONOS et y faire tourner des anciens softs
   * [ ] Github pages, wiki ?
-* [ ] Vidéos sur Youtube : <https://youtu.be/um_8PuhIGSI>
+* [x] Vidéos sur Youtube : <https://youtu.be/um_8PuhIGSI>
 
 * [ ] Github releases (download et procédure d'install)
 
 * [ ] Home self hosting possible pour les services de bouncing (éventuellement
   via ngrock + authentication)
 * [ ] Serveurs sur IONOS (faire framework en Dart, à la flutter éventuellement)
-* [ ] FTP sur IONOS :
+* [x] FTP sur IONOS :
   <https://www.digitalocean.com/community/tutorials/how-to-set-up-vsftpd-for-anonymous-downloads-on-ubuntu-16-04>
 * [ ] WSS/TCP gateway sur IONOS (filter par IP), réflechir à un serveur Dart qui
   fait le passe plat, liste blanche basée sur IP ?
