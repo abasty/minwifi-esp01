@@ -270,6 +270,7 @@ connexion        |J1-5                 |GPIO14       |logique 0 active
   * [ ] TEMU (https://bellard.org/jslinux/), à voir si on peut installer ça sur
   IONOS et y faire tourner des anciens softs
   * [ ] Github pages, wiki ?
+* [ ] Vidéos sur Youtube : <https://youtu.be/um_8PuhIGSI>
 
 * [ ] Github releases (download et procédure d'install)
 
