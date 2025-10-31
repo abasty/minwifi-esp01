@@ -454,7 +454,7 @@ passe associé).
 `WIFI STATUS` : Affiche des informations sur l'état du WiFi, l'adresse IP, le
 SSID connecté.
 
-# `PAUSE` dans modes BASTOS (non connecté)
+## `PAUSE` dans modes BASTOS (non connecté)
 
 | running | inputting | paused | key          | comportement |
 |---------|-----------|--------|--------------|--------------|
