@@ -1,5 +1,9 @@
 # TODO
 
+* [ ] Comment distribuer le firmware au format bineaire et le flasher sans les
+  sources et sans compiler
+* [ ] UPDATE <FILE.upd>
+
 ## Bugs
 
 * [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
