@@ -1,8 +1,14 @@
 # TODO
 
-* [ ] Comment distribuer le firmware au format bineaire et le flasher sans les
-  sources et sans compiler
-* [ ] UPDATE <FILE.upd>
+* [x] Comment distribuer le firmware au format bineaire et le flasher sans les
+  sources et sans compiler. EN utilisant "Verbose Upload" dans le menu
+  PlatformIO, on a ça :
+  ```
+  "/home/alain/.platformio/penv/bin/python" "/home/alain/.platformio/packages/tool-esptoolpy/esptool.py" --before default_reset --after hard_reset --chip esp8266 --port "/dev/ttyUSB0" --baud 230400 write_flash 0x0 .pio/build/esp01_1m_nodecmu/firmware.bin
+  ```
+  En ligne de commande directement, si on a installé `sudo apt install esptool` :
+  `esptool --before default_reset --after hard_reset --chip esp8266 --port "/dev/ttyUSB0" --baud 230400 write_flash 0x0 firmware.bin`
+* [ ] UPDATE prend `firmware.bin` sur le _file system_ et le flashe à l'adresse 0
 
 ## Bugs
 
@@ -270,7 +276,7 @@ connexion        |J1-5                 |GPIO14       |logique 0 active
 
 * [x] Présence sur le musée du minitel
 * [ ] Réseau social : Mastodon only
-* [ ] Blog / CMS : hugo +
+* [x] ~~Blog / CMS~~ : hugo +
   [hextra](https://imfing.github.io/hextra/docs/guide/organize-files/)
 * [ ] [mastodon comments] (https://andreas.scherbaum.la/post/2024-05-23_client-side-comments-with-mastodon-on-a-static-hugo-website/)
 * [ ] Blog / content : pages perso retro: Minitel / HP48 / ORIC 1 / PalmOS / ...
