@@ -289,6 +289,12 @@ connexion        |J1-5                 |GPIO14       |logique 0 active
 * [ ] Serveurs sur IONOS (faire framework en Dart, à la flutter éventuellement)
 * [x] FTP sur IONOS :
   <https://www.digitalocean.com/community/tutorials/how-to-set-up-vsftpd-for-anonymous-downloads-on-ubuntu-16-04>
+* [ ] Pouvoir alimenter un site FTP depuis un script local (FTP Bastos en
+  lecture seule + Site web blog z4rd0z)
+  * [ ] Blog sur alain.basty.free.fr (accès FTP) :
+    <https://serverfault.com/questions/24622/how-to-use-rsync-over-ftp>
+  * [ ] Site FTP BASTOS : rsync over SSH,
+    <https://stackoverflow.com/questions/9090817/copying-files-using-rsync-from-remote-server-to-local-machine>
 * [ ] WSS/TCP gateway sur IONOS (filter par IP), réflechir à un serveur Dart qui
   fait le passe plat, liste blanche basée sur IP ?
 * [ ] TELNET bouncing sur IONOS
