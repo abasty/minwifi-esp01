@@ -110,6 +110,8 @@ line
 char
 fast2
 l
+g0
+g1
 EOF
 
 # Do not sort to preserve save/load compatibility

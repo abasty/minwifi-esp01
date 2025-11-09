@@ -6,6 +6,9 @@
 
 ## Bugs
 
+* [ ] `RUN` d'un programme avec une erreur de syntaxe (édité sur PC) provoque un
+  crash (sortie de BASTOS dans l'émulateur) => On devrait juste avoir une erreur
+  comme sur `LOAD`.
 * [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
   plus sur Minitel
 * [ ] Attention : Apparemment E.Page sur minitel ne déplace pas le curseur
@@ -87,6 +90,9 @@
 * [ ] Quand on est connécté à un service, voir ce que fait ESC et CX/Fin
 * [ ] À définir : support des touches de mise en pages dans les différents modes
   de BASTOS (CLI, INPUT, INKEY/PAUSE, prévoir un mode EDIT)
+* [ ] Supprimer `BIN`, remplacer par `BASE$(<N>, <BASE>, <MAX>)`.
+* [ ] Rajouter un `FORMAT$` ?
+* [x] G0 / G1 TTY instructions
 * [ ] Touches de direction : génère un ESC + 2 caractères ([Touches en mode
   clavier étendu](#touches-en-mode-clavier-%C3%A9tendu))
   * [x] Implémenter dans minterm (clavier virtuel et physique)

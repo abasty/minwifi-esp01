@@ -98,3 +98,5 @@
 #define TOKEN_KEYWORD_CHAR ((uint8_t) (96 | 0b10000000))
 #define TOKEN_KEYWORD_FAST2 ((uint8_t) (97 | 0b10000000))
 #define TOKEN_KEYWORD_L ((uint8_t) (98 | 0b10000000))
+#define TOKEN_KEYWORD_G0 ((uint8_t) (99 | 0b10000000))
+#define TOKEN_KEYWORD_G1 ((uint8_t) (100 | 0b10000000))

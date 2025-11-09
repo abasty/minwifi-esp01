@@ -98,4 +98,6 @@ static const char *keywords =
     "CHA""\xd2"
     "FAST""\xb2"
     """\xcc"
+    "G""\xb0"
+    "G""\xb1"
 ;

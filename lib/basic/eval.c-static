@@ -82,7 +82,8 @@ char tty_codes[] = {
     TOKEN_KEYWORD_CLEOL,   TOKEN_KEYWORD_LINE0,     TOKEN_KEYWORD_FLASH,
     TOKEN_KEYWORD_INVERSE, TOKEN_KEYWORD_UNDERLINE, TOKEN_KEYWORD_ECHO,
     TOKEN_KEYWORD_SIZE,    TOKEN_KEYWORD_SCROLL,    TOKEN_KEYWORD_DEL,
-    TOKEN_KEYWORD_INS,     0,
+    TOKEN_KEYWORD_INS,     TOKEN_KEYWORD_G0,        TOKEN_KEYWORD_G1,
+    0,
 };
 
 const char compare_tokens[] = {
@@ -1419,6 +1420,16 @@ static bool eval_string_tty() {
 
     if (fn == TOKEN_KEYWORD_LINE0) {
         snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x1f\x40\x41");
+        goto EVAL;
+    }
+
+    if (fn == TOKEN_KEYWORD_G0) {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, G0);
+        goto EVAL;
+    }
+
+    if (fn == TOKEN_KEYWORD_G1) {
+        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, G1);
         goto EVAL;
     }
 
