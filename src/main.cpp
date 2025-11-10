@@ -285,7 +285,7 @@ int hal_net_connect(split_t *urn)
         }
 
         // Disable nagle's algo
-        g_tcp_socket.setDefaultNoDelay(true);
+        g_tcp_socket.setNoDelay(true);
         return 0;
     }
 
@@ -299,6 +299,8 @@ int hal_net_connect(split_t *urn)
             web_socket_terminate();
             return -1;
         }
+        // Disable nagle's algo
+        g_tcp_socket.setNoDelay(true);
         return 0;
     }
 
