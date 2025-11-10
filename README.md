@@ -8,6 +8,9 @@
   ```
   En ligne de commande directement, si on a installé `sudo apt install esptool` :
   `esptool --before default_reset --after hard_reset --chip esp8266 --port "/dev/ttyUSB0" --baud 230400 write_flash 0x0 firmware.bin`
+* [x] Distribution sur FTP BASTOS : `scp firmware.bin
+  abasty-retro:/var/ftp/bastos`. Peut-être utiliser pour _flash serial from PC_ ou
+  _direct from flash disk_ (télécharger avec FTP, puis `UPDATE`)
 * [ ] UPDATE prend `firmware.bin` sur le _file system_ et le flashe à l'adresse 0
 
 ## Bugs
