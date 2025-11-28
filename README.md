@@ -11,7 +11,9 @@
 * [x] Distribution sur FTP BASTOS : `scp firmware.bin
   abasty-retro:/var/ftp/bastos`. Peut-être utiliser pour _flash serial from PC_ ou
   _direct from flash disk_ (télécharger avec FTP, puis `UPDATE`)
-* [ ] UPDATE prend `firmware.bin` sur le _file system_ et le flashe à l'adresse 0
+* [ ] UPDATE prend `bastos-s.bin` sur le _file system_ et le flashe à l'adresse 0
+* [ ] Penser à BASTOS-PI / BASTOS-PC puis BASTOS-P
+* [ ] 4060 / 9784. 3528 Sans les REMs.
 
 ## Bugs
 
