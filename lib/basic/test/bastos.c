@@ -58,7 +58,8 @@ void hal_print_oem_string(void)
 uint8_t hal_get_key()
 {
     struct pollfd input[1] = {{fd : 0, events : POLLIN}};
-    int ret = poll(input, 1, 1);
+    usleep(100);
+    int ret = poll(input, 1, 0);
 
     if (ret < 0)
         goto err;
