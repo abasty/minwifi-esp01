@@ -1,6 +1,6 @@
-40 FAST
-50 CLS;ORIGIN 2,4;AT 3,0;PAPER 1;REP$ 32," "
-51 AT 3,11;INK 7;"ZXSnake"
+10 FAST
+50 CURSOR 0;CLS;ORIGIN 2,5;AT 3,0;PAPER 1;REP$ 32," "
+51 AT 3,12;"ZXSnake"
 52 AT 5,11;"a - Up"
 53 AT 6,11;"q - Down"
 54 AT 7,11;"o - Left"
@@ -29,7 +29,7 @@ REM "Variable definition"
 140 taily=5
 150 orientationx=1
 160 orientationy=0
-165 REM "Clear arrays p, x and y"
+REM "Clear arrays p, x and y"
 170 FOR c=1 TO 23
 175 FOR f=1 TO 34
 180 p(c,f)=0
@@ -45,8 +45,12 @@ REM "Variable definition"
 250 miny=0
 
 REM "Screen Initialization"
-1015 CLS;CURSOR 0
-1020 AT 21,1;PAPER 1;INK 7;" SCORE : 0                     "
+1020 AT -1,-1;PAPER 1;REP$ 34," "
+1024 FOR l=1 TO 22 STEP 2
+1025 AT l,-1;INK 1;SIZE 1;"\x7f";REP$ 32," ";"\x7f"
+1026 NEXT l
+1027 AT 21,0;PAPER 1;" SCORE : 0";REP$ 22," "
+
 1030 FOR c=minx TO maxx
 1040 p(miny+1,c+1)=4
 1050 p(maxy+1,c+1)=4
@@ -73,7 +77,6 @@ REM "Draw the Head"
 2057 y(heady+2,headx+2)=0
 
 REM "Update snake position"
-3005 INK 7
 REM "Change the orientation if needed"
 3015 x(heady+2,headx+2)=orientationx
 3020 y(heady+2,headx+2)=orientationy
@@ -85,7 +88,7 @@ REM "Erase previous head"
 3050 IF p(heady+2,headx+2)>1 THEN 9900
 3051 IF p(heady+2,headx+2)<>1 THEN 3060
 3052 score=score+10
-3053 AT 21,10;PAPER 1;INK 7;" ";score
+3053 AT 21,8;PAPER 1;" ";score
 3054 eaten=1
 3055 GOSUB 8000
 REM "Print the new head"
@@ -119,7 +122,6 @@ REM "Read the keyboard"
 REM "No key"
 7000 PAUSE 150
 7998 GOTO 3000
-7999 END
 
 REM "Fruit placement"
 8010 fruitx=INT(RND*30)+1
@@ -142,9 +144,9 @@ REM "Erase tail"
 8190 RETURN
 
 REM "Game over"
-9910 AT 10,12;INK 2;SIZE 1;"GAME OVER";SIZE 0
-9930 PRINT AT 13,8;"Press space key";CURSOR 1
+9910 AT 10,11;INK 2;SIZE 1;" GAME OVER ";SIZE 0
+9930 AT 12,8;" Press space key "
 9940 j$=INKEY$
 9945 PAUSE 50
-9950 IF j$=" " THEN 100
+9950 IF j$=" " THEN 50
 9960 GOTO 9940
