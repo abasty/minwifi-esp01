@@ -100,4 +100,5 @@ static const char *keywords =
     """\xcc"
     "G""\xb0"
     "G""\xb1"
+    "ORIGI""\xce"
 ;

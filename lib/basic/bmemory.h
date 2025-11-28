@@ -78,6 +78,8 @@ typedef struct
     int8_t error;
     char inkey;
     uint8_t flags;
+    uint8_t ofs_c;
+    uint8_t ofs_l;
     bool do_eval;
     bool running;
     bool inputting;

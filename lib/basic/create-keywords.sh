@@ -112,6 +112,7 @@ fast2
 l
 g0
 g1
+origin
 EOF
 
 # Do not sort to preserve save/load compatibility

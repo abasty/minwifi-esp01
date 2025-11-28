@@ -1,1 +1,1 @@
-10 run"meteor.vdt.bas"
+10 RUN "snake"
