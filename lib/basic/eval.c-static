@@ -1142,7 +1142,7 @@ static bool eval_print(bool implicit) {
 }
 
 static bool eval_list() {
-    if (!eval_token(TOKEN_KEYWORD_LIST) && !eval_token(TOKEN_KEYWORD_L))
+    if (!eval_token(TOKEN_KEYWORD_LIST) && !eval_token(TOKEN_KEYWORD_LL))
         return false;
 
     uint16_t start = 0;

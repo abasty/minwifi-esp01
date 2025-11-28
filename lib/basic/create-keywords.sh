@@ -109,7 +109,7 @@ ins
 line
 char
 fast2
-l
+ll
 g0
 g1
 origin
