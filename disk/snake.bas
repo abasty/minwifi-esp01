@@ -14,8 +14,9 @@
 65 IF j$="" THEN 60
 
 REM "UDG Definition des caractAeres si minitel 2 / Magic Club"
-71 s$=">"
+71 s$=""
 72 f$="@"
+73 ss$="+"
 
 REM "Variable declaration (maybe declare as char array)"
 76 DIM p(23,34)
@@ -64,14 +65,14 @@ REM "Screen Initialization"
 REM "Draw snake in its initial position"
 REM "Draw the body"
 2010 FOR c=tailx TO headx-1
-2020 PRINT AT taily,c;"O"
+2020 PRINT AT taily,c;ss$
 2025 p(taily+2,c+2)=3
 2026 x(taily+2,c+2)=1
 2027 y(taily+2,c+2)=0
 2030 NEXT c
 REM "Draw the Head"
-2045 s$=">"
-2050 PRINT AT heady,headx;INVERSE 1;s$;
+2045 s$="\x19\x2e"
+2050 AT heady,headx;s$
 2055 p(heady+2,headx+2)=2
 2056 x(heady+2,headx+2)=1
 2057 y(heady+2,headx+2)=0
@@ -81,7 +82,7 @@ REM "Change the orientation if needed"
 3015 x(heady+2,headx+2)=orientationx
 3020 y(heady+2,headx+2)=orientationy
 REM "Erase previous head"
-3030 AT heady,headx;"O"
+3030 AT heady,headx;ss$
 3035 p(heady+2,headx+2)=3
 3040 headx=headx+orientationx
 3045 heady=heady+orientationy
@@ -102,22 +103,22 @@ REM "Read the keyboard"
 3300 IF a$<>"o" THEN 3400
 3310 orientationx=-1
 3320 orientationy=0
-3330 s$="<"
+3330 s$="\x19\x2c"
 3399 GOTO 7000
 3400 IF a$<>"p" THEN 3500
 3410 orientationx=1
 3420 orientationy=0
-3430 s$=">"
+3430 s$="\x19\x2e"
 3499 GOTO 7000
 3500 IF a$<>"a" THEN 3600
 3510 orientationx=0
 3520 orientationy=-1
-3530 s$="^"
+3530 s$="\x19\x2d"
 3599 GOTO 7000
 3600 IF a$<>"q" THEN 3700
 3610 orientationx=0
 3620 orientationy=1
-3630 s$="V"
+3630 s$="\x19\x2f"
 3699 GOTO 7000
 REM "No key"
 7000 PAUSE 150
@@ -145,7 +146,7 @@ REM "Erase tail"
 
 REM "Game over"
 9910 AT 10,11;INK 2;SIZE 1;" GAME OVER ";SIZE 0
-9930 AT 12,8;" Press space key "
+9930 AT 12,8;FLASH 1;" Press space key ";FLASH 0
 9940 j$=INKEY$
 9945 PAUSE 50
 9950 IF j$=" " THEN 50
