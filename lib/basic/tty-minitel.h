@@ -98,4 +98,8 @@
 #define P_PRISE_4800 PRO2 "\x6B\x76"
 #define P_PRISE_9600 PRO2 "\x6B\x7f"
 
+// #define P_UPDATE1 "\x0c\x1f\x4b\x4a\x1b\x4dDO NOT UNPLUG DEVICE\x1b\x4c"
+#define P_UPDATE1 "\x0c\x1f\x4b\x4a\x1b\x4d" "DO NOT UNPLUG DEVICE\x1b\x4c"
+#define P_UPDATE2 "\x1f\x4d\x4c\x1b\x48" "Updating BASTOS...\x1b\x49"
+
 #endif // TTY_MINITEL_H

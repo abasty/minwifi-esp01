@@ -1,0 +1,4 @@
+10 a$="\x0c\x1f\x4b\x4a\x1b\x4dDO NOT UNPLUG DEVICE\x1b\x4c"
+20 a$=a$+"\x1f\x4d\x4c\x1b\x48Updating BASTOS...\x1b\x49"
+30 ?a$;
+100 at 22,1

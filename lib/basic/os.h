@@ -76,6 +76,8 @@ extern "C" {
 #define FILE_BASE_MAX (16)
 #define FILE_EXT_MAX (3)
 
+#define BASTOS_FIRMWARE_FILENAME "bastos-firmware.bin"
+
 typedef struct split_s {
     uint8_t n;
     uint8_t proto;
@@ -116,6 +118,7 @@ int hal_read(int fd, void *buf, int count);
 
 size_t hal_cat(void);
 int hal_erase(const char *pathname);
+int hal_update(void);
 
 int hal_wifi_scan(void);
 int hal_wifi_connect(const char* ssid, const char* secret);

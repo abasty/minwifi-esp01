@@ -23,6 +23,9 @@
  * SOFTWARE.
  */
 
+// #define TOTO
+#ifdef TOTO
+
 #include <ESP8266WiFi.h>
 #include <LittleFS.h>
 #include <ArduinoHttpClient.h>
@@ -446,6 +449,37 @@ int hal_get_function_key(void)
     return function;
 }
 
+int hal_update(void)
+{
+    int err = 0;
+    File file = LittleFS.open(BASTOS_FIRMWARE_FILENAME, "r");
+    if (!file) {
+        hal_print_string("No '" BASTOS_FIRMWARE_FILENAME "'\r\n");
+        return -1;
+    }
+
+    hal_print_string(P_UPDATE1 P_UPDATE2);
+
+    uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+    if (!Update.begin(maxSketchSpace, U_FLASH)) {
+        Update.printError(Serial);
+        // Serial.println("ERROR");
+        return -1;
+    }
+
+    while (file.available()) {
+        uint8_t buffer[128];
+        file.read((uint8_t *)buffer, 128);
+        Update.write(buffer, sizeof(buffer));
+    }
+
+    // Serial.print(
+    Update.end(true);
+    file.close();
+    hal_reset();
+    return 0;
+}
+
 static void serial_flush_rx()
 {
     Serial.setTimeout(0);
@@ -512,3 +546,119 @@ void loop()
 {
     os_loop();
 }
+
+
+#else
+
+/* #include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ESP8266WebServer.h>
+#include <LittleFS.h>
+
+#define BASTOS_FIRMWARE_FILENAME "bastos-firmware.bin"
+
+void setup() {
+  Serial.begin(115200, );
+  Serial.println();
+
+  LittleFS.begin();
+
+  pinMode(BUILTIN_LED, OUTPUT);
+  digitalWrite(BUILTIN_LED, LOW);
+
+  File file = LittleFS.open(BASTOS_FIRMWARE_FILENAME, "r");
+  if (file) {
+    Serial.println("File open: " BASTOS_FIRMWARE_FILENAME);
+  } else
+  {
+    Serial.println("File not open !!!");
+  }
+
+  uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+  if (!Update.begin(maxSketchSpace, U_FLASH)) { //start with max available size
+    Update.printError(Serial);
+    Serial.println("ERROR");
+  }
+
+  while (file.available()) {
+    uint8_t ibuffer[128];
+    file.read((uint8_t *)ibuffer, 128);
+    Serial.println((char *)ibuffer);
+    Update.write(ibuffer, sizeof(ibuffer));
+  }
+
+  Serial.print(Update.end(true));
+  digitalWrite(BUILTIN_LED, HIGH);
+  file.close();
+}
+
+void loop() {
+}
+*/
+
+#include <ESP8266WiFi.h>
+#include <LittleFS.h>
+
+
+#define MY_BLUE_LED_PIN 2
+#define BASTOS_FIRMWARE_FILENAME "bastos-firmware.bin"
+
+void setup() {
+    pinMode(MY_BLUE_LED_PIN, OUTPUT);
+    digitalWrite(MY_BLUE_LED_PIN, LOW);
+
+    Serial.begin(115200, SERIAL_8N1);
+    Serial.println();
+    LittleFS.begin();
+
+    File file = LittleFS.open(BASTOS_FIRMWARE_FILENAME, "r");
+    if (file) {
+        Serial.println("File open: " BASTOS_FIRMWARE_FILENAME);
+    } else
+    {
+        Serial.println("File not open !!!");
+        return;
+    }
+
+    size_t fsize = 100000;
+    // uint32_t maxSketchSpace = (ESP.getFreeSketchSpace()) & 0xFFFFF000;
+    // Serial.printf("maxSketchSpace: %u\r\n", maxSketchSpace);
+    if (!Update.begin(fsize, U_FLASH)) {
+        Update.printError(Serial);
+        return;
+    }
+
+    size_t written = 0;
+    while (file.available())
+    {
+        uint8_t ibuffer[128];
+        size_t r = file.read((uint8_t *)ibuffer, 128);
+        size_t w = Update.write(ibuffer, sizeof(ibuffer));
+        if (r != w) {
+            Serial.printf("ERROR r: %zu, w: %zu (written: %zu)\r\n", r, w, written);
+            break;
+        }
+        written += w;
+    }
+
+    file.close();
+
+    if (Update.end(true)) {
+        Serial.println("Update Success");
+        return;
+    } else {
+        Serial.println(Update.getErrorString());
+    }
+}
+
+// the loop function runs over and over again forever
+void loop() {
+  digitalWrite(MY_BLUE_LED_PIN, LOW);   // Turn the LED on (Note that LOW is the voltage level
+  // but actually the LED is on; this is because
+  // it is active low on the ESP-01)
+  delay(1000);                      // Wait for a second
+  digitalWrite(MY_BLUE_LED_PIN, HIGH);  // Turn the LED off by making the voltage HIGH
+  delay(2000);                      // Wait for two seconds (to demonstrate the active low LED)
+}
+
+#endif

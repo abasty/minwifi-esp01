@@ -101,3 +101,4 @@
 #define TOKEN_KEYWORD_G0 ((uint8_t) (99 | 0b10000000))
 #define TOKEN_KEYWORD_G1 ((uint8_t) (100 | 0b10000000))
 #define TOKEN_KEYWORD_ORIGIN ((uint8_t) (101 | 0b10000000))
+#define TOKEN_KEYWORD_UPDATE ((uint8_t) (102 | 0b10000000))

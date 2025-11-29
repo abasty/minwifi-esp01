@@ -101,4 +101,5 @@ static const char *keywords =
     "G""\xb0"
     "G""\xb1"
     "ORIGI""\xce"
+    "UPDAT""\xc5"
 ;

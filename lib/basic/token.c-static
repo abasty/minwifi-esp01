@@ -216,7 +216,7 @@ static int8_t tokenize_string(tokenizer_state_t *state) {
             }
         } else if (escape == 2) {
             char hex[3] = {c, *(state->read_ptr + 1), 0};
-            if (isxdigit(hex[0]) && isxdigit(hex[1])) {
+            if (isxdigit(hex[0U]) && isxdigit(hex[1U])) {
                 c = strtol(hex, 0, 16);
                 state->read_ptr++;
             }

@@ -183,6 +183,18 @@ int hal_erase(const char *pathname)
     return unlink(pathname);
 }
 
+int hal_update(void)
+{
+    int fd = open(BASTOS_FIRMWARE_FILENAME, O_RDONLY);
+    if (fd < 0) {
+        hal_print_string("No '" BASTOS_FIRMWARE_FILENAME "'\r\n");
+        return -1;
+    }
+    hal_print_string(P_UPDATE1 P_UPDATE2 "\r\n\r\n");
+    hal_print_string("Update not implemented on Linux\r\n");
+    return 0;
+}
+
 void hal_reset()
 {
 }

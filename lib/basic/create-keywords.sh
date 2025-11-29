@@ -113,6 +113,7 @@ ll
 g0
 g1
 origin
+update
 EOF
 
 # Do not sort to preserve save/load compatibility
