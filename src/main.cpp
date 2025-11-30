@@ -27,6 +27,7 @@
 #include <LittleFS.h>
 #include <ArduinoHttpClient.h>
 #include <FTPClient.h>
+#include <ArduinoOTA.h>
 
 #ifdef MINITEL
 #include "tty-minitel.h"
@@ -224,7 +225,12 @@ int hal_wifi_connect(const char* ssid, const char* secret)
     {
         delay(500);
     }
-    return WiFi.status() == WL_CONNECTED ? 0 : -1;
+    int ret = WiFi.status() == WL_CONNECTED ? 0 : -1;
+    if (ret == 0)
+    {
+        ArduinoOTA.begin();
+    }
+    return ret;
 }
 
 void hal_wifi_disconnect()
@@ -510,5 +516,9 @@ void setup()
 
 void loop()
 {
+    if (WiFi.isConnected())
+    {
+        ArduinoOTA.handle();
+    }
     os_loop();
 }
