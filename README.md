@@ -1,19 +1,24 @@
 # TODO
 
+## Roadmap
+
 * [x] Comment distribuer le firmware au format bineaire et le flasher sans les
   sources et sans compiler. EN utilisant "Verbose Upload" dans le menu
   PlatformIO, on a ça :
   ```
   "/home/alain/.platformio/penv/bin/python" "/home/alain/.platformio/packages/tool-esptoolpy/esptool.py" --before default_reset --after hard_reset --chip esp8266 --port "/dev/ttyUSB0" --baud 230400 write_flash 0x0 .pio/build/esp01_1m_nodecmu/firmware.bin
   ```
-  En ligne de commande directement, si on a installé `sudo apt install esptool` :
-  `esptool --before default_reset --after hard_reset --chip esp8266 --port "/dev/ttyUSB0" --baud 230400 write_flash 0x0 firmware.bin`
-* [x] Distribution sur FTP BASTOS : `scp firmware.bin
-  abasty-retro:/var/ftp/bastos`. Peut-être utiliser pour _flash serial from PC_ ou
-  _direct from flash disk_ (télécharger avec FTP, puis `UPDATE`)
-* [ ] UPDATE prend `bastos-s.bin` sur le _file system_ et le flashe à l'adresse 0
+  En ligne de commande directement, si on a installé `sudo apt install esptool`
+  : `esptool --before default_reset --after hard_reset --chip esp8266 --port
+  "/dev/ttyUSB0" --baud 230400 write_flash 0x0 firmware.bin`
+* Distribution sur FTP BASTOS + Update par FTP : impossible, il faut toujours
+  avoir 2x la place en flash pour flasher + la copie sur FS
+    * [x] Distribution sur FTP BASTOS : `scp firmware.bin
+    abasty-retro:/var/ftp/bastos`. Peut-être utiliser pour _flash serial from PC_ ou
+    _direct from flash disk_ (télécharger avec FTP, puis `UPDATE`)
+    * [ ] UPDATE prend `bastos-s.bin` sur le _file system_ et le flashe à l'adresse
+    0
 * [ ] Penser à BASTOS-PI / BASTOS-PC puis BASTOS-P
-* [ ] 4060 / 9784. 3528 Sans les REMs.
 
 ## Bugs
 
@@ -26,68 +31,6 @@
 * [ ] Déconnexion provenant d'un serveur websocket : semble ne pas fonctionner
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
-
-* [x] Sur Minitel/Sonoff en mode clavier étendu : les touches Home et E. Page ne
-  sont pas fonctionnelles. Home: "1b 5b 48" / E. Page = "1b 5b 32 4a" / CX/Fin =
-  "13 59"
-* [x] a$="" k$="alain" a$=a$+k$ => len a$ == 5 mais les caractères ne snt pas
-  copiés dans a$
-* [x] Sur Minitel/Sonoff, "Error 1" au reset : Plus visible après déterminiation
-  vitesse au boot
-* [x] ~~Comprendre pourquoi il faut appuyer sur des touches pour afficher les
-  caractères (ligne0 score, record) quand on entre dans le GOSUB du jeu METEOR.
-  En mode FAST ça marche, pas en mode SLOW. Faut voir si ça arrive sur device,
-  possibilité que ça arrive avec le nagle aussi, ou que ce soit un pb de
-  minterm~~
-* [x] Fixer les commandes TTY qui nécessitent un ou plusieurs paramètres et qui
-  ne génèrent pas d'erreur de syntaxe quand elles n'ont pas le bon nombre de
-  paramètres (commandes tty)
-* [x] Si possible, `INPUT` vide : ne change pas la valeur de la variable
-* [x] Chaine d'init à balancer même si autoexec. À rajouter : clavier étendu,
-  minuscules. Chaine d'init après retour mode connecté aussi
-    * [x] Touche ESC ne fonctionne en mode videotex : passer en clavier étendu
-    (Fnct+C E)
-    * [x] Passer en minuscule automatiquement (Fnct+C M)
-    * [x] BASTOS ou AUTOEXEC => Init string d'abord
-* [x] Pour HACKER, définir le path de l'URN à `/?echo` ~~: Pouvoir faire un
-  `ECHO 1`~~
-* [x] `RUN` d'un `.bst` ne doit pas supprimer les variables => doit faire un
-  `GOTO 0`
-* [x] CX/Fin : ne doit pas être utilisé pour déconnecter car certains services
-  "Kiosque" l'utilise pour revenir à l'appli principale "3615". Utiliser plutôt
-  la même touche que pour arrêter le programme (ESC). Pareillement, la touche
-  pour arrêter le programme ne dois pas être Annulation mais "ESC". Annulation
-  pourrait être mappé sur "Ctrl+A" dans minterm, au lieu de ESC actuellement
-* [x] `LOAD` `.bas` : Conversion UTF-8 vers MIN (voir `accents-utf8.txt`)
-* [x] Ajouter la commande `END` : Ca fait `STOP` et `CLEAR`, on ne peut pas
-  `CONT`
-* [x] Chaine de caractères 255 OK, si on ajoute un char => bug, pb sur toutes
-  les varaiables chaines de caractères
-* [x] Une revue des `hal_print*` / `os_print*` est nécessaire avec `OUTPUT
-  START`, notamment sur les affichages line0 (mots de passe, status,
-  notifications, cat, etc.)
-* [x] `LOAD` d'un fichier `.var` suspend l'exécution du programme en cours
-  d'exécution
-* [x] `MINIPAVI` : Utiliser le port 8182 (WS sans SSL) ~~voir `minipavi-gw.sh`,
-  solution temporaire à l'utilisation de SSL dans le projet : WSS non suporté
-  (connexion sur minipavi impossible). Problème de SSL : ça prend plus 100KB...
-  Au niveau mémoire, quand on baisse la mémoire à 8KB pour le Basic on n'a plus
-  de crash mais une erreur de connexion. Erreur de connexion aussi en Flutter.
-  Erreur aussi avec websocat, Marche avec `./websocat -b --ws-dont-check-headers
-  wss://go.minipavi.fr:8181/`~~
-* [x] INPUT vide
-* [x] ~~Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
-  serveur Minitel. Voir avec une websocket statique (pas de new / delete)~~
-* [x] Crash avec connexion en boucle sur WS "3615" ou "hacker" (pages lourdes)
-  lorsque qu'on coupe la communication alors qu'on reçoit des données
-* [x] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
-  même les chaines de caractères sont terminées par `\0`, notamment dans les
-  tableaux. Ce n'est pas compatible avec le Basic ZX81 car on ne peut accéder au
-  dernier caractère (qui est forcément `\0`) => chaine de caractères
-  représentées par longueur (16 bits) + contenu
-
-## Bug minipavi
-
 * [ ] Websocket minipavi : ne fonctionne pas en mode ESP (sans gateway) :
   déconnexion au bout d'un moment. Les touches ne partent pas, en tout cas on ne
   les a pas en echo local, il semble qu'on doit être en mode binaire => debug
@@ -95,48 +38,12 @@
 
 ## Fonctionnalités
 
-* [x] Gérer les codes INSL, DELL, DELC et définir les commandes BASTOS associées
-* [ ] Gérer les codes DINSC, FINSC et définir les commandes BASTOS associées
-* [ ] Ctrl+C à la place de ESC /ESC ?
-* [ ] Quand on est connécté à un service, voir ce que fait ESC et CX/Fin
-* [ ] À définir : support des touches de mise en pages dans les différents modes
-  de BASTOS (CLI, INPUT, INKEY/PAUSE, prévoir un mode EDIT)
-* [ ] Supprimer `BIN`, remplacer par `BASE$(<N>, <BASE>, <MAX>)`.
-* [ ] Rajouter un `FORMAT$` ?
-* [x] G0 / G1 TTY instructions
-* [ ] Touches de direction : génère un ESC + 2 caractères ([Touches en mode
-  clavier étendu](#touches-en-mode-clavier-%C3%A9tendu))
-  * [x] Implémenter dans minterm (clavier virtuel et physique)
-  * [x] Implémenter dans `os_get_key()`
-  * [x] Touche flèche gauche + Ctrl (DEL)
-* [ ] Break qui arrive plus vite (d'abord sur device, flush sur serial, sur TCP
-  il faudrait avoir un autre canal pour dier à l'mu de flusher ce qu'il a déjà
-  reçu)
-* [ ] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
-  en main à cause du "autoexec" ).
-* [x] Bouton reset : détecter appui long, appui court
-* [x] Détection vitesse prise
-* [x] Édition de ligne / suppresion du dernier caractère : gérer les séquences
-  de caractères spéciaux (G2, G1)
-    * [x] G2 caractère spécial : tester si le caractère précédent est SS2
-    * [x] G2 accents (aeiuo) / cédille (cC) : tester les séquences admissibles
-    * [x] G1 : si le caractère précédent est G1, le supprimer
-    * [x] G1 : Pouvoir introduire G1 (idéalement Ctrl+G)
+* [ ] TAB
+* [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
 * [ ] RAND
 * [ ] PLOT / UNPLOT / TEST (Voir serveur zboub et lib graphique)
   * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
   * [ ] Minitel, semi graphique
-* [x] PAUSE <N>
-* [ ] PAUSE <N>, <LINENO> : Pendant le temps de la pause exécute le
-  sous-programme <LINENO>. Quand `RETURN` est appelé, soit le temps est écoulé
-  et le programme reprend après le `PAUSE`, soit on continue la pause jusqu'à
-  épuisement du temps
-* [ ] Faire NEXT tout seul remonte au dernier FOR
-* [ ] TAB
-* [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
-
-* [ ] FAST FAST (9600 / Minitel 2)
-
 * [ ] EDIT line, EDIT tout seul édite la dernière entrée (raccourci: fleche
   haut). définir une zone à partir de la ligne actuelle et sur 4 lignes pour
   pouvoir entrer au max 128 caractères : mode roleau, on se déplace de 3 lignes
@@ -144,104 +51,127 @@
   cleol ; on insere 4 lignes, on commence l'édition
 * [ ] Ajouter `EDIT <LINE_NO>`, integration "edit_min" ?
 * [ ] EVAL / EVAL$ => Voir `os_eval_string()`, utilisé pour le `LOAD`
-* [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
-  seule commande print.
+* [ ] Gérer les codes DINSC, FINSC et définir les commandes BASTOS associées
+* [ ] Ctrl+C à la place de ESC /ESC ?
+* [ ] Quand on est connécté à un service, voir ce que fait ESC et CX/Fin
+* [ ] À définir : support des touches de mise en pages dans les différents modes
+  de BASTOS (CLI, INPUT, INKEY/PAUSE, prévoir un mode EDIT)
+* [ ] Supprimer `BIN`, remplacer par `BASE$(<N>, <BASE>, <MAX>)`.
+* [ ] Gestion de la touche Cx/Fin
+  * [*] voir avec une interface série PC <-> Minitel, quels codes on reçoit, en
+  mode F en mode C clignotant
+  * [*] Le traiter pour sortir du mode connecté BASTOS
+  * [ ] A tester : réagir en conséquence (envoyer un autre Cx/Fin par la prise
+    pour déconnecter le modem ou autre)
 
-* SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs
-  (voir dans `MINOLD.PAS`)
-
+* [ ] Rajouter un `FORMAT$` ?
+* [ ] Break qui arrive plus vite (d'abord sur device, flush sur serial, sur TCP
+  il faudrait avoir un autre canal pour dier à l'mu de flusher ce qu'il a déjà
+  reçu)
+* [ ] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
+  en main à cause du "autoexec" ).
+* [ ] PAUSE <N>, <LINENO> : Pendant le temps de la pause exécute le
+  sous-programme <LINENO>. Quand `RETURN` est appelé, soit le temps est écoulé
+  et le programme reprend après le `PAUSE`, soit on continue la pause jusqu'à
+  épuisement du temps
+* [ ] Faire NEXT tout seul remonte au dernier FOR
 * [ ] PEEK (y compris variables OS ?) / POKE / USR : adresses converties par
   rapport au début du bloc (0 à 32K+4K). PEEK16 / POKE16. Les pointeurs
   pourraient être à l'extérieur et dans le bstate on ne mettrait que des offsets
   sur 16 bits => on pourrait modifier vars_start / vars_end. `@<VAR>`,
   `@<LINE_NO>`, `@DB <SET>,<KEY>`
+* [ ] Gérer l'historique avec la DB config (une seule chaîne, séparée par des
+  "\0", ou "HIST_0" à "HIST_9")
+* [ ] Ramener les variables OS dans le bstate
+* [ ] SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs
+  (voir dans `MINOLD.PAS`)
+* [ ] Touches de direction : génère un ESC + 2 caractères ([Touches en mode
+  clavier étendu](#touches-en-mode-clavier-%C3%A9tendu))
+  * [x] Implémenter dans minterm (clavier virtuel et physique)
+  * [x] Implémenter dans `os_get_key()`
+  * [x] Touche flèche gauche + Ctrl (DEL)
 
-* [x] `BEEP`, `CLEOL`,
-* [x] `FLASH 0|1`, `INVERSE 0|1`, `UNDERLINE 0|1`
-* [x] `CURSOR 0|1` ~~con, coff~~
-* [x] `REP$ <N>,<STRING>`
-* [x] `ECHO 0|1`
-* [x] `AT 1,1` => HOME ("\x1E"), `AT 1,2` => "\x1e\x09", `AT 2,1` => "\x1e\n"
-* [x] `LINE0`
-* [x] "\n\r\t\x08\x0b" (LF, CR, HT, BS, VT, etc)
-* [x] `SCROLL 0|1|[UP]|DOWN`
-* [x] `?` pour `PRINT` (PET CBM, MSX, MS Basic) : "Ask to computer : ?2+2"
-  <https://stackoverflow.com/questions/23597690/following-standards-or-not>
-* [x] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
-  mode connecté / basic / boot au mode interactif)
-* [x] Augmenter la mémoire BASTOS (32KB), reste 12KB pour l'OS (wifi / db)
-* [x] Commandes `DB`: `PUT <SET>, <KEY>, <VALUE>`, `GET <SET>, <KEY>` (Basic
-  VBA)
-* [x] `DB ERASE <SET>, <KEY>`, `DB LIST <SET>`
-* [x] L'OS se sert de la database pour stocker la config
-  * [x] Mettre en place la gestion de la mémoire DB
-  * [x] Gestion Wifi : sauvegarder les mots de passe avec comme clé le SSID
-  * [x] Gestion serveurs : clé=nom, valeur=urn
-* [x] Passage des paramètres de config en URN
-* [x] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
-  urn)). `MINITEL LIST / ERASE / [START] [<URN>] [,] [<NAME>]`
-* [x] Caractères spéciaux dans chaines de caractères ("\n \x41 \"" ...)
-* [x] FTP (https://github.com/Exocet22/TinyFTPClient / MIT)
-  * [x] Implémenter DB FTP (set 253), `FTP LIST, FTP ERASE`
-  * [x] Intégrer TinyFTPClient dans les sources du projet
-  * [x] SPIFS => LittleFS
-  * [x] Généraliser os_net_connect, passer le `split_t` en paramètre
-  * [x] `FTP START/STOP`
-  * [x] `FTP CAT`
-  * [x] `FTP PUT/GET`
-  * [x] Optimisation (retrait des commandes qu'on utilise pas, etc)
-* [x] Load / Save ASCII. Selon l'extension. Extension par défaut `.bas`. Si
-  `.bas`, Sauvegarde uniquement du programme en mode ASCII. Si `.var`,
-  uniquement variables.
-    * [x] `SAVE` sans extension rajoute `.bas`
-    * [x] Les extensions autres que `.bas`, `.bst` et `.var` sont interdites
-      (erreur)
-    * [x] `SAVE` `.var` ne sauve que les variables avec un programme à 0
-    * [x] `SAVE` `.bas` similaire à `LIST` mais dans un fichier
-        * [x] Untokenize : doit supporter les caractères "\x.." dans les chaînes
-        * [x] Pouvoir rediriger hal_print_* vers fichier (os_print_xxx + flag
-          redirect)
-    * [x] `LOAD` sans extension => `.bas`.
-    * [x] `LOAD` `bst` ou `var` c'est le load actuel car le format avec ou sans
-      prog, avec ou sans var est le même, par contre lorsqu'on load des vars, il
-      ne faut pas supprimer le programme existant
-    * [x] `LOAD` `.bas`. Lire ligne par ligne, Similaire au mode interactif
-* [x] `RUN [<FILE> [, <NO_LINE> ]]` ou `RUN [<NO_LINE>]`
-* [x] `autoexec.bas`
-* [x] Fichiers ".db" => `autoload.db`
-* [x] RUN line, RUN "autorun.bst", RUN "program.bst", line
-* [x] `SAVE`, `LOAD` : pouvoir faire du `.bas` et du `.bst`. Non : ~~Majuscules
-  / Minucules : toujours en majuscules sur disque, pour faire plus rétro.~~
-* [x] Sauvegarder uniquement les variables et pouvoir recharger uniquement les
-  variables (ça peut remplacer des fichiers). Exemple : on crée des variables
-  contenant des codes videotex et on sauve ces variables.
+# Optimisations
 
-* [x] Couvert par l'extension `.bas` et `FTP` : Pouvoir lire un fichier `.bas`
-  sur la ligne d'entrée et l'envoyer à `bastos_send_keys`. Ce serait bien aussi
-  de pouvoir construire un disque à distance
-* [x] Remplacé par :`FTP GET / PUT`.`FTP DOWNLOAD` / `FTP UPLOAD` et autres
-  fonctions FTP.
+* [*] WebSockets : ça prend 110 KB. L'utilisation de l'API ArduinoHttpClient
+  permet d'accéder aux WebSocket cliente avec une API synchrone mais économe (on
+  retombe à 340383 octets (au lieu de 436xxx))
+* Nouveau modèle mémoire
+  * [ ] redéfinir la gestion mémoire : alloc, free, garbage collector. Tous les
+    objets, prog_t, var_t, nommés ou non, sont stockés dans le heap.
+  * [ ] Table des symboles/objets optimisée (prog_t, var_t), unicité, possibilité
+    de lier des objets (previous/next) ou d'y accéder en absolu
+  * [ ] Mem map : `[ system | handles | free space | heap (names / values) ]`,
+    handles : `(name addr, class, value addr, )`. addr : adresse / 4 (12 bits),
+    class : 8 bits => 1 handle : 32 bits
+* [ ] Voir s'il est facile de passer en align2 et dimensions sur 2 octets
+  (penser à arm32 / arm64)
+* [ ] packed structure (mémoire)
+* [ ] flags groupés en bit fields, élimination de bool (mémoire)
+* [ ] repasser en static ce qu'on peut mettre en static (HAL ? / OS)
+* [ ] Optimisation accès tableau / variable (factorisation number / string,
+  name)
+* [ ] Optimisation execution basic
+* [ ] Optimisation tokenisation (règles, mini lex/yacc, automate)
+* [ ] Optimisation parser (règles et code générique)
 
-* [x] Pouvoir rediriger PRINT vers une variable. `OUTPUT a$`. Les fonctions
-  `hal_print_*` sont remplacées par `os_print_*` ou `os_printf`. Ces dernières
-  utilisent un buffer et `hal_print_buffer` ou, si OUTPUT est une variable,
-  ajoute le buffer à la variable.
+## Backend et doc
+
+* [ ] Réseau social : Mastodon only
+* [ ] [mastodon comments] (https://andreas.scherbaum.la/post/2024-05-23_client-side-comments-with-mastodon-on-a-static-hugo-website/)
+* [ ] Blog / content : pages perso retro: Minitel / HP48 / ORIC 1 / PalmOS / ...
+* [ ] Blog / hébergement
+  * [ ] Free <http://les.pages.perso.chez.free.fr/bonnes-pratiques-et-cms-cle-en-main.io>.
+  * [ ] Sur mesure fait avec Flutter (possibilité d'y inclure l'émulateur)
+  * [ ] TEMU (https://bellard.org/jslinux/), à voir si on peut installer ça sur
+  IONOS et y faire tourner des anciens softs
+  * [ ] Github pages, wiki ?
+* [ ] Github releases (download et procédure d'install)
+
+* [ ] Home self hosting possible pour les services de bouncing (éventuellement
+  via ngrock + authentication)
+* [ ] Serveurs sur IONOS (faire framework en Dart, à la flutter éventuellement)
+* [ ] Pouvoir alimenter un site FTP depuis un script local (FTP Bastos en
+  lecture seule + Site web blog z4rd0z)
+  * [ ] Blog sur alain.basty.free.fr (accès FTP) :
+    <https://serverfault.com/questions/24622/how-to-use-rsync-over-ftp>
+  * [ ] Site FTP BASTOS : rsync over SSH,
+    <https://stackoverflow.com/questions/9090817/copying-files-using-rsync-from-remote-server-to-local-machine>
+* [ ] WSS/TCP gateway sur IONOS (filter par IP), réflechir à un serveur Dart qui
+  fait le passe plat, liste blanche basée sur IP ?
+* [ ] TELNET bouncing sur IONOS
+* [ ] Projet serveur en Dart (package / lib minitel + lib server (voir http
+  server)). Création de pages Videotex : voir COMPO et EDIMIN (marchent dans
+  DOSbox)
+
+* [ ] Doc lyx ou MD, Amazon kindle ou Lulu (ou voir solution Framasoft)
+* [ ] Hackable pour la manip avec le SonOff
+
+* [x] Vidéos sur Youtube : <https://youtu.be/um_8PuhIGSI>
+* [x] Présence sur le musée du minitel
+* [x] ~~Blog / CMS~~ : hugo +
+  [hextra](https://imfing.github.io/hextra/docs/guide/organize-files/)
+* [x] FTP sur IONOS :
+  <https://www.digitalocean.com/community/tutorials/how-to-set-up-vsftpd-for-anonymous-downloads-on-ubuntu-16-04>
+
+## Version 2
 
 * [ ] `TELNET` : au départ gérer avec un front end `ncat` qui passe en mode
   téléinformatique, et effectue la connexion telnet
 * [ ] Protocole FTP intégré à BASTOS (dispo dans le simu)
 * [ ] Websockets (sans SSL) intégrées ?
 
-* [ ] Gérer l'historique avec la DB config (une seule chaîne, séparée par des
-  "\0", ou "HIST_0" à "HIST_9")
-* [ ] Ramener les variables OS dans le bstate
+## Abandonné
 
-* [ ] Pouvoir flasher depuis un fichier sur LittleFS téléchargé par FTP ()
-
+* [x] Pas possible sans 3ème copie en flash :Pouvoir flasher depuis un fichier
+  sur LittleFS téléchargé par FTP ()
 * [x] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.bst` /
   `.bas` ?
-
 * [x] Non: ~~CAT ne doit pas afficher les fichiers finissant par "$$$"~~
+* [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
+  seule commande print.
+
+# Référence
 
 ## Touches en mode clavier étendu
 
@@ -277,71 +207,9 @@ connexion        |J1-3                 |U0TXD/GPIO3  |Pour programmer
 connexion        |J1-4                 |             |Gnd, 0V
 connexion        |J1-5                 |GPIO14       |logique 0 active
 
-## Backend et doc
-
-* [x] Présence sur le musée du minitel
-* [ ] Réseau social : Mastodon only
-* [x] ~~Blog / CMS~~ : hugo +
-  [hextra](https://imfing.github.io/hextra/docs/guide/organize-files/)
-* [ ] [mastodon comments] (https://andreas.scherbaum.la/post/2024-05-23_client-side-comments-with-mastodon-on-a-static-hugo-website/)
-* [ ] Blog / content : pages perso retro: Minitel / HP48 / ORIC 1 / PalmOS / ...
-* [ ] Blog / hébergement
-  * [ ] Free <http://les.pages.perso.chez.free.fr/bonnes-pratiques-et-cms-cle-en-main.io>.
-  * [ ] Sur mesure fait avec Flutter (possibilité d'y inclure l'émulateur)
-  * [ ] TEMU (https://bellard.org/jslinux/), à voir si on peut installer ça sur
-  IONOS et y faire tourner des anciens softs
-  * [ ] Github pages, wiki ?
-* [x] Vidéos sur Youtube : <https://youtu.be/um_8PuhIGSI>
-
-* [ ] Github releases (download et procédure d'install)
-
-* [ ] Home self hosting possible pour les services de bouncing (éventuellement
-  via ngrock + authentication)
-* [ ] Serveurs sur IONOS (faire framework en Dart, à la flutter éventuellement)
-* [x] FTP sur IONOS :
-  <https://www.digitalocean.com/community/tutorials/how-to-set-up-vsftpd-for-anonymous-downloads-on-ubuntu-16-04>
-* [ ] Pouvoir alimenter un site FTP depuis un script local (FTP Bastos en
-  lecture seule + Site web blog z4rd0z)
-  * [ ] Blog sur alain.basty.free.fr (accès FTP) :
-    <https://serverfault.com/questions/24622/how-to-use-rsync-over-ftp>
-  * [ ] Site FTP BASTOS : rsync over SSH,
-    <https://stackoverflow.com/questions/9090817/copying-files-using-rsync-from-remote-server-to-local-machine>
-* [ ] WSS/TCP gateway sur IONOS (filter par IP), réflechir à un serveur Dart qui
-  fait le passe plat, liste blanche basée sur IP ?
-* [ ] TELNET bouncing sur IONOS
-* [ ] Projet serveur en Dart (package / lib minitel + lib server (voir http
-  server)). Création de pages Videotex : voir COMPO et EDIMIN (marchent dans
-  DOSbox)
-
-* [ ] Doc lyx ou MD, Amazon kindle ou Lulu (ou voir solution Framasoft)
-* [ ] Hackable pour la manip avec le SonOff
-
 # Idées futures
 
 * Langage CISAB : Un Basic en post-fixé (RPN), à la HP + commande à adresse routine
-
-# Optimisations
-
-* [*] WebSockets : ça prend 110 KB. L'utilisation de l'API ArduinoHttpClient
-  permet d'accéder aux WebSocket cliente avec une API synchrone mais économe (on
-  retombe à 340383 octets (au lieu de 436xxx))
-* Nouveau modèle mémoire
-  * [ ] redéfinir la gestion mémoire : alloc, free, garbage collector. Tous les
-    objets, prog_t, var_t, nommés ou non, sont stockés dans le heap.
-  * [ ] Table des symboles/objets optimisée (prog_t, var_t), unicité, possibilité
-    de lier des objets (previous/next) ou d'y accéder en absolu
-  * [ ] Mem map : `[ system | handles | free space | heap (names / values) ]`,
-    handles : `(name addr, class, value addr, )`. addr : adresse / 4 (12 bits),
-    class : 8 bits => 1 handle : 32 bits
-* [ ] Voir s'il est facile de passer en align2 et dimensions sur 2 octets
-  (penser à arm32 / arm64)
-* [ ] packed structure (mémoire)
-* [ ] flags groupés en bit fields, élimination de bool (mémoire)
-* [ ] repasser en static ce qu'on peut mettre en static (HAL ? / OS)
-* [ ] Optimisation accès tableau / variable (factorisation number / string,
-  name)
-* [ ] Optimisation execution basic
-* [ ] Optimisation tokenisation (règles, mini lex/yacc, automate)
 
 # Architecture logicielle
 
@@ -571,13 +439,6 @@ chars = nl * nc = 960
 
 ## Code Minitel
 
-* [ ] Gestion de la touche Cx/Fin
-  * [*] voir avec une interface série PC <-> Minitel, quels codes on reçoit, en
-  mode F en mode C clignotant
-  * [*] Le traiter pour sortir du mode connecté BASTOS
-  * [ ] A tester : réagir en conséquence (envoyer un autre Cx/Fin par la prise
-    pour déconnecter le modem ou autre)
-
 ## Code commun
 
 * [x] Partition 512/512
@@ -630,8 +491,147 @@ Doivent être en C pour être intégrés à minwifi.
 
 * [x] wifi list / wifi connect / wifi erase 1 jusqu'à erreur / wifi list =>
   crash sur ESP, connexion fermée sur émulateur + serveur bastos
+* [x] Sur Minitel/Sonoff en mode clavier étendu : les touches Home et E. Page ne
+  sont pas fonctionnelles. Home: "1b 5b 48" / E. Page = "1b 5b 32 4a" / CX/Fin =
+  "13 59"
+* [x] a$="" k$="alain" a$=a$+k$ => len a$ == 5 mais les caractères ne snt pas
+  copiés dans a$
+* [x] Sur Minitel/Sonoff, "Error 1" au reset : Plus visible après déterminiation
+  vitesse au boot
+* [x] ~~Comprendre pourquoi il faut appuyer sur des touches pour afficher les
+  caractères (ligne0 score, record) quand on entre dans le GOSUB du jeu METEOR.
+  En mode FAST ça marche, pas en mode SLOW. Faut voir si ça arrive sur device,
+  possibilité que ça arrive avec le nagle aussi, ou que ce soit un pb de
+  minterm~~
+* [x] Fixer les commandes TTY qui nécessitent un ou plusieurs paramètres et qui
+  ne génèrent pas d'erreur de syntaxe quand elles n'ont pas le bon nombre de
+  paramètres (commandes tty)
+* [x] Si possible, `INPUT` vide : ne change pas la valeur de la variable
+* [x] Chaine d'init à balancer même si autoexec. À rajouter : clavier étendu,
+  minuscules. Chaine d'init après retour mode connecté aussi
+    * [x] Touche ESC ne fonctionne en mode videotex : passer en clavier étendu
+    (Fnct+C E)
+    * [x] Passer en minuscule automatiquement (Fnct+C M)
+    * [x] BASTOS ou AUTOEXEC => Init string d'abord
+* [x] Pour HACKER, définir le path de l'URN à `/?echo` ~~: Pouvoir faire un
+  `ECHO 1`~~
+* [x] `RUN` d'un `.bst` ne doit pas supprimer les variables => doit faire un
+  `GOTO 0`
+* [x] CX/Fin : ne doit pas être utilisé pour déconnecter car certains services
+  "Kiosque" l'utilise pour revenir à l'appli principale "3615". Utiliser plutôt
+  la même touche que pour arrêter le programme (ESC). Pareillement, la touche
+  pour arrêter le programme ne dois pas être Annulation mais "ESC". Annulation
+  pourrait être mappé sur "Ctrl+A" dans minterm, au lieu de ESC actuellement
+* [x] `LOAD` `.bas` : Conversion UTF-8 vers MIN (voir `accents-utf8.txt`)
+* [x] Ajouter la commande `END` : Ca fait `STOP` et `CLEAR`, on ne peut pas
+  `CONT`
+* [x] Chaine de caractères 255 OK, si on ajoute un char => bug, pb sur toutes
+  les varaiables chaines de caractères
+* [x] Une revue des `hal_print*` / `os_print*` est nécessaire avec `OUTPUT
+  START`, notamment sur les affichages line0 (mots de passe, status,
+  notifications, cat, etc.)
+* [x] `LOAD` d'un fichier `.var` suspend l'exécution du programme en cours
+  d'exécution
+* [x] `MINIPAVI` : Utiliser le port 8182 (WS sans SSL) ~~voir `minipavi-gw.sh`,
+  solution temporaire à l'utilisation de SSL dans le projet : WSS non suporté
+  (connexion sur minipavi impossible). Problème de SSL : ça prend plus 100KB...
+  Au niveau mémoire, quand on baisse la mémoire à 8KB pour le Basic on n'a plus
+  de crash mais une erreur de connexion. Erreur de connexion aussi en Flutter.
+  Erreur aussi avec websocat, Marche avec `./websocat -b --ws-dont-check-headers
+  wss://go.minipavi.fr:8181/`~~
+* [x] INPUT vide
+* [x] ~~Pas sûr : Memory leak quand on enchaine connexions et déconnexions à un
+  serveur Minitel. Voir avec une websocket statique (pas de new / delete)~~
+* [x] Crash avec connexion en boucle sur WS "3615" ou "hacker" (pages lourdes)
+  lorsque qu'on coupe la communication alors qu'on reçoit des données
+* [x] On ne peut pas définir de caractère `\0` dans une chaîne de caractères. De
+  même les chaines de caractères sont terminées par `\0`, notamment dans les
+  tableaux. Ce n'est pas compatible avec le Basic ZX81 car on ne peut accéder au
+  dernier caractère (qui est forcément `\0`) => chaine de caractères
+  représentées par longueur (16 bits) + contenu
 
 ## Features
+
+* [x] Gérer les codes INSL, DELL, DELC et définir les commandes BASTOS associées
+* [x] FAST2 (9600 / Minitel 2)
+* [x] G0 / G1 TTY instructions
+* [x] Bouton reset : détecter appui long, appui court
+* [x] Détection vitesse prise
+* [x] Édition de ligne / suppresion du dernier caractère : gérer les séquences
+  de caractères spéciaux (G2, G1)
+    * [x] G2 caractère spécial : tester si le caractère précédent est SS2
+    * [x] G2 accents (aeiuo) / cédille (cC) : tester les séquences admissibles
+    * [x] G1 : si le caractère précédent est G1, le supprimer
+    * [x] G1 : Pouvoir introduire G1 (idéalement Ctrl+G)
+* [x] PAUSE <N>
+* [x] `BEEP`, `CLEOL`,
+* [x] `FLASH 0|1`, `INVERSE 0|1`, `UNDERLINE 0|1`
+* [x] `CURSOR 0|1` ~~con, coff~~
+* [x] `REP$ <N>,<STRING>`
+* [x] `ECHO 0|1`
+* [x] `AT 1,1` => HOME ("\x1E"), `AT 1,2` => "\x1e\x09", `AT 2,1` => "\x1e\n"
+* [x] `LINE0`
+* [x] "\n\r\t\x08\x0b" (LF, CR, HT, BS, VT, etc)
+* [x] `SCROLL 0|1|[UP]|DOWN`
+* [x] `?` pour `PRINT` (PET CBM, MSX, MS Basic) : "Ask to computer : ?2+2"
+  <https://stackoverflow.com/questions/23597690/following-standards-or-not>
+* [x] "Ready" à un seul endroit (avec flag pour l'afficher, quand on passe d'un
+  mode connecté / basic / boot au mode interactif)
+* [x] Augmenter la mémoire BASTOS (32KB), reste 12KB pour l'OS (wifi / db)
+* [x] Commandes `DB`: `PUT <SET>, <KEY>, <VALUE>`, `GET <SET>, <KEY>` (Basic
+  VBA)
+* [x] `DB ERASE <SET>, <KEY>`, `DB LIST <SET>`
+* [x] L'OS se sert de la database pour stocker la config
+  * [x] Mettre en place la gestion de la mémoire DB
+  * [x] Gestion Wifi : sauvegarder les mots de passe avec comme clé le SSID
+  * [x] Gestion serveurs : clé=nom, valeur=urn
+* [x] Passage des paramètres de config en URN
+* [x] Configuration autre que WiFi (Sites minitel (nom /urn), Sites FTP (nom /
+  urn)). `MINITEL LIST / ERASE / [START] [<URN>] [,] [<NAME>]`
+* [x] Caractères spéciaux dans chaines de caractères ("\n \x41 \"" ...)
+* [x] FTP (https://github.com/Exocet22/TinyFTPClient / MIT)
+  * [x] Implémenter DB FTP (set 253), `FTP LIST, FTP ERASE`
+  * [x] Intégrer TinyFTPClient dans les sources du projet
+  * [x] SPIFS => LittleFS
+  * [x] Généraliser os_net_connect, passer le `split_t` en paramètre
+  * [x] `FTP START/STOP`
+  * [x] `FTP CAT`
+  * [x] `FTP PUT/GET`
+  * [x] Optimisation (retrait des commandes qu'on utilise pas, etc)
+* [x] Load / Save ASCII. Selon l'extension. Extension par défaut `.bas`. Si
+  `.bas`, Sauvegarde uniquement du programme en mode ASCII. Si `.var`,
+  uniquement variables.
+    * [x] `SAVE` sans extension rajoute `.bas`
+    * [x] Les extensions autres que `.bas`, `.bst` et `.var` sont interdites
+      (erreur)
+    * [x] `SAVE` `.var` ne sauve que les variables avec un programme à 0
+    * [x] `SAVE` `.bas` similaire à `LIST` mais dans un fichier
+        * [x] Untokenize : doit supporter les caractères "\x.." dans les chaînes
+        * [x] Pouvoir rediriger hal_print_* vers fichier (os_print_xxx + flag
+          redirect)
+    * [x] `LOAD` sans extension => `.bas`.
+    * [x] `LOAD` `bst` ou `var` c'est le load actuel car le format avec ou sans
+      prog, avec ou sans var est le même, par contre lorsqu'on load des vars, il
+      ne faut pas supprimer le programme existant
+    * [x] `LOAD` `.bas`. Lire ligne par ligne, Similaire au mode interactif
+* [x] `RUN [<FILE> [, <NO_LINE> ]]` ou `RUN [<NO_LINE>]`
+* [x] `autoexec.bas`
+* [x] Fichiers ".db" => `autoload.db`
+* [x] RUN line, RUN "autorun.bst", RUN "program.bst", line
+* [x] `SAVE`, `LOAD` : pouvoir faire du `.bas` et du `.bst`. Non : ~~Majuscules
+  / Minucules : toujours en majuscules sur disque, pour faire plus rétro.~~
+* [x] Sauvegarder uniquement les variables et pouvoir recharger uniquement les
+  variables (ça peut remplacer des fichiers). Exemple : on crée des variables
+  contenant des codes videotex et on sauve ces variables.
+* [x] Couvert par l'extension `.bas` et `FTP` : Pouvoir lire un fichier `.bas`
+  sur la ligne d'entrée et l'envoyer à `bastos_send_keys`. Ce serait bien aussi
+  de pouvoir construire un disque à distance
+* [x] Remplacé par :`FTP GET / PUT`.`FTP DOWNLOAD` / `FTP UPLOAD` et autres
+  fonctions FTP.
+* [x] Pouvoir rediriger PRINT vers une variable. `OUTPUT a$`. Les fonctions
+  `hal_print_*` sont remplacées par `os_print_*` ou `os_printf`. Ces dernières
+  utilisent un buffer et `hal_print_buffer` ou, si OUTPUT est une variable,
+  ajoute le buffer à la variable.
 * [x] vitesse serial ()
 * [x] Support Suite / Retour / Sommaire (TAB ou PGDN / SHIFT TAB ou PGDUP/ HOME)
 * [x] Pas de mDSN (plus d'acces telnet ni OTA) ~~Régler le pb du nom mDNS de
@@ -694,7 +694,6 @@ Doivent être en C pour être intégrés à minwifi.
     * [x] var systèmes + bstate dans global memory
     * [x] buffer IO
     * [x] buffer tokens : dans bstate, c'est un prog_t
-  * [ ] Optimisation parser (règles et code générique)
   * [x] New memory model : ~~Transformation tree -> list (parcours GRD, etc) à mettre dans ds~~
   * [x] Removed Wifi client and server from MINITEL build
   * [x] N'optimise pas : Unifier load / save methods (read_uint16, read_len_mem0)
