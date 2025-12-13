@@ -38,6 +38,9 @@
 
 ## Fonctionnalités
 
+* [ ] Design + Commande mode "Connexion Téléphone"
+* [ ] CAT, FTP CAT : version avec filtre (expression régulière)  et options
+  (plusieurs par lignes, pas d'en tête) => rajouter `DIR <PATTERN>`
 * [ ] TAB
 * [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
 * [ ] RAND
@@ -117,6 +120,9 @@
 
 ## Backend et doc
 
+* [ ] Faire une appli qui crée la base de données par défaut + appli ou code C
+  qui présente une liste genre annuaire ou répertoire (voir avec Minipavi et
+  3615 si on peut appeler les sites directement)
 * [ ] Réseau social : Mastodon only
 * [ ] [mastodon comments] (https://andreas.scherbaum.la/post/2024-05-23_client-side-comments-with-mastodon-on-a-static-hugo-website/)
 * [ ] Blog / content : pages perso retro: Minitel / HP48 / ORIC 1 / PalmOS / ...
@@ -897,15 +903,15 @@ $ pio run -e minwifi -t clean
 
 * <https://library.defence-force.org/books/content/telestrat/manuel_des_applications_telematiques.pdf>
 
-## WebSocket Minitel
+## Minitel Web (TCP / WS)
 
 * Web sockets et liens vers services sur IP :
-<https://cq94.medium.com/retour-du-minitel-sur-le-web-8b8693ae8c6a>
-* <http://3611.re/> : Dans `minitel-3611.js` on a l'URI de la WebSocket :
-  `"ws://3611.re/ws"`
-* hacker : <ws://mntl.joher.com:2018>
-* <wss://go.minipavi.fr:8181/> "wss:go.minipavi.fr:8181" erreur sur header.
-  Marche avec `./websocat --ws-dont-check-headers wss://go.minipavi.fr:8181/`
+  <https://cq94.medium.com/retour-du-minitel-sur-le-web-8b8693ae8c6a>
+* 3611 : `ws:3611.re:80:/ws`
+* 3615 : ""
+* hacker : `ws:mntl.joher.com:2018:/?echo`
+* minipavi : `tcp:go.minipavi.fr:516`
+* retrocampus : `tcp:bbs.retrocampus.com:1651`
 
 Test avec Python, on installe `sudo apt install python3-websockets`.
 
