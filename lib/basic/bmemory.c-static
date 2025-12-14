@@ -206,15 +206,15 @@ static void bmem_vars_clear() { bmem->vars_start = bmem->vars_end; }
 
 // Create a new string variable
 static var_t *bmem_var_string_set(const char *name, char *value, bool is_cstr) {
-    // Remove the variable if it already exists
-    var_t *var = bmem_var_get(name);
-    if (var != 0)
-        bmem_var_unset(var);
-
     // Copy the name in tmp
     char tmp[B_NAME_SIZE_MAX];
     strncpy(tmp, name, B_NAME_SIZE_MAX - 1);
     tmp[B_NAME_SIZE_MAX - 1] = 0;
+
+    // Remove the variable if it already exists
+    var_t *var = bmem_var_get(name);
+    if (var != 0)
+        bmem_var_unset(var);
 
     // Create the variable
     uint16_t len = is_cstr ? strlen(value) : string_len(value);
