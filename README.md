@@ -25,6 +25,7 @@
 * [ ] `RUN` d'un programme avec une erreur de syntaxe (édité sur PC) provoque un
   crash (sortie de BASTOS dans l'émulateur) => On devrait juste avoir une erreur
   comme sur `LOAD`.
+* [ ] `RUN` d'un programme vide => crash
 * [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
   plus sur Minitel
 * [ ] Attention : Apparemment E.Page sur minitel ne déplace pas le curseur
