@@ -1289,13 +1289,13 @@ static bool eval_run() {
     int32_t line_no = (int32_t)bmem->bstate.number;
     if (line_no < 0) {
         bmem->bstate.error = BERROR_RANGE;
-        return false;
+        return true;
     }
 
     if (arg1_is_string) {
         eval_load();
         if (bmem->bstate.error != BERROR_NONE)
-            return false;
+            return true;
         var_clear = false;
     }
 
@@ -1303,18 +1303,16 @@ static bool eval_run() {
     if (var_clear) bmem_vars_clear();
     eval_goto(line_no);
 
-    return bmem->bstate.error == BERROR_NONE;
+    return true;
 }
 
 static void eval_goto(uint16_t line_no) {
     bmem->bstate.pc = bmem_prog_get_line_or_next(line_no);
     bmem->bstate.running = bmem->bstate.pc != 0;
-    bmem->bstate.flags |= B_GOTO_FLAG;
 
-    if (bmem->bstate.pc)
-        return;
-
-    bmem->bstate.error = BERROR_RUN;
+    if (bmem->bstate.running) {
+        bmem->bstate.flags |= B_GOTO_FLAG;
+    }
 }
 
 static void eval_gosub() {

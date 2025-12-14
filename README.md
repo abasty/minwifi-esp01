@@ -23,7 +23,7 @@
 ## Bugs
 
 * [x] Bug input : si la variable est déjà définie avant le input, un unset est
-  fait, ce a ppur effet de déplacer les variables en mémoire, puis on copie le
+  fait, ce a pour effet de déplacer les variables en mémoire, puis on copie le
   nom de la variable en gardant le pointeur sur le nom qui vient d'être "unset".
   Au mieux ça fait n'importe quoi :)
   ```
@@ -33,10 +33,10 @@
   ? a$ +> Error 5
   ```
 * [x] Bug test string avec variable string non définie en 1er argument
-* [ ] `RUN` d'un programme avec une erreur de syntaxe (édité sur PC) provoque un
+* [x] `RUN` d'un programme avec une erreur de syntaxe (édité sur PC) provoque un
   crash (sortie de BASTOS dans l'émulateur) => On devrait juste avoir une erreur
   comme sur `LOAD`.
-* [ ] `RUN` d'un programme vide => crash
+* [x] `RUN` d'un programme vide => crash
 * [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
   plus sur Minitel
 * [ ] Attention : Apparemment E.Page sur minitel ne déplace pas le curseur
