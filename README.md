@@ -1,27 +1,26 @@
 # TODO
 
-## Roadmap
+## Version 2
 
-* [x] Comment distribuer le firmware au format bineaire et le flasher sans les
-  sources et sans compiler. EN utilisant "Verbose Upload" dans le menu
-  PlatformIO, on a ça :
-  ```
-  "/home/alain/.platformio/penv/bin/python" "/home/alain/.platformio/packages/tool-esptoolpy/esptool.py" --before default_reset --after hard_reset --chip esp8266 --port "/dev/ttyUSB0" --baud 230400 write_flash 0x0 .pio/build/esp01_1m_nodecmu/firmware.bin
-  ```
-  En ligne de commande directement, si on a installé `sudo apt install esptool`
-  : `esptool --before default_reset --after hard_reset --chip esp8266 --port
-  "/dev/ttyUSB0" --baud 230400 write_flash 0x0 firmware.bin`
-* Distribution sur FTP BASTOS + Update par FTP : impossible, il faut toujours
-  avoir 2x la place en flash pour flasher + la copie sur FS
-    * [x] Distribution sur FTP BASTOS : `scp firmware.bin
-    abasty-retro:/var/ftp/bastos`. Peut-être utiliser pour _flash serial from PC_ ou
-    _direct from flash disk_ (télécharger avec FTP, puis `UPDATE`)
-    * [ ] UPDATE prend `bastos-s.bin` sur le _file system_ et le flashe à l'adresse
-    0
+* [ ] DD4012SA + SonOff Basic R4 : v1 + OTA + Commande "MINITEL WIFI" => serveur
+  TCP sur BASTOS qui fait du passe plat avec la prise péri-info et téléphone ou
+  PC qui se connecte aux services (telnet, tcp, ws, wss)
+* [ ] `TELNET` : au départ gérer avec un front end `ncat` qui passe en mode
+  téléinformatique, et effectue la connexion telnet
+* [ ] Protocole FTP intégré à BASTOS (dispo dans le simu)
+* [ ] Websockets (sans SSL) intégrées ?
 * [ ] Penser à BASTOS-PI / BASTOS-PC puis BASTOS-P
+
+## Idées futures
+
+* Langage CISAB : Un Basic en post-fixé (RPN), à la HP + commande à adresse
+  routine
 
 ## Bugs
 
+* [ ] À priori, toutes les fonctions `eval_*` doivent renvoyer `true` si la
+  syntaxe est bonne. Lors de l'exécution notamment on devrait toujours renvoyer
+  vrai, et juste fixer l'erreur à autre chose que `BERROR_NONE`
 * [x] Bug input : si la variable est déjà définie avant le input, un unset est
   fait, ce a pour effet de déplacer les variables en mémoire, puis on copie le
   nom de la variable en gardant le pointeur sur le nom qui vient d'être "unset".
@@ -106,7 +105,7 @@
   * [x] Implémenter dans `os_get_key()`
   * [x] Touche flèche gauche + Ctrl (DEL)
 
-# Optimisations
+## Optimisations
 
 * [*] WebSockets : ça prend 110 KB. L'utilisation de l'API ArduinoHttpClient
   permet d'accéder aux WebSocket cliente avec une API synchrone mais économe (on
@@ -163,7 +162,8 @@
   DOSbox)
 
 * [ ] Doc lyx ou MD, Amazon kindle ou Lulu (ou voir solution Framasoft)
-* [ ] Hackable pour la manip avec le SonOff
+* [ ] Hackable pour la manip avec le SonOff : Sonoff Basic R4 + abaisseur de
+  tension
 
 * [x] Vidéos sur Youtube : <https://youtu.be/um_8PuhIGSI>
 * [x] Présence sur le musée du minitel
@@ -172,22 +172,10 @@
 * [x] FTP sur IONOS :
   <https://www.digitalocean.com/community/tutorials/how-to-set-up-vsftpd-for-anonymous-downloads-on-ubuntu-16-04>
 
-## Version 2
+## Abandonné : flash par FTP
 
-* [ ] `TELNET` : au départ gérer avec un front end `ncat` qui passe en mode
-  téléinformatique, et effectue la connexion telnet
-* [ ] Protocole FTP intégré à BASTOS (dispo dans le simu)
-* [ ] Websockets (sans SSL) intégrées ?
-
-## Abandonné
-
-* [x] Pas possible sans 3ème copie en flash :Pouvoir flasher depuis un fichier
-  sur LittleFS téléchargé par FTP ()
-* [x] Limiter noms de fichier à 15 caractères (majuscules ?), ajouter `.bst` /
-  `.bas` ?
-* [x] Non: ~~CAT ne doit pas afficher les fichiers finissant par "$$$"~~
-* [ ] Print integer et print float => internes à bastos (voir str$), plus qu'une
-  seule commande print.
+* [x] Update par FTP : impossible, il faut toujours avoir 2x la place en flash
+  pour flasher + la copie sur FS
 
 # Référence
 
@@ -224,10 +212,6 @@ connexion        |J1-2                 |U0RXD/GPIO1  |Pour programmer
 connexion        |J1-3                 |U0TXD/GPIO3  |Pour programmer
 connexion        |J1-4                 |             |Gnd, 0V
 connexion        |J1-5                 |GPIO14       |logique 0 active
-
-# Idées futures
-
-* Langage CISAB : Un Basic en post-fixé (RPN), à la HP + commande à adresse routine
 
 # Architecture logicielle
 
@@ -568,8 +552,21 @@ Doivent être en C pour être intégrés à minwifi.
   dernier caractère (qui est forcément `\0`) => chaine de caractères
   représentées par longueur (16 bits) + contenu
 
-## Features
+## Features (à documenter)
 
+* [x] Comment distribuer le firmware au format binaire et le flasher sans les
+  sources et sans compiler. EN utilisant "Verbose Upload" dans le menu
+  PlatformIO, on a ça :
+  ```
+  "/home/alain/.platformio/penv/bin/python" "/home/alain/.platformio/packages/tool-esptoolpy/esptool.py" --before default_reset --after hard_reset --chip esp8266 --port "/dev/ttyUSB0" --baud 230400 write_flash 0x0 .pio/build/esp01_1m_nodecmu/firmware.bin
+  ```
+  En ligne de commande directement, si on a installé `sudo apt install esptool`
+  : `esptool --before default_reset --after hard_reset --chip esp8266 --port
+  "/dev/ttyUSB0" --baud 230400 write_flash 0x0 firmware.bin`
+* Distribution sur FTP BASTOS
+    * [x] Distribution sur FTP BASTOS : `scp firmware.bin
+    abasty-retro:/var/ftp/bastos`. Peut-être utiliser pour _flash serial from PC_ ou
+    _direct from flash disk_ (télécharger avec FTP, puis `UPDATE`)
 * [x] Gérer les codes INSL, DELL, DELC et définir les commandes BASTOS associées
 * [x] FAST2 (9600 / Minitel 2)
 * [x] G0 / G1 TTY instructions
