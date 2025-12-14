@@ -424,7 +424,7 @@ static bool eval_compare_expr() {
 
             if (bmem->bstate.do_eval) {
                 char *string2 = string_cstr(bmem->bstate.string);
-                result = strcmp(string1, string2);
+                result = strcmp(string1 ? string1 : "", string2 ? string2 : "");
             } else {
                 result = 0;
             }
