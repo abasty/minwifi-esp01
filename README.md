@@ -726,19 +726,10 @@ TX -     - RX
  9v   0v  PT
 ```
 
-Sur le fil DIN noir :
+Commencer par repérer puis souder TX car ensuite tout peut être déduit.
+Attention, dans le cable Minitel vers Sonoff, TX et RX doivent être croisés. Il
+en résulte que le cable DIN 5 femelle vers FTDI doit être droit.
 
-* TX : Bleu
-* RX : Rouge
-* Tresse : 0v
-
-* 9v : Vert
-* OT : Blanc
-
-
-* TX : Marron
-* RX : Rouge
-* 0v : Noir
 
 ## Connexion PC avec FTDI
 
