@@ -21,6 +21,8 @@
 * [ ] À priori, toutes les fonctions `eval_*` doivent renvoyer `true` si la
   syntaxe est bonne. Lors de l'exécution notamment on devrait toujours renvoyer
   vrai, et juste fixer l'erreur à autre chose que `BERROR_NONE`
+* [ ] Minterm + BASTOS-32 : pas de reconnaissance de la vitesse de l'émulateur.
+  Il faut mettre l'ému en 1200 bps
 * [x] Bug input : si la variable est déjà définie avant le input, un unset est
   fait, ce a pour effet de déplacer les variables en mémoire, puis on copie le
   nom de la variable en gardant le pointeur sur le nom qui vient d'être "unset".
@@ -52,6 +54,8 @@
 * [ ] Design + Commande mode "Connexion Téléphone"
 * [ ] CAT, FTP CAT : version avec filtre (expression régulière)  et options
   (plusieurs par lignes, pas d'en tête) => rajouter `DIR <PATTERN>`
+* [ ] Ajouter répertoires dans système de fichiers
+  (<https://randomnerdtutorials.com/esp32-write-data-littlefs-arduino/>)
 * [ ] TAB
 * [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
 * [ ] RAND
@@ -71,6 +75,7 @@
 * [ ] À définir : support des touches de mise en pages dans les différents modes
   de BASTOS (CLI, INPUT, INKEY/PAUSE, prévoir un mode EDIT)
 * [ ] Supprimer `BIN`, remplacer par `BASE$(<N>, <BASE>, <MAX>)`.
+* [ ] File System :
 * [ ] Gestion de la touche Cx/Fin
   * [*] voir avec une interface série PC <-> Minitel, quels codes on reçoit, en
   mode F en mode C clignotant

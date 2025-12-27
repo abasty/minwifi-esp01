@@ -23,7 +23,14 @@
  * SOFTWARE.
  */
 
+#ifdef ESP32
+#include <WiFi.h>
+#else
 #include <ESP8266WiFi.h>
+#endif
+
+
+#include <FS.h>
 #include <LittleFS.h>
 #include <ArduinoHttpClient.h>
 #include <FTPClient.h>
@@ -59,7 +66,11 @@ static void serial_flush_rx();
 
 void hal_print_oem_string(void)
 {
+    #ifdef ESP32
+    hal_print_string("ESP32c");
+    #else
     hal_print_string("ESP8285");
+    #endif
     hal_print_integer(", OS free RAM: %u", ESP.getFreeHeap());
 }
 
@@ -99,13 +110,20 @@ int hal_print_buffer(uint8_t *buffer, int n)
 int hal_open(const char *pathname, int flags)
 {
     const char *access = "r";
+    #ifdef ESP32
+    char rname[FILE_NAME_SIZE + 4] = "/";
+    strncat(rname, pathname, FILE_NAME_SIZE + 3);
+    pathname = rname;
+    #endif
+
     if (flags & B_CREAT)
     {
         access = "w+";
     }
     g_file0 = LittleFS.open(pathname, access);
-    if (!g_file0)
+    if (!g_file0) {
         return -1;
+    }
     return 0;
 }
 
@@ -125,6 +143,25 @@ int hal_read(int fd, void *buf, int count)
     return g_file0.read((uint8_t *)buf, count);
 }
 
+#ifdef ESP32
+size_t hal_cat()
+{
+    File dir = LittleFS.open("/");
+    if(!dir || !dir.isDirectory())
+        return 0;
+
+    File file = dir.openNextFile();
+    while(file){
+        if(file.isDirectory()){
+            // TODO: entry is a dir
+        } else {
+            os_cat_file(file.name(), file.size());
+        }
+        file = dir.openNextFile();
+    }
+    return LittleFS.totalBytes() - LittleFS.usedBytes();
+}
+#else
 size_t hal_cat()
 {
     Dir dir = LittleFS.openDir("/");
@@ -136,6 +173,7 @@ size_t hal_cat()
     LittleFS.info(info);
     return info.totalBytes - info.usedBytes;
 }
+#endif
 
 ssize_t hal_ftp_cat()
 {
@@ -162,6 +200,12 @@ bool hal_ftp_files(uint8_t func, const char *filename)
 
 int hal_erase(const char *pathname)
 {
+    #ifdef ESP32
+    char rname[FILE_NAME_SIZE + 4] = "/";
+    strncat(rname, pathname, FILE_NAME_SIZE + 3);
+    pathname = rname;
+    #endif
+
     bool ret = LittleFS.remove(pathname);
     if (ret)
         return 0;
@@ -195,19 +239,15 @@ void hal_speed(uint8_t fn)
 int hal_wifi_scan()
 {
     int n = WiFi.scanNetworks(false, true);
-
-    String ssid;
-    uint8_t encryptionType;
-    int32_t RSSI;
-    uint8_t *BSSID;
-    int32_t channel;
-    bool isHidden;
-
     for (int i = 0; i < n; i++)
     {
-        WiFi.getNetworkInfo(i, ssid, encryptionType, RSSI, BSSID, channel, isHidden);
+        String ssid = WiFi.SSID(i);
+        int32_t RSSI = WiFi.RSSI(i);
+        uint8_t encryptionType = WiFi.encryptionType(i);
         os_wifi_print_network(i + 1, ssid.c_str(), encryptionType, RSSI);
     }
+    WiFi.scanDelete();
+
     return n;
 }
 
@@ -498,7 +538,11 @@ void setup()
     setup_serial();
 
     // Setup file system
+    #ifdef ESP32
+    LittleFS.begin(true);
+    #else
     LittleFS.begin();
+    #endif
 
     // Setup WiFi
     WiFi.persistent(false);

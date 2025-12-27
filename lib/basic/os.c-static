@@ -164,7 +164,7 @@ static void os_autoexec(void) {
         bmem->bstate.pc = bmem_prog_first_line();
         bmem->bstate.running = bmem->bstate.pc != 0;
     } else {
-        bastos_send_keys("bastos\n", 7, false);
+        // bastos_send_keys("bastos\n", 7, false);
     }
 }
 

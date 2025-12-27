@@ -10,7 +10,12 @@
 #ifndef _TINY_FTPCLIENT_H_
 #define _TINY_FTPCLIENT_H_
 
+#ifdef ESP32
+#include <WiFi.h>
+#else
 #include <ESP8266WiFi.h>
+#endif
+
 #include <stdint.h>
 
 // Constants
