@@ -18,13 +18,14 @@
 
 ## Bugs
 
-* [ ] Bug choix vitesse connexion Minitel / Emu : À revoir delay entre les
+* [x] Bug choix vitesse connexion Minitel / Emu : À revoir delay entre les
   différentes étapes (avec 1000 ça marche sur ému et minitel, essayer de
   descendre un peu)
-* [ ] Lors des commandes de changements de vitesse SLOW, FATS, FAST2, un
+* [x] Lors des commandes de changements de vitesse SLOW, FATS, FAST2, un
   carcatère en plus est affiché (Emu et Minitel)
 * [ ] `snake.bas` ne fonctionne pas correctement (init écran), sur ému et
-  minitel
+  minitel : Apparemment la commande ORIGIN n'a pas le même comportement sur
+  esp8266 et esp32 (1 colonne de plus à droite)
 * [ ] À priori, toutes les fonctions `eval_*` doivent renvoyer `true` si la
   syntaxe est bonne. Lors de l'exécution notamment on devrait toujours renvoyer
   vrai, et juste fixer l'erreur à autre chose que `BERROR_NONE`

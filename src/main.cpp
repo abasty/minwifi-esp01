@@ -229,11 +229,12 @@ void hal_speed(uint8_t fn)
                           : fn == TOKEN_KEYWORD_FAST ? 4800
                                                      : 1200;
     hal_print_string(p_speed);
-    delay(250);
+    delay(500);
     Serial.end();
+    delay(500);
     Serial.begin(speed, SERIAL_7E1);
-    delay(250);
-    serial_flush_rx();
+    delay(500);
+    // serial_flush_rx();
 }
 
 int hal_wifi_scan()
@@ -503,18 +504,22 @@ static bool wait_serial(unsigned long speed, String wait_for)
 {
     Serial.begin(speed, SERIAL_7E1);
     Serial.setTimeout(0);
-    serial_flush_rx();
+    // serial_flush_rx();
+    delay(500);
     hal_print_string("\e9t");
     delay(500);
     String reply = Serial.readString();
     if (reply == wait_for)
         return true;
     Serial.end();
+    delay(500);
     return false;
 }
 
 static void setup_serial()
 {
+    Serial.end();
+    delay(500);
     while (true)
     {
         if (wait_serial(9600, "\x1b\x3au\x7f"))
