@@ -1478,7 +1478,7 @@ static bool eval_string_tty() {
     }
 
     // 1 arg
-    uint8_t arg1 = bmem->bstate.number;
+    int8_t arg1 = bmem->bstate.number;
     if (fn == TOKEN_KEYWORD_INK) {
         snprintf(codes, CODE_SEQUENCE_MAX_SIZE, INK, arg1 + INK_DELTA);
         goto EVAL;
@@ -1537,7 +1537,7 @@ static bool eval_string_tty() {
         return false;
     }
 
-    uint8_t arg2 = bmem->bstate.number;
+    int8_t arg2 = bmem->bstate.number;
 
     if (fn == TOKEN_KEYWORD_ORIGIN) {
         if (bmem->bstate.do_eval) {

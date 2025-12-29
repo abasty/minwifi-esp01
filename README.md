@@ -23,7 +23,7 @@
   descendre un peu)
 * [x] Lors des commandes de changements de vitesse SLOW, FATS, FAST2, un
   carcatère en plus est affiché (Emu et Minitel)
-* [ ] `snake.bas` ne fonctionne pas correctement (init écran), sur ému et
+* [x] `snake.bas` ne fonctionne pas correctement (init écran), sur ému et
   minitel : Apparemment la commande ORIGIN n'a pas le même comportement sur
   esp8266 et esp32 (1 colonne de plus à droite)
 * [ ] À priori, toutes les fonctions `eval_*` doivent renvoyer `true` si la
@@ -573,8 +573,8 @@ Doivent être en C pour être intégrés à minwifi.
   ```
   "/home/alain/.platformio/penv/bin/python" "/home/alain/.platformio/packages/tool-esptoolpy/esptool.py" --before default_reset --after hard_reset --chip esp8266 --port "/dev/ttyUSB0" --baud 230400 write_flash 0x0 .pio/build/esp01_1m_nodecmu/firmware.bin
   ```
-  En ligne de commande directement, si on a installé `sudo apt install esptool`
-  : `esptool --before default_reset --after hard_reset --chip esp8266 --port
+  En ligne de commande directement, si on a installé `sudo apt install esptool` :
+  `esptool --before default_reset --after hard_reset --chip esp8266 --port
   "/dev/ttyUSB0" --baud 230400 write_flash 0x0 firmware.bin`
 * Distribution sur FTP BASTOS
     * [x] Distribution sur FTP BASTOS : `scp firmware.bin
