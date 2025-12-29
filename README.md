@@ -18,34 +18,12 @@
 
 ## Bugs
 
-* [x] Bug choix vitesse connexion Minitel / Emu : À revoir delay entre les
-  différentes étapes (avec 1000 ça marche sur ému et minitel, essayer de
-  descendre un peu)
-* [x] Lors des commandes de changements de vitesse SLOW, FATS, FAST2, un
-  carcatère en plus est affiché (Emu et Minitel)
-* [x] `snake.bas` ne fonctionne pas correctement (init écran), sur ému et
-  minitel : Apparemment la commande ORIGIN n'a pas le même comportement sur
-  esp8266 et esp32 (1 colonne de plus à droite)
 * [ ] À priori, toutes les fonctions `eval_*` doivent renvoyer `true` si la
   syntaxe est bonne. Lors de l'exécution notamment on devrait toujours renvoyer
-  vrai, et juste fixer l'erreur à autre chose que `BERROR_NONE`
+  vrai, et juste fixer l'erreur à autre chose que `BERROR_NONE` s'il y a une
+  erreur à l'exécution
 * [ ] Minterm + BASTOS-32 : pas de reconnaissance de la vitesse de l'émulateur.
   Il faut mettre l'ému en 1200 bps
-* [x] Bug input : si la variable est déjà définie avant le input, un unset est
-  fait, ce a pour effet de déplacer les variables en mémoire, puis on copie le
-  nom de la variable en gardant le pointeur sur le nom qui vient d'être "unset".
-  Au mieux ça fait n'importe quoi :)
-  ```
-  a$="aa"
-  b$="bb"
-  input a$
-  ? a$ +> Error 5
-  ```
-* [x] Bug test string avec variable string non définie en 1er argument
-* [x] `RUN` d'un programme avec une erreur de syntaxe (édité sur PC) provoque un
-  crash (sortie de BASTOS dans l'émulateur) => On devrait juste avoir une erreur
-  comme sur `LOAD`.
-* [x] `RUN` d'un programme vide => crash
 * [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
   plus sur Minitel
 * [ ] Attention : Apparemment E.Page sur minitel ne déplace pas le curseur
@@ -504,6 +482,29 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Bugs
 
+* [x] Bug choix vitesse connexion Minitel / Emu : À revoir delay entre les
+  différentes étapes (avec 1000 ça marche sur ému et minitel, essayer de
+  descendre un peu)
+* [x] Lors des commandes de changements de vitesse SLOW, FATS, FAST2, un
+  carcatère en plus est affiché (Emu et Minitel)
+* [x] `snake.bas` ne fonctionne pas correctement (init écran), sur ému et
+  minitel : Apparemment la commande ORIGIN n'a pas le même comportement sur
+  esp8266 et esp32 (1 colonne de plus à droite)
+* [x] Bug input : si la variable est déjà définie avant le input, un unset est
+  fait, ce a pour effet de déplacer les variables en mémoire, puis on copie le
+  nom de la variable en gardant le pointeur sur le nom qui vient d'être "unset".
+  Au mieux ça fait n'importe quoi :)
+  ```
+  a$="aa"
+  b$="bb"
+  input a$
+  ? a$ +> Error 5
+  ```
+* [x] Bug test string avec variable string non définie en 1er argument
+* [x] `RUN` d'un programme avec une erreur de syntaxe (édité sur PC) provoque un
+  crash (sortie de BASTOS dans l'émulateur) => On devrait juste avoir une erreur
+  comme sur `LOAD`.
+* [x] `RUN` d'un programme vide => crash
 * [x] wifi list / wifi connect / wifi erase 1 jusqu'à erreur / wifi list =>
   crash sur ESP, connexion fermée sur émulateur + serveur bastos
 * [x] Sur Minitel/Sonoff en mode clavier étendu : les touches Home et E. Page ne
