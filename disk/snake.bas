@@ -47,10 +47,10 @@ REM "Clear arrays p, x and y"
 
 REM "Screen Initialization"
 1020 AT -1,-1;PAPER 1;REP$ 34," "
-1024 FOR l=1 TO 22 STEP 2
-1025 AT l,-1;INK 1;SIZE 1;"\x7f";REP$ 32," ";"\x7f"
+1024 FOR l=0 TO 20
+1025 AT l,-1;INK 1;"\x7f";REP$ 32," ";"\x7f"
 1026 NEXT l
-1027 AT 21,0;PAPER 1;" SCORE : 0";REP$ 22," "
+1027 AT 21,-1;PAPER 1;"  SCORE : 0";REP$ 23," "
 
 1030 FOR c=minx TO maxx
 1040 p(miny+1,c+1)=4

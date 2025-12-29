@@ -31,17 +31,23 @@
 #include "bio.h"
 #include "eval.h"
 
-#define BASTOS_MEMORY_SIZE_KB (32)
-#define BASTOS_DB_SIZE_KB (4)
-#define BASTOS_DB_SIZE (BASTOS_DB_SIZE_KB * 1024)
-#define BASTOS_MEMORY_SIZE ((BASTOS_MEMORY_SIZE_KB + BASTOS_DB_SIZE_KB) * 1024)
+#ifdef ESP32
+#define BASTOS_MEMORY_SIZE_KB (56U)
+#define BASTOS_DB_SIZE_KB (6U)
+#else
+#define BASTOS_MEMORY_SIZE_KB (32U)
+#define BASTOS_DB_SIZE_KB (4U)
+#endif
+
+#define BASTOS_DB_SIZE (BASTOS_DB_SIZE_KB * 1024U)
+#define BASTOS_MEMORY_SIZE ((BASTOS_MEMORY_SIZE_KB + BASTOS_DB_SIZE_KB) * 1024U)
 #define BASTOS_MEMORY_ALIGN (sizeof(uint32_t))
-#define IO_BUFFER_SIZE  (128)
-#define TOKEN_LINE_SIZE (128)
-#define EVAL_RETURNS_SIZE (32)
-#define B_DIM_MAX (16)
-#define B_DIM_RANGE_FLAG (128)
-#define B_NAME_SIZE_MAX (16)
+#define IO_BUFFER_SIZE  (128U)
+#define TOKEN_LINE_SIZE (128U)
+#define EVAL_RETURNS_SIZE (32U)
+#define B_DIM_MAX (16U)
+#define B_DIM_RANGE_FLAG (128U)
+#define B_NAME_SIZE_MAX (16U)
 
 typedef struct {
     uint16_t line_no;
@@ -78,8 +84,8 @@ typedef struct
     int8_t error;
     char inkey;
     uint8_t flags;
-    uint8_t ofs_c;
-    uint8_t ofs_l;
+    int8_t ofs_c;
+    int8_t ofs_l;
     bool do_eval;
     bool running;
     bool inputting;

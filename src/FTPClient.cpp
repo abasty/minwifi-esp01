@@ -56,8 +56,13 @@ bool FTPClient::connected() { return m_client.connected(); }
 // Write data to file
 bool FTPClient::write_file(const char *file_name,
                            const char *fs_file_name) {
-    // Mount file system
-    // if (LittleFS.begin()) {
+
+    #ifdef ESP32
+    char rname[FILE_NAME_SIZE + 4] = "/";
+    strncat(rname, fs_file_name, FILE_NAME_SIZE + 3);
+    fs_file_name = rname;
+    #endif
+
     // Open source file
     File source_file = LittleFS.open(fs_file_name, "r");
     if (source_file) {
@@ -90,6 +95,12 @@ bool FTPClient::read_file(const char *file_name, const char *fs_file_name) {
     ssize_t size = strtol(size_str, 0, 10);
     if (size <= 0)
         return false;
+
+    #ifdef ESP32
+    char rname[FILE_NAME_SIZE + 4] = "/";
+    strncat(rname, fs_file_name, FILE_NAME_SIZE + 3);
+    fs_file_name = rname;
+    #endif
 
     // Open destination file
     File destination_file = LittleFS.open(fs_file_name, "w");
