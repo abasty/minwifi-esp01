@@ -18,6 +18,8 @@
 
 ## Bugs
 
+* [ ] `hal_speed()` ne fonctionne pas sur Minitel avec ESP32c (caractère
+  parasite envoyé dans la séquence Serial.end() / Serial.begin())
 * [ ] À priori, toutes les fonctions `eval_*` doivent renvoyer `true` si la
   syntaxe est bonne. Lors de l'exécution notamment on devrait toujours renvoyer
   vrai, et juste fixer l'erreur à autre chose que `BERROR_NONE` s'il y a une
