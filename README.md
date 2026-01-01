@@ -18,8 +18,6 @@
 
 ## Bugs
 
-* [ ] `hal_speed()` ne fonctionne pas sur Minitel avec ESP32c (caractère
-  parasite envoyé dans la séquence Serial.end() / Serial.begin())
 * [ ] À priori, toutes les fonctions `eval_*` doivent renvoyer `true` si la
   syntaxe est bonne. Lors de l'exécution notamment on devrait toujours renvoyer
   vrai, et juste fixer l'erreur à autre chose que `BERROR_NONE` s'il y a une
@@ -484,6 +482,8 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Bugs
 
+* [x] `hal_speed()` ne fonctionne pas sur Minitel avec ESP32c (caractère
+  parasite envoyé dans la séquence Serial.end() / Serial.begin())
 * [x] Bug choix vitesse connexion Minitel / Emu : À revoir delay entre les
   différentes étapes (avec 1000 ça marche sur ému et minitel, essayer de
   descendre un peu)

@@ -62,8 +62,6 @@ static int g_web_socket_unread_bytes = 0;
 static FTPClient g_ftp_client;
 static bool g_ftp_connected = false;
 
-static void serial_flush_rx();
-
 void hal_print_oem_string(void)
 {
     #ifdef ESP32
@@ -229,12 +227,8 @@ void hal_speed(uint8_t fn)
                           : fn == TOKEN_KEYWORD_FAST ? 4800
                                                      : 1200;
     hal_print_string(p_speed);
-    delay(500);
-    Serial.end();
-    delay(500);
-    Serial.begin(speed, SERIAL_7E1);
-    delay(500);
-    // serial_flush_rx();
+    delay(250); // Be sure chars are sent to Minitel before changing speed
+    Serial.updateBaudRate(speed);
 }
 
 int hal_wifi_scan()
