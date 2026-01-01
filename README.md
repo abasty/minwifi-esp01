@@ -22,8 +22,6 @@
   syntaxe est bonne. Lors de l'exécution notamment on devrait toujours renvoyer
   vrai, et juste fixer l'erreur à autre chose que `BERROR_NONE` s'il y a une
   erreur à l'exécution
-* [ ] Minterm + BASTOS-32 : pas de reconnaissance de la vitesse de l'émulateur.
-  Il faut mettre l'ému en 1200 bps
 * [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
   plus sur Minitel
 * [ ] Attention : Apparemment E.Page sur minitel ne déplace pas le curseur
@@ -484,6 +482,8 @@ Doivent être en C pour être intégrés à minwifi.
 
 * [x] `hal_speed()` ne fonctionne pas sur Minitel avec ESP32c (caractère
   parasite envoyé dans la séquence Serial.end() / Serial.begin())
+* [x] Minterm + BASTOS-32 : pas de reconnaissance de la vitesse de l'émulateur.
+  Il faut mettre l'ému en 1200 bps
 * [x] Bug choix vitesse connexion Minitel / Emu : À revoir delay entre les
   différentes étapes (avec 1000 ça marche sur ému et minitel, essayer de
   descendre un peu)
@@ -491,7 +491,8 @@ Doivent être en C pour être intégrés à minwifi.
   carcatère en plus est affiché (Emu et Minitel)
 * [x] `snake.bas` ne fonctionne pas correctement (init écran), sur ému et
   minitel : Apparemment la commande ORIGIN n'a pas le même comportement sur
-  esp8266 et esp32 (1 colonne de plus à droite)
+  esp8266 et esp32 (1 colonne de plus à droite) => fix entier non signé / entier
+  signé
 * [x] Bug input : si la variable est déjà définie avant le input, un unset est
   fait, ce a pour effet de déplacer les variables en mémoire, puis on copie le
   nom de la variable en gardant le pointeur sur le nom qui vient d'être "unset".
