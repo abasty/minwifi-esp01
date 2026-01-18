@@ -22,6 +22,9 @@
   syntaxe est bonne. Lors de l'exécution notamment on devrait toujours renvoyer
   vrai, et juste fixer l'erreur à autre chose que `BERROR_NONE` s'il y a une
   erreur à l'exécution
+* [ ] Touches de fonctions Minirtel supportées dans BASTOS
+* [ ] Écrire un programme BASIC qui implémente un annuaire qui ressemble à celui
+  du M2
 * [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
   plus sur Minitel
 * [ ] Attention : Apparemment E.Page sur minitel ne déplace pas le curseur
@@ -31,11 +34,12 @@
 * [ ] Websocket minipavi : ne fonctionne pas en mode ESP (sans gateway) :
   déconnexion au bout d'un moment. Les touches ne partent pas, en tout cas on ne
   les a pas en echo local, il semble qu'on doit être en mode binaire => debug
-  avec ludojoey
+  avec ludojoey (fonctionne en TCP)
 
 ## Fonctionnalités
 
-* [ ] Design + Commande mode "Connexion Téléphone"
+* [ ] Design + Commande mode "Connexion Téléphone" (peut-on utiliser le mode TCP
+  pour ver un service Kiosque serveur ?)
 * [ ] CAT, FTP CAT : version avec filtre (expression régulière)  et options
   (plusieurs par lignes, pas d'en tête) => rajouter `DIR <PATTERN>`
 * [ ] Ajouter répertoires dans système de fichiers
