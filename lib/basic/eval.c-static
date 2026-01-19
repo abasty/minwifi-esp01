@@ -251,7 +251,7 @@ static bool eval_number() {
                 float *number = bmem_number_array_get_cell(name, dim, dims);
                 if (!number) {
                     bmem->bstate.error = BERROR_RANGE;
-                    return false;
+                    return true;
                 }
                 value = *number;
             }
@@ -788,13 +788,13 @@ static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims) {
         if (bmem->bstate.do_eval) {
             if ((*dim_count & ~B_DIM_RANGE_FLAG) >= B_DIM_MAX - 1) {
                 bmem->bstate.error = BERROR_RANGE;
-                return false;
+                return true;
             }
 
             if (bmem->bstate.number < 1 ||
                 bmem->bstate.number >= BASTOS_MEMORY_SIZE) {
                 bmem->bstate.error = BERROR_RANGE;
-                return false;
+                return true;
             }
         }
         dims[*dim_count] = bmem->bstate.number;
@@ -815,7 +815,7 @@ static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims) {
             if (bmem->bstate.number < 1 ||
                 bmem->bstate.number >= BASTOS_MEMORY_SIZE) {
                 bmem->bstate.error = BERROR_RANGE;
-                return false;
+                return true;
             }
             dims[*dim_count & ~B_DIM_RANGE_FLAG] = bmem->bstate.number;
         } else {
@@ -1710,13 +1710,13 @@ static bool eval_wifi_connect(void) {
     char *ssid = eval_get_ssid();
     if (ssid == 0 || string_len(ssid) == 0) {
         bmem->bstate.error = BERROR_WIFI;
-        return false;
+        return true;
     }
 
     int ret = os_wifi_connect(ssid);
     if (ret < 0) {
         bmem->bstate.error = BERROR_WIFI;
-        return false;
+        return true;
     }
 
     return true;
@@ -1732,13 +1732,13 @@ static bool eval_wifi_erase(void) {
     char *ssid = eval_get_ssid();
     if (ssid == 0 || string_len(ssid) == 0) {
         bmem->bstate.error = BERROR_WIFI;
-        return false;
+        return true;
     }
 
     int ret = os_wifi_erase(ssid);
     if (ret < 0) {
         bmem->bstate.error = BERROR_WIFI;
-        return false;
+        return true;
     }
 
     return true;
@@ -1832,7 +1832,7 @@ static bool eval_connect(uint8_t set) {
         bmem->bstate.sock = fd;
     }
 
-    return fd >= 0;
+    return true;
 }
 
 static bool eval_db_erase(uint8_t set) {
@@ -1907,12 +1907,12 @@ static bool eval_ftp_file(uint8_t func) {
 
     if (!hal_ftp_is_connected()) {
         bmem->bstate.error = BERROR_SOCK;
-        return false;
+        return true;
     }
 
     if (!hal_ftp_files(func, string_cstr(bmem->bstate.string))) {
         bmem->bstate.error = BERROR_SOCK;
-        return false;
+        return true;
     }
 
     if (!eval_running()) {

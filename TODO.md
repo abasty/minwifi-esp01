@@ -18,11 +18,7 @@
 
 ## Bugs
 
-* [ ] À priori, toutes les fonctions `eval_*` doivent renvoyer `true` si la
-  syntaxe est bonne. Lors de l'exécution notamment on devrait toujours renvoyer
-  vrai, et juste fixer l'erreur à autre chose que `BERROR_NONE` s'il y a une
-  erreur à l'exécution
-* [ ] Touches de fonctions Minirtel supportées dans BASTOS
+* [ ] Touches de fonctions Minitel supportées dans BASTOS
 * [ ] Écrire un programme BASIC qui implémente un annuaire qui ressemble à celui
   du M2
 * [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
@@ -484,6 +480,10 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Bugs
 
+* [x] À priori, toutes les fonctions `eval_*` doivent renvoyer `true` si la
+  syntaxe est bonne. Lors de l'exécution notamment on devrait toujours renvoyer
+  vrai, et juste fixer l'erreur à autre chose que `BERROR_NONE` s'il y a une
+  erreur à l'exécution
 * [x] `hal_speed()` ne fonctionne pas sur Minitel avec ESP32c (caractère
   parasite envoyé dans la séquence Serial.end() / Serial.begin())
 * [x] Minterm + BASTOS-32 : pas de reconnaissance de la vitesse de l'émulateur.
