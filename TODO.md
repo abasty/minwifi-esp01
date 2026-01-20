@@ -34,6 +34,21 @@
 
 ## Fonctionnalités
 
+* [ ] EVAL / EVAL$ => Voir `os_eval_string()`, utilisé pour le `LOAD`
+* [ ] `FILE <FILENAME> -> <STRING>` : Renvoie une string contenant les octets du fichier
+  `<FILENAME>`
+* [ ] `FILE <FILENAME> [, <OFFSET>, <SIZE> ] -> <STRING>` : Renvoie une string
+  contenant `<SIZE>` octets à l'`<OFFSET>` du fichier `<FILENAME>`
+* [ ] `DB <N> -> <STRING>` : Renvoie les clés d'une table séparées par \r\n"
+* [ ] `INDEX <STRING>, <SUB-STRING> [, <START>] -> <INDEX>`
+  ```vb
+  100 deb = 1
+  110 fin = index a$, "\n", deb
+  120 if fin <= 0 then 200
+  130 sub$ = a$(deb to fin-1)
+  140 deb = fin+1
+  150 goto 100
+  ```
 * [ ] Design + Commande mode "Connexion Téléphone" (peut-on utiliser le mode TCP
   pour ver un service Kiosque serveur ?)
 * [ ] CAT, FTP CAT : version avec filtre (expression régulière)  et options
@@ -52,7 +67,6 @@
   vers le bas, on demande la position curseur => l, c. On remonte en l-3, 1 ; on
   cleol ; on insere 4 lignes, on commence l'édition
 * [ ] Ajouter `EDIT <LINE_NO>`, integration "edit_min" ?
-* [ ] EVAL / EVAL$ => Voir `os_eval_string()`, utilisé pour le `LOAD`
 * [ ] Gérer les codes DINSC, FINSC et définir les commandes BASTOS associées
 * [ ] Ctrl+C à la place de ESC /ESC ?
 * [ ] Quand on est connécté à un service, voir ce que fait ESC et CX/Fin
