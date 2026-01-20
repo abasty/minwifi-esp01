@@ -21,6 +21,8 @@
 * [ ] Touches de fonctions Minitel supportées dans BASTOS
 * [ ] Écrire un programme BASIC qui implémente un annuaire qui ressemble à celui
   du M2
+* [ ] Remplacer ESC-ESC par Ctrl+C
+* [ ] Revisiter "Connexion/Fin"
 * [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
   plus sur Minitel
 * [ ] Attention : Apparemment E.Page sur minitel ne déplace pas le curseur

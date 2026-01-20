@@ -115,7 +115,7 @@ Exemples :
 * `MINITEL "3611", "ws:3611.re:80:/ws"`
 * `MINITEL "3615", "ws:3615co.de:80:/ws"`
 * `MINITEL "hacker", "ws:mntl.joher.com:2018:/?echo"`
-* `M̀INITEL "rcampus", "tcp:bbs.retrocampus.com:1651`
+* `M̀INITEL "rcampus", "tcp:bbs.retrocampus.com:1651"`
 
 Pour se connecter à un service déjà configuré :
 
