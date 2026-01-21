@@ -18,9 +18,6 @@
 
 ## Bugs
 
-* [ ] Touches de fonctions Minitel supportées dans BASTOS
-* [ ] Écrire un programme BASIC qui implémente un annuaire qui ressemble à celui
-  du M2
 * [ ] Remplacer ESC-ESC par Ctrl+C
 * [ ] Revisiter "Connexion/Fin"
 * [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
@@ -564,6 +561,7 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Bugs
 
+* [x] Touches de fonctions Minitel supportées dans BASTOS
 * [x] À priori, toutes les fonctions `eval_*` doivent renvoyer `true` si la
   syntaxe est bonne. Lors de l'exécution notamment on devrait toujours renvoyer
   vrai, et juste fixer l'erreur à autre chose que `BERROR_NONE` s'il y a une
@@ -659,6 +657,8 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Features (à documenter)
 
+* [x] Écrire un programme BASIC qui implémente un annuaire qui ressemble à celui
+  du M2
 * [x] Comment distribuer le firmware au format binaire et le flasher sans les
   sources et sans compiler. EN utilisant "Verbose Upload" dans le menu
   PlatformIO, on a ça :
