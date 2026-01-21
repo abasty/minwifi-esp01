@@ -404,13 +404,28 @@ static uint8_t os_get_key() {
         if (key == 0x41) {
             // Convert Minitel ENVOI key to BASTOS Enter key
             key = '\r';
-        } else if (key == 0x47) {
+        } else if (key == 'G') {
             // Convert Minitel CORRECTION key to BASTOS DEL key
             key = 0x7F;
-        } else if (key == 0x45) {
+        } else if (key == 'E') {
             // Convert Minitel ANNULATION key to BASTOS Ctrl+A key
             key = 1;
-        } else if (key == 0x59) {
+        } else if (key == 'C') {
+            // Convert Minitel REPETITION key to BASTOS Ctrl+B key
+            key = 2;
+        } else if (key == 'H') {
+            // Convert Minitel SUITE key to BASTOS Ctrl+D key
+            key = 4;
+        } else if (key == 'B') {
+            // Convert Minitel RETOUR key to BASTOS Ctrl+E key
+            key = 5;
+        } else if (key == 'F') {
+            // Convert Minitel SOMMAIRE key to BASTOS Ctrl+F key
+            key = 6;
+        } else if (key == 'D') {
+            // Convert Minitel GUIDE key to BASTOS Ctrl+N key
+            key = 14;
+        } else if (key == 'Y') {
             // Take action on Minitel CX/Fin key (send it to Minitel)
             key = 0;
             os_redir_print_string("\x13\x59");
@@ -440,13 +455,13 @@ static uint8_t os_get_key() {
 
     case KEY_STATE_CSI:
         if (key == 'A') {
-            key = 0x0b;
+            key = 0x0b; // up
         } else if (key == 'B') {
-            key = 0x0a;
+            key = 0x0a; // down
         } else if (key == 'C') {
-            key = 0x09;
+            key = 0x09; // right
         } else if (key == 'D') {
-            key = 0x08;
+            key = 0x08; // left
         } else if (key == 'H') {
             key = 0x1e; // Home
         } else if (key == '2') {

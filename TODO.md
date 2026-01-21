@@ -21,6 +21,8 @@
 * [ ] Touches de fonctions Minitel supportées dans BASTOS
 * [ ] Écrire un programme BASIC qui implémente un annuaire qui ressemble à celui
   du M2
+* [ ] Remplacer ESC-ESC par Ctrl+C
+* [ ] Revisiter "Connexion/Fin"
 * [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
   plus sur Minitel
 * [ ] Attention : Apparemment E.Page sur minitel ne déplace pas le curseur
@@ -283,6 +285,78 @@ Si oui, il charge ce fichier et l'exécute. Exemple de fichier `autoexec.bas` :
 En l'absence de ce fichier, on affiche la bannière BASTOS et on arrive dans le
 Basic en mode interactif.
 
+## Clavier Minitel vs Fonctions BASTOS
+
+Code | Fonction BastOS | Touche Minitel
+-|-|-
+ 00 | not used |
+ 01 | erase | (ANNULATION)
+ 02 | repeat | (REPETITION)
+ 03 | reserved |
+ 04 | next | (SUITE)
+ 05 | previous | (RETOUR)
+ 06 | start | (SOMMAIRE)
+ 07 | graphics | (CTRL G)
+ 08 | left | (LEFT ARROW)
+ 09 | right | (RIGHT ARROW)
+ 10 | down | (DOWN ARROW)
+ 11 | up | (UP ARROW)
+ 12 | clear | (CTRL ENTER)
+ 13 | return | (ENTER) (ENVOI)
+ 14 | help | (GUIDE)
+ 27 | escape | (ESC ESC)
+ 30 | home | (SHIFT ENTER)
+127 | backspace | (CORRECTION)
+
+Les touches REPETITION, SUITE, RETOUR, SOMMAIRE, ENTER, ENVOI et GUIDE valide
+une entrée `INPUT`. La touche appuyée est testable avec `INKEY$` même après un
+`INPUT`.
+
+## Caractères UTF-8 vers Minitel
+
+Afin de pouvoir éditer des programmes BASTOS sur un PC, il est possible
+d'utiliser l'encodage UTF-8 pour les caractères spéciaux et accentués.
+
+Les caractères UTF-8 ci-dessous sont automatiquement convertis en séquences
+Minitel équivalentes (G2) au moment d'un `LOAD` d'un fichier `*.BAS` :
+
+Glyph | UTF-8
+-|-
+← | 0xE2 0x86 0x90
+↑ | 0xE2 0x86 0x91
+→ | 0xE2 0x86 0x92
+↓ | 0xE2 0x86 0x93
+|
+£ | 0xC2 0xA3
+§ | 0xC2 0xA7
+° | 0xC2 0xB0
+± | 0xC2 0xB1
+÷ | 0xC3 0xB7
+¼ | 0xC2 0xBC
+½ | 0xC2 0xBD
+¾ | 0xC2 0xBE
+|
+Œ | 0xC5 0x92
+œ | 0xC5 0x93
+|
+ß | 0xC3 0x9F
+à | 0xC3 0xA0
+è | 0xC3 0xA8
+ù | 0xC3 0xB9
+é | 0xC3 0xA9
+â | 0xC3 0xA2
+ê | 0xC3 0xAA
+î | 0xC3 0xAE
+ô | 0xC3 0xB4
+û | 0xC3 0xBB
+ä | 0xC3 0xA4
+ë | 0xC3 0xAB
+ï | 0xC3 0xAF
+ö | 0xC3 0xB6
+ü | 0xC3 0xBC
+ç | 0xC3 0xA7
+Ç | 0xC3 0x87
+
 ## Variables OS
 
 Non accessibles depuis le Basic, à voir si des instructions spéciales permettent
@@ -294,12 +368,8 @@ dans la memoire système du Basic (bmem).
 Chaque réseau est défini par :
 
 - ssid (max 32 caractères)
-- encryption (octet) : TKIP (WPA) = 2, WEP = 5, CCMP (WPA) = 4, NONE = 7, AUTO =
-  8
 - secret (éventuellement non renseigné, 63 caractères max pour clé
   WPA-PSK/WPA2-PSK)
-- known (booléen, a été connectecté avec succès au moins une fois)
-- rssi en dBm
 
 Les réseaux connus, c'est à dire ceux sur lesquels on s'est connecté au moins
 une fois avec succès, sont sauvegardés dans la configuration.

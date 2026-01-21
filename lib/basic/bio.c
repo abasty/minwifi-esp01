@@ -114,9 +114,7 @@ static bool is_char_input_key(char test_char) {
         return true;
     if (test_char == SS2) // G2 chars prefix
         return true;
-    if (test_char == '\x01') // Clear entry key (Ctrl+A)
-        return true;
-    if (test_char == '\x07') // Graphic key (Ctrl+G)
+    if ((test_char >= 1 && test_char <= 7) || test_char == 14) // Function keys and Ctrl+G
         return true;
     return false;
 }
@@ -166,8 +164,8 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
     }
 
     // If running and not inputting or paused mode, store the key in inkey state
+    bmem->bstate.inkey = (char)*src;
     if ((eval_running() && !eval_inputting()) || eval_paused()) {
-        bmem->bstate.inkey = (char)*src;
         if (eval_paused()) {
             eval_check_pause();
         }
@@ -201,7 +199,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
             while (dst != bmem->io_buffer)
                 del_last_key(&dst, echo);
             return;
-        } else if (*src == '\r') { // CR
+        } else if (*src == '\r' || *src == 2 || *src == 4 || *src == 5 || *src == 6 || *src == 14) { // CR
             *dst++ = '\n';
             src++;
             bmem->bstate.g_mode = false;
