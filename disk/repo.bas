@@ -4,24 +4,22 @@
 
 100 GOSUB 1000
 110 AT 24,1;"Choix : .\x08";CURSOR 1
-120 PAUSE 100
-125 k$=INKEY$
-130 IF k$="" THEN 120
-140 IF k$="p" THEN 10
-150 IF k$<>"n" THEN 200
-160 IF suiv=0 THEN 120
+120 INPUT c$
+130 k$=INKEY$
+140 IF k$="\x06" THEN 10
+150 IF k$<>"\x04" THEN 200
+160 IF suiv=0 THEN 110
 170 b=b+5
 180 GOTO 100
 
-200 IF k$<"1" OR k$>"9" THEN 120
-210 c=CODE k$-48
-220 IF c<=0 OR c>nc THEN 120
-230 AT 24,9;k$
-240 GOSUB 2000+(b+c-1)*10
-250 IF urn$="" THEN 120
+200 c=CODE c$-48
+220 IF c<=0 OR c>nc THEN 110
+230 GOSUB 2000+(b+c-1)*10
+240 IF urn$="" THEN 110
+250 PRINT AT 0,1;"Connecting to ";srv$
 260 MINITEL urn$
 
-900 END
+300 GOTO 10
 
 999 REM "Affiche page"
 1000 CURSOR 0;LINE0 ;CLEOL ;CLS ;SCROLL 0;"LISTE DES SERVICES\r\n";INK 4;REP$ 40,"`"
@@ -43,7 +41,7 @@
 1166 suiv=0
 1170 IF srv$="" THEN 1190
 1175 suiv=1
-1180 AT 23,17;INK 2;"page suivante \x19\x2e ";INK 6;INVERSE 1;" SUITE  "
+1180 AT 23,17;INK 2;"page suivante \x19\x2e";UNDERLINE 1; " ";INK 6;INVERSE 1;" SUITE  "
 1190 AT 24,17;INK 2;"première page \x19\x2e ";INK 6;INVERSE 1;"SOMMAIRE"
 1200 RETURN
 
@@ -54,7 +52,7 @@
 2009 RETURN
 2010 srv$="3611"
 2011 urn$="ws:3611.re:80:/ws"
-2012 desc$="Annuaire Belectronique"
+2012 desc$="Annuaire électronique"
 2019 RETURN
 2020 srv$="3615"
 2021 urn$="ws:3615co.de:80:/ws"
