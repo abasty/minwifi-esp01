@@ -1206,7 +1206,7 @@ static bool eval_list() {
     return true;
 }
 
-static inline void eval_input_mode(bool mode) { bmem->bstate.inputting = mode; }
+static inline void eval_input_mode(bool mode) { bmem->bstate.inputting = mode ? 1 : 0; }
 
 static int8_t eval_prog_next() {
     int8_t err = BERROR_NONE;
@@ -1215,8 +1215,7 @@ static int8_t eval_prog_next() {
     if (pc) {
         err = eval_prog(pc, true);
         if (err == BERROR_NONE) {
-            if (bmem->bstate.pc == pc &&
-                (bmem->bstate.flags & B_GOTO_FLAG) == 0) {
+            if (bmem->bstate.pc == pc && bmem->bstate.in_goto == 0) {
                 // If executed line did not change PC then move PC to next line
                 bmem->bstate.pc = bmem_prog_next_line(bmem->bstate.pc);
             }
@@ -1232,7 +1231,7 @@ static int8_t eval_prog_next() {
     }
 
     bmem->bstate.pc = 0;
-    bmem->bstate.running = false;
+    bmem->bstate.running = 0;
 
     return err;
 }
@@ -1240,13 +1239,13 @@ static int8_t eval_prog_next() {
 static inline bool eval_running() { return bmem->bstate.running; }
 
 static void eval_stop() {
-    bmem->bstate.running = false;
+    bmem->bstate.running = 0;
     eval_input_mode(false);
 }
 
 static void eval_cont() { bmem->bstate.running = bmem->bstate.pc != 0; }
 
-static void eval_reset() { bmem->bstate.reset = true; }
+static void eval_reset() { bmem->bstate.reset = 1; }
 
 static void eval_free() {
     char info[40];
@@ -1335,7 +1334,7 @@ static void eval_goto(uint16_t line_no) {
     bmem->bstate.running = bmem->bstate.pc != 0;
 
     if (bmem->bstate.running) {
-        bmem->bstate.flags |= B_GOTO_FLAG;
+        bmem->bstate.in_goto = 1;
     }
 }
 
@@ -2120,13 +2119,13 @@ static bool eval_next() {
 
 static int8_t eval_prog(prog_t *prog, bool do_eval) {
     // Init evaluator state
-    bmem->bstate.do_eval = do_eval;
+    bmem->bstate.do_eval = do_eval ? 1 : 0;
     bmem->bstate.read_ptr = prog->line;
     bmem->bstate.token = 0;
     bmem->bstate.string = 0;
     bmem->bstate.error = BERROR_NONE;
     bmem->bstate.prog = prog;
-    bmem->bstate.flags &= ~B_GOTO_FLAG;
+    bmem->bstate.in_goto = 0;
 
     // Do syntax check or eval
     bool eval = eval_instruction() || eval_if() || eval_for() || eval_next();

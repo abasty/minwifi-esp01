@@ -715,7 +715,7 @@ static void os_loop_connected() {
 static void os_loop_basic() {
     int fn = hal_get_function_key();
     if (fn > 0) {
-        bmem->bstate.reset = true;
+        bmem->bstate.reset = 1;
     } else {
         char key = os_get_key();
         bastos_send_keys((char *)&key, key != 0 ? 1 : 0, true);
@@ -738,7 +738,7 @@ void os_loop() {
 bool os_debug(void) {
     if (!bmem)
         return false;
-    return bmem->bstate.debug != 0.0;
+    return bmem->bstate.debug != 0;
 }
 
 void os_setup(void) {
