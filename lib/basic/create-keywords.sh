@@ -80,7 +80,7 @@ start
 peek
 poke
 usr
-eval
+val
 bastos
 scan
 status
@@ -113,6 +113,7 @@ ll
 g0
 g1
 origin
+vkey
 EOF
 
 # Do not sort to preserve save/load compatibility

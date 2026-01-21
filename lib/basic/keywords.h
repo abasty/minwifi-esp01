@@ -68,7 +68,7 @@
 #define TOKEN_KEYWORD_PEEK ((uint8_t) (66 | 0b10000000))
 #define TOKEN_KEYWORD_POKE ((uint8_t) (67 | 0b10000000))
 #define TOKEN_KEYWORD_USR ((uint8_t) (68 | 0b10000000))
-#define TOKEN_KEYWORD_EVAL ((uint8_t) (69 | 0b10000000))
+#define TOKEN_KEYWORD_VAL ((uint8_t) (69 | 0b10000000))
 #define TOKEN_KEYWORD_BASTOS ((uint8_t) (70 | 0b10000000))
 #define TOKEN_KEYWORD_SCAN ((uint8_t) (71 | 0b10000000))
 #define TOKEN_KEYWORD_STATUS ((uint8_t) (72 | 0b10000000))
@@ -101,3 +101,4 @@
 #define TOKEN_KEYWORD_G0 ((uint8_t) (99 | 0b10000000))
 #define TOKEN_KEYWORD_G1 ((uint8_t) (100 | 0b10000000))
 #define TOKEN_KEYWORD_ORIGIN ((uint8_t) (101 | 0b10000000))
+#define TOKEN_KEYWORD_VKEY ((uint8_t) (102 | 0b10000000))

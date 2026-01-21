@@ -78,28 +78,18 @@ typedef struct
     var_t *input_var;
     float number;
     uint8_t *read_ptr;
-    uint16_t list_start;
     uint8_t token;
     uint8_t input_var_token;
     int8_t error;
-    char inkey;
     uint8_t flags;
-    int8_t ofs_c;
-    int8_t ofs_l;
     bool do_eval;
     bool running;
     bool inputting;
     bool reset;
     bool debug;
     bool g_mode;
-    uint32_t pause_delay;
-    uint64_t pause_start_time;
     int sp;
-    int sock;
-    int output_fd;
     char *string;
-    char output_var[B_NAME_SIZE_MAX];
-    prog_buffer_t token_buffer;
 } eval_state_t;
 
 // Bastos low memory system variables
@@ -115,6 +105,17 @@ typedef struct {
     loop_t loops['Z' - 'A' + 1];
     return_t returns[EVAL_RETURNS_SIZE];
     uint8_t io_buffer[IO_BUFFER_SIZE];
+    prog_buffer_t token_buffer;
+    uint16_t list_start;
+    char inkey;
+    char vkey;
+    int8_t ofs_c;
+    int8_t ofs_l;
+    uint32_t pause_delay;
+    uint64_t pause_start_time;
+    int sock;
+    int output_fd;
+    char output_var[B_NAME_SIZE_MAX];
 } bmem_t;
 
 static void bmem_init(uint8_t *mem, uint16_t size);

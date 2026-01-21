@@ -414,7 +414,7 @@ static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line,
 
     // Find where to insert the new line
     if (line_no == 0) {
-        prog = (prog_t *)&bmem->bstate.token_buffer;
+        prog = (prog_t *)&bmem->token_buffer;
     } else if (prog == 0) {
         // Insert at the end of the program
         prog = (prog_t *)bmem->prog_end;
@@ -525,10 +525,10 @@ static void bmem_init(uint8_t *mem, uint16_t size) {
     bmem->db_start = bmem->db_end;
     bmem->prog_start = (uint8_t *)bmem + sizeof(bmem_t);
     bmem->vars_end = (uint8_t *)bmem + size - BASTOS_DB_SIZE;
-    bmem->bstate.sock = -1;
-    bmem->bstate.output_fd = -1;
-    bmem->bstate.ofs_c = 0;
-    bmem->bstate.ofs_l = 0;
+    bmem->sock = -1;
+    bmem->output_fd = -1;
+    bmem->ofs_c = 0;
+    bmem->ofs_l = 0;
     bastos_prog_new();
     os_db_load();
     os_autoexec();

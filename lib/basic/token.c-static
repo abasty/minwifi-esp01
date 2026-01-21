@@ -243,7 +243,7 @@ static int8_t tokenize_string(tokenizer_state_t *state) {
 char *untokenize(uint8_t *input) {
     tokenizer_state_t state;
 
-    uint8_t *token_buffer = bmem->bstate.token_buffer.line;
+    uint8_t *token_buffer = bmem->token_buffer.line;
     *token_buffer = 0;
     state.write_ptr = token_buffer;
     state.read_ptr = (uint8_t *)input;
@@ -259,7 +259,7 @@ char *untokenize(uint8_t *input) {
             }
             untokenize_keyword(&state, keywords);
             if (*state.read_ptr != '(' && token != TOKEN_KEYWORD_PI &&
-                token != TOKEN_KEYWORD_RND) {
+                token != TOKEN_KEYWORD_RND && token != TOKEN_KEYWORD_VKEY) {
                 os_redir_print_string(" ");
             }
         } else if (token == TOKEN_NUMBER) {
@@ -296,8 +296,8 @@ char *untokenize(uint8_t *input) {
     return (char *)token_buffer;
 }
 
-int8_t tokenize(tokenizer_state_t *state, char *input) {
-    uint8_t *token_buffer = bmem->bstate.token_buffer.line;
+int8_t tokenize(tokenizer_state_t *state, char *input, bool parcel) {
+    uint8_t *token_buffer = bmem->token_buffer.line;
     state->read_ptr = (uint8_t *)input;
     state->write_ptr = token_buffer;
     state->line_no = 0;
@@ -319,7 +319,7 @@ int8_t tokenize(tokenizer_state_t *state, char *input) {
         } else if (c >= '0' && c <= '9') {
             // number
             err = tokenize_number(state);
-            if (err == 0 && token_count == 0) {
+            if (err == 0 && token_count == 0 && !parcel) {
                 // line number
                 uint8_t *read_ptr = state->read_ptr;
                 state->read_ptr = token_buffer;
@@ -427,7 +427,7 @@ static void untokenize_string(tokenizer_state_t *state) {
             break;
         case '\x0e':
         case '\x0f':
-            if (bmem->bstate.output_fd < 0) {
+            if (bmem->output_fd < 0) {
                 os_redir_print_buffer(&c, 1);
                 break;
             }

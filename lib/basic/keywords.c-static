@@ -68,7 +68,7 @@ static const char *keywords =
     "PEE""\xcb"
     "POK""\xc5"
     "US""\xd2"
-    "EVA""\xcc"
+    "VA""\xcc"
     "BASTO""\xd3"
     "SCA""\xce"
     "STATU""\xd3"
@@ -101,4 +101,5 @@ static const char *keywords =
     "G""\xb0"
     "G""\xb1"
     "ORIGI""\xce"
+    "VKE""\xd9"
 ;
