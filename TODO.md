@@ -33,7 +33,6 @@
 
 ## Fonctionnalités
 
-* [ ] EVAL / EVAL$ => Voir `os_eval_string()`, utilisé pour le `LOAD`
 * [ ] `FILE <FILENAME> -> <STRING>` : Renvoie une string contenant les octets du fichier
   `<FILENAME>`
 * [ ] `FILE <FILENAME> [, <OFFSET>, <SIZE> ] -> <STRING>` : Renvoie une string
@@ -657,6 +656,7 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Features (à documenter)
 
+* [x] `VAL` utilise un sous-tokenizer / évaluateur
 * [x] Écrire un programme BASIC qui implémente un annuaire qui ressemble à celui
   du M2
 * [x] Comment distribuer le firmware au format binaire et le flasher sans les

@@ -67,8 +67,6 @@ typedef struct
     uint16_t line_no;
 } return_t;
 
-#define B_GOTO_FLAG (1 << 0)
-
 // Bastos evaluation state
 typedef struct eval_state_s eval_state_t;
 struct eval_state_s {
