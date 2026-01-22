@@ -59,7 +59,7 @@ void bastos_init(void) {
 }
 
 void bastos_done() {
-    hal_net_disconnect(DB_MIN_SET, bmem->bstate.sock);
+    hal_net_disconnect(DB_MIN_SET, bmem->sock);
     hal_net_disconnect(DB_FTP_SET, -1);
     hal_wifi_disconnect();
     hal_speed(TOKEN_KEYWORD_SLOW);
@@ -128,7 +128,7 @@ static void del_last_key(uint8_t **dst, bool echo) {
                 (*dst)--;
             } else if (*(*dst - 2) == SO) {
                 (*dst)--;
-                bmem->bstate.g_mode = false;
+                bmem->bstate.g_mode = 0;
                 if (echo)
                     hal_print_string(G0);
             }
@@ -164,8 +164,8 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
     }
 
     // If running and not inputting or paused mode, store the key in inkey state
-    bmem->bstate.inkey = (char)*src;
     if ((eval_running() && !eval_inputting()) || eval_paused()) {
+        bmem->inkey = (char)*src;
         if (eval_paused()) {
             eval_check_pause();
         }
@@ -199,10 +199,12 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
             while (dst != bmem->io_buffer)
                 del_last_key(&dst, echo);
             return;
-        } else if (*src == '\r' || *src == 2 || *src == 4 || *src == 5 || *src == 6 || *src == 14) { // CR
+        } else if (*src == '\r' || *src == 2 || *src == 4 || *src == 5 || *src == 6 || *src == 14) {
+            // Validation key
+            bmem->vkey = *src;
             *dst++ = '\n';
             src++;
-            bmem->bstate.g_mode = false;
+            bmem->bstate.g_mode = 0;
             if (echo)
                 hal_print_string(G0 "\r\n");
         } else if (*src == 127) { // Correction (DEL)
@@ -254,7 +256,7 @@ static int8_t bastos_input() {
 
     // Tokenize command and handle tokenize error case
     tokenizer_state_t line;
-    err = tokenize(&line, (char *)bmem->io_buffer);
+    err = tokenize(&line, (char *)bmem->io_buffer, false);
     if (err < 0)
         goto finalize;
 
@@ -344,7 +346,7 @@ static int32_t os_save_bin(int fd, int16_t type) {
 static int os_eval_string(char *str) {
     // Tokenize command and handle tokenize error case
     tokenizer_state_t line;
-    int err = tokenize(&line, str);
+    int err = tokenize(&line, str, false);
     if (err < 0)
         goto finalize;
 

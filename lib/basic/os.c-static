@@ -44,7 +44,7 @@ char g_wifi_connected_ssid[20] = ""; // 20 first characters of SSID
 char g_wifi_connected_ip[16] = "";
 char g_ftp_connected_host[32] = "";
 
-static void os_set_redirect(int fd) { bmem->bstate.output_fd = fd; }
+static void os_set_redirect(int fd) { bmem->output_fd = fd; }
 
 static int os_concat_buffer(const char *name, const char *buffer, int n) {
     var_t *var = bmem_var_get(name);
@@ -75,25 +75,25 @@ static int os_concat_buffer(const char *name, const char *buffer, int n) {
 
 static int os_redir_print_buffer(const char *buffer, int n) {
     // Redir to fd
-    if (bmem->bstate.output_fd >= 0)
-        return hal_write(bmem->bstate.output_fd, buffer, n);
+    if (bmem->output_fd >= 0)
+        return hal_write(bmem->output_fd, buffer, n);
 
     // Redir to var
-    if (*bmem->bstate.output_var != 0)
-        return os_concat_buffer(bmem->bstate.output_var, buffer, n);
+    if (*bmem->output_var != 0)
+        return os_concat_buffer(bmem->output_var, buffer, n);
 
     return hal_print_buffer((uint8_t *) buffer, n);
 }
 
 static int os_redir_print_string(const char *s) {
-    if (bmem->bstate.output_fd >= 0 || *bmem->bstate.output_var != 0)
+    if (bmem->output_fd >= 0 || *bmem->output_var != 0)
         return os_redir_print_buffer(s, strlen(s));
 
     return hal_print_string(s);
 }
 
 static int os_redir_print_integer(const char *format, int i) {
-    if (bmem->bstate.output_fd >= 0 || *bmem->bstate.output_var != 0) {
+    if (bmem->output_fd >= 0 || *bmem->output_var != 0) {
         char buffer[80];
         int len = snprintf(buffer, sizeof(buffer), format, i);
         return os_redir_print_buffer(buffer, len);
@@ -102,7 +102,7 @@ static int os_redir_print_integer(const char *format, int i) {
 }
 
 static int os_redir_print_float(float f) {
-    if (bmem->bstate.output_fd >= 0 || *bmem->bstate.output_var != 0) {
+    if (bmem->output_fd >= 0 || *bmem->output_var != 0) {
         char buffer[16];
         int len = snprintf(buffer, sizeof(buffer), "%g", f);
         return os_redir_print_buffer(buffer, len);
@@ -534,8 +534,8 @@ finalize:
 
 static void os_disconnect(uint8_t set) {
     if (set == DB_MIN_SET) {
-        hal_net_disconnect(set, bmem->bstate.sock);
-        bmem->bstate.sock = -1;
+        hal_net_disconnect(set, bmem->sock);
+        bmem->sock = -1;
         os_redir_print_string("\r\n" MODE_INIT_STRING CON G0 INK7);
     } else if (set == DB_FTP_SET) {
         hal_net_disconnect(set, -1);
@@ -677,7 +677,7 @@ static void os_loop_connected() {
     static uint8_t ESC_count = 0;
 
     // Read data on socket in a non blocking mode
-    int ret = hal_net_recv(bmem->bstate.sock, buffer, sizeof(buffer));
+    int ret = hal_net_recv(bmem->sock, buffer, sizeof(buffer));
     if (ret < 0) {
         // If error on socket: exit the connected mode
         ESC_count = 0;
@@ -693,7 +693,7 @@ static void os_loop_connected() {
         return;
 
     // Send char to server through the socket
-    ret = hal_net_send(bmem->bstate.sock, &key, 1);
+    ret = hal_net_send(bmem->sock, &key, 1);
     if (ret < 0) {
         // If error on socket: exit the connected mode
         ESC_count = 0;
@@ -715,7 +715,7 @@ static void os_loop_connected() {
 static void os_loop_basic() {
     int fn = hal_get_function_key();
     if (fn > 0) {
-        bmem->bstate.reset = true;
+        bmem->bstate.reset = 1;
     } else {
         char key = os_get_key();
         bastos_send_keys((char *)&key, key != 0 ? 1 : 0, true);
@@ -728,7 +728,7 @@ static void os_loop_basic() {
 }
 
 void os_loop() {
-    if (bmem->bstate.sock >= 0) {
+    if (bmem->sock >= 0) {
         os_loop_connected();
     } else {
         os_loop_basic();
@@ -738,7 +738,7 @@ void os_loop() {
 bool os_debug(void) {
     if (!bmem)
         return false;
-    return bmem->bstate.debug != 0.0;
+    return bmem->bstate.debug != 0;
 }
 
 void os_setup(void) {

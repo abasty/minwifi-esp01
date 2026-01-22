@@ -70,37 +70,31 @@ typedef struct
 #define B_GOTO_FLAG (1 << 0)
 
 // Bastos evaluation state
-typedef struct
-{
+typedef struct eval_state_s eval_state_t;
+struct eval_state_s {
     prog_t *pc;
     prog_t *prog;
     char *var_ref;
     var_t *input_var;
-    float number;
     uint8_t *read_ptr;
-    uint16_t list_start;
+    char *string;
+    float number;
+
     uint8_t token;
     uint8_t input_var_token;
     int8_t error;
-    char inkey;
-    uint8_t flags;
-    int8_t ofs_c;
-    int8_t ofs_l;
-    bool do_eval;
-    bool running;
-    bool inputting;
-    bool reset;
-    bool debug;
-    bool g_mode;
-    uint32_t pause_delay;
-    uint64_t pause_start_time;
-    int sp;
-    int sock;
-    int output_fd;
-    char *string;
-    char output_var[B_NAME_SIZE_MAX];
+    int8_t sp;
+
+    uint8_t in_goto: 1;
+    uint8_t do_eval: 1;
+    uint8_t running: 1;
+    uint8_t inputting: 1;
+    uint8_t reset: 1;
+    uint8_t debug: 1;
+    uint8_t g_mode: 1;
+
     prog_buffer_t token_buffer;
-} eval_state_t;
+};
 
 // Bastos low memory system variables
 typedef struct {
@@ -111,10 +105,20 @@ typedef struct {
     uint8_t *vars_end;
     uint8_t *db_start;
     uint8_t *db_end;
-    eval_state_t bstate;
     loop_t loops['Z' - 'A' + 1];
     return_t returns[EVAL_RETURNS_SIZE];
     uint8_t io_buffer[IO_BUFFER_SIZE];
+    uint16_t list_start;
+    char inkey;
+    char vkey;
+    int8_t ofs_c;
+    int8_t ofs_l;
+    uint32_t pause_delay;
+    uint64_t pause_start_time;
+    int sock;
+    int output_fd;
+    char output_var[B_NAME_SIZE_MAX];
+    eval_state_t bstate;
 } bmem_t;
 
 static void bmem_init(uint8_t *mem, uint16_t size);

@@ -525,10 +525,10 @@ static void bmem_init(uint8_t *mem, uint16_t size) {
     bmem->db_start = bmem->db_end;
     bmem->prog_start = (uint8_t *)bmem + sizeof(bmem_t);
     bmem->vars_end = (uint8_t *)bmem + size - BASTOS_DB_SIZE;
-    bmem->bstate.sock = -1;
-    bmem->bstate.output_fd = -1;
-    bmem->bstate.ofs_c = 0;
-    bmem->bstate.ofs_l = 0;
+    bmem->sock = -1;
+    bmem->output_fd = -1;
+    bmem->ofs_c = 0;
+    bmem->ofs_l = 0;
     bastos_prog_new();
     os_db_load();
     os_autoexec();

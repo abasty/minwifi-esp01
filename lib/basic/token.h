@@ -52,7 +52,7 @@ typedef struct {
     uint8_t *write_ptr;
 } tokenizer_state_t;
 
-static int8_t tokenize(tokenizer_state_t *state, char *line);
+static int8_t tokenize(tokenizer_state_t *state, char *line, bool parcel);
 static char *untokenize(uint8_t *input);
 
 #endif // __TOKEN_H__

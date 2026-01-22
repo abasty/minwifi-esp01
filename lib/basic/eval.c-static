@@ -157,11 +157,11 @@ uint8_t output_func[] = {
 static void running_state_clear() {
     bmem->bstate.pc = 0;
     bmem->bstate.sp = 0;
-    bmem->bstate.list_start = 0;
+    bmem->list_start = 0;
     memset(bmem->loops, 0, sizeof(bmem->loops));
-    bmem->bstate.inkey = 0;
-    bmem->bstate.ofs_c = 0;
-    bmem->bstate.ofs_l = 0;
+    bmem->inkey = 0;
+    bmem->ofs_c = 0;
+    bmem->ofs_l = 0;
 }
 
 static bool eval_token(uint8_t c) {
@@ -186,16 +186,48 @@ static uint8_t eval_token_one_of(const char *set) {
     return c;
 }
 
-uint8_t len_code_functions[] = {
+uint8_t string_to_number_functions[] = {
     TOKEN_KEYWORD_CODE,
     TOKEN_KEYWORD_LEN,
+    TOKEN_KEYWORD_VAL,
     0,
 };
 
-static bool eval_len_code() {
+static void eval_val() {
+
+    eval_state_t saved_state = bmem->bstate;
+    float number = 0.0;
+    int8_t err = -1;
+
+    // Dupplicate input
+    char *input_dup = string_dup(bmem->bstate.string);
+
+    // Tokenize command
+    tokenizer_state_t line;
+    if (tokenize(&line, string_cstr(input_dup), true) < 0)
+        goto finalize;
+
+    // Set read pointer to tokenized input
+    bmem->bstate.read_ptr = bmem->bstate.token_buffer.line;
+
+    // Do syntax check / eval
+    bool eval = eval_expr(TOKEN_NUMBER);
+    if (!eval)
+        goto finalize;
+
+    number = bmem->bstate.number;
+    err = 0;
+
+finalize:
+    bmem->bstate = saved_state;
+    bmem->bstate.number = err == 0 ? number : 0.0;
+    bmem->bstate.error = err == 0 ? BERROR_NONE : BERROR_SYNTAX;
+}
+
+static bool eval_string_to_number() {
     uint8_t token;
 
-    if ((token = eval_token_one_of((char *)len_code_functions)) == 0 ||
+    if ((token = eval_token_one_of((char *)string_to_number_functions)) == 0 ||
         !eval_string_expr())
         return false;
 
@@ -212,6 +244,12 @@ static bool eval_len_code() {
         return true;
     }
 
+    if (token == TOKEN_KEYWORD_VAL) {
+        eval_val();
+        return true;
+    }
+
+    // token == TOKEN_KEYWORD_CODE
     bmem->bstate.number = bmem->bstate.string[2];
     return true;
 }
@@ -224,6 +262,8 @@ static bool eval_number() {
         value = 3.1415926536;
     } else if (eval_token(TOKEN_KEYWORD_RND)) {
         value = (float)((double)rand() / (double)RAND_MAX);
+    } else if (eval_token(TOKEN_KEYWORD_VKEY)) {
+        value = bmem->vkey;
     } else if (eval_token(TOKEN_NUMBER)) {
         uint8_t *write_value_ptr = (uint8_t *)&value;
         *write_value_ptr++ = *bmem->bstate.read_ptr++;
@@ -328,7 +368,7 @@ static bool eval_function() {
 
 static bool eval_factor() {
     bool result =
-        eval_number() || eval_function() || eval_len_code() ||
+        eval_number() || eval_function() || eval_string_to_number() ||
         (eval_token('(') && eval_expr(TOKEN_NUMBER) && eval_token(')'));
     return result;
 }
@@ -624,15 +664,15 @@ static bool eval_string_inkey() {
 
     if (bmem->bstate.do_eval) {
         bmem->bstate.string =
-            bmem_string_alloc(bmem->bstate.inkey == 0 ? 0 : 1);
+            bmem_string_alloc(bmem->inkey == 0 ? 0 : 1);
         if (!bmem->bstate.string)
             return false;
 
-        if (bmem->bstate.inkey != 0) {
-            bmem->bstate.string[2] = bmem->bstate.inkey;
+        if (bmem->inkey != 0) {
+            bmem->bstate.string[2] = bmem->inkey;
         }
 
-        bmem->bstate.inkey = 0;
+        bmem->inkey = 0;
     }
 
     return true;
@@ -933,12 +973,12 @@ static bool eval_output() {
 
     // Store var ref ou var name (first N chars)
     if (func == TOKEN_KEYWORD_START) {
-        strncpy(bmem->bstate.output_var, bmem->bstate.var_ref,
+        strncpy(bmem->output_var, bmem->bstate.var_ref,
                 B_NAME_SIZE_MAX - 1);
-        bmem->bstate.output_var[B_NAME_SIZE_MAX - 1] = 0;
-        bmem_var_string_set(bmem->bstate.output_var, "", true);
+        bmem->output_var[B_NAME_SIZE_MAX - 1] = 0;
+        bmem_var_string_set(bmem->output_var, "", true);
     } else {
-        *bmem->bstate.output_var = 0;
+        *bmem->output_var = 0;
     }
     return true;
 }
@@ -1158,7 +1198,7 @@ static bool eval_list() {
         }
     }
     else {
-        start = bmem->bstate.list_start;
+        start = bmem->list_start;
     }
 
     if (bmem->bstate.do_eval) {
@@ -1175,14 +1215,14 @@ static bool eval_list() {
                 n--;
             }
             prog = bmem_prog_next_line(prog);
-            bmem->bstate.list_start = prog ? prog->line_no : 0;
+            bmem->list_start = prog ? prog->line_no : 0;
         }
     }
 
     return true;
 }
 
-static inline void eval_input_mode(bool mode) { bmem->bstate.inputting = mode; }
+static inline void eval_input_mode(bool mode) { bmem->bstate.inputting = mode ? 1 : 0; }
 
 static int8_t eval_prog_next() {
     int8_t err = BERROR_NONE;
@@ -1191,8 +1231,7 @@ static int8_t eval_prog_next() {
     if (pc) {
         err = eval_prog(pc, true);
         if (err == BERROR_NONE) {
-            if (bmem->bstate.pc == pc &&
-                (bmem->bstate.flags & B_GOTO_FLAG) == 0) {
+            if (bmem->bstate.pc == pc && bmem->bstate.in_goto == 0) {
                 // If executed line did not change PC then move PC to next line
                 bmem->bstate.pc = bmem_prog_next_line(bmem->bstate.pc);
             }
@@ -1208,7 +1247,7 @@ static int8_t eval_prog_next() {
     }
 
     bmem->bstate.pc = 0;
-    bmem->bstate.running = false;
+    bmem->bstate.running = 0;
 
     return err;
 }
@@ -1216,13 +1255,13 @@ static int8_t eval_prog_next() {
 static inline bool eval_running() { return bmem->bstate.running; }
 
 static void eval_stop() {
-    bmem->bstate.running = false;
+    bmem->bstate.running = 0;
     eval_input_mode(false);
 }
 
 static void eval_cont() { bmem->bstate.running = bmem->bstate.pc != 0; }
 
-static void eval_reset() { bmem->bstate.reset = true; }
+static void eval_reset() { bmem->bstate.reset = 1; }
 
 static void eval_free() {
     char info[40];
@@ -1311,7 +1350,7 @@ static void eval_goto(uint16_t line_no) {
     bmem->bstate.running = bmem->bstate.pc != 0;
 
     if (bmem->bstate.running) {
-        bmem->bstate.flags |= B_GOTO_FLAG;
+        bmem->bstate.in_goto = 1;
     }
 }
 
@@ -1379,17 +1418,17 @@ static void eval_new() {
     bastos_prog_new();
 }
 
-static bool eval_paused() { return bmem->bstate.pause_delay != 0; }
+static bool eval_paused() { return bmem->pause_delay != 0; }
 
 static void eval_check_pause() {
-    if (hal_get_ms() - bmem->bstate.pause_start_time >= bmem->bstate.pause_delay) {
-        bmem->bstate.pause_delay = 0;
+    if (hal_get_ms() - bmem->pause_start_time >= bmem->pause_delay) {
+        bmem->pause_delay = 0;
     }
 }
 
 static void eval_pause() {
-    bmem->bstate.pause_delay = bmem->bstate.number;
-    bmem->bstate.pause_start_time = hal_get_ms();
+    bmem->pause_delay = bmem->bstate.number;
+    bmem->pause_start_time = hal_get_ms();
 }
 
 static bool eval_string_tty() {
@@ -1541,14 +1580,14 @@ static bool eval_string_tty() {
 
     if (fn == TOKEN_KEYWORD_ORIGIN) {
         if (bmem->bstate.do_eval) {
-            bmem->bstate.ofs_l = arg1;
-            bmem->bstate.ofs_c = arg2;
+            bmem->ofs_l = arg1;
+            bmem->ofs_c = arg2;
         }
         return true;
     } else {
         // fn = TOKEN_KEYWORD_AT
-        arg1 += bmem->bstate.ofs_l;
-        arg2 += bmem->bstate.ofs_c;
+        arg1 += bmem->ofs_l;
+        arg2 += bmem->ofs_c;
         if (arg1 == 1 && arg2 == 1) {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x1e");
         } else if (arg1 == 1 && arg2 == 2) {
@@ -1829,7 +1868,7 @@ static bool eval_connect(uint8_t set) {
     }
 
     if (set == DB_MIN_SET) {
-        bmem->bstate.sock = fd;
+        bmem->sock = fd;
     }
 
     return true;
@@ -2096,13 +2135,13 @@ static bool eval_next() {
 
 static int8_t eval_prog(prog_t *prog, bool do_eval) {
     // Init evaluator state
-    bmem->bstate.do_eval = do_eval;
+    bmem->bstate.do_eval = do_eval ? 1 : 0;
     bmem->bstate.read_ptr = prog->line;
     bmem->bstate.token = 0;
     bmem->bstate.string = 0;
     bmem->bstate.error = BERROR_NONE;
     bmem->bstate.prog = prog;
-    bmem->bstate.flags &= ~B_GOTO_FLAG;
+    bmem->bstate.in_goto = 0;
 
     // Do syntax check or eval
     bool eval = eval_instruction() || eval_if() || eval_for() || eval_next();

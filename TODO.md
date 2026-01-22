@@ -79,7 +79,6 @@
   * [*] Le traiter pour sortir du mode connecté BASTOS
   * [ ] A tester : réagir en conséquence (envoyer un autre Cx/Fin par la prise
     pour déconnecter le modem ou autre)
-
 * [ ] Rajouter un `FORMAT$` ?
 * [ ] Break qui arrive plus vite (d'abord sur device, flush sur serial, sur TCP
   il faudrait avoir un autre canal pour dier à l'mu de flusher ce qu'il a déjà
@@ -306,8 +305,9 @@ Code | Fonction BastOS | Touche Minitel
 127 | backspace | (CORRECTION)
 
 Les touches REPETITION, SUITE, RETOUR, SOMMAIRE, ENTER, ENVOI et GUIDE valide
-une entrée `INPUT`. La touche appuyée est testable avec `INKEY$` même après un
-`INPUT`.
+une entrée `INPUT`. La touche appuyée est testable avec `VKEY` (retourne un
+entier) après un `INPUT`. Hors mode `INPUT`, `INKEY$` renvoie le caractère
+associé (`\x04`, ...).
 
 ## Caractères UTF-8 vers Minitel
 
