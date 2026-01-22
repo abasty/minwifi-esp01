@@ -642,24 +642,25 @@ static bool eval_string_get() {
         return false;
 
     set = (uint16_t)bmem->bstate.number;
+    bool entry = false;
 
-    if (!eval_token(','))
-        return false;
-
-    if (!eval_expr(TOKEN_STRING))
-        return false;
+    if (eval_token(',')) {
+        if (!eval_expr(TOKEN_STRING))
+            return false;
+        entry = true;
+    }
 
     if (brackets && !eval_token(')'))
         return false;
 
     if (bmem->bstate.do_eval) {
-        // Wifi password are write only
-        entry_t *entry =
-            set == DB_WIFI_SET
-                ? 0
-                : bdb_entry_get(set, string_cstr(bmem->bstate.string));
-        bmem->bstate.string =
-            entry ? string_dup(entry->string) : bmem_string_alloc(0);
+        if (entry) {
+            // Wifi password are write only
+            entry_t *entry = set == DB_WIFI_SET ? 0 : bdb_entry_get(set, string_cstr(bmem->bstate.string));
+            bmem->bstate.string = entry ? string_dup(entry->string) : bmem_string_alloc(0);
+        } else {
+            bmem->bstate.string = bdb_get_keys(set);
+        }
     }
 
     return true;

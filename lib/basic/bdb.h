@@ -39,6 +39,7 @@ static split_t *bdb_urn_split(const char *urn);
 static uint16_t bdb_entry_count();
 static entry_t *bdb_entry_first();
 static entry_t *bdb_entry_next();
+static char *bdb_get_keys(uint8_t set);
 
 static entry_t *bdb_entry_set(uint8_t set, const char *name, char *value, bool is_cstr);
 static entry_t *bdb_entry_get(uint8_t set, const char *name);

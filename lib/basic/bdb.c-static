@@ -207,3 +207,32 @@ static entry_t *bdb_entry_set(uint8_t set, const char *name, char *value,
 finalize:
     return entry;
 }
+
+static char *bdb_get_keys(uint8_t set) {
+    char *string = bmem_string_alloc(0);
+    char key[B_NAME_SIZE_MAX + 4];
+    key[B_NAME_SIZE_MAX - 1 + 4] = 0;
+    uint16_t size = 0;
+    entry_t *entry = bdb_entry_first();
+    while (entry) {
+        if (entry->token == set) {
+            char *cname = (char *)entry->bytes + entry->name_ofs;
+            strncpy(string_cstr(key), cname, B_NAME_SIZE_MAX - 1);
+            size = strlen(string_cstr(key)) + 2;
+            key[2 + size - 2] = '\r';
+            key[2 + size - 1] = '\n';
+            key[0] = size & 0xff;
+            key[1] = size >> 8;
+            string_concat(&string, key);
+        }
+        entry = bdb_entry_next(entry);
+    }
+
+    size = string_len(string);
+    if (size > 0) {
+        size -= 2;
+        string[0] = size & 0xff;
+        string[1] = size >> 8;
+    }
+    return string;
+}

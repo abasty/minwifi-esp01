@@ -33,11 +33,7 @@
 
 ## Fonctionnalités
 
-* [ ] `FILE <FILENAME> -> <STRING>` : Renvoie une string contenant les octets du fichier
-  `<FILENAME>`
-* [ ] `FILE <FILENAME> [, <OFFSET>, <SIZE> ] -> <STRING>` : Renvoie une string
-  contenant `<SIZE>` octets à l'`<OFFSET>` du fichier `<FILENAME>`
-* [ ] `DB <N> -> <STRING>` : Renvoie les clés d'une table séparées par \r\n"
+* [x] `GET <N> -> <STRING>` : Renvoie les clés d'une table séparées par "\r\n"
 * [ ] `INDEX <STRING>, <SUB-STRING> [, <START>] -> <INDEX>`
   ```vb
   100 deb = 1
@@ -47,6 +43,10 @@
   140 deb = fin+1
   150 goto 100
   ```
+* [ ] `FILE <FILENAME> -> <STRING>` : Renvoie une string contenant les octets du fichier
+  `<FILENAME>`
+* [ ] `FILE <FILENAME> [, <OFFSET>, <SIZE> ] -> <STRING>` : Renvoie une string
+  contenant `<SIZE>` octets à l'`<OFFSET>` du fichier `<FILENAME>`
 * [ ] Design + Commande mode "Connexion Téléphone" (peut-on utiliser le mode TCP
   pour ver un service Kiosque serveur ?)
 * [ ] CAT, FTP CAT : version avec filtre (expression régulière)  et options
