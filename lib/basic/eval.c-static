@@ -194,19 +194,34 @@ uint8_t string_to_number_functions[] = {
 };
 
 static void eval_val() {
-    bmem->bstate.number = 0;
 
-    // Tokenize command and handle tokenize error case
+    eval_state_t saved_state = bmem->bstate;
+    float number = 0.0;
+    int8_t err = -1;
+
+    // Dupplicate input
+    char *input_dup = string_dup(bmem->bstate.string);
+
+    // Tokenize command
     tokenizer_state_t line;
-    int err = tokenize(&line, string_cstr(bmem->bstate.string), true);
-    if (err < 0) {
-        bmem->bstate.number = -1;
+    if (tokenize(&line, string_cstr(input_dup), true) < 0)
         goto finalize;
-    }
 
+    // Set read pointer to tokenized input
+    bmem->bstate.read_ptr = bmem->bstate.token_buffer.line;
+
+    // Do syntax check / eval
+    bool eval = eval_expr(TOKEN_NUMBER);
+    if (!eval)
+        goto finalize;
+
+    number = bmem->bstate.number;
+    err = 0;
 
 finalize:
-    return;
+    bmem->bstate = saved_state;
+    bmem->bstate.number = err == 0 ? number : 0.0;
+    bmem->bstate.error = err == 0 ? BERROR_NONE : BERROR_SYNTAX;
 }
 
 static bool eval_string_to_number() {
@@ -234,6 +249,7 @@ static bool eval_string_to_number() {
         return true;
     }
 
+    // token == TOKEN_KEYWORD_CODE
     bmem->bstate.number = bmem->bstate.string[2];
     return true;
 }

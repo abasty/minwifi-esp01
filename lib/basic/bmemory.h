@@ -92,6 +92,8 @@ struct eval_state_s {
     uint8_t reset: 1;
     uint8_t debug: 1;
     uint8_t g_mode: 1;
+
+    prog_buffer_t token_buffer;
 };
 
 // Bastos low memory system variables
@@ -106,7 +108,6 @@ typedef struct {
     loop_t loops['Z' - 'A' + 1];
     return_t returns[EVAL_RETURNS_SIZE];
     uint8_t io_buffer[IO_BUFFER_SIZE];
-    prog_buffer_t token_buffer;
     uint16_t list_start;
     char inkey;
     char vkey;

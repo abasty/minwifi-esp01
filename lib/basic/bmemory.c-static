@@ -414,7 +414,7 @@ static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line,
 
     // Find where to insert the new line
     if (line_no == 0) {
-        prog = (prog_t *)&bmem->token_buffer;
+        prog = (prog_t *)&bmem->bstate.token_buffer;
     } else if (prog == 0) {
         // Insert at the end of the program
         prog = (prog_t *)bmem->prog_end;
