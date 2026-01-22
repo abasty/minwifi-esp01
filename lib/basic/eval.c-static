@@ -227,8 +227,15 @@ finalize:
 static bool eval_string_to_number() {
     uint8_t token;
 
-    if ((token = eval_token_one_of((char *)string_to_number_functions)) == 0 ||
-        !eval_string_expr())
+    if ((token = eval_token_one_of((char *)string_to_number_functions)) == 0)
+        return false;
+
+    bool brackets = eval_token('(');
+
+    if (!eval_string_expr())
+        return false;
+
+    if (brackets && !eval_token(')'))
         return false;
 
     if (!bmem->bstate.do_eval)
