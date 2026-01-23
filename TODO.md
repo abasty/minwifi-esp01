@@ -33,16 +33,6 @@
 
 ## Fonctionnalités
 
-* [x] `GET <N> -> <STRING>` : Renvoie les clés d'une table séparées par "\r\n"
-* [ ] `INDEX <STRING>, <SUB-STRING> [, <START>] -> <INDEX>`
-  ```vb
-  100 deb = 1
-  110 fin = index a$, "\n", deb
-  120 if fin <= 0 then 200
-  130 sub$ = a$(deb to fin-1)
-  140 deb = fin+1
-  150 goto 100
-  ```
 * [ ] `FILE <FILENAME> -> <STRING>` : Renvoie une string contenant les octets du fichier
   `<FILENAME>`
 * [ ] `FILE <FILENAME>, <OFFSET>, <SIZE> -> <STRING>` : Renvoie une string
@@ -560,6 +550,7 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Bugs
 
+* [x] Syntax error : `130 sub$ = a$(deb to fin-1)` (mais marche avec ',')
 * [x] `WIFI` n'admet pas une variable _string_ comme SSID
 * [x] Valeur par défaut sur `INPUT` : À virer car comportement inattendu quand
   on fait RETOUR / GUIDE par exemple au lieu de ENVOI dans `repo.bas`
@@ -659,6 +650,16 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Features (à documenter)
 
+* [x] `GET <N> -> <STRING>` : Renvoie les clés d'une table séparées par "\r\n"
+* [x] `INDEX <STRING>, <SUB-STRING> [, <START>] -> <INDEX>`
+  ```vb
+  100 deb = 1
+  110 fin = index a$, "\n", deb
+  120 if fin <= 0 then 200
+  130 sub$ = a$(deb, fin-1)
+  140 deb = fin+1
+  150 goto 110
+  ```
 * [x] `VAL` utilise un sous-tokenizer / évaluateur
 * [x] Écrire un programme BASIC qui implémente un annuaire qui ressemble à celui
   du M2
