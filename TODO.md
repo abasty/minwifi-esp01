@@ -18,7 +18,6 @@
 
 ## Bugs
 
-* [ ] Syntax error : `130 sub$ = a$(deb to fin-1)` (mais marche avec ',')
 * ~~[ ] Remplacer ESC-ESC par Ctrl+C~~
 * [ ] Revisiter "Connexion/Fin"
 * [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
@@ -551,6 +550,7 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Bugs
 
+* [x] Syntax error : `130 sub$ = a$(deb to fin-1)` (mais marche avec ',')
 * [x] `WIFI` n'admet pas une variable _string_ comme SSID
 * [x] Valeur par défaut sur `INPUT` : À virer car comportement inattendu quand
   on fait RETOUR / GUIDE par exemple au lieu de ENVOI dans `repo.bas`

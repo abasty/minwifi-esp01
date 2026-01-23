@@ -898,12 +898,14 @@ static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims) {
 
     if ((*dim_count & B_DIM_RANGE_FLAG) != 0) {
         if (eval_float_expr()) {
-            if (bmem->bstate.number < 1 ||
-                bmem->bstate.number >= BASTOS_MEMORY_SIZE) {
-                bmem->bstate.error = BERROR_RANGE;
-                return true;
+            if (bmem->bstate.do_eval) {
+                if (bmem->bstate.number < 1 ||
+                    bmem->bstate.number >= BASTOS_MEMORY_SIZE) {
+                    bmem->bstate.error = BERROR_RANGE;
+                    return true;
+                }
+                dims[*dim_count & ~B_DIM_RANGE_FLAG] = bmem->bstate.number;
             }
-            dims[*dim_count & ~B_DIM_RANGE_FLAG] = bmem->bstate.number;
         } else {
             dims[*dim_count & ~B_DIM_RANGE_FLAG] = BASTOS_MEMORY_SIZE;
         }
