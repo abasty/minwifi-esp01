@@ -18,7 +18,8 @@
 
 ## Bugs
 
-* [ ] Remplacer ESC-ESC par Ctrl+C
+* [ ] `WIFI` n'admet pas une variable _string_ comme SSID
+* ~~[ ] Remplacer ESC-ESC par Ctrl+C~~
 * [ ] Revisiter "Connexion/Fin"
 * [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
   plus sur Minitel
@@ -45,7 +46,7 @@
   ```
 * [ ] `FILE <FILENAME> -> <STRING>` : Renvoie une string contenant les octets du fichier
   `<FILENAME>`
-* [ ] `FILE <FILENAME> [, <OFFSET>, <SIZE> ] -> <STRING>` : Renvoie une string
+* [ ] `FILE <FILENAME>, <OFFSET>, <SIZE> -> <STRING>` : Renvoie une string
   contenant `<SIZE>` octets à l'`<OFFSET>` du fichier `<FILENAME>`
 * [ ] Design + Commande mode "Connexion Téléphone" (peut-on utiliser le mode TCP
   pour ver un service Kiosque serveur ?)
@@ -560,6 +561,8 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Bugs
 
+* [x] Valeur par défaut sur `INPUT` : À virer car comportement inattendu quand
+  on fait RETOUR / GUIDE par exemple au lieu de ENVOI dans `repo.bas`
 * [x] Touches de fonctions Minitel supportées dans BASTOS
 * [x] À priori, toutes les fonctions `eval_*` doivent renvoyer `true` si la
   syntaxe est bonne. Lors de l'exécution notamment on devrait toujours renvoyer

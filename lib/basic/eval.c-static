@@ -1074,8 +1074,9 @@ static bool eval_let() {
 static int8_t eval_input_store(char *io_string) {
     eval_input_mode(false);
 
-    if (strlen(io_string) == 0)
-        return BERROR_NONE;
+    // Comment out the next two lines to support "no change on empty input"
+    // if (strlen(io_string) == 0)
+    //     return BERROR_NONE;
 
     if (bmem->bstate.input_var_token == TOKEN_VARIABLE_NUMBER) {
         char *end_ptr = 0;
