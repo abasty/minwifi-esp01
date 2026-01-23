@@ -1789,7 +1789,7 @@ static char *eval_get_ssid() {
 }
 
 static bool eval_wifi_connect(void) {
-    if (!eval_expr(TOKEN_STRING) && !eval_expr(TOKEN_NUMBER))
+    if (!eval_expr(TOKEN_STRING | TOKEN_NUMBER))
         return false;
 
     if (!bmem->bstate.do_eval)
@@ -1811,7 +1811,7 @@ static bool eval_wifi_connect(void) {
 }
 
 static bool eval_wifi_erase(void) {
-    if (!eval_expr(TOKEN_STRING) && !eval_expr(TOKEN_NUMBER))
+    if (!eval_expr(TOKEN_STRING | TOKEN_NUMBER))
         return false;
 
     if (!bmem->bstate.do_eval)
