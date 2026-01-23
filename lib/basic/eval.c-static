@@ -261,6 +261,44 @@ static bool eval_string_to_number() {
     return true;
 }
 
+static bool eval_index() {
+
+    if (!eval_token(TOKEN_KEYWORD_INDEX))
+        return false;
+
+    bool brackets = eval_token('(');
+
+    if (!eval_expr(TOKEN_STRING))
+        return false;
+
+    char *string1= bmem->bstate.string;
+
+    if (!eval_token(','))
+        return false;
+
+    if (!eval_expr(TOKEN_STRING))
+        return false;
+
+    char *string2= bmem->bstate.string;
+
+    uint16_t index = 1;
+
+    if (eval_token(',')) {
+        if (!eval_expr(TOKEN_NUMBER))
+            return false;
+        index = bmem->bstate.number;
+    }
+    if (brackets && !eval_token(')'))
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    bmem->bstate.token = TOKEN_NUMBER;
+    bmem->bstate.number = string_index(string1, string2, index);
+    return true;
+}
+
 static bool eval_number() {
     bool minus = eval_token('-');
     float value = 0;
@@ -375,7 +413,7 @@ static bool eval_function() {
 
 static bool eval_factor() {
     bool result =
-        eval_number() || eval_function() || eval_string_to_number() ||
+        eval_number() || eval_function() || eval_string_to_number() || eval_index() ||
         (eval_token('(') && eval_expr(TOKEN_NUMBER) && eval_token(')'));
     return result;
 }

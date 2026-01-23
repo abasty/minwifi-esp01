@@ -144,6 +144,7 @@ static int string_len(const char *string);
 static char *string_dup(const char *string);
 static void string_slice(char **string, uint16_t start, uint16_t end);
 static void string_concat(char **string1, char *string2);
+static uint16_t string_index(char *string1, char *string2, uint16_t index);
 
 static inline int bmem_align4(int size)
 {

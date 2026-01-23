@@ -227,12 +227,5 @@ static char *bdb_get_keys(uint8_t set) {
         }
         entry = bdb_entry_next(entry);
     }
-
-    size = string_len(string);
-    if (size > 0) {
-        size -= 2;
-        string[0] = size & 0xff;
-        string[1] = size >> 8;
-    }
     return string;
 }
