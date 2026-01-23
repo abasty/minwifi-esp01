@@ -18,7 +18,6 @@
 
 ## Bugs
 
-* [ ] `WIFI` n'admet pas une variable _string_ comme SSID
 * ~~[ ] Remplacer ESC-ESC par Ctrl+C~~
 * [ ] Revisiter "Connexion/Fin"
 * [ ] À valider : Touches Enter + Ctrl et Shift (CLS, HOME) : ne fonctionnent
@@ -561,6 +560,7 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Bugs
 
+* [x] `WIFI` n'admet pas une variable _string_ comme SSID
 * [x] Valeur par défaut sur `INPUT` : À virer car comportement inattendu quand
   on fait RETOUR / GUIDE par exemple au lieu de ENVOI dans `repo.bas`
 * [x] Touches de fonctions Minitel supportées dans BASTOS
