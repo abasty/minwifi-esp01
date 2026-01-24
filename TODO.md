@@ -72,8 +72,6 @@
 * [ ] Break qui arrive plus vite (d'abord sur device, flush sur serial, sur TCP
   il faudrait avoir un autre canal pour dier à l'mu de flusher ce qu'il a déjà
   reçu)
-* [ ] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
-  en main à cause du "autoexec" ).
 * [ ] PAUSE <N>, <LINENO> : Pendant le temps de la pause exécute le
   sous-programme <LINENO>. Quand `RETURN` est appelé, soit le temps est écoulé
   et le programme reprend après le `PAUSE`, soit on continue la pause jusqu'à
@@ -121,9 +119,6 @@
 
 ## Backend et doc
 
-* [ ] Faire une appli qui crée la base de données par défaut + appli ou code C
-  qui présente une liste genre annuaire ou répertoire (voir avec Minipavi et
-  3615 si on peut appeler les sites directement)
 * [ ] Réseau social : Mastodon only
 * [ ] [mastodon comments] (https://andreas.scherbaum.la/post/2024-05-23_client-side-comments-with-mastodon-on-a-static-hugo-website/)
 * [ ] Blog / content : pages perso retro: Minitel / HP48 / ORIC 1 / PalmOS / ...
@@ -190,7 +185,7 @@
 | Ctrl+Fleche gauche (<-)   |                DEL(7F) | DEL(7F) |
 | Ctrl+Retour Chariot (<-') | CSI 2 (32) J (4A)      | FF (0C) |
 
-## Hardware SonOff
+## Hardware SonOff R1/R2
 
 Composant        |Connexion du schéma  |ESP8266      |Note
 -----------------|---------------------|-------------|------------------
@@ -202,6 +197,15 @@ connexion        |J1-2                 |U0RXD/GPIO1  |Pour programmer
 connexion        |J1-3                 |U0TXD/GPIO3  |Pour programmer
 connexion        |J1-4                 |             |Gnd, 0V
 connexion        |J1-5                 |GPIO14       |logique 0 active
+
+## Hardware SonOff R4
+
+Composant        |ESP32c       |Note
+-----------------|-------------|------------------
+bouton-poussoir  |GPIO9        |logique 0 active
+relais           |GPIO4        |logique 1 active
+DEL bleue        |GPIO6        |logique 1 active
+Magic Switch Mode|GPIO5        |?
 
 # Architecture logicielle
 
@@ -515,9 +519,9 @@ chars = nl * nc = 960
 
 ## Intégration SONOFF
 
-* [ ] Gérer le bouton du Sonoff : ON / OFF Minitel + RESET
-* [ ] Gestion télérupteur
-* [ ] Gestion Led
+* [x] Gérer le bouton du Sonoff : RESET sans autoexec si appuie long
+* [x] Gestion Led
+* ~~[ ] Gestion télérupteur~~
 
 ## Interface PC / Émulateur
 
@@ -651,6 +655,11 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Features (à documenter)
 
+* [x] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
+  en main à cause du "autoexec" ).
+* [x] Faire une appli qui crée la base de données par défaut + appli ou code C
+  qui présente une liste genre annuaire ou répertoire (voir avec Minipavi et
+  3615 si on peut appeler les sites directement) : `connect.bas`
 * [x] `GET <N> -> <STRING>` : Renvoie les clés d'une table séparées par "\r\n"
 * [x] `INDEX <STRING>, <SUB-STRING> [, <START>] -> <INDEX>`
   ```vb

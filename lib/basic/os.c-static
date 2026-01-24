@@ -159,7 +159,16 @@ finalize:
 
 static void os_autoexec(void) {
     hal_print_string(MODE_INIT_STRING);
-    if (bastos_load(AUTOEXEC_FILE) == BERROR_NONE) {
+
+    char autochar[2] = {'1', 0};
+    entry_t *entry = bdb_entry_get(DB_CONFIG_SET, "autoexec");
+    if (entry) {
+        strncpy(autochar, string_cstr(entry->string), 1);
+        autochar[1] = 0;
+        bdb_entry_set(DB_CONFIG_SET, "autoexec", 0, true);
+        os_db_save();
+    }
+    if (autochar[0] == '1' && bastos_load(AUTOEXEC_FILE) == BERROR_NONE) {
         running_state_clear();
         bmem->bstate.pc = bmem_prog_first_line();
         bmem->bstate.running = bmem->bstate.pc != 0;
@@ -714,8 +723,14 @@ static void os_loop_connected() {
 
 static void os_loop_basic() {
     int fn = hal_get_function_key();
-    if (fn > 0) {
+    if (fn == 1) {
         bmem->bstate.reset = 1;
+        bdb_entry_set(DB_CONFIG_SET, "autoexec", "1", true);
+        os_db_save();
+    } else if (fn > 1) {
+        bmem->bstate.reset = 1;
+        bdb_entry_set(DB_CONFIG_SET, "autoexec", "0", true);
+        os_db_save();
     } else {
         char key = os_get_key();
         bastos_send_keys((char *)&key, key != 0 ? 1 : 0, true);

@@ -357,7 +357,14 @@ uint64_t hal_get_ms(void)
 
 int hal_get_function_key(void)
 {
-    return 0;
+    uint8_t fn = 0;
+    int fkey = open("/tmp/fkey", O_RDONLY);
+    if (fkey >= 0) {
+        read(fkey, &fn, 1);
+        close(fkey);
+        unlink("/tmp/fkey");
+    }
+    return fn;
 }
 
 bool hal_ftp_is_connected()

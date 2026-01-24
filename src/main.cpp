@@ -44,14 +44,19 @@
 #include "bio.h"
 #include "os.h"
 
-// 0:	BUTTON
-// 12:	RELAY
-// 13:	LED
-// 14:	EXTRA GPIO
-
+#ifdef ESP32
+const int button_pin = 9;
+const int relay_pin = 4;
+const int led_pin = 6;
+#define BLUE_LED_ON do { digitalWrite(led_pin, HIGH); } while(0);
+#define BLUE_LED_OFF do { digitalWrite(led_pin, LOW); } while(0);
+#else
 const int button_pin = 0;
 const int relay_pin = 12;
 const int led_pin = 13;
+#define BLUE_LED_ON do { digitalWrite(led_pin, LOW); } while(0);
+#define BLUE_LED_OFF do { digitalWrite(led_pin, HIGH); } while(0);
+#endif
 
 // Files and sockets
 static File g_file0;
@@ -212,7 +217,7 @@ int hal_erase(const char *pathname)
 
 void hal_reset()
 {
-    digitalWrite(led_pin, HIGH);
+    BLUE_LED_OFF;
     hal_print_string(P_ACK_OFF_PRISE P_PRISE_1200);
     delay(250);
     ESP.restart();
@@ -474,10 +479,6 @@ int hal_get_function_key(void)
         last_state = current_state;
     }
 
-    if (function != 0) {
-        digitalWrite(led_pin, HIGH);
-        delay(200);
-    }
     return function;
 }
 
@@ -496,10 +497,12 @@ static void serial_flush_rx()
 
 static bool wait_serial(unsigned long speed, String wait_for)
 {
+    BLUE_LED_ON;
     Serial.begin(speed, SERIAL_7E1);
     Serial.setTimeout(0);
     // serial_flush_rx();
     delay(500);
+    BLUE_LED_OFF;
     hal_print_string("\e9t");
     delay(500);
     String reply = Serial.readString();
@@ -531,8 +534,6 @@ void setup()
     pinMode(relay_pin, OUTPUT);
     pinMode(led_pin, OUTPUT);
     pinMode(button_pin, INPUT_PULLUP);
-    digitalWrite(relay_pin, HIGH); // On R2, light the red led (relay state)
-    digitalWrite(led_pin, LOW);   // On R2, light the blue led (red + blue => purple)
 
     setup_serial();
 
@@ -549,6 +550,7 @@ void setup()
 
     // Bootstrap the OS
     os_setup();
+    BLUE_LED_ON;
 }
 
 void loop()

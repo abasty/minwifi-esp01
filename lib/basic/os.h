@@ -66,6 +66,7 @@ extern "C" {
 #define DB_WIFI_SET ((uint8_t) 255)
 #define DB_MIN_SET ((uint8_t) 254)
 #define DB_FTP_SET ((uint8_t) 253)
+#define DB_CONFIG_SET ((uint8_t) 252)
 
 // Files constants
 #define FILE_TYPE_BAS (0)
