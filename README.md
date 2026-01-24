@@ -1,4 +1,10 @@
-# 1. Se connecter à un réseau Wi-Fi
+# 1. Sortir du mode connecté ou d'une exécution Basic
+
+Appuyer 2 fois sur la touche "ESC", si ça ne marche pas, appuyer sur le bouton
+RESET. Si on ne veut pas exécuter le programme `autoexec.bas` au démarrage, un
+appui long sur le bouton RESET permet de l'éviter.
+
+# 2. Se connecter à un réseau Wi-Fi
 
 Pour voir les réseaux connus :
 
@@ -28,7 +34,7 @@ WIFI "<nom du réseau>"
 OK
 ```
 
-# 2. Se connecter au FTP BASTOS
+# 3. Se connecter au FTP BASTOS
 
 Il faut être connecté au Wi-Fi.
 
@@ -54,7 +60,7 @@ FTP "bastos"
 OK
 ```
 
-# 3. Télécharger et exécuter "snake.bas"
+# 4. Télécharger et exécuter "snake.bas"
 
 Il faut être connecté au FTP BASTOS.
 
@@ -86,7 +92,7 @@ Pour charger et exécuter "snake.bas" depuis le disque local :
 RUN "snake"
 ```
 
-# 4. Se connecter à des services Minitel
+# 5. Se connecter à des services Minitel
 
 Il faut être connecté au Wi-Fi.
 
@@ -120,12 +126,8 @@ Exemples :
 Pour se connecter à un service déjà configuré :
 
 ```
-MINITEL <nom du service>
+MINITEL "<nom du service>"
 ```
-
-# 5. Sortir du mode connecté ou d'une exécution Basic
-
-Appuyer 2 fois sur la touche "ESC".
 
 # Troubleshooting
 
@@ -151,15 +153,17 @@ connecter au réseau.
 
 ## Tout est planté
 
-C'est un problème connu sur BASTOS :)
-
+* Pour sortir d'un programme en exécution ou du mode connecté, appuyer 2 fois
+  consécutivement sur ESC
 * En connexion sur un service Minitel la touche "Connexion/Fin" peut aider.
 * La commande `BASTOS` permet de redéfinir les attributs par défaut pour BASTOS
   et afficher l'invite de commande initiale
 * La commande `RESET` permet de réinitialiser BASTOS et de revenir en mode
   `SLOW` (prise à 1200 bps)
+* Un appui court sur le bouton RESET est équivalent à la commande `RESET`
+* Un appui long sur le bouton RESET fait `RESET` **et** n'exécute pas
+  `autoexec.bas` au re-démarrage
 * La suppression du fichier `autoexec.bas` peut aussi aider à sortir d'une
-  boucle infernale
-* Je ne me rappelle plus si le bouton est branché sur `RESET` ou pas : à essayer
+  boucle infernale (de la même façon que l'appui long sur RESET)
 * Finalement en ultime : Débrancher le module BASTOS et le rebrancher de/sur la
   DIN du Minitel
