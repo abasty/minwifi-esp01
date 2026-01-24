@@ -1,3 +1,5 @@
+![bastos](bastos-title.png)
+
 # 1. Sortir du mode connecté ou d'une exécution Basic
 
 Appuyer 2 fois sur la touche "ESC", si ça ne marche pas, appuyer sur le bouton
