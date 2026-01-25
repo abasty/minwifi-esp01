@@ -33,12 +33,8 @@
 
 ## Fonctionnalités
 
-* [ ] `FILE <FILENAME> -> <STRING>` : Renvoie une string contenant les octets du fichier
-  `<FILENAME>`
-* [ ] `FILE <FILENAME>, <OFFSET>, <SIZE> -> <STRING>` : Renvoie une string
-  contenant `<SIZE>` octets à l'`<OFFSET>` du fichier `<FILENAME>`
-* [ ] Design + Commande mode "Connexion Téléphone" (peut-on utiliser le mode TCP
-  pour ver un service Kiosque serveur ?)
+* [ ] Design + Commande mode "Connexion Téléphone" (peut-on utiliser un URN TCP
+  et la commande MINITEL vers un service Kiosque serveur sur le téléphone ?)
 * [ ] CAT, FTP CAT : version avec filtre (expression régulière)  et options
   (plusieurs par lignes, pas d'en tête) => rajouter `DIR <PATTERN>`
 * [ ] Ajouter répertoires dans système de fichiers
@@ -132,7 +128,8 @@
 
 * [ ] Home self hosting possible pour les services de bouncing (éventuellement
   via ngrock + authentication)
-* [ ] Serveurs sur IONOS (faire framework en Dart, à la flutter éventuellement)
+* [ ] Serveurs sur IONOS (faire framework en Dart, à la flutter éventuellement,
+  <https://zetcode.com/dart/serversocket/>)
 * [ ] Pouvoir alimenter un site FTP depuis un script local (FTP Bastos en
   lecture seule + Site web blog z4rd0z)
   * [ ] Blog sur alain.basty.free.fr (accès FTP) :
@@ -655,6 +652,10 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Features (à documenter)
 
+* [x] `FILE <FILENAME> -> <STRING>` : Renvoie une string contenant les octets du fichier
+  `<FILENAME>`
+* [x] `FILE <FILENAME>, <OFFSET>, <SIZE> -> <STRING>` : Renvoie une string
+  contenant `<SIZE>` octets à l'`<OFFSET>` du fichier `<FILENAME>`
 * [x] Le bouton reset doit ne pas exécuter le "autoexec.bas" (là pb de reprise
   en main à cause du "autoexec" ).
 * [x] Faire une appli qui crée la base de données par défaut + appli ou code C

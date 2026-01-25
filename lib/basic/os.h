@@ -77,6 +77,8 @@ extern "C" {
 #define FILE_BASE_MAX (16)
 #define FILE_EXT_MAX (3)
 
+#define FILE_READ_MAX_SIZE (16384)
+
 typedef struct split_s {
     uint8_t n;
     uint8_t proto;
@@ -114,6 +116,8 @@ int hal_open(const char *pathname, int flags);
 int hal_close(int fd);
 int hal_write(int fd, const void *buf, int count);
 int hal_read(int fd, void *buf, int count);
+int hal_get_file_size(const char* pathname);
+int hal_file(const char* pathname, char *buffer, uint16_t offset, uint16_t size);
 
 size_t hal_cat(void);
 int hal_erase(const char *pathname);

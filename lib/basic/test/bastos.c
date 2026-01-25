@@ -141,6 +141,32 @@ int hal_read(int fd, void *buf, int count)
     return 0;
 }
 
+int hal_get_file_size(const char* pathname)
+{
+    int fd = hal_open(pathname, O_RDONLY);
+    if (fd < 0)
+        return 0;
+
+    int fsize = lseek(fd, 0, SEEK_END);
+    hal_close(fd);
+    return fsize;
+}
+
+int hal_file(const char* pathname, char *buffer, uint16_t offset, uint16_t size)
+{
+    int r = 0;
+    int fd = hal_open(pathname, O_RDONLY);
+    if (fd < 0)
+        return 0;
+
+    if (offset == (uint16_t) lseek(fd, offset, SEEK_SET)) {
+        r = read(fd, buffer, size);
+    }
+
+    hal_close(fd);
+    return r;
+}
+
 size_t hal_cat()
 {
     off_t total = 0;

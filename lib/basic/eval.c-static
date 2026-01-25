@@ -679,7 +679,7 @@ static bool eval_string_get() {
     if (!eval_expr(TOKEN_NUMBER))
         return false;
 
-    set = (uint16_t)bmem->bstate.number;
+    set = (uint8_t)bmem->bstate.number;
     bool entry = false;
 
     if (eval_token(',')) {
@@ -700,6 +700,64 @@ static bool eval_string_get() {
             bmem->bstate.string = bdb_get_keys(set);
         }
     }
+
+    return true;
+}
+
+static bool eval_string_file() {
+    if (!eval_token(TOKEN_KEYWORD_FILE))
+        return false;
+
+    bool brackets = eval_token('(');
+
+    if (!eval_expr(TOKEN_STRING))
+        return false;
+
+    char* pathname = bmem->bstate.string + 2;
+    uint16_t size = 0;
+    uint16_t offset = 0;
+
+    if (eval_token(',')) {
+        if (!eval_expr(TOKEN_NUMBER))
+            return false;
+        offset = (uint16_t) bmem->bstate.number;
+        if (!eval_token(','))
+            return false;
+        if (!eval_expr(TOKEN_NUMBER))
+            return false;
+        size = (uint16_t) bmem->bstate.number;
+    }
+
+    if (brackets && !eval_token(')'))
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    if (size == 0) {
+        size = hal_get_file_size(pathname);
+    }
+
+    bmem->bstate.string = 0;
+
+    if (size > FILE_READ_MAX_SIZE) {
+        bmem->bstate.error = BERROR_RANGE;
+        return true;
+    }
+
+    if (size == 0) {
+        return true;
+    }
+
+    bmem->bstate.string = bmem_string_alloc(size);
+    if (!bmem->bstate.string) {
+        bmem->bstate.error = BERROR_MEMORY;
+        return true;
+    }
+
+    int rsize = hal_file(pathname, string_cstr(bmem->bstate.string), offset, size);
+    bmem->bstate.string[0] = rsize & 0xff;
+    bmem->bstate.string[1] = rsize >> 8;
 
     return true;
 }
@@ -783,9 +841,9 @@ static bool eval_string_var() {
 }
 
 static bool eval_string_term() {
-    bool result = eval_string_const() || eval_string_var() ||
-                  eval_string_chr() || eval_string_tty() || eval_string_str() ||
-                  eval_string_rep() || eval_string_get() || eval_string_inkey() ||
+    bool result = eval_string_const() || eval_string_var() || eval_string_chr() ||
+                  eval_string_tty() || eval_string_str() || eval_string_rep() ||
+                  eval_string_get() || eval_string_file() || eval_string_inkey() ||
                   (eval_token('(') && eval_string_expr() && eval_token(')'));
 
     if (!result)

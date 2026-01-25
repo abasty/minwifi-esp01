@@ -146,6 +146,45 @@ int hal_read(int fd, void *buf, int count)
     return g_file0.read((uint8_t *)buf, count);
 }
 
+int hal_get_file_size(const char* pathname)
+{
+    #ifdef ESP32
+    char rname[FILE_NAME_SIZE + 4] = "/";
+    strncat(rname, pathname, FILE_NAME_SIZE + 3);
+    pathname = rname;
+    #endif
+
+    int size = 0;
+    File f = LittleFS.open(pathname, "r");
+    if (f)
+    {
+        size = f.size();
+        f.close();
+    }
+    return size;
+}
+
+int hal_file(const char* pathname, char *buffer, uint16_t offset, uint16_t size)
+{
+    #ifdef ESP32
+    char rname[FILE_NAME_SIZE + 4] = "/";
+    strncat(rname, pathname, FILE_NAME_SIZE + 3);
+    pathname = rname;
+    #endif
+
+    int r = 0;
+    File f = LittleFS.open(pathname, "r");
+    if (!f)
+        return 0;
+
+    if (f.seek(offset)) {
+        r = f.read((uint8_t*) buffer, size);
+    }
+
+    f.close();
+    return r;
+}
+
 #ifdef ESP32
 size_t hal_cat()
 {
@@ -160,6 +199,7 @@ size_t hal_cat()
         } else {
             os_cat_file(file.name(), file.size());
         }
+        file.close();
         file = dir.openNextFile();
     }
     return LittleFS.totalBytes() - LittleFS.usedBytes();

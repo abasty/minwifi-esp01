@@ -115,6 +115,7 @@ g1
 origin
 vkey
 index
+file
 EOF
 
 # Do not sort to preserve save/load compatibility
