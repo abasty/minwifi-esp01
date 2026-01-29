@@ -1,0 +1,12 @@
+10 CLS ;AT 24,1;CURSOR 0
+20 FAST
+1000 a$=FILE "bastos.txt"
+1100 deb=1
+1110 fin=INDEX a$,"\n",deb
+1120 IF fin<=0 THEN 2000
+1130 l$=a$(deb,fin-1)
+1140 deb=fin+1
+1150 PRINT l$( TO 39)
+1210 PAUSE 50
+1220 GOTO 1110
+2000 CURSOR 1
