@@ -67,7 +67,8 @@ uint8_t functions[] = {
     TOKEN_KEYWORD_ATN, TOKEN_KEYWORD_BIN, TOKEN_KEYWORD_COS,
     TOKEN_KEYWORD_EXP, TOKEN_KEYWORD_INT, TOKEN_KEYWORD_LN,
     TOKEN_KEYWORD_SGN, TOKEN_KEYWORD_SIN, TOKEN_KEYWORD_SQR,
-    TOKEN_KEYWORD_TAN, TOKEN_KEYWORD_NOT, 0,
+    TOKEN_KEYWORD_TAN, TOKEN_KEYWORD_NOT, TOKEN_KEYWORD_TEST,
+    0,
 };
 
 uint8_t variables[] = {
@@ -447,9 +448,33 @@ static bool eval_function() {
     return true;
 }
 
+static bool eval_test() {
+    if (!eval_token(TOKEN_KEYWORD_TEST))
+        return false;
+
+    if (!eval_factor())
+        return false;
+
+    int8_t x = bmem->bstate.number;
+
+    if (!eval_token(','))
+        return false;
+
+    if (!eval_factor())
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    int8_t y = bmem->bstate.number;
+    bmem->bstate.number = eval_graphic_fn(TOKEN_KEYWORD_TEST, x, y, 0) != 0;
+
+    return true;
+}
+
 static bool eval_factor() {
     bool result =
-        eval_number() || eval_function() || eval_string_to_number() || eval_index() ||
+        eval_number()  || eval_test() || eval_function() || eval_string_to_number() || eval_index() ||
         (eval_token('(') && eval_expr(TOKEN_NUMBER) && eval_token(')'));
     return result;
 }
