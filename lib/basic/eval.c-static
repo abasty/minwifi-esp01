@@ -83,7 +83,8 @@ char tty_codes[] = {
     TOKEN_KEYWORD_INVERSE, TOKEN_KEYWORD_UNDERLINE, TOKEN_KEYWORD_ECHO,
     TOKEN_KEYWORD_SIZE,    TOKEN_KEYWORD_SCROLL,    TOKEN_KEYWORD_DEL,
     TOKEN_KEYWORD_INS,     TOKEN_KEYWORD_G0,        TOKEN_KEYWORD_G1,
-    TOKEN_KEYWORD_ORIGIN,  0,
+    TOKEN_KEYWORD_ORIGIN,  TOKEN_KEYWORD_PLOT,      TOKEN_KEYWORD_UNPLOT,
+    0,
 };
 
 const char compare_tokens[] = {
@@ -351,6 +352,41 @@ static bool eval_number() {
         bmem->bstate.number = -bmem->bstate.number;
     }
     return true;
+}
+
+static uint8_t eval_graphic_fn(uint8_t fn, int8_t x, int8_t y, char *codes) {
+    if (x < 0 || x > 79 || y < 0 || y > 71) {
+        bmem->bstate.error = BERROR_RANGE;
+        return 0;
+    }
+    static const uint8_t point[3][2] = {
+        {1, 2},
+        {4, 8},
+        {16, 64},
+    };
+    uint16_t C = (x + 2) / 2;
+    uint16_t L = (71 - y) / 3 + 1;
+    uint16_t c = x % 2;
+    uint16_t l = (71 - y) % 3;
+    uint8_t *addr = &bmem->screen[L - 1][C - 1];
+    uint8_t cbit = point[l][c];
+    if (fn == TOKEN_KEYWORD_TEST) {
+        return *addr & cbit;
+    }
+    if (fn == TOKEN_KEYWORD_PLOT) {
+        *addr |= cbit;
+    } else if (fn == TOKEN_KEYWORD_UNPLOT) {
+        *addr &= !cbit;
+    }
+    codes += sprintf(codes, CUR, L + CUR_DELTA_V, C + CUR_DELTA_H);
+    if (bmem->paper != 0) {
+        codes += sprintf(codes, PAPER, bmem->paper + PAPER_DELTA);
+    }
+    if (bmem->ink != 7) {
+        codes += sprintf(codes, INK, bmem->ink + INK_DELTA);
+    }
+    codes += sprintf(codes, G1 "%c", *addr + ' ');
+    return cbit;
 }
 
 static bool eval_function() {
@@ -1403,6 +1439,7 @@ static void eval_bastos() {
              (int)(bmem->vars_start - bmem->strings_end),
              (int)(BASTOS_DB_SIZE - (bmem->db_end - bmem->db_start)));
     os_redir_print_string(info);
+    bmem_screen_clear();
 
     if (!eval_running()) {
         hal_print_string("Ready\r\n");
@@ -1551,6 +1588,7 @@ static bool eval_string_tty() {
     // 0 arg
     if (fn == TOKEN_KEYWORD_CLS) {
         snprintf(codes, CODE_SEQUENCE_MAX_SIZE, CLS);
+        bmem_screen_clear();
         goto EVAL;
     }
 
@@ -1626,10 +1664,12 @@ static bool eval_string_tty() {
     // 1 arg
     int8_t arg1 = bmem->bstate.number;
     if (fn == TOKEN_KEYWORD_INK) {
+        bmem->ink = arg1;
         snprintf(codes, CODE_SEQUENCE_MAX_SIZE, INK, arg1 + INK_DELTA);
         goto EVAL;
     }
     if (fn == TOKEN_KEYWORD_PAPER) {
+        bmem->paper = arg1;
         snprintf(codes, CODE_SEQUENCE_MAX_SIZE, PAPER, arg1 + PAPER_DELTA);
         goto EVAL;
     }
@@ -1691,6 +1731,10 @@ static bool eval_string_tty() {
             bmem->ofs_c = arg2;
         }
         return true;
+    } else if (fn == TOKEN_KEYWORD_PLOT || fn == TOKEN_KEYWORD_UNPLOT) {
+        if (!bmem->bstate.do_eval)
+            return true;
+        eval_graphic_fn(fn, arg1, arg2, codes);
     } else {
         // fn = TOKEN_KEYWORD_AT
         arg1 += bmem->ofs_l;
