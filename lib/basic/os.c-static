@@ -488,6 +488,7 @@ static uint8_t os_get_key() {
     case KEY_STATE_CSI_2:
         if (key == 'J') {
             key = 0x0c; // CLS
+            bmem_screen_clear();
         } else {
             key = 0;
         }

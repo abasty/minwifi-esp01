@@ -33,6 +33,7 @@
 
 ## Fonctionnalités
 
+* [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
 * [ ] Design + Commande mode "Connexion Téléphone" (peut-on utiliser un URN TCP
   et la commande MINITEL vers un service Kiosque serveur sur le téléphone ?)
 * [ ] CAT, FTP CAT : version avec filtre (expression régulière)  et options
@@ -40,11 +41,7 @@
 * [ ] Ajouter répertoires dans système de fichiers
   (<https://randomnerdtutorials.com/esp32-write-data-littlefs-arduino/>)
 * [ ] TAB
-* [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
 * [ ] RAND
-* [ ] PLOT / UNPLOT / TEST (Voir serveur zboub et lib graphique)
-  * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
-  * [ ] Minitel, semi graphique
 * [ ] EDIT line, EDIT tout seul édite la dernière entrée (raccourci: fleche
   haut). définir une zone à partir de la ligne actuelle et sur 4 lignes pour
   pouvoir entrer au max 128 caractères : mode roleau, on se déplace de 3 lignes
@@ -160,6 +157,50 @@
   pour flasher + la copie sur FS
 
 # Référence
+
+## Coordonnées semi-graphique
+
+`point[][]` :
+
+|     | c:0| c:1|
+|-----|----|----|
+| l:0 |  1 |  2 |
+| l:1 |  4 |  8 |
+| l:2 | 16 | 64 |
+
+Les coordonnées vont de (x:0, y:0) ou (point:16, C:1, L:24) à (x:79, y:71) ou
+(point:2, C:40, L:1).
+
+```C
+uint16_t C = (x + 2) / 2
+uint16_t L = (71 - y) / 3 + 1
+uint16_t c = x % 2
+uint16_t l = (71 - y) % 3
+uint8_t *addr = &screen[L][C];
+uint8_t cbit = point[l][c];
+```
+
+Selon qu'on `PLOT` ou `UNPLOT`
+
+`PLOT <X>,<Y>` :
+
+```C
+*addr |= cbit;
+char c = *addr + ' ';
+```
+
+`UNPLOT <X>,<Y>` :
+
+```C
+*addr &= !cbit;
+char c = *addr + ' ';
+```
+
+`TEST <X>,<Y>` :
+
+```C
+uint8_t test = (*addr & cbit) != 0;
+```
 
 ## Touches en mode clavier étendu
 
@@ -652,6 +693,7 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Features (à documenter)
 
+* [x] PLOT / UNPLOT / TEST (Voir serveur zboub et lib graphique)
 * [x] `FILE <FILENAME> -> <STRING>` : Renvoie une string contenant les octets du fichier
   `<FILENAME>`
 * [x] `FILE <FILENAME>, <OFFSET>, <SIZE> -> <STRING>` : Renvoie une string

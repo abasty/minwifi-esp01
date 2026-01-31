@@ -26,7 +26,7 @@
 #ifndef TTY_MINITEL_H
 #define TTY_MINITEL_H
 
-#define CODE_SEQUENCE_MAX_SIZE 8
+#define CODE_SEQUENCE_MAX_SIZE 12
 
 #define DEL "\x08 \x08"
 

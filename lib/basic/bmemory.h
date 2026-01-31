@@ -117,9 +117,13 @@ typedef struct {
     int output_fd;
     char output_var[B_NAME_SIZE_MAX];
     eval_state_t bstate;
+    uint8_t paper;
+    uint8_t ink;
+    uint8_t screen[24][40];
 } bmem_t;
 
 static void bmem_init(uint8_t *mem, uint16_t size);
+static void bmem_screen_clear();
 
 // prog related functions
 static void bmem_prog_line_free(prog_t *prog);

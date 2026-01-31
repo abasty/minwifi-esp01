@@ -204,6 +204,12 @@ static void bmem_var_unset(var_t *var) {
 // Clear all variables
 static void bmem_vars_clear() { bmem->vars_start = bmem->vars_end; }
 
+static void bmem_screen_clear() {
+    memset(bmem->screen, 0, sizeof(bmem->screen));
+    bmem->paper = 0;
+    bmem->ink = 7;
+}
+
 // Create a new string variable
 static var_t *bmem_var_string_set(const char *name, char *value, bool is_cstr) {
     // Copy the name in tmp
@@ -529,6 +535,7 @@ static void bmem_init(uint8_t *mem, uint16_t size) {
     bmem->output_fd = -1;
     bmem->ofs_c = 0;
     bmem->ofs_l = 0;
+    bmem_screen_clear();
     bastos_prog_new();
     os_db_load();
     os_autoexec();
