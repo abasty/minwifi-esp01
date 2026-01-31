@@ -33,9 +33,6 @@
 
 ## Fonctionnalités
 
-* [ ] PLOT / UNPLOT / TEST (Voir serveur zboub et lib graphique)
-  * [ ] VT100 : https://www.w3schools.com/charsets/ref_utf_block.asp
-  * [ ] Minitel, semi graphique
 * [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
 * [ ] Design + Commande mode "Connexion Téléphone" (peut-on utiliser un URN TCP
   et la commande MINITEL vers un service Kiosque serveur sur le téléphone ?)
@@ -163,7 +160,6 @@
 
 ## Coordonnées semi-graphique
 
-
 `point[][]` :
 
 |     | c:0| c:1|
@@ -203,7 +199,7 @@ char c = *addr + ' ';
 `TEST <X>,<Y>` :
 
 ```C
-uint8_t test = *addr & cbit;
+uint8_t test = (*addr & cbit) != 0;
 ```
 
 ## Touches en mode clavier étendu
@@ -697,6 +693,7 @@ Doivent être en C pour être intégrés à minwifi.
 
 ## Features (à documenter)
 
+* [x] PLOT / UNPLOT / TEST (Voir serveur zboub et lib graphique)
 * [x] `FILE <FILENAME> -> <STRING>` : Renvoie une string contenant les octets du fichier
   `<FILENAME>`
 * [x] `FILE <FILENAME>, <OFFSET>, <SIZE> -> <STRING>` : Renvoie une string
