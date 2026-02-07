@@ -11,11 +11,6 @@
 * [ ] Websockets (sans SSL) intégrées ?
 * [ ] Penser à BASTOS-PI / BASTOS-PC puis BASTOS-P
 
-## Idées futures
-
-* Langage CISAB : Un Basic en post-fixé (RPN), à la HP + commande à adresse
-  routine
-
 ## Bugs
 
 * ~~[ ] Remplacer ESC-ESC par Ctrl+C~~
@@ -30,6 +25,30 @@
   déconnexion au bout d'un moment. Les touches ne partent pas, en tout cas on ne
   les a pas en echo local, il semble qu'on doit être en mode binaire => debug
   avec ludojoey (fonctionne en TCP)
+
+## Problèmes Websockets
+
+**WS IP et ports, wireshark**
+
+```
+export QT_SCALE_FACTOR=1.5
+```
+
+```
+websocat ws://go.minipavi.fr:8182/
+145.239.71.221:8182
+wireshark -iwlan0 -k -f "host 145.239.71.221"
+
+websocat ws://galaxy.microtel.fr:50124
+163.172.214.239:50124
+wireshark -iwlan0 -k -f "host 163.172.214.239"
+
+websocat ws://3611.re/ws
+82.64.249.221:80
+wireshark -iwlan0 -k -f "host 82.64.249.221"
+```
+
+En display filter on peut mettre : `not tcp.len == 0`
 
 ## Fonctionnalités
 
