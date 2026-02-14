@@ -1,3 +1,3 @@
 #!/bin/bash
 
-exec ncat -kl -m1 -vvv 192.168.1.126 1967 -e "/home/alain/Downloads/websocat -b --ws-dont-check-headers ws://go.minipavi.fr:8182/"
+exec ncat -kl -m1 -vvv 127.0.0.1 1963 -e "/usr/local/bin/websocat -b ws://go.minipavi.fr:8182/"
