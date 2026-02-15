@@ -215,12 +215,10 @@ void hal_reset()
 
 void hal_speed(uint8_t fn)
 {
-    if (fn == TOKEN_KEYWORD_FAST || fn == TOKEN_KEYWORD_SLOW)
-    {
-#ifdef MINITEL
-        hal_print_string(fn == TOKEN_KEYWORD_FAST ? P_PRISE_4800 : P_PRISE_1200);
-#endif
-    }
+    const char *p_speed = fn == TOKEN_KEYWORD_FAST2  ? P_PRISE_9600
+                          : fn == TOKEN_KEYWORD_FAST ? P_PRISE_4800
+                                                     : P_PRISE_1200;
+    hal_print_string(p_speed);
 }
 
 int hal_wifi_scan()
