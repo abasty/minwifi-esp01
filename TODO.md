@@ -9,7 +9,7 @@
   téléinformatique, et effectue la connexion telnet
 * [ ] Protocole FTP intégré à BASTOS (dispo dans le simu)
 * [ ] Websockets (sans SSL) intégrées ?
-* [ ] Penser à BASTOS-PI / BASTOS-PC puis BASTOS-P
+* [ ] ~~Penser à BASTOS-PI / BASTOS-PC puis BASTOS-P~~
 
 ## Bugs
 

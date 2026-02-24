@@ -98,6 +98,7 @@ void os_wifi_set_info(const char *ssid, const char *ip);
 
 // OS network functions
 void os_ftp_cat_file(const char* line);
+int os_ws_connect(int fd, const char *host, const char *path);
 
 // OS file functions
 void os_cat_file(const char *filename, size_t size);

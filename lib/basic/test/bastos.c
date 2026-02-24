@@ -325,15 +325,18 @@ int hal_net_connect(split_t *urn)
     if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
     {
         close(fd);
-        fd = -1;
+        return -1;
     }
-    else
+    // Get local address
+    socklen_t addr_len = sizeof(addr_local);
+    getsockname(fd, (struct sockaddr *)&addr_local, &addr_len);
+    // Set wifi IP address
+    inet_ntop(AF_INET, &addr_local.sin_addr, wifi_ip, sizeof(wifi_ip));
+
+    if (urn->proto == URN_PROTO_WS || urn->proto == URN_PROTO_WSS)
     {
-        // Get local address
-        socklen_t addr_len = sizeof(addr_local);
-        getsockname(fd, (struct sockaddr *)&addr_local, &addr_len);
-        // Set wifi IP address
-        inet_ntop(AF_INET, &addr_local.sin_addr, wifi_ip, sizeof(wifi_ip));
+        // Do a WS protocol handshake
+        fd = os_ws_connect(fd, urn->parts[URN_PART_HOST], urn->parts[URN_PART_PATH]);
     }
 
     return fd;
