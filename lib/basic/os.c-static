@@ -38,11 +38,33 @@
 #define AUTOEXEC_FILE "autoexec.bas"
 #define AUTOLOAD_DB_FILE "autoload.db"
 
+#define WS_STATE_READ_HEADER0  (0U)
+#define WS_STATE_READ_HEADER1  (1U)
+#define WS_STATE_READ_EXT_LEN0 (2U)
+#define WS_STATE_READ_EXT_LEN1 (3U)
+#define WS_STATE_READ_MASK_KEY (5U)
+#define WS_STATE_READ_PAYLOAD  (6U)
+
 // OS WiFi variables
 // FIXME (Move to Basic memory)
-char g_wifi_connected_ssid[20] = ""; // 20 first characters of SSID
-char g_wifi_connected_ip[16] = "";
-char g_ftp_connected_host[32] = "";
+static char g_wifi_connected_ssid[20] = ""; // 20 first characters of SSID
+static char g_wifi_connected_ip[16] = "";
+static char g_ftp_connected_host[32] = "";
+static uint8_t g_proto = 0;
+
+// WebSocket state structure
+struct ws_state_s {
+    uint8_t state;
+    uint16_t read;
+    uint8_t mask_key[4];
+    uint16_t payload_remain;
+    uint8_t fin;
+    uint8_t fragmented;
+    uint8_t ping_payload[125];
+    uint16_t ping_size;
+};
+
+static struct ws_state_s g_ws_state = {0};
 
 static void os_set_redirect(int fd) { bmem->output_fd = fd; }
 
@@ -516,6 +538,9 @@ static int os_connect(uint8_t set, const char *name, const char *urn) {
     if (split->proto == 0)
         goto finalize;
 
+    g_proto = split->proto;
+    memset(&g_ws_state, 0, sizeof(g_ws_state));
+
     // Connect to the host
     ret = hal_net_connect(split);
     if (ret >= 0) {
@@ -554,6 +579,99 @@ static void os_disconnect(uint8_t set) {
 
     if (!eval_running())
         hal_print_string("Ready\r\n");
+}
+
+int os_ws_connect(int fd, const char *host, const char *path) {
+    // Simple WebSocket handshake implementation
+    // Generate a simple key (in production, this should be random)
+    const char *ws_key = "dGhlIHNhbXBsZSBub25jZQ==";
+
+    // Build WebSocket upgrade request
+    char request[256];
+    int len = snprintf(request, sizeof(request),
+        "GET %s HTTP/1.1\r\n"
+        "Host: %s\r\n"
+        "Connection: Upgrade\r\n"
+        "Upgrade: websocket\r\n"
+        "Sec-WebSocket-Key: %s\r\n"
+        "Sec-WebSocket-Version: 13\r\n"
+        "\r\n",
+        path && *path ? path : "/",
+        host,
+        ws_key);
+
+    // Send upgrade request
+    if (hal_net_send(fd, (const uint8_t *)request, len) < 0) {
+        hal_net_disconnect(DB_MIN_SET, fd);
+        return -1;
+    }
+
+    // Read and parse HTTP response headers
+    char line[256];
+    int line_idx = 0;
+    uint64_t start_ms = hal_get_ms();
+    int is_first_line = 1;
+
+    while ((hal_get_ms() - start_ms) < 5000) {
+        int n = hal_net_recv(fd, (uint8_t *)&line[line_idx], 1);
+
+        if (n <= 0) {
+            // Error or timeout waiting for data
+            if (n < 0) {
+                hal_net_disconnect(DB_MIN_SET, fd);
+                return -1;
+            }
+            // n == 0, no data yet, continue waiting
+            continue;
+        }
+
+        // Got one byte
+        char c = line[line_idx];
+
+        // Check for line end (\n or \r\n)
+        if (c == '\n') {
+            // Remove trailing \r if present
+            if (line_idx > 0 && line[line_idx - 1] == '\r') {
+                line_idx--;
+            }
+            line[line_idx] = 0;  // Null-terminate the line
+
+            // Check if this is an empty line (end of headers)
+            if (line_idx == 0) {
+                // Empty line found, handshake complete
+                return fd;
+            }
+
+            // Process the line
+            if (is_first_line) {
+                // Check first line for status code 101
+                if (strncmp(line, "HTTP/1.1 101", 12) != 0 &&
+                    strncmp(line, "HTTP/1.0 101", 12) != 0) {
+                    // Status is not 101, handshake failed
+                    hal_net_disconnect(DB_MIN_SET, fd);
+                    return -1;
+                }
+                is_first_line = 0;
+            }
+            // For other header lines, just discard them (line_idx already = 0
+            // after setting null term)
+
+            // Reset for next line
+            line_idx = 0;
+        } else if (c != '\r') {
+            // Regular character, add to line (skip \r)
+            line_idx++;
+            if (line_idx >= (int)sizeof(line) - 1) {
+                // Line too long
+                hal_net_disconnect(DB_MIN_SET, fd);
+                return -1;
+            }
+        }
+    }
+
+    // Timeout reached
+    hal_net_disconnect(DB_MIN_SET, fd);
+    return -1;
 }
 
 static void os_cat(void) {
@@ -682,16 +800,275 @@ static char *os_filename(const char *name, int16_t *type) {
     return filename;
 }
 
+static int os_net_send(int fd, const uint8_t *buffer, size_t size) {
+    if (g_proto != URN_PROTO_WS && g_proto != URN_PROTO_WSS)
+        return hal_net_send(fd, buffer, size);
+
+    if (size == 0)
+        return 0;
+
+    // Build WebSocket frame
+    // Frame format: FIN(1) RSV(3) OPCODE(4) | MASK(1) PAYLOAD_LEN(7) | [extended payload length] | [masking key] | [payload]
+    uint8_t ws_frame[NET_BUFFER_MAX + 14]; // Header + key + payload
+    uint8_t *dst = ws_frame;
+
+    // Byte 0: FIN=1, RSV=0, OPCODE=1 (text frame)
+    *dst++ = 0x81;
+
+    // Get a simple mask key (in practice should be random)
+    static uint32_t mask_seed = 0x12345678;
+    mask_seed = (mask_seed * 1103515245 + 12345) & 0x7fffffff;
+    uint8_t mask_key[4];
+    mask_key[0] = (mask_seed >> 0) & 0xFF;
+    mask_key[1] = (mask_seed >> 8) & 0xFF;
+    mask_key[2] = (mask_seed >> 16) & 0xFF;
+    mask_key[3] = (mask_seed >> 24) & 0xFF;
+
+    // Byte 1: MASK=1, PAYLOAD_LEN or extended length indicator
+    if (size < 126) {
+        *dst++ = 0x80 | size; // MASK=1, length in 7 bits
+    } else if (size < 65536) {
+        *dst++ = 0xFE; // MASK=1, 16-bit extended length
+        *dst++ = (size >> 8) & 0xFF;
+        *dst++ = size & 0xFF;
+    } else {
+        return -1; // 64-bit length not supported
+    }
+
+    // Masking key (4 bytes)
+    *dst++ = mask_key[0];
+    *dst++ = mask_key[1];
+    *dst++ = mask_key[2];
+    *dst++ = mask_key[3];
+
+    // Payload (masked)
+    for (size_t i = 0; i < size; i++) {
+        *dst++ = buffer[i] ^ mask_key[i % 4];
+    }
+
+    size_t frame_size = dst - ws_frame;
+    return hal_net_send(fd, ws_frame, frame_size);
+}
+
+static int os_net_send_pong(int fd, const uint8_t *payload, size_t size) {
+    if (g_proto != URN_PROTO_WS && g_proto != URN_PROTO_WSS)
+        return 0;
+
+    if (size > 125) {
+        // Pong control frames must be <= 125 bytes
+        return -1;
+    }
+
+    // Build WebSocket pong frame
+    uint8_t ws_frame[14 + 125]; // Header + key + max payload
+    uint8_t *dst = ws_frame;
+
+    // Byte 0: FIN=1, RSV=0, OPCODE=10 (pong frame)
+    *dst++ = 0x8A;
+
+    // Get a simple mask key
+    static uint32_t pong_seed = 0x87654321;
+    pong_seed = (pong_seed * 1103515245 + 12345) & 0x7fffffff;
+    uint8_t mask_key[4];
+    mask_key[0] = (pong_seed >> 0) & 0xFF;
+    mask_key[1] = (pong_seed >> 8) & 0xFF;
+    mask_key[2] = (pong_seed >> 16) & 0xFF;
+    mask_key[3] = (pong_seed >> 24) & 0xFF;
+
+    // Byte 1: MASK=1, PAYLOAD_LEN (always < 126 for control frames)
+    *dst++ = 0x80 | size;
+
+    // Masking key (4 bytes)
+    *dst++ = mask_key[0];
+    *dst++ = mask_key[1];
+    *dst++ = mask_key[2];
+    *dst++ = mask_key[3];
+
+    // Payload (masked)
+    for (size_t i = 0; i < size; i++) {
+        *dst++ = payload[i] ^ mask_key[i % 4];
+    }
+
+    size_t frame_size = dst - ws_frame;
+    return hal_net_send(fd, ws_frame, frame_size);
+}
+
+static int os_net_receive(int fd, uint8_t *buffer, size_t size) {
+    if (g_proto != URN_PROTO_WS && g_proto != URN_PROTO_WSS)
+        return hal_net_recv(fd, buffer, size);
+
+    if (size == 0)
+        return 0;
+
+    static uint8_t ws_header[2];
+    static uint8_t ws_ext_length[2];
+    static uint16_t ws_length;
+    static uint8_t ws_opcode;
+    static uint8_t ws_mask;
+
+    if (g_ws_state.state == WS_STATE_READ_HEADER0) {
+        int n = hal_net_recv(fd, ws_header + g_ws_state.read, 2 - g_ws_state.read);
+        if (n <= 0)
+            return n;
+        g_ws_state.read += n;
+        if (g_ws_state.read < 2)
+            return 0;
+
+        g_ws_state.read = 0;
+        ws_length = ws_header[1] & 0x7f;
+        ws_opcode = ws_header[0] & 0x0f;
+        ws_mask = (ws_header[1] & 0x80) != 0;
+        g_ws_state.fin = (ws_header[0] & 0x80) != 0;
+
+        // Handle invalid length (127 = 64-bit not supported)
+        if (ws_length == 127)
+            return -1;
+
+        if (ws_length == 0)
+            return 0;
+
+        if (ws_length == 126) {
+            // 16-bit extended payload length
+            g_ws_state.state = WS_STATE_READ_EXT_LEN0;
+        } else {
+            // Payload length in header, or go to mask key if masked
+            g_ws_state.payload_remain = ws_length;
+            if (ws_mask) {
+                g_ws_state.state = WS_STATE_READ_MASK_KEY;
+            } else {
+                g_ws_state.state = WS_STATE_READ_PAYLOAD;
+            }
+        }
+        return 0;
+    }
+
+    if (g_ws_state.state == WS_STATE_READ_EXT_LEN0) {
+        int n = hal_net_recv(fd, ws_ext_length + g_ws_state.read, 2 - g_ws_state.read);
+        if (n <= 0)
+            return n;
+        g_ws_state.read += n;
+        if (g_ws_state.read < 2)
+            return 0;
+
+        // Convert extended length from network byte order (big-endian)
+        ws_length = ((uint16_t)ws_ext_length[0] << 8) | ws_ext_length[1];
+        g_ws_state.payload_remain = ws_length;
+        g_ws_state.read = 0;
+
+        if (ws_mask) {
+            g_ws_state.state = WS_STATE_READ_MASK_KEY;
+        } else {
+            g_ws_state.state = WS_STATE_READ_PAYLOAD;
+        }
+        return 0;
+    }
+
+    if (g_ws_state.state == WS_STATE_READ_MASK_KEY) {
+        int n = hal_net_recv(fd, g_ws_state.mask_key + g_ws_state.read, 4 - g_ws_state.read);
+        if (n <= 0)
+            return n;
+        g_ws_state.read += n;
+        if (g_ws_state.read < 4)
+            return 0;
+
+        g_ws_state.read = 0;
+        g_ws_state.state = WS_STATE_READ_PAYLOAD;
+        return 0;
+    }
+
+    if (g_ws_state.state == WS_STATE_READ_PAYLOAD) {
+        if (g_ws_state.payload_remain == 0) {
+            g_ws_state.state = WS_STATE_READ_HEADER0;
+            return 0;
+        }
+
+        int read_size = size > g_ws_state.payload_remain ? g_ws_state.payload_remain : size;
+        int n = hal_net_recv(fd, buffer, read_size);
+        if (n <= 0)
+            return n;
+
+        // Unmask the payload if needed
+        if (ws_mask) {
+            for (int i = 0; i < n; i++) {
+                buffer[i] ^= g_ws_state.mask_key[(g_ws_state.read + i) % 4];
+            }
+        }
+
+        g_ws_state.read += n;
+        g_ws_state.payload_remain -= n;
+
+        if (g_ws_state.payload_remain == 0) {
+            g_ws_state.read = 0;
+            g_ws_state.state = WS_STATE_READ_HEADER0;
+        }
+
+        // Handle control frames (always returned immediately)
+        if (ws_opcode == 0x8) {
+            // Close frame
+            return -1;
+        }
+        if (ws_opcode == 0x9) {
+            // Ping frame - store payload and respond with pong
+            g_ws_state.ping_size = n > 125 ? 125 : n;
+            if (g_ws_state.ping_size > 0) {
+                for (int i = 0; i < g_ws_state.ping_size; i++) {
+                    g_ws_state.ping_payload[i] = buffer[i];
+                }
+            }
+            os_net_send_pong(fd, g_ws_state.ping_payload, g_ws_state.ping_size);
+            return 0;
+        }
+        if (ws_opcode == 0xA) {
+            // Pong frame - skip them
+            return 0;
+        }
+
+        // Handle data frames (0x1=text, 0x2=binary, 0x0=continuation)
+        if (ws_opcode == 0x0) {
+            // Continuation frame
+            if (!g_ws_state.fin) {
+                // More frames coming, skip this data
+                return 0;
+            } else {
+                // Final continuation frame, return data
+                g_ws_state.fragmented = 0;
+                return n;
+            }
+        }
+
+        if (ws_opcode == 0x01 || ws_opcode == 0x02) {
+            // Data frame (text or binary)
+            if (!g_ws_state.fin) {
+                // Start of fragmented message, skip data for now
+                g_ws_state.fragmented = 1;
+                return 0;
+            } else {
+                // Complete frame, return data
+                g_ws_state.fragmented = 0;
+                return n;
+            }
+        }
+
+        // Unknown opcode
+        return 0;
+    }
+
+    return 0;
+}
+
 static void os_loop_connected() {
     uint8_t buffer[NET_BUFFER_MAX];
     static uint8_t ESC_count = 0;
+    static uint8_t pending_key = 0;
 
     // Read data on socket in a non blocking mode
-    int ret = hal_net_recv(bmem->sock, buffer, sizeof(buffer));
+    int ret = os_net_receive(bmem->sock, buffer, sizeof(buffer));
     if (ret < 0) {
         // If error on socket: exit the connected mode
         ESC_count = 0;
+        pending_key = 0;
         os_disconnect(DB_MIN_SET);
+        return;
     } else if (ret > 0) {
         // If chars on socket: forward chars to screen (print)
         hal_print_buffer(buffer, ret);
@@ -702,12 +1079,29 @@ static void os_loop_connected() {
     if (key == 0)
         return;
 
-    // Send char to server through the socket
-    ret = hal_net_send(bmem->sock, &key, 1);
+    // Handle SEP and SS2 keys specially: store and wait for next key
+    if (key == SEP || key == SS2) {
+        pending_key = key;
+        ESC_count = 0;
+        return;
+    }
+
+    // If we have a pending special key, send both together
+    if (pending_key) {
+        uint8_t keys[2] = {pending_key, key};
+        ret = os_net_send(bmem->sock, keys, 2);
+        pending_key = 0;
+    } else {
+        // Send char to server through the socket
+        ret = os_net_send(bmem->sock, &key, 1);
+    }
+
     if (ret < 0) {
         // If error on socket: exit the connected mode
         ESC_count = 0;
+        pending_key = 0;
         os_disconnect(DB_MIN_SET);
+        return;
     }
 
     if (key == '\x1b') {
@@ -715,6 +1109,7 @@ static void os_loop_connected() {
         if (ESC_count >= 2) {
             // If 2 ESC pressed: exit the connected mode
             ESC_count = 0;
+            pending_key = 0;
             os_disconnect(DB_MIN_SET);
         }
     } else {
