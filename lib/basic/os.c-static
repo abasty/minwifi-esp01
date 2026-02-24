@@ -1059,14 +1059,14 @@ static int os_net_receive(int fd, uint8_t *buffer, size_t size) {
 static void os_loop_connected() {
     uint8_t buffer[NET_BUFFER_MAX];
     static uint8_t ESC_count = 0;
-    static uint8_t pending_key_19 = 0;
+    static uint8_t pending_key_sep = 0;
 
     // Read data on socket in a non blocking mode
     int ret = os_net_receive(bmem->sock, buffer, sizeof(buffer));
     if (ret < 0) {
         // If error on socket: exit the connected mode
         ESC_count = 0;
-        pending_key_19 = 0;
+        pending_key_sep = 0;
         os_disconnect(DB_MIN_SET);
         return;
     } else if (ret > 0) {
@@ -1079,18 +1079,18 @@ static void os_loop_connected() {
     if (key == 0)
         return;
 
-    // Handle key 19 (0x13) specially: store it and wait for next key
-    if (key == 19) {
-        pending_key_19 = 1;
+    // Handle SEP key specially: store it and wait for next key
+    if (key == SEP) {
+        pending_key_sep = 1;
         ESC_count = 0;
         return;
     }
 
-    // If we have a pending key 19, send both together
-    if (pending_key_19) {
-        uint8_t keys[2] = {19, key};
+    // If we have a pending SEP key, send both together
+    if (pending_key_sep) {
+        uint8_t keys[2] = {SEP, key};
         ret = os_net_send(bmem->sock, keys, 2);
-        pending_key_19 = 0;
+        pending_key_sep = 0;
     } else {
         // Send char to server through the socket
         ret = os_net_send(bmem->sock, &key, 1);
@@ -1099,7 +1099,7 @@ static void os_loop_connected() {
     if (ret < 0) {
         // If error on socket: exit the connected mode
         ESC_count = 0;
-        pending_key_19 = 0;
+        pending_key_sep = 0;
         os_disconnect(DB_MIN_SET);
         return;
     }
@@ -1109,7 +1109,7 @@ static void os_loop_connected() {
         if (ESC_count >= 2) {
             // If 2 ESC pressed: exit the connected mode
             ESC_count = 0;
-            pending_key_19 = 0;
+            pending_key_sep = 0;
             os_disconnect(DB_MIN_SET);
         }
     } else {
