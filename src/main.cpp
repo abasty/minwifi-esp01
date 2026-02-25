@@ -32,7 +32,6 @@
 
 #include <FS.h>
 #include <LittleFS.h>
-#include <ArduinoHttpClient.h>
 #include <FTPClient.h>
 
 #ifdef MINITEL
@@ -62,8 +61,6 @@ const int led_pin = 13;
 static File g_file0;
 static int g_net_proto = -1;
 static WiFiClient g_tcp_socket;
-static WebSocketClient *g_web_socket = 0;
-static int g_web_socket_unread_bytes = 0;
 static FTPClient g_ftp_client;
 static bool g_ftp_connected = false;
 
@@ -343,47 +340,8 @@ bool hal_ftp_is_connected()
     return g_ftp_connected;
 }
 
-static void web_socket_terminate()
-{
-    g_web_socket->flush();
-    g_web_socket->stop();
-    delete g_web_socket;
-    g_web_socket = 0;
-    g_web_socket_unread_bytes = 0;
-}
-
 int hal_net_connect(split_t *urn)
 {
-    if (urn->proto == URN_PROTO_TCP)
-    {
-        g_net_proto = urn->proto;
-        g_tcp_socket.connect(urn->parts[URN_PART_HOST], urn->port);
-        if (!g_tcp_socket.connected())
-        {
-            g_tcp_socket.stop();
-            return -1;
-        }
-
-        // Disable nagle's algo
-        g_tcp_socket.setNoDelay(true);
-        return 0;
-    }
-
-    if (urn->proto == URN_PROTO_WS || urn->proto == URN_PROTO_WSS)
-    {
-        g_net_proto = urn->proto;
-        g_web_socket = new WebSocketClient(g_tcp_socket, urn->parts[URN_PART_HOST], urn->port);
-        g_web_socket->begin(urn->parts[URN_PART_PATH]);
-        if (!g_web_socket->connected())
-        {
-            web_socket_terminate();
-            return -1;
-        }
-        // Disable nagle's algo
-        g_tcp_socket.setNoDelay(true);
-        return 0;
-    }
-
     if (urn->proto == URN_PROTO_FTP)
     {
         if (hal_ftp_is_connected())
@@ -401,7 +359,25 @@ int hal_net_connect(split_t *urn)
 
         return 0;
     }
-    return -1;
+
+    g_net_proto = urn->proto;
+    g_tcp_socket.connect(urn->parts[URN_PART_HOST], urn->port);
+    if (!g_tcp_socket.connected())
+    {
+        g_tcp_socket.stop();
+        return -1;
+    }
+
+    // Disable nagle's algo
+    g_tcp_socket.setNoDelay(true);
+
+    if (urn->proto == URN_PROTO_WS || urn->proto == URN_PROTO_WSS)
+    {
+        // Do a WS protocol handshake
+        os_ws_connect(0, urn->parts[URN_PART_HOST], urn->parts[URN_PART_PATH]);
+    }
+
+    return 0;
 }
 
 void hal_net_disconnect(uint8_t set, int n)
@@ -409,20 +385,9 @@ void hal_net_disconnect(uint8_t set, int n)
     // If connected, disconnect and remove associated resources
     if (set == DB_MIN_SET)
     {
-        if (g_net_proto == URN_PROTO_TCP)
+        if (g_tcp_socket.connected())
         {
-            if (g_tcp_socket.connected())
-            {
-                g_tcp_socket.stop();
-            }
-        }
-
-        if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
-        {
-            if (g_web_socket && g_web_socket->connected())
-            {
-                web_socket_terminate();
-            }
+            g_tcp_socket.stop();
         }
         g_net_proto = -1;
     }
@@ -438,55 +403,19 @@ void hal_net_disconnect(uint8_t set, int n)
 
 int hal_net_send(int fd, const uint8_t *buffer, int n)
 {
-    if (g_net_proto == URN_PROTO_TCP)
-    {
-        return g_tcp_socket.write(buffer, n);
-    }
-    if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
-    {
-        if (!g_web_socket || !g_web_socket->connected())
-            return -1;
-
-        g_web_socket->beginMessage(TYPE_TEXT);
-        int written = g_web_socket->write(buffer, n);
-        g_web_socket->endMessage();
-        return written;
-    }
-    return -1;
+    return g_tcp_socket.write(buffer, n);
 }
 
 int hal_net_recv(int fd, uint8_t *buffer, int n)
 {
-    // TODO: Try to virtualize the socket
-    if (g_net_proto == URN_PROTO_TCP)
-    {
-        int available = g_tcp_socket.available();
-        if (available == 0)
-            return 0;
+    int available = g_tcp_socket.available();
+    if (available == 0)
+        return 0;
 
-        if (n > available)
-            n = available;
+    if (n > available)
+        n = available;
 
-        return g_tcp_socket.read(buffer, n);
-    }
-    if (g_net_proto == URN_PROTO_WS || g_net_proto == URN_PROTO_WSS)
-    {
-        if (!g_web_socket || !g_web_socket->connected())
-            return -1;
-        if (g_web_socket_unread_bytes == 0)
-        {
-            g_web_socket_unread_bytes = g_web_socket->parseMessage();
-            if (g_web_socket_unread_bytes == 0)
-                return 0;
-        }
-        if (n > g_web_socket_unread_bytes)
-        {
-            n = g_web_socket_unread_bytes;
-        }
-        g_web_socket_unread_bytes -= n;
-        return g_web_socket->read(buffer, n);
-    }
-    return -1;
+    return g_tcp_socket.read(buffer, n);
 }
 
 uint64_t hal_get_ms(void)
