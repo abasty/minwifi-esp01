@@ -524,70 +524,9 @@ static uint8_t os_get_key() {
     return key;
 }
 
-static int os_connect(uint8_t set, const char *name, const char *urn) {
-    int fd = -1;
-
-    // Get configuration if needed
-    entry_t *entry = name ? bdb_entry_get(set, name) : 0;
-    bool use_db = entry != 0 && urn == 0;
-    urn = use_db ? string_cstr(entry->string) : urn;
-    if (!urn)
-        goto finalize;
-
-    split_t *split = bdb_urn_split(urn);
-    if (split->proto == 0)
-        goto finalize;
-
-    g_proto = split->proto;
-    memset(&g_ws_state, 0, sizeof(g_ws_state));
-
-    // Connect to the host
-    fd = hal_net_connect(split);
-    if (fd >= 0) {
-        if (set == DB_MIN_SET) {
-            if (g_proto == URN_PROTO_WS || g_proto == URN_PROTO_WSS)
-            {
-                // Do a WS protocol handshake
-                fd = os_ws_connect(fd, split->parts[URN_PART_HOST], split->parts[URN_PART_PATH]);
-            }
-            os_redir_print_string(P_ROULEAU_OFF);
-        } else {
-            if (set == DB_FTP_SET) {
-                strncpy(g_ftp_connected_host, split->parts[URN_PART_HOST],
-                        sizeof(g_ftp_connected_host) - 1);
-                g_ftp_connected_host[sizeof(g_ftp_connected_host) - 1] = 0;
-            }
-            if (!eval_running()) {
-                hal_print_string("OK\r\n");
-            }
-        }
-    }
-
-    if (!use_db && name && *name > 0) {
-        bdb_entry_set(set, name, (char *)urn, true);
-        os_db_save();
-    }
-
-finalize:
-    return fd;
-}
-
-static void os_disconnect(uint8_t set) {
-    if (set == DB_MIN_SET) {
-        hal_net_disconnect(set, bmem->sock);
-        bmem->sock = -1;
-        os_redir_print_string("\r\n" MODE_INIT_STRING CON G0 INK7);
-    } else if (set == DB_FTP_SET) {
-        hal_net_disconnect(set, -1);
-        *g_ftp_connected_host = 0;
-    }
-
-    if (!eval_running())
-        hal_print_string("Ready\r\n");
-}
-
-int os_ws_connect(int fd, const char *host, const char *path) {
+static int os_ws_connect(int fd, split_t *urn) {
     // Simple WebSocket handshake implementation
+    const char* path = urn->parts[URN_PART_PATH];
     // Generate a simple key (in production, this should be random)
     const char *ws_key = "dGhlIHNhbXBsZSBub25jZQ==";
 
@@ -602,7 +541,7 @@ int os_ws_connect(int fd, const char *host, const char *path) {
         "Sec-WebSocket-Version: 13\r\n"
         "\r\n",
         path && *path ? path : "/",
-        host,
+        urn->parts[URN_PART_HOST],
         ws_key);
 
     // Send upgrade request
@@ -677,6 +616,102 @@ int os_ws_connect(int fd, const char *host, const char *path) {
     // Timeout reached
     hal_net_disconnect(DB_MIN_SET, fd);
     return -1;
+}
+
+static int os_ftp_connect(int fd, split_t *urn)
+{
+    // if (urn->proto == URN_PROTO_FTP)
+    // {
+    //     if (g_ftp_connected)
+    //         return -1;
+
+    //     // uint16_t port = urn->port ? urn->port : 21;
+    //     // const char *login = *urn->parts[URN_PART_LOGIN] ? urn->parts[URN_PART_LOGIN] : "anonymous";
+    //     // const char *pass = *urn->parts[URN_PART_PASS] ? urn->parts[URN_PART_PASS] : "pat@frites.be";
+    //     // g_ftp_client.open(urn->parts[URN_PART_HOST], port, login, pass);
+    //     sleep(1);
+    //     g_ftp_connected = true;
+    //     if (!g_ftp_connected)
+    //         return -1;
+
+    //     // if (*urn->parts[URN_PART_PATH])
+    //     //     g_ftp_client.change_directory(urn->parts[URN_PART_PATH]);
+
+    //     // hal_print_string(urn->parts[URN_PART_HOST]);
+    //     // hal_print_integer(":%d:", port);
+    //     // hal_print_string(urn->parts[URN_PART_PATH]);
+    //     // hal_print_string(":");
+    //     // hal_print_string(login);
+    //     // hal_print_string(":");
+    //     // hal_print_string(pass);
+    //     // hal_print_string("\r\n");
+
+    //     return 0;
+    // }
+    return fd;
+}
+
+static int os_connect(uint8_t set, const char *name, const char *urn) {
+    int fd = -1;
+
+    // Get configuration if needed
+    entry_t *entry = name ? bdb_entry_get(set, name) : 0;
+    bool use_db = entry != 0 && urn == 0;
+    urn = use_db ? string_cstr(entry->string) : urn;
+    if (!urn)
+        goto finalize;
+
+    split_t *split = bdb_urn_split(urn);
+    if (split->proto == 0)
+        goto finalize;
+
+    g_proto = split->proto;
+    memset(&g_ws_state, 0, sizeof(g_ws_state));
+
+    // Connect to the host
+    fd = hal_net_connect(split);
+    if (fd >= 0) {
+        if (set == DB_MIN_SET) {
+            if (g_proto == URN_PROTO_WS || g_proto == URN_PROTO_WSS)
+            {
+                // Do a WS protocol handshake
+                fd = os_ws_connect(fd, split);
+            }
+            os_redir_print_string(P_ROULEAU_OFF);
+        } else {
+            if (set == DB_FTP_SET) {
+                fd = os_ftp_connect(fd, split);
+                strncpy(g_ftp_connected_host, split->parts[URN_PART_HOST],
+                        sizeof(g_ftp_connected_host) - 1);
+                g_ftp_connected_host[sizeof(g_ftp_connected_host) - 1] = 0;
+            }
+            if (!eval_running()) {
+                hal_print_string("OK\r\n");
+            }
+        }
+    }
+
+    if (!use_db && name && *name > 0) {
+        bdb_entry_set(set, name, (char *)urn, true);
+        os_db_save();
+    }
+
+finalize:
+    return fd;
+}
+
+static void os_disconnect(uint8_t set) {
+    if (set == DB_MIN_SET) {
+        hal_net_disconnect(set, bmem->sock);
+        bmem->sock = -1;
+        os_redir_print_string("\r\n" MODE_INIT_STRING CON G0 INK7);
+    } else if (set == DB_FTP_SET) {
+        hal_net_disconnect(set, -1);
+        *g_ftp_connected_host = 0;
+    }
+
+    if (!eval_running())
+        hal_print_string("Ready\r\n");
 }
 
 static void os_cat(void) {
