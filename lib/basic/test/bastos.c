@@ -307,19 +307,7 @@ int hal_net_connect(split_t *urn)
 
 void hal_net_disconnect(uint8_t set, int n)
 {
-    // If connected, disconnect and remove associated resources
-
-    if (set == DB_MIN_SET)
-    {
-        close(n);
-    }
-    else if (set == DB_FTP_SET)
-    {
-        if (!g_ftp_connected)
-            return;
-
-        g_ftp_connected = false;
-    }
+    close(n);
 }
 
 int hal_net_send(int fd, const uint8_t *buffer, int n)

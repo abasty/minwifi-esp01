@@ -66,6 +66,8 @@ struct ws_state_s {
 
 static struct ws_state_s g_ws_state = {0};
 
+static int g_ftp_fd = -1;
+
 static void os_set_redirect(int fd) { bmem->output_fd = fd; }
 
 static int os_concat_buffer(const char *name, const char *buffer, int n) {
@@ -618,41 +620,128 @@ static int os_ws_connect(int fd, split_t *urn) {
     return -1;
 }
 
+static int os_ftp_read_response(int fd, char *line, size_t size, int *code)
+{
+    int line_idx = 0;
+    uint64_t start_ms = hal_get_ms();
+
+    while ((hal_get_ms() - start_ms) < 5000) {
+        int n = hal_net_recv(fd, (uint8_t *)&line[line_idx], 1);
+
+        if (n <= 0) {
+            if (n < 0)
+                return -1;
+            continue;
+        }
+
+        char c = line[line_idx];
+
+        if (c == '\n') {
+            if (line_idx > 0 && line[line_idx - 1] == '\r')
+                line_idx--;
+            line[line_idx] = 0;
+
+            // Parse response code
+            *code = strtol(line, NULL, 10);
+            return 0;
+        } else if (c != '\r') {
+            line_idx++;
+            if (line_idx >= (int)size - 1)
+                return -1;
+        }
+    }
+
+    return -1; // Timeout
+}
+
 static int os_ftp_connect(int fd, split_t *urn)
 {
-    // if (urn->proto == URN_PROTO_FTP)
-    // {
-    //     if (g_ftp_connected)
-    //         return -1;
+    const char *login = *urn->parts[URN_PART_LOGIN] ? urn->parts[URN_PART_LOGIN] : "anonymous";
+    const char *pass = *urn->parts[URN_PART_PASS] ? urn->parts[URN_PART_PASS] : "pat@frites.be";
 
-    //     // uint16_t port = urn->port ? urn->port : 21;
-    //     // const char *login = *urn->parts[URN_PART_LOGIN] ? urn->parts[URN_PART_LOGIN] : "anonymous";
-    //     // const char *pass = *urn->parts[URN_PART_PASS] ? urn->parts[URN_PART_PASS] : "pat@frites.be";
-    //     // g_ftp_client.open(urn->parts[URN_PART_HOST], port, login, pass);
-    //     sleep(1);
-    //     g_ftp_connected = true;
-    //     if (!g_ftp_connected)
-    //         return -1;
+    char line[256];
+    char cmd[256];
+    int code;
 
-    //     // if (*urn->parts[URN_PART_PATH])
-    //     //     g_ftp_client.change_directory(urn->parts[URN_PART_PATH]);
+    // Read initial FTP response (expect 220)
+    if (os_ftp_read_response(fd, line, sizeof(line), &code) < 0 || code != 220) {
+        hal_net_disconnect(DB_FTP_SET, fd);
+        g_ftp_fd = -1;
+        return -1;
+    }
 
-    //     // hal_print_string(urn->parts[URN_PART_HOST]);
-    //     // hal_print_integer(":%d:", port);
-    //     // hal_print_string(urn->parts[URN_PART_PATH]);
-    //     // hal_print_string(":");
-    //     // hal_print_string(login);
-    //     // hal_print_string(":");
-    //     // hal_print_string(pass);
-    //     // hal_print_string("\r\n");
+    // Send USER command
+    snprintf(cmd, sizeof(cmd), "USER %s\r\n", login);
+    if (hal_net_send(fd, (const uint8_t *)cmd, strlen(cmd)) < 0) {
+        hal_net_disconnect(DB_FTP_SET, fd);
+        g_ftp_fd = -1;
+        return -1;
+    }
 
-    //     return 0;
-    // }
+    // Read USER response (expect 331 or 230)
+    if (os_ftp_read_response(fd, line, sizeof(line), &code) < 0 || (code != 331 && code != 230)) {
+        hal_net_disconnect(DB_FTP_SET, fd);
+        g_ftp_fd = -1;
+        return -1;
+    }
+
+    // If 230, already logged in without password
+    if (code == 230)
+        goto feat;
+
+    // Send PASS command
+    snprintf(cmd, sizeof(cmd), "PASS %s\r\n", pass);
+    if (hal_net_send(fd, (const uint8_t *)cmd, strlen(cmd)) < 0) {
+        hal_net_disconnect(DB_FTP_SET, fd);
+        g_ftp_fd = -1;
+        return -1;
+    }
+
+    // Read PASS response (expect 230)
+    if (os_ftp_read_response(fd, line, sizeof(line), &code) < 0 || code != 230) {
+        hal_net_disconnect(DB_FTP_SET, fd);
+        g_ftp_fd = -1;
+        return -1;
+    }
+
+feat:
+    // If path specified, change directory
+    if (urn->parts[URN_PART_PATH] && *urn->parts[URN_PART_PATH]) {
+        snprintf(cmd, sizeof(cmd), "CWD %s\r\n", urn->parts[URN_PART_PATH]);
+        if (hal_net_send(fd, (const uint8_t *)cmd, strlen(cmd)) < 0) {
+            hal_net_disconnect(DB_FTP_SET, fd);
+            g_ftp_fd = -1;
+            return -1;
+        }
+
+        // Read CWD response (expect 250)
+        if (os_ftp_read_response(fd, line, sizeof(line), &code) < 0 || code != 250) {
+            hal_net_disconnect(DB_FTP_SET, fd);
+            g_ftp_fd = -1;
+            return -1;
+        }
+    }
+
+    // Get features
+    snprintf(cmd, sizeof(cmd), "FEAT\r\n");
+    if (hal_net_send(fd, (const uint8_t *)cmd, strlen(cmd)) < 0) {
+        // FEAT failure is not critical, continue anyway
+    } else {
+        os_ftp_read_response(fd, line, sizeof(line), &code);
+        // Read until 211 response ends
+        while (os_ftp_read_response(fd, line, sizeof(line), &code) >= 0 && code == 211);
+    }
+
     return fd;
 }
 
 static int os_connect(uint8_t set, const char *name, const char *urn) {
     int fd = -1;
+
+    if (set == DB_FTP_SET && g_ftp_fd >= 0) {
+        hal_net_disconnect(set, g_ftp_fd);
+        g_ftp_fd = -1;
+    }
 
     // Get configuration if needed
     entry_t *entry = name ? bdb_entry_get(set, name) : 0;
@@ -665,28 +754,29 @@ static int os_connect(uint8_t set, const char *name, const char *urn) {
     if (split->proto == 0)
         goto finalize;
 
-    g_proto = split->proto;
+
+    if (set == DB_MIN_SET) {
+        g_proto = split->proto;
+    }
     memset(&g_ws_state, 0, sizeof(g_ws_state));
 
     // Connect to the host
     fd = hal_net_connect(split);
     if (fd >= 0) {
         if (set == DB_MIN_SET) {
-            if (g_proto == URN_PROTO_WS || g_proto == URN_PROTO_WSS)
-            {
-                // Do a WS protocol handshake
+            if (g_proto == URN_PROTO_WS || g_proto == URN_PROTO_WSS) {
                 fd = os_ws_connect(fd, split);
             }
             os_redir_print_string(P_ROULEAU_OFF);
-        } else {
-            if (set == DB_FTP_SET) {
-                fd = os_ftp_connect(fd, split);
+        } else if (set == DB_FTP_SET) {
+            fd = os_ftp_connect(fd, split);
+            g_ftp_fd = fd;
+            if (fd >= 0) {
                 strncpy(g_ftp_connected_host, split->parts[URN_PART_HOST],
                         sizeof(g_ftp_connected_host) - 1);
                 g_ftp_connected_host[sizeof(g_ftp_connected_host) - 1] = 0;
-            }
-            if (!eval_running()) {
-                hal_print_string("OK\r\n");
+                if (!eval_running())
+                    hal_print_string("OK\r\n");
             }
         }
     }
@@ -891,9 +981,6 @@ static int os_net_send(int fd, const uint8_t *buffer, size_t size) {
 }
 
 static int os_net_send_pong(int fd, const uint8_t *payload, size_t size) {
-    if (g_proto != URN_PROTO_WS && g_proto != URN_PROTO_WSS)
-        return 0;
-
     if (size > 125) {
         // Pong control frames must be <= 125 bytes
         return -1;
