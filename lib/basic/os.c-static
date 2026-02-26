@@ -525,7 +525,7 @@ static uint8_t os_get_key() {
 }
 
 static int os_connect(uint8_t set, const char *name, const char *urn) {
-    int ret = -1;
+    int fd = -1;
 
     // Get configuration if needed
     entry_t *entry = name ? bdb_entry_get(set, name) : 0;
@@ -542,9 +542,14 @@ static int os_connect(uint8_t set, const char *name, const char *urn) {
     memset(&g_ws_state, 0, sizeof(g_ws_state));
 
     // Connect to the host
-    ret = hal_net_connect(split);
-    if (ret >= 0) {
+    fd = hal_net_connect(split);
+    if (fd >= 0) {
         if (set == DB_MIN_SET) {
+            if (g_proto == URN_PROTO_WS || g_proto == URN_PROTO_WSS)
+            {
+                // Do a WS protocol handshake
+                fd = os_ws_connect(fd, split->parts[URN_PART_HOST], split->parts[URN_PART_PATH]);
+            }
             os_redir_print_string(P_ROULEAU_OFF);
         } else {
             if (set == DB_FTP_SET) {
@@ -564,7 +569,7 @@ static int os_connect(uint8_t set, const char *name, const char *urn) {
     }
 
 finalize:
-    return ret;
+    return fd;
 }
 
 static void os_disconnect(uint8_t set) {

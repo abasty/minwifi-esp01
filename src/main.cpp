@@ -59,7 +59,6 @@ const int led_pin = 13;
 
 // Files and sockets
 static File g_file0;
-static int g_net_proto = -1;
 static WiFiClient g_tcp_socket;
 static FTPClient g_ftp_client;
 static bool g_ftp_connected = false;
@@ -360,7 +359,6 @@ int hal_net_connect(split_t *urn)
         return 0;
     }
 
-    g_net_proto = urn->proto;
     g_tcp_socket.connect(urn->parts[URN_PART_HOST], urn->port);
     if (!g_tcp_socket.connected())
     {
@@ -370,12 +368,6 @@ int hal_net_connect(split_t *urn)
 
     // Disable nagle's algo
     g_tcp_socket.setNoDelay(true);
-
-    if (urn->proto == URN_PROTO_WS || urn->proto == URN_PROTO_WSS)
-    {
-        // Do a WS protocol handshake
-        os_ws_connect(0, urn->parts[URN_PART_HOST], urn->parts[URN_PART_PATH]);
-    }
 
     return 0;
 }
@@ -389,7 +381,6 @@ void hal_net_disconnect(uint8_t set, int n)
         {
             g_tcp_socket.stop();
         }
-        g_net_proto = -1;
     }
     else if (set == DB_FTP_SET)
     {

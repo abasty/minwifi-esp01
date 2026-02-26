@@ -279,43 +279,44 @@ bool g_ftp_connected = false;
 
 int hal_net_connect(split_t *urn)
 {
-    if (urn->proto == URN_PROTO_FTP)
-    {
-        if (g_ftp_connected)
-            return -1;
-
-        // uint16_t port = urn->port ? urn->port : 21;
-        // const char *login = *urn->parts[URN_PART_LOGIN] ? urn->parts[URN_PART_LOGIN] : "anonymous";
-        // const char *pass = *urn->parts[URN_PART_PASS] ? urn->parts[URN_PART_PASS] : "pat@frites.be";
-        // g_ftp_client.open(urn->parts[URN_PART_HOST], port, login, pass);
-        sleep(1);
-        g_ftp_connected = true;
-        if (!g_ftp_connected)
-            return -1;
-
-        // if (*urn->parts[URN_PART_PATH])
-        //     g_ftp_client.change_directory(urn->parts[URN_PART_PATH]);
-
-        // hal_print_string(urn->parts[URN_PART_HOST]);
-        // hal_print_integer(":%d:", port);
-        // hal_print_string(urn->parts[URN_PART_PATH]);
-        // hal_print_string(":");
-        // hal_print_string(login);
-        // hal_print_string(":");
-        // hal_print_string(pass);
-        // hal_print_string("\r\n");
-
-        return 0;
-    }
-
-    // Do the connection (TCP socket or WebSocket)
-    // Disable nagle's algo
     struct sockaddr_in addr;
     struct sockaddr_in addr_local;
 
     struct hostent *hp = gethostbyname(urn->parts[URN_PART_HOST]);
     if (hp == 0)
         return -1;
+
+    // if (urn->proto == URN_PROTO_FTP)
+    // {
+    //     if (g_ftp_connected)
+    //         return -1;
+
+    //     // uint16_t port = urn->port ? urn->port : 21;
+    //     // const char *login = *urn->parts[URN_PART_LOGIN] ? urn->parts[URN_PART_LOGIN] : "anonymous";
+    //     // const char *pass = *urn->parts[URN_PART_PASS] ? urn->parts[URN_PART_PASS] : "pat@frites.be";
+    //     // g_ftp_client.open(urn->parts[URN_PART_HOST], port, login, pass);
+    //     sleep(1);
+    //     g_ftp_connected = true;
+    //     if (!g_ftp_connected)
+    //         return -1;
+
+    //     // if (*urn->parts[URN_PART_PATH])
+    //     //     g_ftp_client.change_directory(urn->parts[URN_PART_PATH]);
+
+    //     // hal_print_string(urn->parts[URN_PART_HOST]);
+    //     // hal_print_integer(":%d:", port);
+    //     // hal_print_string(urn->parts[URN_PART_PATH]);
+    //     // hal_print_string(":");
+    //     // hal_print_string(login);
+    //     // hal_print_string(":");
+    //     // hal_print_string(pass);
+    //     // hal_print_string("\r\n");
+
+    //     return 0;
+    // }
+
+    // // Do the connection (TCP socket or WebSocket)
+    // // Disable nagle's algo
 
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     addr.sin_family = AF_INET;
@@ -332,12 +333,6 @@ int hal_net_connect(split_t *urn)
     getsockname(fd, (struct sockaddr *)&addr_local, &addr_len);
     // Set wifi IP address
     inet_ntop(AF_INET, &addr_local.sin_addr, wifi_ip, sizeof(wifi_ip));
-
-    if (urn->proto == URN_PROTO_WS || urn->proto == URN_PROTO_WSS)
-    {
-        // Do a WS protocol handshake
-        fd = os_ws_connect(fd, urn->parts[URN_PART_HOST], urn->parts[URN_PART_PATH]);
-    }
 
     return fd;
 }
