@@ -954,7 +954,109 @@ static bool os_ftp_cat(void) {
 
 static bool os_ftp_put_file(const char *filename)
 {
-    return false;
+    if (g_ftp_fd < 0) {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    char cmd[256];
+    char line[256];
+    int code;
+    int data_fd = -1;
+
+    // Get local file size
+    int file_size = hal_get_file_size(filename);
+    if (file_size <= 0) {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    // Open local file for reading
+    int local_fd = hal_open(filename, B_RDONLY);
+    if (local_fd < 0) {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    // Set binary mode
+    snprintf(cmd, sizeof(cmd), "TYPE I\r\n");
+    if (hal_net_send(g_ftp_fd, (const uint8_t *)cmd, strlen(cmd)) < 0) {
+        hal_close(local_fd);
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    if (os_ftp_read_response(g_ftp_fd, line, sizeof(line), &code) < 0 || code != 200) {
+        hal_close(local_fd);
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    // Open passive mode data connection
+    if (os_ftp_open_passive(g_ftp_fd, &data_fd) < 0) {
+        hal_close(local_fd);
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    // Send STOR command
+    snprintf(cmd, sizeof(cmd), "STOR %s\r\n", filename);
+    if (hal_net_send(g_ftp_fd, (const uint8_t *)cmd, strlen(cmd)) < 0) {
+        if (data_fd >= 0)
+            hal_net_disconnect(DB_FTP_SET, data_fd);
+        hal_close(local_fd);
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    // Read STOR response (expect 150 or 125)
+    if (os_ftp_read_response(g_ftp_fd, line, sizeof(line), &code) < 0 || (code != 150 && code != 125)) {
+        if (data_fd >= 0)
+            hal_net_disconnect(DB_FTP_SET, data_fd);
+        hal_close(local_fd);
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    // Send file data through data connection
+    uint8_t buffer[NET_BUFFER_MAX];
+    ssize_t bytes_sent = 0;
+
+    while (bytes_sent < file_size) {
+        int to_read = file_size - bytes_sent;
+        if (to_read > NET_BUFFER_MAX)
+            to_read = NET_BUFFER_MAX;
+
+        int n = hal_read(local_fd, buffer, to_read);
+        if (n <= 0)
+            break;
+
+        // Send data through data connection
+        if (hal_net_send(data_fd, buffer, n) < 0) {
+            if (data_fd >= 0)
+                hal_net_disconnect(DB_FTP_SET, data_fd);
+            hal_close(local_fd);
+            bmem->bstate.error = BERROR_SOCK;
+            return false;
+        }
+
+        bytes_sent += n;
+    }
+
+    // Close data connection
+    if (data_fd >= 0)
+        hal_net_disconnect(DB_FTP_SET, data_fd);
+
+    // Close local file
+    hal_close(local_fd);
+
+    // Read final response (expect 226 Transfer complete)
+    if (os_ftp_read_response(g_ftp_fd, line, sizeof(line), &code) < 0 || code != 226) {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    return bytes_sent == file_size;
 }
 
 static bool os_ftp_get_file(const char *filename)
