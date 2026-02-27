@@ -2167,7 +2167,7 @@ static bool eval_ftp() {
         os_ftp_status();
 
     if (func == TOKEN_KEYWORD_CAT)
-        return os_ftp_cat();
+        os_ftp_cat();
 
     return true;
 }
