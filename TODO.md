@@ -6,7 +6,9 @@
   TCP sur BASTOS qui fait du passe plat avec la prise péri-info et téléphone ou
   PC qui se connecte aux services (telnet, tcp, ws, wss)
 * [ ] `TELNET` : au départ gérer avec un front end `ncat` qui passe en mode
-  téléinformatique, et effectue la connexion telnet
+  téléinformatique, et effectue la connexion telnet. Voir :
+  <https://mewbies.com/acute_terminal_fun_telnet_public_servers_watch_star_wars_play_games_etc.htm>,
+  <https://www.mudconnect.com/>
 * [x] Protocole FTP intégré à BASTOS (dispo dans le simu)
 * [x] Websockets (sans SSL) intégrées ?
 * [ ] ~~Penser à BASTOS-PI / BASTOS-PC puis BASTOS-P~~
