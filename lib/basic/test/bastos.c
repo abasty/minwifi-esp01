@@ -190,20 +190,6 @@ size_t hal_cat()
     return 524288 - total;
 }
 
-ssize_t hal_ftp_cat()
-{
-    if (!hal_ftp_is_connected())
-        return -1;
-
-    os_ftp_cat_file("-rw-------    1 116      127            72 Aug 14 00:21 inkey.bst\r\n");
-    return 1;
-}
-
-bool hal_ftp_files(uint8_t func, const char *filename)
-{
-    return true;
-}
-
 int hal_erase(const char *pathname)
 {
     return unlink(pathname);
@@ -286,38 +272,6 @@ int hal_net_connect(split_t *urn)
     if (hp == 0)
         return -1;
 
-    // if (urn->proto == URN_PROTO_FTP)
-    // {
-    //     if (g_ftp_connected)
-    //         return -1;
-
-    //     // uint16_t port = urn->port ? urn->port : 21;
-    //     // const char *login = *urn->parts[URN_PART_LOGIN] ? urn->parts[URN_PART_LOGIN] : "anonymous";
-    //     // const char *pass = *urn->parts[URN_PART_PASS] ? urn->parts[URN_PART_PASS] : "pat@frites.be";
-    //     // g_ftp_client.open(urn->parts[URN_PART_HOST], port, login, pass);
-    //     sleep(1);
-    //     g_ftp_connected = true;
-    //     if (!g_ftp_connected)
-    //         return -1;
-
-    //     // if (*urn->parts[URN_PART_PATH])
-    //     //     g_ftp_client.change_directory(urn->parts[URN_PART_PATH]);
-
-    //     // hal_print_string(urn->parts[URN_PART_HOST]);
-    //     // hal_print_integer(":%d:", port);
-    //     // hal_print_string(urn->parts[URN_PART_PATH]);
-    //     // hal_print_string(":");
-    //     // hal_print_string(login);
-    //     // hal_print_string(":");
-    //     // hal_print_string(pass);
-    //     // hal_print_string("\r\n");
-
-    //     return 0;
-    // }
-
-    // // Do the connection (TCP socket or WebSocket)
-    // // Disable nagle's algo
-
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     addr.sin_family = AF_INET;
     memcpy(&addr.sin_addr, hp->h_addr_list[0], hp->h_length);
@@ -339,19 +293,7 @@ int hal_net_connect(split_t *urn)
 
 void hal_net_disconnect(uint8_t set, int n)
 {
-    // If connected, disconnect and remove associated resources
-
-    if (set == DB_MIN_SET)
-    {
-        close(n);
-    }
-    else if (set == DB_FTP_SET)
-    {
-        if (!g_ftp_connected)
-            return;
-
-        g_ftp_connected = false;
-    }
+    close(n);
 }
 
 int hal_net_send(int fd, const uint8_t *buffer, int n)
@@ -387,11 +329,6 @@ int hal_get_function_key(void)
         unlink("/tmp/fkey");
     }
     return fn;
-}
-
-bool hal_ftp_is_connected()
-{
-    return g_ftp_connected;
 }
 
 void setup()

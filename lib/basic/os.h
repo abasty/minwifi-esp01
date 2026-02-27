@@ -98,7 +98,6 @@ void os_wifi_set_info(const char *ssid, const char *ip);
 
 // OS network functions
 void os_ftp_cat_file(const char* line);
-int os_ws_connect(int fd, const char *host, const char *path);
 
 // OS file functions
 void os_cat_file(const char *filename, size_t size);
@@ -132,10 +131,6 @@ int hal_net_connect(split_t *urn_split);
 void hal_net_disconnect(uint8_t set, int fd);
 int hal_net_send(int fd, const uint8_t *buffer, int n);
 int hal_net_recv(int fd, uint8_t *buffer, int n);
-
-ssize_t hal_ftp_cat(void);
-bool hal_ftp_is_connected(void);
-bool hal_ftp_files(uint8_t func, const char *filename);
 
 void hal_speed(uint8_t fn);
 void hal_reset(void);

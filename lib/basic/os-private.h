@@ -47,8 +47,11 @@ static void os_wifi_status(void);
 // OS network functions
 static int os_connect(uint8_t set, const char *name, const char* urn);
 static void os_disconnect(uint8_t set);
+
+// FTP functions
 static void os_ftp_status(void);
 static bool os_ftp_cat(void);
+static bool os_ftp_files(uint8_t func, const char *filename);
 
 // OS keyboard functions
 static uint8_t os_get_key(void);
