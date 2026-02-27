@@ -7,8 +7,8 @@
   PC qui se connecte aux services (telnet, tcp, ws, wss)
 * [ ] `TELNET` : au départ gérer avec un front end `ncat` qui passe en mode
   téléinformatique, et effectue la connexion telnet
-* [ ] Protocole FTP intégré à BASTOS (dispo dans le simu)
-* [ ] Websockets (sans SSL) intégrées ?
+* [x] Protocole FTP intégré à BASTOS (dispo dans le simu)
+* [x] Websockets (sans SSL) intégrées ?
 * [ ] ~~Penser à BASTOS-PI / BASTOS-PC puis BASTOS-P~~
 
 ## Bugs
@@ -21,12 +21,14 @@
 * [ ] Déconnexion provenant d'un serveur websocket : semble ne pas fonctionner
 * [ ] `MINITEL` sur une URN non connectable => ns non connues peut engendrer un
   _crash_ du ESP => À tester en local
-* [ ] Websocket minipavi : ne fonctionne pas en mode ESP (sans gateway) :
-  déconnexion au bout d'un moment. Les touches ne partent pas, en tout cas on ne
-  les a pas en echo local, il semble qu'on doit être en mode binaire => debug
-  avec ludojoey (fonctionne en TCP)
+* [x] Fixé par websockets custom. Websocket minipavi : ne fonctionne pas en mode
+  ESP (sans gateway) : déconnexion au bout d'un moment. Les touches ne partent
+  pas, en tout cas on ne les a pas en echo local, il semble qu'on doit être en
+  mode binaire => debug avec ludojoey (fonctionne en TCP)
 
 ## Problèmes Websockets
+
+Pbs réglés par l'implémentation custom.
 
 **WS IP et ports, wireshark**
 
