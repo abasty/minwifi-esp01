@@ -32,7 +32,6 @@
 
 #include <FS.h>
 #include <LittleFS.h>
-#include <FTPClient.h>
 
 #ifdef MINITEL
 #include "tty-minitel.h"
@@ -57,11 +56,12 @@ const int led_pin = 13;
 #define BLUE_LED_OFF do { digitalWrite(led_pin, HIGH); } while(0);
 #endif
 
+#define MAX_CONNECTIONS (4)
+
 // Files and sockets
 static File g_file0;
-static WiFiClient g_tcp_socket;
-static FTPClient g_ftp_client;
-static bool g_ftp_connected = false;
+static WiFiClient g_tcp_socket[MAX_CONNECTIONS];
+static bool g_used_sockets[MAX_CONNECTIONS] = {0};
 
 void hal_print_oem_string(void)
 {
@@ -302,88 +302,54 @@ bool hal_wifi_is_connected()
     return connected;
 }
 
-bool hal_ftp_is_connected()
-{
-    if (!g_ftp_connected)
-        return false;
-
-    if (!g_ftp_client.connected())
-    {
-        g_ftp_client.close();
-        g_ftp_connected = false;
-    }
-
-    return g_ftp_connected;
-}
-
 int hal_net_connect(split_t *urn)
 {
-    if (urn->proto == URN_PROTO_FTP)
-    {
-        if (hal_ftp_is_connected())
-            return -1;
-
-        uint16_t port = urn->port ? urn->port : 21;
-        const char *login = *urn->parts[URN_PART_LOGIN] ? urn->parts[URN_PART_LOGIN] : "anonymous";
-        const char *pass = *urn->parts[URN_PART_PASS] ? urn->parts[URN_PART_PASS] : "pat@frites.be";
-        g_ftp_connected = g_ftp_client.open(urn->parts[URN_PART_HOST], port, login, pass);
-        if (!g_ftp_connected)
-            return -1;
-
-        if (*urn->parts[URN_PART_PATH])
-            g_ftp_client.change_directory(urn->parts[URN_PART_PATH]);
-
-        return 0;
+    int fd = -1;
+    for (int n = 0; n < MAX_CONNECTIONS; n++) {
+        if (!g_used_sockets[n]) {
+            fd = n;
+            break;
+        }
     }
 
-    g_tcp_socket.connect(urn->parts[URN_PART_HOST], urn->port);
-    if (!g_tcp_socket.connected())
+    if (fd < 0)
+        return fd;
+
+    g_tcp_socket[fd].connect(urn->parts[URN_PART_HOST], urn->port);
+    g_used_sockets[fd] = true;
+    if (!g_tcp_socket[fd].connected())
     {
-        g_tcp_socket.stop();
+        hal_net_disconnect(0, fd);
         return -1;
     }
 
     // Disable nagle's algo
-    g_tcp_socket.setNoDelay(true);
+    g_tcp_socket[fd].setNoDelay(true);
 
-    return 0;
+    return fd;
 }
 
-void hal_net_disconnect(uint8_t set, int n)
+void hal_net_disconnect(uint8_t set, int fd)
 {
-    // If connected, disconnect and remove associated resources
-    if (set == DB_MIN_SET)
-    {
-        if (g_tcp_socket.connected())
-        {
-            g_tcp_socket.stop();
-        }
-    }
-    else if (set == DB_FTP_SET)
-    {
-        if (g_ftp_connected)
-        {
-            g_ftp_client.close();
-            g_ftp_connected = false;
-        }
-    }
+    g_tcp_socket[fd].stop();
+    g_used_sockets[fd] = false;
 }
 
 int hal_net_send(int fd, const uint8_t *buffer, int n)
 {
-    return g_tcp_socket.write(buffer, n);
+    return g_tcp_socket[fd].write(buffer, n);
 }
 
 int hal_net_recv(int fd, uint8_t *buffer, int n)
 {
-    int available = g_tcp_socket.available();
+    int available = g_tcp_socket[fd].available();
     if (available == 0)
         return 0;
 
     if (n > available)
         n = available;
 
-    return g_tcp_socket.read(buffer, n);
+    return g_tcp_socket[fd].read(buffer, n);
 }
 
 uint64_t hal_get_ms(void)
@@ -419,18 +385,18 @@ int hal_get_function_key(void)
     return function;
 }
 
-static void serial_flush_rx()
-{
-    Serial.setTimeout(0);
-    // Empty Serial buffer
-    while (Serial && Serial.available() > 0)
-    {
-        uint8_t buffer[32];
-        Serial.readBytes(buffer, 32);
-        delay(10);
-    }
-    Serial.flush();
-}
+// static void serial_flush_rx()
+// {
+//     Serial.setTimeout(0);
+//     // Empty Serial buffer
+//     while (Serial && Serial.available() > 0)
+//     {
+//         uint8_t buffer[32];
+//         Serial.readBytes(buffer, 32);
+//         delay(10);
+//     }
+//     Serial.flush();
+// }
 
 static bool wait_serial(unsigned long speed, String wait_for)
 {

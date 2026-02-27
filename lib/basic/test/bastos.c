@@ -331,11 +331,6 @@ int hal_get_function_key(void)
     return fn;
 }
 
-bool hal_ftp_is_connected()
-{
-    return g_ftp_connected;
-}
-
 void setup()
 {
     os_setup();
