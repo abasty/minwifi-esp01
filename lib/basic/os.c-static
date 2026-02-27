@@ -317,7 +317,7 @@ static void os_ftp_status(void) {
     os_redir_print_string("\r\n" INV "FTP Host" CLEOL " " NORMAL "\r\n");
 
     // Check connection status
-    if (*g_ftp_connected_host != 0 && !hal_ftp_is_connected()) {
+    if (*g_ftp_connected_host != 0 && g_ftp_fd < 0) {
         *g_ftp_connected_host = 0;
     }
 
@@ -950,6 +950,146 @@ static bool os_ftp_cat(void) {
     os_redir_print_integer("\r\n%3zd file(s)\r\n\r\n", total);
 
     return true;
+}
+
+static bool os_ftp_put_file(const char *filename)
+{
+    return false;
+}
+
+static bool os_ftp_get_file(const char *filename)
+{
+    if (g_ftp_fd < 0) {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    char cmd[256];
+    char line[256];
+    int code;
+    int data_fd = -1;
+
+    // Get file size with SIZE command
+    snprintf(cmd, sizeof(cmd), "SIZE %s\r\n", filename);
+    if (hal_net_send(g_ftp_fd, (const uint8_t *)cmd, strlen(cmd)) < 0) {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    if (os_ftp_read_response(g_ftp_fd, line, sizeof(line), &code) < 0 || code != 213) {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    ssize_t file_size = strtol(line + 4, NULL, 10);
+    if (file_size <= 0) {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    // Open local file for writing
+    int local_fd = hal_open(filename, B_CREAT | B_WRONLY);
+    if (local_fd < 0) {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    // Set binary mode
+    snprintf(cmd, sizeof(cmd), "TYPE I\r\n");
+    if (hal_net_send(g_ftp_fd, (const uint8_t *)cmd, strlen(cmd)) < 0) {
+        hal_close(local_fd);
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    if (os_ftp_read_response(g_ftp_fd, line, sizeof(line), &code) < 0 || code != 200) {
+        hal_close(local_fd);
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    // Open passive mode data connection
+    if (os_ftp_open_passive(g_ftp_fd, &data_fd) < 0) {
+        hal_close(local_fd);
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    // Send RETR command
+    snprintf(cmd, sizeof(cmd), "RETR %s\r\n", filename);
+    if (hal_net_send(g_ftp_fd, (const uint8_t *)cmd, strlen(cmd)) < 0) {
+        if (data_fd >= 0)
+            hal_net_disconnect(DB_FTP_SET, data_fd);
+        hal_close(local_fd);
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    // Read RETR response (expect 150 or 125)
+    if (os_ftp_read_response(g_ftp_fd, line, sizeof(line), &code) < 0 || (code != 150 && code != 125)) {
+        if (data_fd >= 0)
+            hal_net_disconnect(DB_FTP_SET, data_fd);
+        hal_close(local_fd);
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    // Read file data from data connection
+    uint8_t buffer[NET_BUFFER_MAX];
+    ssize_t bytes_read = 0;
+    uint64_t start_ms = hal_get_ms();
+
+    while (bytes_read < file_size && (hal_get_ms() - start_ms) < 30000) {
+        int n = hal_net_recv(data_fd, buffer, sizeof(buffer));
+
+        if (n <= 0) {
+            if (n < 0)
+                break;
+            continue;
+        }
+
+        start_ms = hal_get_ms(); // Reset timeout on data received
+
+        // Write to local file
+        if (hal_write(local_fd, buffer, n) < 0) {
+            if (data_fd >= 0)
+                hal_net_disconnect(DB_FTP_SET, data_fd);
+            hal_close(local_fd);
+            bmem->bstate.error = BERROR_SOCK;
+            return false;
+        }
+
+        bytes_read += n;
+    }
+
+    // Close data connection
+    if (data_fd >= 0)
+        hal_net_disconnect(DB_FTP_SET, data_fd);
+
+    // Close local file
+    hal_close(local_fd);
+
+    // Read final response (expect 226 Transfer complete)
+    if (os_ftp_read_response(g_ftp_fd, line, sizeof(line), &code) < 0 || code != 226) {
+        bmem->bstate.error = BERROR_SOCK;
+        return false;
+    }
+
+    return bytes_read == file_size;
+}
+
+static bool os_ftp_files(uint8_t func, const char *filename)
+{
+    if (g_ftp_fd < 0)
+        return false;
+
+    if (func == TOKEN_KEYWORD_PUT)
+        return os_ftp_put_file(filename);
+
+    if (func == TOKEN_KEYWORD_GET)
+        return os_ftp_get_file(filename);
+
+    return false;
 }
 
 void os_cat_file(const char *filename, size_t size) {

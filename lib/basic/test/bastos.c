@@ -190,20 +190,6 @@ size_t hal_cat()
     return 524288 - total;
 }
 
-ssize_t hal_ftp_cat()
-{
-    if (!hal_ftp_is_connected())
-        return -1;
-
-    os_ftp_cat_file("-rw-------    1 116      127            72 Aug 14 00:21 inkey.bst\r\n");
-    return 1;
-}
-
-bool hal_ftp_files(uint8_t func, const char *filename)
-{
-    return true;
-}
-
 int hal_erase(const char *pathname)
 {
     return unlink(pathname);

@@ -132,10 +132,6 @@ void hal_net_disconnect(uint8_t set, int fd);
 int hal_net_send(int fd, const uint8_t *buffer, int n);
 int hal_net_recv(int fd, uint8_t *buffer, int n);
 
-ssize_t hal_ftp_cat(void);
-bool hal_ftp_is_connected(void);
-bool hal_ftp_files(uint8_t func, const char *filename);
-
 void hal_speed(uint8_t fn);
 void hal_reset(void);
 
