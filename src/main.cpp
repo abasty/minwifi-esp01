@@ -331,6 +331,8 @@ int hal_net_connect(split_t *urn)
 
 void hal_net_disconnect(uint8_t set, int fd)
 {
+    if (fd < 0 || fd >= MAX_CONNECTIONS)
+        return;
     g_tcp_socket[fd].stop();
     g_used_sockets[fd] = false;
 }
