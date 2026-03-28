@@ -56,7 +56,7 @@ En display filter on peut mettre : `not tcp.len == 0`
 
 ## Fonctionnalités
 
-* [ ] MODE (mode écran, 0: Videotex, 1:Mixte, 2:Téléinformatique)
+* [x] MODE (mode écran, 0,1: Videotext + Clavier étendu, 2:Téléinformatique)
 * [ ] Design + Commande mode "Connexion Téléphone" (peut-on utiliser un URN TCP
   et la commande MINITEL vers un service Kiosque serveur sur le téléphone ?)
 * [ ] CAT, FTP CAT : version avec filtre (expression régulière)  et options

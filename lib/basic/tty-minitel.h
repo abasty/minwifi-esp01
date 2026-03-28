@@ -94,9 +94,13 @@
 // Déconnexion
 #define P_DECONNEXION PRO1 "\x67"
 
-// Serial 4800bds
+// Vitesse Serial
 #define P_PRISE_1200 PRO2 "\x6B\x64"
 #define P_PRISE_4800 PRO2 "\x6B\x76"
 #define P_PRISE_9600 PRO2 "\x6B\x7f"
+
+// Mode terminal (40/80 cols)
+#define P_80_COLS PRO2 "\x32\x7d"
+#define P_40_COLS PRO2 "\x32\x7e"
 
 #endif // TTY_MINITEL_H
