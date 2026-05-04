@@ -1,5 +1,6 @@
 REM "Bootstrap"
 100 FAST
+102 CURSOR 0
 105 SCROLL 1
 110 GOSUB 10000
 115 DIM hof$(9,16)
@@ -306,26 +307,25 @@ REM "----------------------------------------------"
 
 REM "----------------------------------------------"
 11020 OUTPUT records$
-11030 LINE0;CLEOL;
+11030 LINE0;CLEOL;CURSOR 0
 11040 CLS;"\n";PAPER 1;" ";CLEOL;bottom$
 11050 AT 2,13;SIZE 1;"<<< RECORDS >>>"
 
 REM "----------------------------------------------"
 11070 OUTPUT credits$
-11130 LINE0;CLEOL
+11130 LINE0;CLEOL;CURSOR 0
 11140 CLS;"\n";PAPER 1;" ";CLEOL;bottom$
 11150 AT 2,13;SIZE 1;"<<< CREDITS >>>"
-11160 PRINT AT 5,20-6;SIZE 3;INVERSE 1;"BASTOS"
-11170 PRINT AT 7,2;"Inspiré par :"
-11180 PRINT " - Sinclair ZX81 / Spectrum"
-11190 PRINT " - Oric 1 / Atmos"
-11200 PRINT " - Amstrad CPC"
-11210 PRINT
-11220 PRINT AT 14,20-6;SIZE 3;FLASH 1;"METEOR";
-11230 PRINT AT 16,1;" Inspiré par";UNDERLINE 1;" METEOR";UNDERLINE 0;" : Premier jeu en"
-11240 PRINT " assembleur Z80 sur ZX81. Sur Minitel,"
-11250 PRINT " pas de mémoire écran, juste une prise"
-11260 PRINT " 4800(M1B)/9600(M2) bps."
+11160 AT 5,20-6;SIZE 3;INVERSE 1;"BASTOS";SIZE 0;INVERSE 0
+11170 AT 7,15;"Inspiré par"
+11180 AT 8,9;"Sinclair ZX81 / Spectrum"
+11190 AT 9,14;"Oric 1 / Atmos"
+11200 AT 10,15;"Amstrad CPC"
+11220 AT 14,20-6;SIZE 3;FLASH 1;"METEOR";SIZE 0;FLASH 0
+11230 AT 16,2;"Inspiré par";UNDERLINE 1;" METEOR";UNDERLINE 0;" : Premier jeu en"
+11240 AT 17,1;"assembleur Z80 sur ZX81. Sur Minitel,"
+11250 AT 18,1;"pas de mémoire écran, juste une prise"
+11260 AT 19,8;"4800(M1B)/9600(M2) bps."
 
 REM "----------------------------------------------"
 11270 OUTPUT STOP
