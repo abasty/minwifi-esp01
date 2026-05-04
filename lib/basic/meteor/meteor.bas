@@ -2,12 +2,14 @@ REM "Bootstrap"
 100 FAST
 105 SCROLL 1
 110 GOSUB 10000
-120 rc$="00000"
+115 DIM hof$(9,16)
+116 GOSUB 6200
+120 rc$=GET(199,"h1")(TO 5)
+125 IF rc$="" THEN LET rc$="00000"
 130 vn$="H"+(INVERSE 1)+"O"+(INVERSE 0)+"H"
 140 vi$="/T\\"
 
 REM "Menu principal"
-145 GOSUB 400
 150 PRINT menu$;
 160 INPUT "\nChoix: ",c
 170 c=INT c
@@ -29,8 +31,8 @@ REM "Hall of Fame"
 
 REM "Configuration"
 500 PRINT config$;
-510 IF INKEY$ ="" THEN 510
-520 RETURN
+590 IF INKEY$ ="" THEN 590
+599 RETURN
 
 REM "Credits"
 600 PRINT credits$;
@@ -193,8 +195,12 @@ REM "Game over"
 4530 AT 15,12;FLASH 1;     "  Press 'x' key ";FLASH 0;
 4540 j$=INKEY$
 4550 PAUSE 50
-4560 IF j$="x" THEN RETURN
-4570 GOTO 4540
+4560 IF j$<>"x" THEN 4540
+4600 GOSUB 6600
+4605 IF pos=0 THEN 400
+4610 GOSUB 6800
+4620 GOSUB 6400
+4630 GOTO 400
 
 REM "Affiche meteor"
 REM "sm$: Sprite meteor, cml: Current meteor line"
@@ -225,18 +231,49 @@ REM "Hall of fame"
 6000 DIM p(2)
 6010 p(1)=4
 6020 p(2)=1
-6030 deb=1
-6040 s$=GET 199,"meteor-hi"
-6050 IF s$="" THEN LET s$="010000 Z4R:001000 Z4R"
-6060 s$=s$+":"
-6070 FOR i=1 TO 9
-6080 l$="000000 ---"
-6090 fin=INDEX s$,":",deb
-6100 IF fin<=0 THEN 6130
-6110 l$=s$(deb,fin-1)
-6120 deb=fin+1
-6130 AT i*2+3,1;SIZE 1;PAPER p(i%2+1);" ";i;CLEOL;" ";l$
-6140 NEXT i
+6070 FOR z=1 TO 9
+6100 l$=hof$(z)
+6110 t=INDEX l$,":",1
+6120 IF t>0 THEN LET l$(t)=" "
+6130 AT z*2+3,1;SIZE 1;PAPER p(z%2+1);" ";z;CLEOL;" ";l$
+6140 NEXT z
+6150 RETURN
+
+REM "Charge HOF dans hof$"
+6200 FOR i=1 TO 9
+6210 hof$(i)=GET(199,"h"+CHR$(48+i))
+6220 IF hof$(i,1)=" " THEN LET hof$(i)="000000:---"
+6230 j=INDEX hof$(i),":",1
+6240 IF j<=0 THEN LET hof$(i)="000000:---"
+6250 NEXT i
+6260 RETURN
+
+REM "Sauvegarde hof$"
+6400 FOR i=1 TO 9
+6410 PUT 199,"h"+CHR$(48+i),hof$(i)
+6420 NEXT i
+6430 RETURN
+
+REM "Insère score courant (sc$+'0') dans hof$ si > à un des 9 premiers"
+6600 hs$=sc$+"0"
+6610 pos=0
+6620 FOR i=1 TO 9
+6630 IF pos=0 AND hs$>hof$(i,1 TO 6) THEN LET pos=i
+6640 NEXT i
+
+6650 IF pos=0 THEN RETURN
+6670 FOR j=9 TO pos+1 STEP -1
+6680 hof$(j, 1 TO 16)=hof$(j-1, 1 TO 16)
+6690 NEXT j
+6700 hof$(pos)=hs$+":???"
+6710 RETURN
+
+REM "Demande nom pour HOF"
+6800 AT 16,12;"Nom (max 9 car.): "
+6810 INPUT "",nm$
+6820 IF LEN nm$>9 THEN LET nm$=nm$(1 TO 9)
+6830 hof$(pos)=hof$(pos,1 TO 7)+nm$
+6840 RETURN
 
 6999 RETURN
 
@@ -270,7 +307,6 @@ REM "----------------------------------------------"
 11030 LINE0;CLEOL;
 11040 CLS;"\n";PAPER 1;" ";CLEOL;bottom$
 11050 AT 2,13;SIZE 1;"<<< RECORDS >>>"
-11060 AT 4,1;"<Appuie sur une touche>"
 
 REM "----------------------------------------------"
 11070 OUTPUT config$
