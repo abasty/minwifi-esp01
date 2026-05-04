@@ -267,7 +267,7 @@ REM "Insère score courant (sc$+'0') dans hof$ si > à un des 9 premiers"
 6710 RETURN
 
 REM "Demande nom pour HOF"
-6800 AT 16,12;"Nom (max 9 car.): "
+6800 AT 16,12;"Nom (max 9 car.): ";CURSOR 1
 6810 INPUT "",nm$
 6820 IF LEN nm$>9 THEN LET nm$=nm$(1 TO 9)
 6830 hof$(pos)=hof$(pos,1 TO 7)+nm$
