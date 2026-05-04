@@ -229,7 +229,7 @@ REM "Calcule nouveau meteor"
 REM "Hall of fame"
 6000 DIM p(2)
 6010 p(1)=4
-6020 p(2)=1
+6020 p(2)=6
 6070 FOR z=1 TO 9
 6100 l$=hof$(z)
 6110 t=INDEX l$,":",1
@@ -293,7 +293,7 @@ REM "----------------------------------------------"
 10060 AT 6,3;"Déplacez-vous et évitez les météores"
 10070 AT 7,3;"Tirez dessus pour marquer des points"
 10080 AT 9,10;INVERSE 1;"[a]";INVERSE 0;"=Gauche    ";INVERSE 1;"[e]";INVERSE 0;"=Droite"
-10090 AT 10,9;INVERSE 1;"[espace]";INVERSE 0;"=Tir    ";INVERSE 1;"[x]";INVERSE 0;"=Fin"
+10090 AT 10,9;INVERSE 1;"[espace]";INVERSE 0;"=Tir    ";INVERSE 1;"[x]";INVERSE 0;"=Exit"
 10100 AT 13,16;INVERSE 1;SIZE 2;"J";SIZE 0;INVERSE 0;"ouer"
 10110 AT 14,16;INVERSE 1;SIZE 2;"R";SIZE 0;INVERSE 0;"ecords"
 10120 AT 15,16;INVERSE 1;SIZE 2;"C";SIZE 0;INVERSE 0;"rédits"
