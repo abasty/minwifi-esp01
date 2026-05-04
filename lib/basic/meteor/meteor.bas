@@ -11,11 +11,14 @@ REM "Bootstrap"
 
 REM "Menu principal"
 150 PRINT menu$;
-160 INPUT "\nChoix: ",c
-170 c=INT c
-180 IF c<1 THEN LET c=1
-190 IF c>=5 THEN LET c=5
-200 GOSUB c*100+200
+160 c$=INKEY$
+162 PAUSE 50
+164 IF c$="" THEN 160
+165 IF c$(1)>="a" AND c$(1)<="z" THEN LET c$(1)=CHR$(CODE c$(1)-32)
+170 IF c$="J" THEN GOSUB 300
+172 IF c$="R" THEN GOSUB 400
+174 IF c$="C" THEN GOSUB 600
+176 IF c$="Q" THEN GOSUB 700
 210 GOTO 150
 
 REM "Jeu"
@@ -28,11 +31,6 @@ REM "Hall of Fame"
 405 GOSUB 6000
 410 IF INKEY$ ="" THEN 410
 420 RETURN
-
-REM "Configuration"
-500 PRINT config$;
-590 IF INKEY$ ="" THEN 590
-599 RETURN
 
 REM "Credits"
 600 PRINT credits$;
@@ -289,14 +287,18 @@ REM "----------------------------------------------"
 
 REM "----------------------------------------------"
 10030 OUTPUT menu$
-10050 LINE0;CLEOL;CLS;"\n";PAPER 1;" ";CLEOL;bottom$
-10070 AT 2,13;SIZE 1;"<<< METEOR >>>"
-10080 PRINT AT 4,1;"1.";UNDERLINE 1;" Jouer";UNDERLINE 0;" "
-10090 PRINT "2. Records"
-10100 PRINT "3. Configuration"
-10110 PRINT "4. Crédits"
-10120 PRINT "5. Quitter"
-10130 CURSOR 1
+10040 LINE0;CLEOL;CLS;"\n";PAPER 1;" ";CLEOL;bottom$
+10050 AT 2,13;SIZE 1;"<<< METEOR >>>";SIZE 0
+10060 AT 6,3;"Déplacez-vous et évitez les météores"
+10070 AT 7,3;"Tirez dessus pour marquer des points"
+10080 AT 9,10;INVERSE 1;"[a]";INVERSE 0;"=Gauche    ";INVERSE 1;"[e]";INVERSE 0;"=Droite"
+10090 AT 10,9;INVERSE 1;"[espace]";INVERSE 0;"=Tir    ";INVERSE 1;"[x]";INVERSE 0;"=Fin"
+10100 AT 13,16;INVERSE 1;SIZE 2;"J";SIZE 0;INVERSE 0;"ouer"
+10110 AT 14,16;INVERSE 1;SIZE 2;"R";SIZE 0;INVERSE 0;"ecords"
+10120 AT 15,16;INVERSE 1;SIZE 2;"C";SIZE 0;INVERSE 0;"rédits"
+10130 AT 16,16;INVERSE 1;SIZE 2;"Q";SIZE 0;INVERSE 0;"uitter"
+10135 AT 18,16;"Choix: .\x08"
+10140 CURSOR 1
 
 REM "----------------------------------------------"
 11000 OUTPUT jeu$
@@ -309,14 +311,7 @@ REM "----------------------------------------------"
 11050 AT 2,13;SIZE 1;"<<< RECORDS >>>"
 
 REM "----------------------------------------------"
-11070 OUTPUT config$
-11080 LINE0;CLEOL
-11090 CLS;"\n";PAPER 1;" ";CLEOL;bottom$
-11100 AT 2,10;SIZE 1;"<<< CONFIGURATION >>>"
-11110 AT 4,1;"<Appuie sur une touche>"
-
-REM "----------------------------------------------"
-11120 OUTPUT credits$
+11070 OUTPUT credits$
 11130 LINE0;CLEOL
 11140 CLS;"\n";PAPER 1;" ";CLEOL;bottom$
 11150 AT 2,13;SIZE 1;"<<< CREDITS >>>"
