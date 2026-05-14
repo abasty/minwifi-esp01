@@ -1729,7 +1729,7 @@ static bool eval_string_tty() {
 
     if (fn == TOKEN_KEYWORD_FLASH) {
         if (bmem->bstate.screen_mode) {
-            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? MODE80_BLINK : MODE80_NORMAL);
+            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? MODE80_BLINK : MODE80_BLINK_OFF);
         } else {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? "\x1b\x48" : "\x1b\x49");
         }
@@ -1738,7 +1738,7 @@ static bool eval_string_tty() {
 
     if (fn == TOKEN_KEYWORD_INVERSE) {
         if (bmem->bstate.screen_mode) {
-            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? MODE80_INV : MODE80_NORMAL);
+            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? MODE80_INV : MODE80_INV_OFF);
         } else {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? "\x1b\x5d" : "\x1b\x5c");
         }
@@ -1746,7 +1746,11 @@ static bool eval_string_tty() {
     }
 
     if (fn == TOKEN_KEYWORD_UNDERLINE) {
-        snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? "\x1b\x5a" : "\x1b\x59");
+        if (bmem->bstate.screen_mode) {
+            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? MODE80_UNDERLINE : MODE80_UNDERLINE_OFF);
+        } else {
+            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? "\x1b\x5a" : "\x1b\x59");
+        }
         goto EVAL;
     }
 

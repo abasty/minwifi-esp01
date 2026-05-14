@@ -60,8 +60,12 @@
 #define MODE80_PAPER_DELTA 40
 
 #define MODE80_INV "\x1B[7m"
+#define MODE80_INV_OFF "\x1B[27m"
 #define MODE80_NORMAL "\x1B[m"
 #define MODE80_BLINK "\x1B[5m"
+#define MODE80_BLINK_OFF "\x1B[25m"
+#define MODE80_UNDERLINE "\x1B[4m"
+#define MODE80_UNDERLINE_OFF "\x1B[24m"
 #define MODE80_ROULEAU_ON "\x1B[?4l"
 #define MODE80_ROULEAU_OFF "\x1B[<4h"
 
