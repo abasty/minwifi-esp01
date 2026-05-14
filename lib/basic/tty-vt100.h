@@ -35,8 +35,34 @@
 
 #define P_ROULEAU_ON ""
 #define P_ROULEAU_OFF ""
+#define P_CLAVIER_MINUSCULE ""
+#define P_CLAVIER_ETENDU ""
 
 #define P_ACK_OFF_PRISE ""
 #define P_LOCAL_ECHO_OFF ""
+
+#define P_40_COLS "\x1B[?3l"
+#define P_80_COLS "\x1B[?3h"
+
+// Mode 80 colonnes - codes VT100 standards
+#define MODE80_CLS "\x1B[2J\x1B[H"
+#define MODE80_CLEOL "\x1B[K"
+#define MODE80_CON "\x1B[?25h"
+#define MODE80_COFF "\x1B[?25l"
+#define MODE80_CUR "\x1B[%d;%dH"
+#define MODE80_CUR_DELTA_V 0
+#define MODE80_CUR_DELTA_H 0
+#define MODE80_CUD1 "\x1B[1B"
+
+#define MODE80_INK "\x1B[%dm"
+#define MODE80_INK_DELTA 30
+#define MODE80_PAPER "\x1B[%dm"
+#define MODE80_PAPER_DELTA 40
+
+#define MODE80_INV "\x1B[7m"
+#define MODE80_NORMAL "\x1B[m"
+#define MODE80_BLINK "\x1B[5m"
+#define MODE80_ROULEAU_ON "\x1B[?4l"
+#define MODE80_ROULEAU_OFF "\x1B[<4h"
 
 #endif // TTY_VT100_H

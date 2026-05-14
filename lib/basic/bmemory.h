@@ -90,6 +90,8 @@ struct eval_state_s {
     uint8_t reset: 1;
     uint8_t debug: 1;
     uint8_t g_mode: 1;
+    uint8_t screen_mode: 1;
+    uint8_t scroll_mode;
 
     prog_buffer_t token_buffer;
 };

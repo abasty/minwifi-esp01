@@ -26,7 +26,7 @@
 #ifndef TTY_MINITEL_H
 #define TTY_MINITEL_H
 
-#define CODE_SEQUENCE_MAX_SIZE 12
+#define CODE_SEQUENCE_MAX_SIZE 32
 
 #define DEL "\x08 \x08"
 
@@ -102,5 +102,26 @@
 // Mode terminal (40/80 cols)
 #define P_80_COLS PRO2 "\x32\x7d"
 #define P_40_COLS PRO2 "\x32\x7e"
+
+// Mode 80 colonnes - codes ANSI-like pour mode 80 colonnes
+#define MODE80_CLS "\x1B[2J\x1B[H"
+#define MODE80_CLEOL "\x1B[K"
+#define MODE80_CON "\x1B[<1l"
+#define MODE80_COFF "\x1B[<1h"
+#define MODE80_CUR "\x1B[%d;%dH"
+#define MODE80_CUR_DELTA_V 0
+#define MODE80_CUR_DELTA_H 0
+#define MODE80_CUD1 "\x1B[1B"
+
+#define MODE80_INK "\x1B[%dm"
+#define MODE80_INK_DELTA 30
+#define MODE80_PAPER "\x1B[%dm"
+#define MODE80_PAPER_DELTA 40
+
+#define MODE80_INV "\x1B[7m"
+#define MODE80_NORMAL "\x1B[m"
+#define MODE80_BLINK "\x1B[5m"
+#define MODE80_ROULEAU_ON "\x1B\x3A\x69\x43"
+#define MODE80_ROULEAU_OFF "\x1B\x3A\x6A\x43"
 
 #endif // TTY_MINITEL_H

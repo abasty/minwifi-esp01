@@ -57,6 +57,9 @@ En display filter on peut mettre : `not tcp.len == 0`
 ## Fonctionnalités
 
 * [x] MODE (mode écran, 0,1: Videotext + Clavier étendu, 2:Téléinformatique)
+* [ ] MODE 2 : Commandes TTY
+  - [ ] Conserver le mode dans bstate
+  - [ ] Changer les commandes TTY en mode 80 colones pour suivre "mode80.md"
 * [ ] Design + Commande mode "Connexion Téléphone" (peut-on utiliser un URN TCP
   et la commande MINITEL vers un service Kiosque serveur sur le téléphone ?)
 * [ ] CAT, FTP CAT : version avec filtre (expression régulière)  et options
