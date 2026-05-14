@@ -383,12 +383,6 @@ static uint8_t eval_graphic_fn(uint8_t fn, int8_t x, int8_t y, char *codes) {
     }
     if (bmem->bstate.screen_mode) {
         codes += sprintf(codes, MODE80_CUR, L + MODE80_CUR_DELTA_V, C + MODE80_CUR_DELTA_H);
-        if (bmem->paper != 0) {
-            codes += sprintf(codes, MODE80_PAPER, bmem->paper + MODE80_PAPER_DELTA);
-        }
-        if (bmem->ink != 7) {
-            codes += sprintf(codes, MODE80_INK, bmem->ink + MODE80_INK_DELTA);
-        }
     } else {
         codes += sprintf(codes, CUR, L + CUR_DELTA_V, C + CUR_DELTA_H);
         if (bmem->paper != 0) {
@@ -1703,7 +1697,7 @@ static bool eval_string_tty() {
     if (fn == TOKEN_KEYWORD_INK) {
         bmem->ink = arg1;
         if (bmem->bstate.screen_mode) {
-            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, MODE80_INK, arg1 + MODE80_INK_DELTA);
+            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s", arg1 == 7 ? MODE80_BOLD : MODE80_BOLD_OFF);
         } else {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, INK, arg1 + INK_DELTA);
         }
@@ -1711,9 +1705,7 @@ static bool eval_string_tty() {
     }
     if (fn == TOKEN_KEYWORD_PAPER) {
         bmem->paper = arg1;
-        if (bmem->bstate.screen_mode) {
-            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, MODE80_PAPER, arg1 + MODE80_PAPER_DELTA);
-        } else {
+        if (!bmem->bstate.screen_mode) {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, PAPER, arg1 + PAPER_DELTA);
         }
         goto EVAL;

@@ -113,11 +113,8 @@
 #define MODE80_CUR_DELTA_H 0
 #define MODE80_CUD1 "\x1B[1B"
 
-#define MODE80_INK "\x1B[%dm"
-#define MODE80_INK_DELTA 30
-#define MODE80_PAPER "\x1B[%dm"
-#define MODE80_PAPER_DELTA 40
-
+#define MODE80_BOLD "\x1B[1m"
+#define MODE80_BOLD_OFF "\x1B[22m"
 #define MODE80_INV "\x1B[7m"
 #define MODE80_INV_OFF "\x1B[27m"
 #define MODE80_NORMAL "\x1B[m"
