@@ -34,9 +34,10 @@ SRC = ..
 
 SOURCES := $(wildcard $(SRC)/*.c ./*.c)
 
+# Exclude test_bugs.c from the main bastos binary (it has its own main/HAL)
 OBJECTS := \
 	$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(wildcard $(SRC)/*.c)) \
-	$(patsubst ./%.c, $(OBJ)/%.o, $(wildcard ./*.c))
+	$(patsubst ./%.c, $(OBJ)/%.o, $(filter-out ./test_bugs.c, $(wildcard ./*.c)))
 
 # include compiler-generated dependency rules
 DEPENDS := $(OBJECTS:.o=.d)
@@ -82,6 +83,17 @@ run: $(BIN)/$(EXE)
 .PHONY: memcheck
 memcheck: $(BIN)/$(EXE)
 	valgrind --leak-check=full --show-leak-kinds=all $(BIN)/$(EXE)
+
+# test_bugs: separate binary (bio.c + test_bugs.c, no bastos.c)
+TEST_BUGS_EXE = $(BIN)/test_bugs
+TEST_BUGS_OBJECTS = $(OBJ)/bio.o $(OBJ)/test_bugs.o
+
+$(TEST_BUGS_EXE): $(OBJ) $(BIN) $(TEST_BUGS_OBJECTS)
+	$(LD) $(LDFLAGS) $(TEST_BUGS_OBJECTS) $(LDLIBS) -o $@
+
+.PHONY: test_bugs
+test_bugs: $(TEST_BUGS_EXE)
+	./$(TEST_BUGS_EXE)
 
 # remove previous build and objects
 .PHONY: clean
