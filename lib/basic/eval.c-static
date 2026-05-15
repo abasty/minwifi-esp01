@@ -669,7 +669,9 @@ static bool eval_string_str() {
         if (!bmem->bstate.string)
             return false;
 
-        sprintf(string_cstr(bmem->bstate.string), "%g", bmem->bstate.number);
+        int slen = sprintf(string_cstr(bmem->bstate.string), "%g", bmem->bstate.number);
+        ((uint8_t *)bmem->bstate.string)[0] = (uint8_t)(slen & 0xff);
+        ((uint8_t *)bmem->bstate.string)[1] = (uint8_t)(slen >> 8);
     }
 
     return true;

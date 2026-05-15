@@ -160,8 +160,9 @@ var_t *bastos_var_get(const char *name) {
     char typed_name[len + 2];
     typed_name[0] =
         name[len - 1] == '$' ? TOKEN_VARIABLE_STRING : TOKEN_VARIABLE_NUMBER;
-    strncpy(typed_name + 1, name, len - 1);
-    typed_name[len] = 0;
+    size_t copy_len = (name[len - 1] == '$') ? len - 1 : len;
+    strncpy(typed_name + 1, name, copy_len);
+    typed_name[copy_len + 1] = '\0';
 
     return bmem_var_get(typed_name);
 }

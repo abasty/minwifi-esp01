@@ -34,9 +34,10 @@ SRC = ..
 
 SOURCES := $(wildcard $(SRC)/*.c ./*.c)
 
+# Exclude test_bugs.c from the main bastos binary (it has its own main/HAL)
 OBJECTS := \
 	$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(wildcard $(SRC)/*.c)) \
-	$(patsubst ./%.c, $(OBJ)/%.o, $(wildcard ./*.c))
+	$(patsubst ./%.c, $(OBJ)/%.o, $(filter-out ./test_bugs.c, $(wildcard ./*.c)))
 
 # include compiler-generated dependency rules
 DEPENDS := $(OBJECTS:.o=.d)

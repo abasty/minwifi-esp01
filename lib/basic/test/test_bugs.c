@@ -330,6 +330,7 @@ static void test_bug4_var_get(void) {
     /* Set a single-letter numeric variable via BASIC */
     bastos_send_keys("LET A=42\r", 9, false);
     bastos_loop();
+        bastos_loop();
 
     /*
      * Before fix: strncpy(typed_name+1, "A", len-1=0) copies 0 chars.
