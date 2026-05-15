@@ -83,6 +83,17 @@ run: $(BIN)/$(EXE)
 memcheck: $(BIN)/$(EXE)
 	valgrind --leak-check=full --show-leak-kinds=all $(BIN)/$(EXE)
 
+# test_bugs: separate binary (bio.c + test_bugs.c, no bastos.c)
+TEST_BUGS_EXE = $(BIN)/test_bugs
+TEST_BUGS_OBJECTS = $(OBJ)/bio.o $(OBJ)/test_bugs.o
+
+$(TEST_BUGS_EXE): $(OBJ) $(BIN) $(TEST_BUGS_OBJECTS)
+	$(LD) $(LDFLAGS) $(TEST_BUGS_OBJECTS) $(LDLIBS) -o $@
+
+.PHONY: test_bugs
+test_bugs: $(TEST_BUGS_EXE)
+	./$(TEST_BUGS_EXE)
+
 # remove previous build and objects
 .PHONY: clean
 clean:
