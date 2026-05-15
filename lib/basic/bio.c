@@ -55,10 +55,15 @@
 #include "token.c-static"
 
 void bastos_init(void) {
-    bmem_init(malloc(BASTOS_MEMORY_SIZE), BASTOS_MEMORY_SIZE);
+    void *mem = malloc(BASTOS_MEMORY_SIZE);
+    if (mem == NULL)
+        return;
+    bmem_init(mem, BASTOS_MEMORY_SIZE);
 }
 
 void bastos_done() {
+    if (bmem == NULL)
+        return;
     hal_net_disconnect(DB_MIN_SET, bmem->sock);
     hal_net_disconnect(DB_FTP_SET, -1);
     hal_wifi_disconnect();
@@ -514,6 +519,7 @@ static void parse_utf8_to_minitel(char *dst, size_t dst_size, const char *src) {
             src += 2;
         } else {
             *dst++ = *src++;
+            dst_size--;
         }
     }
     *dst = 0;
