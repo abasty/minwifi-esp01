@@ -52,6 +52,9 @@
 
 /* ---- Output capture ---------------------------------------------------- */
 
+/* Large enough to hold any realistic BASIC program output in tests.        */
+/* The BASIC interpreter's own io_buffer is 4096 bytes; 16384 gives us      */
+/* comfortable headroom for multi-line output without arbitrary truncation. */
 #define OUTPUT_BUF_SIZE 16384
 static char g_output[OUTPUT_BUF_SIZE];
 static int  g_output_len = 0;
@@ -62,7 +65,8 @@ static void capture_clear(void) {
 }
 
 static void capture_append(const char *s, int len) {
-    if (g_output_len + len < OUTPUT_BUF_SIZE - 1) {
+    /* Reserve one byte for the null terminator. */
+    if (g_output_len + len <= OUTPUT_BUF_SIZE - 1) {
         memcpy(g_output + g_output_len, s, len);
         g_output_len += len;
         g_output[g_output_len] = '\0';
