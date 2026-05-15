@@ -217,13 +217,21 @@ static var_t *bmem_var_string_set(const char *name, char *value, bool is_cstr) {
     strncpy(tmp, name, B_NAME_SIZE_MAX - 1);
     tmp[B_NAME_SIZE_MAX - 1] = 0;
 
+    // Compute length before potential unset (unset memmoves vars, which may
+    // invalidate 'value' if it points into the vars area)
+    uint16_t len = is_cstr ? strlen(value) : string_len(value);
+
     // Remove the variable if it already exists
     var_t *var = bmem_var_get(name);
-    if (var != 0)
+    if (var != 0) {
+        // If value points into the vars area below var, bmem_var_unset will
+        // memmove that region upward by size(var). Adjust value accordingly.
+        if (!is_cstr && (uint8_t *)value >= bmem->vars_start &&
+                        (uint8_t *)value < (uint8_t *)var) {
+            value = value + bmem_var_size(var);
+        }
         bmem_var_unset(var);
-
-    // Create the variable
-    uint16_t len = is_cstr ? strlen(value) : string_len(value);
+    }
     var = bmem_var_new(tmp, TOKEN_VARIABLE_STRING, len, 0);
     if (var == 0)
         goto finalize;
