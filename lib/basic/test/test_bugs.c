@@ -203,11 +203,22 @@ int hal_get_function_key(void) { return 0; }
 static const char *run_program(const char **lines) {
     bastos_init();
 
+    /*
+     * bastos_init() places an initial command in io_buffer (the "bastos"
+     * splash).  Drain it — and any other queued init commands — before we
+     * start entering program lines.  bastos_loop() is a no-op when
+     * io_buffer is empty, so extra calls are harmless.
+     */
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
     /* Enter each program line (line_no + statement) */
     for (const char **l = lines; *l != NULL; l++) {
         char buf[256];
         snprintf(buf, sizeof(buf), "%s\r", *l);
         bastos_send_keys(buf, strlen(buf), false);
+        /* Two calls: one may be needed for a previous residual, one for ours */
+        bastos_loop();
         bastos_loop();
     }
 
@@ -252,20 +263,23 @@ static void test_bug1_unplot(void) {
      * same row L).  After UNPLOT (0,0), pixel (1,0) must still be set.
      *
      * Before fix: *addr &= !cbit → *addr &= 0 → entire cell zeroed.
-     *             TEST(1,0) == 0  →  BASIC prints "FAIL"
+     *             TEST 1,0 == 0  →  IF condition is false, "PASS" never printed.
      * After fix:  *addr &= ~cbit → only bit for (0,0) cleared.
-     *             TEST(1,0) != 0  →  BASIC prints "PASS"
+     *             TEST 1,0 != 0  →  IF condition is true → "PASS" is printed.
+     *
+     * Note: this BASIC variant does not support ELSE on the same line as IF/THEN,
+     * so we use a single IF THEN without an ELSE branch.
      */
     const char *lines[] = {
         "10 PLOT 0,0",
         "20 PLOT 1,0",
         "30 UNPLOT 0,0",
-        "40 IF TEST(1,0) > 0 THEN PRINT \"PASS\" ELSE PRINT \"FAIL\"",
+        "40 IF TEST 1,0 > 0 THEN PRINT \"PASS\"",
         NULL
     };
     const char *out = run_program(lines);
     check("UNPLOT clears only target pixel; neighbour pixel survives",
-          strstr(out, "PASS") != NULL && strstr(out, "FAIL") == NULL);
+          strstr(out, "PASS") != NULL);
 }
 
 /* ======================================================================== */
@@ -289,12 +303,12 @@ static void test_bug2_string_slice(void) {
     const char *lines[] = {
         "10 LET A$ = \"HELLO\"",
         "20 LET B$ = A$(4,2)",
-        "30 IF LEN(B$) = 0 THEN PRINT \"PASS\" ELSE PRINT \"FAIL\"",
+        "30 IF LEN(B$) = 0 THEN PRINT \"PASS\"",
         NULL
     };
     const char *out = run_program(lines);
     check("A$(start,end) with start > end yields empty string (no error)",
-          strstr(out, "PASS") != NULL && strstr(out, "FAIL") == NULL);
+          strstr(out, "PASS") != NULL);
 }
 
 /* ======================================================================== */
@@ -358,11 +372,11 @@ static void test_bug6_str_length(void) {
      *             LEN reads the header → 4. PASS.
      */
     const char *lines[] = {
-        "10 IF LEN(STR$(3.14)) = 4 THEN PRINT \"PASS\" ELSE PRINT \"FAIL\"",
+        "10 IF LEN(STR$(3.14)) = 4 THEN PRINT \"PASS\"",
         NULL
     };
     const char *out = run_program(lines);
-    check("LEN(STR$(3.14)) == 4", strstr(out, "PASS") != NULL && strstr(out, "FAIL") == NULL);
+    check("LEN(STR$(3.14)) == 4", strstr(out, "PASS") != NULL);
 }
 
 /* ======================================================================== */

@@ -379,7 +379,7 @@ static uint8_t eval_graphic_fn(uint8_t fn, int8_t x, int8_t y, char *codes) {
     if (fn == TOKEN_KEYWORD_PLOT) {
         *addr |= cbit;
     } else if (fn == TOKEN_KEYWORD_UNPLOT) {
-        *addr &= !cbit;
+        *addr &= ~cbit;
     }
     if (bmem->bstate.screen_mode) {
         codes += sprintf(codes, MODE80_CUR, L + MODE80_CUR_DELTA_V, C + MODE80_CUR_DELTA_H);
