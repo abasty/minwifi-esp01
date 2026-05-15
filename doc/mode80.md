@@ -68,15 +68,18 @@
 
 ---
 
-# Page 91
+# ATTRIBUTS
 
-| Séquence | Interprétations | (1) | (2) | (3) |
-| :--- | :--- | :---: | :---: | :---: |
-| | **ATTRIBUT** | | | |
-| CSI Pn 6/D | Activation/désactivation des attributs de caractère en format 80 colonnes exclusivement ;<br>- si Pn=3/0 aucun attribut<br>- si Pn=3/1 activation surintensité<br>- si Pn=3/2 3/2 désactivation surintensité<br>- si Pn=3/4 activation souligné<br>- si Pn=3/2 3/4 désactivation souligné<br>- si Pn=3/5 activation clignotant<br>- si Pn=3/2 3/5 désactivation clignotant<br>- si Pn=3/7 activation fond inversé<br>- si Pn=3/2 3/7 désactivation fond inversé | | ● | ● |
 
-(1) Standard Télétel mode Vidéotex.
-(2) Standard Télétel mode Mixte.
-(3) Standard Téléinformatique.
-● indique que la commande est valide dans le mode ou standard courant.
-■ Commande n'existant pas sur M1B.
+Activation/désactivation des attributs de caractère en format 80 colonnes
+exclusivement : CSI Pn 6/D
+
+- si Pn=3/0 aucun attribut
+- si Pn=3/1 activation surintensité
+- si Pn=3/2 3/2 désactivation surintensité
+- si Pn=3/4 activation souligné
+- si Pn=3/2 3/4 désactivation souligné
+- si Pn=3/5 activation clignotant
+- si Pn=3/2 3/5 désactivation clignotant
+- si Pn=3/7 activation fond inversé
+- si Pn=3/2 3/7 désactivation fond inversé
