@@ -395,8 +395,8 @@ BASTOS dispose d'un magasin clé/valeur organisé en sets numérotés.
 GET set                      ' Renvoie toutes les clés du set sous forme de chaîne
 GET set, "clé"               ' Renvoie la valeur associée à une clé
 PUT set, "clé", "valeur"     ' Stocker ou mettre à jour une paire clé/valeur
-DB LIST n                    ' Lister toutes les entrées du set n
-DB ERASE n, "clé"            ' Supprimer une entrée par clé dans le set n
+DB LIST set                    ' Lister toutes les entrées du set
+DB ERASE set, "clé"            ' Supprimer une entrée par clé du set
 ```
 
 Les sets sont numérotés à partir de 0. Clés et valeurs sont des chaînes. Les connexions WiFi, Minitel et FTP utilisent des sets spécifiques pour persister leur configuration.

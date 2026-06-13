@@ -393,8 +393,8 @@ BASTOS provides a simple key/value store organized in numbered sets.
 GET set              ' Returns all keys of the set as a string
 GET set, "key"       ' Returns the value associated with a key
 PUT set, "key", "value"  ' Store or update a key/value pair
-DB LIST n            ' List all entries in set n
-DB ERASE n, "key"    ' Delete entry by key from set n
+DB LIST set            ' List all entries in set
+DB ERASE set, "key"    ' Delete entry by key from set
 ```
 
 Sets are numbered starting from 0. Keys and values are strings. WiFi, Minitel, and FTP connections use specific sets to persist their configuration.
