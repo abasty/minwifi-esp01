@@ -114,12 +114,11 @@ Codes VKEY des touches de fonction du Minitel :
 Les touches non imprimables (comme les touches de fonction) ne peuvent pas être lues comme des caractères réguliers. Utiliser `CODE INKEY$` pour obtenir le code numérique :
 
 ```basic
-10 k$ = INKEY$
+10 k = CODE INKEY$
 20 PAUSE 100
-30 k = CODE k$
-40 IF k = 0 THEN GOTO 10
-50 PRINT "Code touche : "; k
-60 GOTO 10
+30 IF k = 0 THEN GOTO 10
+40 PRINT "Code touche : "; k
+50 GOTO 10
 ```
 
 Lecture non bloquante (sans attente) :

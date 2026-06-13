@@ -113,12 +113,11 @@ VKEY codes for Minitel function keys:
 Non-printable keys (like function keys) cannot be read as regular characters. Use `CODE INKEY$` to get the numeric code:
 
 ```basic
-10 k$ = INKEY$
+10 k = CODE INKEY$
 20 PAUSE 100
-30 k = CODE k$
-40 IF k = 0 THEN GOTO 10
-50 PRINT "Key code: "; k
-60 GOTO 10
+30 IF k = 0 THEN GOTO 10
+40 PRINT "Key code: "; k
+50 GOTO 10
 ```
 
 Non-blocking key read (no wait):
