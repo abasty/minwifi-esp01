@@ -41,7 +41,7 @@ sans numéro, est interprétée immédiatement (mode interactif).
 
 ---
 
-## PRINT / INPUT
+## Entrées / Sorties
 
 ### PRINT
 
@@ -75,10 +75,12 @@ Positionner l'affichage avec `AT ligne, col` :
 AT 5, 10; "Bonjour"
 ```
 
-Rediriger tout l'affichage vers une variable chaîne :
+### OUTPUT
+
+Rediriger l'affichage vers une variable chaîne :
 
 ```basic
-OUTPUT START m$
+OUTPUT m$
 CLS
 AT 10, 13; "*** METEOR ***"
 OUTPUT STOP
@@ -111,6 +113,13 @@ Codes VKEY des touches de fonction du Minitel :
 | SOMMAIRE | 6 | Termine la saisie |
 | GUIDE | 14 | Termine la saisie |
 
+Lecture non bloquante (sans attente) :
+
+```basic
+k$ = INKEY$
+IF k$ <> "" THEN PRINT "Touche : " k$
+```
+
 Les touches non imprimables (comme les touches de fonction) ne peuvent pas être
 lues comme des caractères réguliers. Utiliser `CODE INKEY$` pour obtenir le code
 numérique :
@@ -121,13 +130,6 @@ numérique :
 30 IF k = 0 THEN GOTO 10
 40 PRINT "Code touche : "; k
 50 GOTO 10
-```
-
-Lecture non bloquante (sans attente) :
-
-```basic
-k$ = INKEY$
-IF k$ <> "" THEN PRINT "Touche : " k$
 ```
 
 ---

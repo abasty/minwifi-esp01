@@ -41,7 +41,7 @@ immediately (interactive mode).
 
 ---
 
-## PRINT / INPUT
+## Input / Output
 
 ### PRINT
 
@@ -75,10 +75,12 @@ Position output with `AT line, col`:
 AT 5, 10; "Hello"
 ```
 
-Redirect all output to a string variable:
+### OUTPUT
+
+Redirect output to a string variable:
 
 ```basic
-OUTPUT START m$
+OUTPUT m$
 CLS
 AT 10, 13; "*** METEOR ***"
 OUTPUT STOP
@@ -111,6 +113,13 @@ VKEY codes for Minitel function keys:
 | SOMMAIRE | 6 | Ends input |
 | GUIDE | 14 | Ends input |
 
+Non-blocking key read (no wait):
+
+```basic
+k$ = INKEY$
+IF k$ <> "" THEN PRINT "Pressed: " k$
+```
+
 Non-printable keys (like function keys) cannot be read as regular characters.
 Use `CODE INKEY$` to get the numeric code:
 
@@ -120,13 +129,6 @@ Use `CODE INKEY$` to get the numeric code:
 30 IF k = 0 THEN GOTO 10
 40 PRINT "Key code: "; k
 50 GOTO 10
-```
-
-Non-blocking key read (no wait):
-
-```basic
-k$ = INKEY$
-IF k$ <> "" THEN PRINT "Pressed: " k$
 ```
 
 ---
