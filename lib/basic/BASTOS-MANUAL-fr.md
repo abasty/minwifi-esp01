@@ -12,6 +12,47 @@ sans numéro, est interprétée immédiatement (mode interactif).
 
 ---
 
+## Modes de BASTOS
+
+BASTOS dispose de trois modes opérationnels :
+
+- **Mode interactif** : Les lignes entrées sont interprétées immédiatement. Si
+  une ligne possède un numéro, elle est enregistrée dans le programme. C'est le
+  mode d'entrée des commandes et d'édition des lignes de programme.
+
+- **Mode exécution** : Un programme est en train de s'exécuter (lancé avec `RUN`
+  ou `GOTO`). Le clavier peut être lu avec `INPUT`, `VKEY` et `INKEY$`. Appuyer
+  deux fois sur ESC permet de sortir du mode exécution et de revenir au mode
+  interactif.
+
+- **Mode connecté** : BASTOS est connecté à un serveur via la commande `MINITEL`.
+  Les entrées clavier sont envoyées au serveur, et l'écran affiche la réponse du
+  serveur. Appuyer deux fois sur ESC permet de sortir du mode connecté et de
+  revenir au mode précédent (soit exécution, soit interactif).
+
+```mermaid
+stateDiagram-v2
+    interactif: Mode interactif
+    execution: Mode exécution
+    connecte: Mode connecté
+    
+    [*] --> interactif
+    interactif --> execution: RUN / GOTO
+    interactif --> connecte: MINITEL
+    execution --> interactif: ESC ESC
+    execution --> connecte: MINITEL
+    connecte --> execution: ESC ESC
+    connecte --> interactif: ESC ESC
+    
+    linkStyle 1 stroke:#0066cc
+    linkStyle 2 stroke:#00cc66
+    linkStyle 3 stroke:#ff6600
+    linkStyle 4 stroke:#00cc66
+    linkStyle 5,6 stroke:#ff6600
+```
+
+---
+
 ## Commandes du programme
 
 | Commande | Description |

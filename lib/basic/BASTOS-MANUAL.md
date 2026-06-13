@@ -12,6 +12,46 @@ immediately (interactive mode).
 
 ---
 
+## BASTOS Modes
+
+BASTOS has three operational modes:
+
+- **Interactive mode**: Entered lines are interpreted immediately. If a line has
+  a line number, it is stored in the program. This is the command entry and
+  program line editing mode.
+
+- **Execution mode**: A program is running (started with `RUN` or `GOTO`). The
+  keyboard can be read with `INPUT`, `VKEY`, and `INKEY$`. Press ESC twice to
+  exit execution and return to interactive mode.
+
+- **Connected mode**: BASTOS is connected to a server via the `MINITEL` command.
+  Keyboard input is sent to the server, and screen output displays the server's
+  response. Press ESC twice to exit connected mode and return to the previous
+  mode (either execution or interactive).
+
+```mermaid
+stateDiagram-v2
+    interactive: Interactive mode
+    execution: Execution mode
+    connected: Connected mode
+    
+    [*] --> interactive
+    interactive --> execution: RUN / GOTO
+    interactive --> connected: MINITEL
+    execution --> interactive: ESC ESC
+    execution --> connected: MINITEL
+    connected --> execution: ESC ESC
+    connected --> interactive: ESC ESC
+    
+    linkStyle 1 stroke:#0066cc
+    linkStyle 2 stroke:#00cc66
+    linkStyle 3 stroke:#ff6600
+    linkStyle 4 stroke:#00cc66
+    linkStyle 5,6 stroke:#ff6600
+```
+
+---
+
 ## Program commands
 
 | Command | Description |
