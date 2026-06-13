@@ -22,9 +22,9 @@ BASTOS dispose de trois modes opérationnels :
   mode d'entrée des commandes et d'édition des lignes de programme.
 
 - **Mode exécution** : Un programme est en train de s'exécuter (lancé avec `RUN`
-  ou `GOTO`). Le clavier peut être lu avec `INPUT`, `VKEY` et `INKEY$`. Appuyer
-  deux fois sur ESC permet de sortir du mode exécution et de revenir au mode
-  interactif.
+  ou `GOTO`). Le clavier peut être lu avec `INPUT`, `VKEY` et `INKEY$`. L'écran
+  est contrôlé par `PRINT` et les commandes TTY. Appuyer deux fois sur ESC permet
+  de sortir du mode exécution et de revenir au mode interactif.
 
 - **Mode connecté** : BASTOS est connecté à un serveur via la commande `MINITEL`.
   Les entrées clavier sont envoyées au serveur, et l'écran affiche la réponse du
