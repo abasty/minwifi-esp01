@@ -521,7 +521,8 @@ PRINT INK(3) "hello"     ' inline: set color then print
 m$ = AT(10,13) + "hi"   ' build a string with positioning
 ```
 
-In Teletext mode (≤1), TTY functions emit Videotex sequences. In VT100 mode (≥2), they emit CSI sequences (`ESC [ ...`).
+In Teletext mode (≤1), TTY functions emit Videotex sequences. In 80-column mode
+(≥2), they emit CSI sequences (`ESC [ ...`).
 
 ### Screen
 
@@ -530,7 +531,7 @@ CLS                  ' Clear screen
 CLEOL                ' Clear to end of line
 CURSOR n             ' 0=hide, 1=show cursor
 BEEP                 ' Sound bell
-MODE n               ' Screen mode: ≤1 = 40 cols Teletext, ≥2 = 80 cols VT100
+MODE n               ' Screen mode: ≤1 = 40 cols Teletext, ≥2 = 80-column
 ```
 
 ### Cursor positioning
@@ -545,13 +546,14 @@ Lines and columns are 1-indexed.
 
 ```basic
 INK color            ' Foreground color (0-7)
-PAPER color          ' Background color (0-7); no effect in VT100 mode (≥2)
+PAPER color          ' Background color (0-7); no effect in 80-column mode (≥2)
 FLASH n              ' 0=off, 1=blinking
 INVERSE n            ' 0=normal, 1=inverted
 UNDERLINE n          ' 0=off, 1=underlined
 ```
 
-In VT100 mode, `INK 7` enables bold/bright; `INK 0`–`6` disables it. `PAPER` has no effect.
+In 80-column mode, `INK 7` enables bold/bright; `INK 0`–`6` disables it. `PAPER`
+has no effect.
 
 ### Graphics
 

@@ -523,7 +523,8 @@ PRINT INK(3) "bonjour"   ' en ligne : changer la couleur puis afficher
 m$ = AT(10,13) + "hi"   ' construire une chaîne avec positionnement
 ```
 
-En mode Teletext (≤1), les fonctions TTY émettent des séquences Vidéotex. En mode VT100 (≥2), elles émettent des séquences CSI (`ESC [ ...`).
+En mode Teletext (≤1), les fonctions TTY émettent des séquences Vidéotex. En
+mode téléinformatique (≥2), elles émettent des séquences CSI (`ESC [ ...`).
 
 ### Écran
 
@@ -532,7 +533,7 @@ CLS                  ' Effacer l'écran
 CLEOL                ' Effacer jusqu'à la fin de ligne
 CURSOR n             ' 0=masquer, 1=afficher le curseur
 BEEP                 ' Émettre un bip
-MODE n               ' Mode écran : ≤1 = 40 cols Teletext, ≥2 = 80 cols VT100
+MODE n               ' Mode écran : ≤1 = 40 cols Teletext, ≥2 = 80 cols téléinformatique
 ```
 
 ### Positionnement du curseur
@@ -547,13 +548,14 @@ Lignes et colonnes sont indexées à partir de 1.
 
 ```basic
 INK couleur          ' Couleur de premier plan (0-7)
-PAPER couleur        ' Couleur d'arrière-plan (0-7) ; sans effet en mode VT100 (≥2)
+PAPER couleur        ' Couleur d'arrière-plan (0-7) ; sans effet en mode téléinformatique (≥2)
 FLASH n              ' 0=normal, 1=clignotant
 INVERSE n            ' 0=normal, 1=vidéo inverse
 UNDERLINE n          ' 0=normal, 1=souligné
 ```
 
-En mode VT100, `INK 7` active la surbrillance ; `INK 0`–`6` la désactive. `PAPER` est sans effet.
+En mode téléinformatique, `INK 7` active la surbrillance ; `INK 0`–`6` la
+désactive. `PAPER` est sans effet.
 
 ### Graphiques
 
