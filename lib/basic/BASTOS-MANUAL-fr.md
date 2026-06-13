@@ -79,8 +79,8 @@ Rediriger tout l'affichage vers une variable chaîne :
 
 ```basic
 OUTPUT START m$
-  CLS
-  AT 10, 13; "*** METEOR ***"
+CLS
+AT 10, 13; "*** METEOR ***"
 OUTPUT STOP
 PRINT m$
 ```
