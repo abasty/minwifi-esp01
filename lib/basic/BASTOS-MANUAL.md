@@ -11,6 +11,12 @@ immediately (interactive mode).
 30 GOTO 10
 ```
 
+BASTOS runs on SonOff Basic modules connected via serial port to Minitel 1B,
+Minitel 2 or Magic Club terminals, using their keyboard and screen. It connects
+to the Internet via WiFi (`WIFI` command), accesses Minitel servers over TCP or
+WebSockets (`MINITEL` command), and exchanges files with FTP servers (`FTP`
+command).
+
 ---
 
 ## BASTOS Modes
@@ -81,7 +87,7 @@ flowchart TD
 
 ## Input / Output
 
-### PRINT
+### Output to screen
 
 Prints expressions to the screen, followed by a newline. `?` is a shorthand
 for `PRINT`.
@@ -96,8 +102,8 @@ PRINT                        ' Print empty line
 Use a trailing `;` to suppress the final newline:
 
 ```basic
-PRINT "Enter value: ";
-INPUT n
+10 PRINT "Enter value: ";
+20 INPUT n
 ```
 
 Numeric expressions and string variables can be mixed freely:
@@ -113,7 +119,91 @@ Position output with `AT line, col`:
 AT 5, 10; "Hello"
 ```
 
-### OUTPUT
+### Minitel Screen Control
+
+The screen has two display modes: **Videotex (40 columns)** and
+**Téléinformatique (80 columns)**. Line 0 is a status line; the display area
+consists of 24 lines below it. Accessing line 0 with `LINE0` (equivalent to
+`AT 0,1`) saves the current cursor position and attributes. To exit line 0
+and return to the display area, use `AT` or `"\n"` (newline); `"\n"`
+restores both the saved position and attributes.
+
+Characters are drawn from two sets: **G0 (ASCII)** for regular text, and **G1
+(semi-graphics)** for pixel-based graphics. On G0, attributes are either local
+(INK, INVERSE, FLASH, SIZE) or global (PAPER, UNDERLINE); global attributes must
+be preceded by a space separator. On G1, all attributes are local and require no
+separator; however, SIZE and INVERSE are not supported, and UNDERLINE controls
+disjoint semi-graphics.
+
+TTY functions return a string containing the corresponding escape sequence. Used
+as a statement, they behave as `PRINT ...; ` (output the sequence with no
+trailing newline). Used as an expression, they can be assigned or embedded in a
+string:
+
+```basic
+CLS                      ' statement: sends clear-screen sequence
+c$ = CLS                 ' expression: stores the sequence in c$
+PRINT INK(3) "hello"     ' inline: set color then print
+m$ = AT(10,13) + "hi"   ' build a string with positioning
+```
+
+In Videotex mode (MODE 0 or MODE 1), TTY functions emit Videotex sequences. In
+80-column mode (MODE 2), they emit CSI sequences (`ESC [ ...`).
+
+#### Screen
+
+```basic
+CLS                  ' Clear screen
+CLEOL                ' Clear to end of line
+CURSOR n             ' 0=hide, 1=show cursor
+BEEP                 ' Sound bell
+MODE n               ' Screen mode: ≤1 = 40 cols Videotex, ≥2 = 80-column
+LINE0                ' Move cursor to line 0, column 1 (status line)
+```
+
+#### Cursor positioning
+
+```basic
+AT line, col; expr
+```
+
+Lines and columns are 1-indexed.
+
+#### Colors and attributes
+
+```basic
+INK color            ' Foreground color (0-7)
+PAPER color          ' Background color (0-7); no effect in 80-column mode (≥2)
+FLASH n              ' 0=off, 1=blinking
+INVERSE n            ' 0=normal, 1=inverted
+UNDERLINE n          ' 0=off, 1=underlined
+```
+
+In 80-column mode, `INK 7` enables bold/bright; `INK 0`–`6` disables it. `PAPER`
+has no effect.
+
+#### Graphics
+
+Each screen character is a semi-graphic matrix of 3 rows × 2 columns of pixels.
+The screen (excluding line 0) has 24 lines of 40 characters, giving **80 pixels
+wide × 72 pixels tall**. The origin **(0, 0) is at the bottom-left corner**: x
+ranges from 0–79 (left to right), y ranges from 0–71 (bottom to top).
+
+```basic
+PLOT x, y            ' Set pixel
+UNPLOT x, y          ' Clear pixel
+TEST(x, y)           ' Returns 1 if pixel set, 0 otherwise
+```
+
+#### Speed
+
+```basic
+SLOW                 ' Normal speed (default)
+FAST                 ' High speed
+FAST2                ' Higher speed
+```
+
+### Output to variable
 
 Redirect output to a string variable:
 
@@ -125,7 +215,7 @@ OUTPUT STOP
 PRINT m$
 ```
 
-### INPUT
+### Keyboard input
 
 Reads a value from the keyboard and assigns it to a variable.
 
@@ -211,7 +301,6 @@ The following images show the mapping between G0 keyboard characters and their
 G1 semi-graphic equivalents:
 
 ![G0↔G1 mapping](g02g1.png)
-![G0↔G1 disjoint mapping](g02g1-dis.png)
 
 ### Supported UTF-8 characters (Minitel conversion)
 
@@ -584,87 +673,3 @@ Example session:
 ```
 
 ---
-
-## Display and TTY
-
-The screen has two display modes: **Videotex (40 columns)** and
-**Téléinformatique (80 columns)**. Line 0 is a status line; the display area
-consists of 24 lines below it. Accessing line 0 with `LINE0` (equivalent to
-`AT 0,1`) saves the current cursor position and attributes. To exit line 0
-and return to the display area, use `AT` or `"\n"` (newline); `"\n"`
-restores both the saved position and attributes.
-
-Characters are drawn from two sets: **G0 (ASCII)** for regular text, and **G1
-(semi-graphics)** for pixel-based graphics. On G0, attributes are either local
-(INK, INVERSE, FLASH, SIZE) or global (PAPER, UNDERLINE); global attributes must
-be preceded by a space separator. On G1, all attributes are local and require no
-separator; however, SIZE and INVERSE are not supported, and UNDERLINE controls
-disjoint semi-graphics.
-
-TTY functions return a string containing the corresponding escape sequence. Used
-as a statement, they behave as `PRINT ...; ` (output the sequence with no
-trailing newline). Used as an expression, they can be assigned or embedded in a
-string:
-
-```basic
-CLS                      ' statement: sends clear-screen sequence
-c$ = CLS                 ' expression: stores the sequence in c$
-PRINT INK(3) "hello"     ' inline: set color then print
-m$ = AT(10,13) + "hi"   ' build a string with positioning
-```
-
-In Teletext mode (≤1), TTY functions emit Videotex sequences. In 80-column mode
-(≥2), they emit CSI sequences (`ESC [ ...`).
-
-### Screen
-
-```basic
-CLS                  ' Clear screen
-CLEOL                ' Clear to end of line
-CURSOR n             ' 0=hide, 1=show cursor
-BEEP                 ' Sound bell
-MODE n               ' Screen mode: ≤1 = 40 cols Teletext, ≥2 = 80-column
-LINE0                ' Move cursor to line 0, column 1 (status line)
-```
-
-### Cursor positioning
-
-```basic
-AT line, col; expr
-```
-
-Lines and columns are 1-indexed.
-
-### Colors and attributes
-
-```basic
-INK color            ' Foreground color (0-7)
-PAPER color          ' Background color (0-7); no effect in 80-column mode (≥2)
-FLASH n              ' 0=off, 1=blinking
-INVERSE n            ' 0=normal, 1=inverted
-UNDERLINE n          ' 0=off, 1=underlined
-```
-
-In 80-column mode, `INK 7` enables bold/bright; `INK 0`–`6` disables it. `PAPER`
-has no effect.
-
-### Graphics
-
-Each screen character is a semi-graphic matrix of 3 rows × 2 columns of pixels.
-The screen (excluding line 0) has 24 lines of 40 characters, giving **80 pixels
-wide × 72 pixels tall**. The origin **(0, 0) is at the bottom-left corner**: x
-ranges from 0–79 (left to right), y ranges from 0–71 (bottom to top).
-
-```basic
-PLOT x, y            ' Set pixel
-UNPLOT x, y          ' Clear pixel
-TEST(x, y)           ' Returns 1 if pixel set, 0 otherwise
-```
-
-### Speed
-
-```basic
-SLOW                 ' Normal speed (default)
-FAST                 ' High speed
-FAST2                ' Higher speed
-```

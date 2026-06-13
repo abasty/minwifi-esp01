@@ -11,6 +11,12 @@ sans numéro, est interprétée immédiatement (mode interactif).
 30 GOTO 10
 ```
 
+BASTOS s'exécute sur les modules SonOff Basic reliés par port série à des
+terminaux Minitel 1B, Minitel 2 ou Magic Club, dont il utilise le clavier et
+l'écran. Il se connecte à Internet via WiFi (commande `WIFI`), accède aux
+serveurs Minitel par TCP ou WebSockets (commande `MINITEL`), et échange des
+fichiers avec des serveurs FTP (commande `FTP`).
+
 ---
 
 ## Modes de BASTOS
@@ -81,7 +87,7 @@ flowchart TD
 
 ## Entrées / Sorties
 
-### PRINT
+### Sortie vers écran
 
 Affiche des expressions à l'écran, suivies d'un saut de ligne. `?` est un
 raccourci pour `PRINT`.
@@ -96,8 +102,8 @@ PRINT                        ' Afficher une ligne vide
 Un `;` en fin de ligne supprime le saut de ligne final :
 
 ```basic
-PRINT "Entrez une valeur : ";
-INPUT n
+10 PRINT "Entrez une valeur : ";
+20 INPUT n
 ```
 
 Les expressions numériques et les chaînes peuvent être mélangées librement :
@@ -113,7 +119,95 @@ Positionner l'affichage avec `AT ligne, col` :
 AT 5, 10; "Bonjour"
 ```
 
-### OUTPUT
+### Contrôle de l'écran du Minitel
+
+L'écran dispose de deux modes d'affichage : **Vidéotex (40 colonnes)** et
+**Téléinformatique (80 colonnes)**. La ligne 0 est une ligne d'état ; la zone
+d'affichage comporte 24 lignes en dessous. L'accès à la ligne 0 avec `LINE0`
+(équivalent à `AT 0,1`) sauvegarde la position courante du curseur et les
+attributs. Pour quitter la ligne 0 et retourner à la zone d'affichage, utiliser
+`AT` ou `"\n"` (saut de ligne) ; `"\n"` restaure à la fois la position
+sauvegardée et les attributs.
+
+Les caractères proviennent de deux jeux : **G0 (ASCII)** pour le texte régulier,
+et **G1 (semi-graphiques)** pour les graphiques à base de pixels. En G0, les
+attributs sont soit locaux (INK, INVERSE, FLASH, SIZE) soit globaux (PAPER,
+UNDERLINE) ; les attributs globaux doivent être précédés d'un séparateur espace.
+En G1, tous les attributs sont locaux et ne nécessitent pas de séparateur ;
+cependant, SIZE et INVERSE ne sont pas supportés, et UNDERLINE gère les
+semi-graphiques disjoints.
+
+Les fonctions TTY renvoient une chaîne contenant la séquence d'échappement
+correspondante. Utilisées comme instruction, elles se comportent comme `PRINT
+...; ` (émettent la séquence sans saut de ligne final). Utilisées comme
+expression, elles peuvent être affectées ou intégrées dans une chaîne :
+
+```basic
+CLS                      ' instruction : envoie la séquence d'effacement écran
+c$ = CLS                 ' expression : stocke la séquence dans c$
+PRINT INK(3) "bonjour"   ' en ligne : changer la couleur puis afficher
+m$ = AT(10,13) + "hi"   ' construire une chaîne avec positionnement
+```
+
+En mode Videotex (MODE 0 ou MODE 1), les fonctions TTY émettent des séquences
+Vidéotex. En mode téléinformatique (MODE 2), elles émettent des séquences CSI
+(`ESC [ ...`).
+
+#### Écran
+
+```basic
+CLS                  ' Effacer l'écran
+CLEOL                ' Effacer jusqu'à la fin de ligne
+CURSOR n             ' 0=masquer, 1=afficher le curseur
+BEEP                 ' Émettre un bip
+MODE n               ' Mode écran : ≤1 = 40 cols Videotex, ≥2 = 80 cols téléinformatique
+LINE0                ' Placer le curseur en ligne 0, colonne 1 (ligne d'état)
+```
+
+#### Positionnement du curseur
+
+```basic
+AT ligne, col; expr
+```
+
+Lignes et colonnes sont indexées à partir de 1.
+
+#### Couleurs et attributs
+
+```basic
+INK couleur          ' Couleur de premier plan (0-7)
+PAPER couleur        ' Couleur d'arrière-plan (0-7) ; sans effet en mode téléinformatique (≥2)
+FLASH n              ' 0=normal, 1=clignotant
+INVERSE n            ' 0=normal, 1=vidéo inverse
+UNDERLINE n          ' 0=normal, 1=souligné
+```
+
+En mode téléinformatique, `INK 7` active la surbrillance ; `INK 0`–`6` la
+désactive. `PAPER` est sans effet.
+
+#### Graphiques
+
+Chaque caractère à l'écran est une matrice semi-graphique de 3 lignes × 2
+colonnes de pixels. L'écran (hors ligne 0) comporte 24 lignes de 40 caractères,
+soit **80 pixels de largeur × 72 pixels de hauteur**. L'origine **(0, 0) est en
+bas à gauche** : x varie de 0–79 (gauche à droite), y varie de 0–71 (bas vers
+haut).
+
+```basic
+PLOT x, y            ' Allumer un pixel
+UNPLOT x, y          ' Éteindre un pixel
+TEST(x, y)           ' Renvoie 1 si le pixel est allumé, 0 sinon
+```
+
+#### Vitesse
+
+```basic
+SLOW                 ' Vitesse normale (défaut)
+FAST                 ' Vitesse rapide
+FAST2                ' Vitesse plus rapide
+```
+
+### Sortie vers variable
 
 Rediriger l'affichage vers une variable chaîne :
 
@@ -125,7 +219,7 @@ OUTPUT STOP
 PRINT m$
 ```
 
-### INPUT
+### Entrée clavier
 
 Lit une valeur au clavier et l'affecte à une variable.
 
@@ -212,7 +306,6 @@ semi-graphique. Les images suivantes montrent la correspondance entre les
 caractères G0 au clavier et leurs équivalents semi-graphiques G1 :
 
 ![Correspondance G0↔G1](g02g1.png)
-![Correspondance G0↔G1 disjoint](g02g1-dis.png)
 
 ### Caractères UTF-8 supportés (conversion Minitel)
 
@@ -595,90 +688,3 @@ Exemple de session :
 ```
 
 ---
-
-## Affichage et TTY
-
-L'écran dispose de deux modes d'affichage : **Vidéotex (40 colonnes)** et
-**Téléinformatique (80 colonnes)**. La ligne 0 est une ligne d'état ; la zone
-d'affichage comporte 24 lignes en dessous. L'accès à la ligne 0 avec `LINE0`
-(équivalent à `AT 0,1`) sauvegarde la position courante du curseur et les
-attributs. Pour quitter la ligne 0 et retourner à la zone d'affichage, utiliser
-`AT` ou `"\n"` (saut de ligne) ; `"\n"` restaure à la fois la position
-sauvegardée et les attributs.
-
-Les caractères proviennent de deux jeux : **G0 (ASCII)** pour le texte régulier,
-et **G1 (semi-graphiques)** pour les graphiques à base de pixels. En G0, les
-attributs sont soit locaux (INK, INVERSE, FLASH, SIZE) soit globaux (PAPER,
-UNDERLINE) ; les attributs globaux doivent être précédés d'un séparateur espace.
-En G1, tous les attributs sont locaux et ne nécessitent pas de séparateur ;
-cependant, SIZE et INVERSE ne sont pas supportés, et UNDERLINE gère les
-semi-graphiques disjoints.
-
-Les fonctions TTY renvoient une chaîne contenant la séquence d'échappement
-correspondante. Utilisées comme instruction, elles se comportent comme `PRINT
-...; ` (émettent la séquence sans saut de ligne final). Utilisées comme
-expression, elles peuvent être affectées ou intégrées dans une chaîne :
-
-```basic
-CLS                      ' instruction : envoie la séquence d'effacement écran
-c$ = CLS                 ' expression : stocke la séquence dans c$
-PRINT INK(3) "bonjour"   ' en ligne : changer la couleur puis afficher
-m$ = AT(10,13) + "hi"   ' construire une chaîne avec positionnement
-```
-
-En mode Teletext (≤1), les fonctions TTY émettent des séquences Vidéotex. En
-mode téléinformatique (≥2), elles émettent des séquences CSI (`ESC [ ...`).
-
-### Écran
-
-```basic
-CLS                  ' Effacer l'écran
-CLEOL                ' Effacer jusqu'à la fin de ligne
-CURSOR n             ' 0=masquer, 1=afficher le curseur
-BEEP                 ' Émettre un bip
-MODE n               ' Mode écran : ≤1 = 40 cols Teletext, ≥2 = 80 cols téléinformatique
-LINE0                ' Placer le curseur en ligne 0, colonne 1 (ligne d'état)
-```
-
-### Positionnement du curseur
-
-```basic
-AT ligne, col; expr
-```
-
-Lignes et colonnes sont indexées à partir de 1.
-
-### Couleurs et attributs
-
-```basic
-INK couleur          ' Couleur de premier plan (0-7)
-PAPER couleur        ' Couleur d'arrière-plan (0-7) ; sans effet en mode téléinformatique (≥2)
-FLASH n              ' 0=normal, 1=clignotant
-INVERSE n            ' 0=normal, 1=vidéo inverse
-UNDERLINE n          ' 0=normal, 1=souligné
-```
-
-En mode téléinformatique, `INK 7` active la surbrillance ; `INK 0`–`6` la
-désactive. `PAPER` est sans effet.
-
-### Graphiques
-
-Chaque caractère à l'écran est une matrice semi-graphique de 3 lignes × 2
-colonnes de pixels. L'écran (hors ligne 0) comporte 24 lignes de 40 caractères,
-soit **80 pixels de largeur × 72 pixels de hauteur**. L'origine **(0, 0) est en
-bas à gauche** : x varie de 0–79 (gauche à droite), y varie de 0–71 (bas vers
-haut).
-
-```basic
-PLOT x, y            ' Allumer un pixel
-UNPLOT x, y          ' Éteindre un pixel
-TEST(x, y)           ' Renvoie 1 si le pixel est allumé, 0 sinon
-```
-
-### Vitesse
-
-```basic
-SLOW                 ' Vitesse normale (défaut)
-FAST                 ' Vitesse rapide
-FAST2                ' Vitesse plus rapide
-```
