@@ -553,6 +553,11 @@ In VT100 mode, `INK 7` enables bold/bright; `INK 0`–`6` disables it. `PAPER` h
 
 ### Graphics
 
+Each screen character is a semi-graphic matrix of 3 rows × 2 columns of pixels.
+The screen (excluding line 0) has 24 lines of 40 characters, giving **80 pixels
+wide × 72 pixels tall**. The origin **(0, 0) is at the bottom-left corner**: x
+ranges from 0–79 (left to right), y ranges from 0–71 (bottom to top).
+
 ```basic
 PLOT x, y            ' Set pixel
 UNPLOT x, y          ' Clear pixel

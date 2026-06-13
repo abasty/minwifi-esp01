@@ -555,6 +555,12 @@ En mode VT100, `INK 7` active la surbrillance ; `INK 0`–`6` la désactive. `PA
 
 ### Graphiques
 
+Chaque caractère à l'écran est une matrice semi-graphique de 3 lignes × 2
+colonnes de pixels. L'écran (hors ligne 0) comporte 24 lignes de 40 caractères,
+soit **80 pixels de largeur × 72 pixels de hauteur**. L'origine **(0, 0) est en
+bas à gauche** : x varie de 0–79 (gauche à droite), y varie de 0–71 (bas vers
+haut).
+
 ```basic
 PLOT x, y            ' Allumer un pixel
 UNPLOT x, y          ' Éteindre un pixel
