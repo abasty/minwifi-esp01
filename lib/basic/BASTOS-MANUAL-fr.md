@@ -111,7 +111,9 @@ Codes VKEY des touches de fonction du Minitel :
 | SOMMAIRE | 6 | Termine la saisie |
 | GUIDE | 14 | Termine la saisie |
 
-Les touches non imprimables (comme les touches de fonction) ne peuvent pas être lues comme des caractères réguliers. Utiliser `CODE INKEY$` pour obtenir le code numérique :
+Les touches non imprimables (comme les touches de fonction) ne peuvent pas être
+lues comme des caractères réguliers. Utiliser `CODE INKEY$` pour obtenir le code
+numérique :
 
 ```basic
 10 k = CODE INKEY$
@@ -213,7 +215,8 @@ Les autres caractères UTF-8 ne sont pas convertis et restent inchangés.
 
 - Numérique : un ou plusieurs caractères, ex. `x`, `compteur`, `total`
 - Chaîne : nom terminé par `$`, ex. `nom$`, `buf$`
-- Les mots-clés sont insensibles à la casse ; le contenu des chaînes est sensible à la casse.
+- Les mots-clés sont insensibles à la casse ; le contenu des chaînes est
+  sensible à la casse.
 
 ```basic
 compteur = 3.14
@@ -229,7 +232,8 @@ x = 42
 
 ### Tableaux
 
-Déclarer avec `DIM` avant utilisation. Les tableaux sont indexés à partir de **1**.
+Déclarer avec `DIM` avant utilisation. Les tableaux sont indexés à partir de
+**1**.
 
 ```basic
 DIM a(10)             ' tableau 1-D de 10 nombres
@@ -248,7 +252,8 @@ s$(1) = "premier"
 
 ### Opérations sur les chaînes
 
-Les parenthèses sont optionnelles pour toutes les fonctions ; ne les utiliser que pour grouper.
+Les parenthèses sont optionnelles pour toutes les fonctions ; ne les utiliser
+que pour grouper.
 
 | Opération | Syntaxe | Exemple |
 |-----------|---------|---------|
@@ -271,7 +276,8 @@ z$ = CHR$ 0
 ia$ = CHR$(CODE a$ & 223)   ' parenthèses pour grouper uniquement
 ```
 
-Les indices de sous-chaîne utilisent le mot-clé `TO`. `début` vaut `1` par défaut, `fin` vaut `LEN s$` par défaut :
+Les indices de sous-chaîne utilisent le mot-clé `TO`. `début` vaut `1` par
+défaut, `fin` vaut `LEN s$` par défaut :
 
 ```basic
 a$ = "Alice and Bob"
@@ -311,7 +317,8 @@ IF NOT a THEN PRINT "a est nul"
 
 ### Fonctions mathématiques
 
-Les parenthèses sont optionnelles ; ne les utiliser que pour grouper des sous-expressions.
+Les parenthèses sont optionnelles ; ne les utiliser que pour grouper des
+sous-expressions.
 
 | Fonction | Description |
 |----------|-------------|
@@ -432,14 +439,17 @@ DB LIST set                    ' Lister toutes les entrées du set
 DB ERASE set, "clé"            ' Supprimer une entrée par clé du set
 ```
 
-Les sets sont numérotés à partir de 0. Clés et valeurs sont des chaînes. Les connexions WiFi, Minitel et FTP utilisent des sets spécifiques pour persister leur configuration.
+Les sets sont numérotés à partir de 0. Clés et valeurs sont des chaînes. Les
+connexions WiFi, Minitel et FTP utilisent des sets spécifiques pour persister
+leur configuration.
 
 ```basic
 PUT 1, "ville", "Paris"
 PRINT GET(1, "ville")    ' "Paris"
 ```
 
-`GET set` renvoie toutes les clés séparées par `\n`. La dernière clé est également suivie d'un `\n`. Utiliser `INDEX` pour les parcourir :
+`GET set` renvoie toutes les clés séparées par `\n`. La dernière clé est
+également suivie d'un `\n`. Utiliser `INDEX` pour les parcourir :
 
 ```basic
 10 keys$ = GET 1
@@ -469,7 +479,8 @@ WIFI ERASE "ssid"            ' Supprimer un réseau sauvegardé
 WIFI STOP                    ' Se déconnecter
 ```
 
-Après `WIFI SCAN`, les réseaux sont numérotés ; utiliser `WIFI n` pour se connecter par index.
+Après `WIFI SCAN`, les réseaux sont numérotés ; utiliser `WIFI n` pour se
+connecter par index.
 
 ### Format URN
 
@@ -479,7 +490,8 @@ Les connexions réseau sont identifiées par un URN dont les parties sont sépar
 protocole:hôte:port[:chemin[:login[:motdepasse]]]
 ```
 
-Pour `ftp`, `login` vaut `anonymous` et `motdepasse` vaut `pat@frites.be` par défaut si omis.
+Pour `ftp`, `login` vaut `anonymous` et `motdepasse` vaut `pat@frites.be` par
+défaut si omis.
 
 | Protocole | Description |
 |-----------|-------------|
@@ -499,7 +511,8 @@ ws:mntl.joher.com:2018:/?echo
 
 ### Minitel
 
-Connexion à un serveur Minitel (émulation terminal Vidéotex) et sauvegarde sous un nom.
+Connexion à un serveur Minitel (émulation terminal Vidéotex) et sauvegarde
+sous un nom.
 
 ```basic
 MINITEL "nom", "urn"         ' Connecter et sauvegarder sous "nom"
