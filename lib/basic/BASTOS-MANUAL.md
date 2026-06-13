@@ -99,20 +99,26 @@ INPUT "prompt", variable
 
 VKEY codes for Minitel function keys:
 
-| Key | VKEY |
-|-----|------|
-| Enter / ENVOI | 13 |
-| REPETITION | 2 |
-| SUITE | 4 |
-| RETOUR | 5 |
-| SOMMAIRE | 6 |
-| GUIDE | 14 |
+| Key | VKEY | Notes |
+|-----|------|-------|
+| Enter / ENVOI | 13 | Ends input |
+| CORRECTION | 127 | Deletes last character; not returned by INPUT |
+| ANNULATION | 1 | Clears entire input; not returned by INPUT |
+| REPETITION | 2 | Ends input |
+| SUITE | 4 | Ends input |
+| RETOUR | 5 | Ends input |
+| SOMMAIRE | 6 | Ends input |
+| GUIDE | 14 | Ends input |
 
-CORRECTION deletes the last character; ANNULATION clears the entire input. Both are handled automatically by BASTOS and do not set VKEY.
+Non-printable keys (like function keys) cannot be read as regular characters. Use `CODE INKEY$` to get the numeric code:
 
 ```basic
-10 INPUT "Enter your name: ", n$
-20 PRINT "Hello, " n$
+10 k$ = INKEY$
+20 IF k$ = "" THEN PAUSE 100 : GOTO 10
+30 c = CODE k$
+40 IF c = 0 THEN GOTO 10
+50 PRINT "Key code: "; c
+60 GOTO 10
 ```
 
 Non-blocking key read (no wait):

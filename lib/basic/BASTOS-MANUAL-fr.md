@@ -100,20 +100,26 @@ INPUT "invite", variable
 
 Codes VKEY des touches de fonction du Minitel :
 
-| Touche | VKEY |
-|--------|------|
-| Entrée / ENVOI | 13 |
-| REPETITION | 2 |
-| SUITE | 4 |
-| RETOUR | 5 |
-| SOMMAIRE | 6 |
-| GUIDE | 14 |
+| Touche | VKEY | Notes |
+|--------|------|-------|
+| Entrée / ENVOI | 13 | Termine la saisie |
+| CORRECTION | 127 | Efface le dernier caractère ; non retourné par INPUT |
+| ANNULATION | 1 | Efface toute la saisie ; non retourné par INPUT |
+| REPETITION | 2 | Termine la saisie |
+| SUITE | 4 | Termine la saisie |
+| RETOUR | 5 | Termine la saisie |
+| SOMMAIRE | 6 | Termine la saisie |
+| GUIDE | 14 | Termine la saisie |
 
-CORRECTION efface le dernier caractère ; ANNULATION efface toute la saisie. Ces deux touches sont gérées automatiquement par BASTOS et ne modifient pas VKEY.
+Les touches non imprimables (comme les touches de fonction) ne peuvent pas être lues comme des caractères réguliers. Utiliser `CODE INKEY$` pour obtenir le code numérique :
 
 ```basic
-10 INPUT "Entrez votre nom : ", n$
-20 PRINT "Bonjour, " n$
+10 k$ = INKEY$
+20 IF k$ = "" THEN PAUSE 100 : GOTO 10
+30 c = CODE k$
+40 IF c = 0 THEN GOTO 10
+50 PRINT "Code touche : "; c
+60 GOTO 10
 ```
 
 Lecture non bloquante (sans attente) :
