@@ -115,10 +115,10 @@ Les touches non imprimables (comme les touches de fonction) ne peuvent pas être
 
 ```basic
 10 k$ = INKEY$
-20 IF k$ = "" THEN PAUSE 100 : GOTO 10
-30 c = CODE k$
-40 IF c = 0 THEN GOTO 10
-50 PRINT "Code touche : "; c
+20 PAUSE 100
+30 k = CODE k$
+40 IF k = 0 THEN GOTO 10
+50 PRINT "Code touche : "; k
 60 GOTO 10
 ```
 

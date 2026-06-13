@@ -114,10 +114,10 @@ Non-printable keys (like function keys) cannot be read as regular characters. Us
 
 ```basic
 10 k$ = INKEY$
-20 IF k$ = "" THEN PAUSE 100 : GOTO 10
-30 c = CODE k$
-40 IF c = 0 THEN GOTO 10
-50 PRINT "Key code: "; c
+20 PAUSE 100
+30 k = CODE k$
+40 IF k = 0 THEN GOTO 10
+50 PRINT "Key code: "; k
 60 GOTO 10
 ```
 
