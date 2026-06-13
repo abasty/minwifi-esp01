@@ -1,6 +1,7 @@
 # Manuel du langage BASTOS
 
-BASTOS est un dialecte BASIC conçu pour la carte ESP01. Les programmes sont
+BASTOS est un dialecte BASIC conçu pour esp8266 et esp32c, qui équipent les
+modules SonOff Basic R2/R3 et R4. Les programmes sont
 composés de lignes numérotées exécutées dans l'ordre ; la ligne 0, ou une ligne
 sans numéro, est interprétée immédiatement (mode interactif).
 
