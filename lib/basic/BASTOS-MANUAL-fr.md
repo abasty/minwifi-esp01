@@ -529,7 +529,11 @@ Exemple de session :
 
 L'écran dispose de deux modes d'affichage : **Vidéotex (40 colonnes)** et
 **Téléinformatique (80 colonnes)**. La ligne 0 est une ligne d'état ; la zone
-d'affichage comporte 24 lignes en dessous.
+d'affichage comporte 24 lignes en dessous. L'accès à la ligne 0 avec `LINE0`
+(équivalent à `AT 0,1`) sauvegarde la position courante du curseur et les
+attributs. Pour quitter la ligne 0 et retourner à la zone d'affichage, utiliser
+`AT` ou `"\n"` (saut de ligne) ; `"\n"` restaure à la fois la position
+sauvegardée et les attributs.
 
 Les caractères proviennent de deux jeux : **G0 (ASCII)** pour le texte régulier,
 et **G1 (semi-graphiques)** pour les graphiques à base de pixels. En G0, les
@@ -562,6 +566,7 @@ CLEOL                ' Effacer jusqu'à la fin de ligne
 CURSOR n             ' 0=masquer, 1=afficher le curseur
 BEEP                 ' Émettre un bip
 MODE n               ' Mode écran : ≤1 = 40 cols Teletext, ≥2 = 80 cols téléinformatique
+LINE0                ' Placer le curseur en ligne 0, colonne 1 (ligne d'état)
 ```
 
 ### Positionnement du curseur

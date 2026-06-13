@@ -527,7 +527,10 @@ Example session:
 
 The screen has two display modes: **Videotex (40 columns)** and
 **Téléinformatique (80 columns)**. Line 0 is a status line; the display area
-consists of 24 lines below it.
+consists of 24 lines below it. Accessing line 0 with `LINE0` (equivalent to
+`AT 0,1`) saves the current cursor position and attributes. To exit line 0
+and return to the display area, use `AT` or `"\n"` (newline); `"\n"`
+restores both the saved position and attributes.
 
 Characters are drawn from two sets: **G0 (ASCII)** for regular text, and **G1
 (semi-graphics)** for pixel-based graphics. On G0, attributes are either local
@@ -559,6 +562,7 @@ CLEOL                ' Clear to end of line
 CURSOR n             ' 0=hide, 1=show cursor
 BEEP                 ' Sound bell
 MODE n               ' Screen mode: ≤1 = 40 cols Teletext, ≥2 = 80-column
+LINE0                ' Move cursor to line 0, column 1 (status line)
 ```
 
 ### Cursor positioning
