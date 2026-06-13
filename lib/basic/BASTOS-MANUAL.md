@@ -45,7 +45,8 @@ immediately (interactive mode).
 
 ### PRINT
 
-Prints expressions to the screen, followed by a newline. `?` is a shorthand for `PRINT`.
+Prints expressions to the screen, followed by a newline. `?` is a shorthand
+for `PRINT`.
 
 ```basic
 PRINT expr [, expr ...]      ' Space between items
@@ -110,7 +111,8 @@ VKEY codes for Minitel function keys:
 | SOMMAIRE | 6 | Ends input |
 | GUIDE | 14 | Ends input |
 
-Non-printable keys (like function keys) cannot be read as regular characters. Use `CODE INKEY$` to get the numeric code:
+Non-printable keys (like function keys) cannot be read as regular characters.
+Use `CODE INKEY$` to get the numeric code:
 
 ```basic
 10 k = CODE INKEY$
@@ -270,7 +272,8 @@ z$ = CHR$ 0
 ia$ = CHR$(CODE a$ & 223)   ' parentheses for grouping only
 ```
 
-Substring indices use the `TO` keyword. `start` defaults to `1`, `end` defaults to `LEN s$`:
+Substring indices use the `TO` keyword. `start` defaults to `1`, `end` defaults
+to `LEN s$`:
 
 ```basic
 a$ = "Alice and Bob"
@@ -477,7 +480,8 @@ Network connections are identified by a URN whose parts are separated by `:`:
 protocol:host:port[:path[:login[:password]]]
 ```
 
-For `ftp`, `login` defaults to `anonymous` and `password` to `pat@frites.be` if omitted.
+For `ftp`, `login` defaults to `anonymous` and `password` to
+`pat@frites.be` if omitted.
 
 | Protocol | Description |
 |----------|-------------|
