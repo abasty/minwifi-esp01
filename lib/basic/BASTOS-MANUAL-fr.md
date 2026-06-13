@@ -322,6 +322,8 @@ IF expression THEN instruction
 40 PRINT "positif"
 ```
 
+⚠️ **Piège courant** : `IF a > 0 THEN a=a-1` ne fonctionnera pas comme prévu. `a=a-1` est traité comme une comparaison (« a est-il égal à a-1 ? »), ce qui évalue à `0` (faux). Utiliser `LET` pour en faire une affectation : `IF a > 0 THEN LET a = a - 1`.
+
 ### FOR / NEXT
 
 ```basic

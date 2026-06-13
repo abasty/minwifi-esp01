@@ -321,6 +321,8 @@ IF expression THEN statement
 40 PRINT "positive"
 ```
 
+⚠️ **Common pitfall**: `IF a > 0 THEN a=a-1` will not work as expected. The `a=a-1` is treated as a comparison (is `a` equal to `a-1`?), which evaluates to `0` (false). Use `LET` to make it an assignment: `IF a > 0 THEN LET a = a - 1`.
+
 ### FOR / NEXT
 
 ```basic
