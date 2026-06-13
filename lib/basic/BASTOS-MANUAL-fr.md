@@ -103,13 +103,13 @@ Codes VKEY des touches de fonction du Minitel :
 | Touche | VKEY |
 |--------|------|
 | Entrée / ENVOI | 13 |
-| Retour arrière / CORRECTION | 127 |
-| ANNULATION | 1 |
 | REPETITION | 2 |
 | SUITE | 4 |
 | RETOUR | 5 |
 | SOMMAIRE | 6 |
 | GUIDE | 14 |
+
+CORRECTION efface le dernier caractère ; ANNULATION efface toute la saisie. Ces deux touches sont gérées automatiquement par BASTOS et ne modifient pas VKEY.
 
 ```basic
 10 INPUT "Entrez votre nom : ", n$
