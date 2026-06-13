@@ -97,6 +97,19 @@ INPUT "prompt", variable
 - For a string variable (`$`), reads until Enter.
 - After input, `VKEY` holds the validation key code.
 
+VKEY codes for Minitel function keys:
+
+| Key | VKEY |
+|-----|------|
+| Enter / ENVOI | 13 |
+| Backspace / CORRECTION | 127 |
+| ANNULATION | 1 |
+| REPETITION | 2 |
+| SUITE | 4 |
+| RETOUR | 5 |
+| SOMMAIRE | 6 |
+| GUIDE | 14 |
+
 ```basic
 10 INPUT "Enter your name: ", n$
 20 PRINT "Hello, " n$

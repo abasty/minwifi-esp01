@@ -98,6 +98,19 @@ INPUT "invite", variable
 - Pour une variable chaîne (`$`), lit jusqu'à Entrée.
 - Après la saisie, `VKEY` contient le code de la touche de validation.
 
+Codes VKEY des touches de fonction du Minitel :
+
+| Touche | VKEY |
+|--------|------|
+| Entrée / ENVOI | 13 |
+| Retour arrière / CORRECTION | 127 |
+| ANNULATION | 1 |
+| REPETITION | 2 |
+| SUITE | 4 |
+| RETOUR | 5 |
+| SOMMAIRE | 6 |
+| GUIDE | 14 |
+
 ```basic
 10 INPUT "Entrez votre nom : ", n$
 20 PRINT "Bonjour, " n$
