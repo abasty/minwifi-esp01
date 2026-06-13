@@ -143,6 +143,16 @@ b$ = "\e[2J"          ' ANSI clear screen
 c$ = "\x1b\x41\x42"  ' Escape + 'A' + 'B'
 ```
 
+### Semi-graphic characters
+
+Press **Ctrl+G** to toggle between G0 (ASCII) and G1 (semi-graphic) character
+sets. Characters typed while in G1 mode are displayed from the semi-graphic set.
+The following images show the mapping between G0 keyboard characters and their
+G1 semi-graphic equivalents:
+
+![G0↔G1 mapping](g02g1.png)
+![G0↔G1 disjoint mapping](g02g1-dis.png)
+
 ### Supported UTF-8 characters (Minitel conversion)
 
 When loading an ASCII `.bas` file, BASTOS converts a limited set of UTF-8
@@ -321,7 +331,9 @@ IF expression THEN statement
 40 PRINT "positive"
 ```
 
-⚠️ **Common pitfall**: `IF a > 0 THEN a=a-1` will not work as expected. The `a=a-1` is treated as a comparison (is `a` equal to `a-1`?), which evaluates to `0` (false). Use `LET` to make it an assignment: `IF a > 0 THEN LET a = a - 1`.
+⚠️ **Common pitfall**: `IF a > 0 THEN a=a-1` will not work as expected. The
+`a=a-1` is treated as a comparison (is `a` equal to `a-1`?), which evaluates to
+`0` (false). Use `LET` to make it an assignment: `IF a > 0 THEN LET a = a - 1`.
 
 ### FOR / NEXT
 
@@ -399,7 +411,8 @@ DB LIST set            ' List all entries in set
 DB ERASE set, "key"    ' Delete entry by key from set
 ```
 
-Sets are numbered starting from 0. Keys and values are strings. WiFi, Minitel, and FTP connections use specific sets to persist their configuration.
+Sets are numbered starting from 0. Keys and values are strings. WiFi, Minitel,
+and FTP connections use specific sets to persist their configuration.
 
 ```basic
 PUT 1, "city", "Paris"
@@ -512,7 +525,21 @@ Example session:
 
 ## Display and TTY
 
-TTY functions return a string containing the corresponding escape sequence. Used as a statement, they behave as `PRINT ...; ` (output the sequence with no trailing newline). Used as an expression, they can be assigned or embedded in a string:
+The screen has two display modes: **Videotex (40 columns)** and
+**Téléinformatique (80 columns)**. Line 0 is a status line; the display area
+consists of 24 lines below it.
+
+Characters are drawn from two sets: **G0 (ASCII)** for regular text, and **G1
+(semi-graphics)** for pixel-based graphics. On G0, attributes are either local
+(INK, INVERSE, FLASH, SIZE) or global (PAPER, UNDERLINE); global attributes must
+be preceded by a space separator. On G1, all attributes are local and require no
+separator; however, SIZE and INVERSE are not supported, and UNDERLINE controls
+disjoint semi-graphics.
+
+TTY functions return a string containing the corresponding escape sequence. Used
+as a statement, they behave as `PRINT ...; ` (output the sequence with no
+trailing newline). Used as an expression, they can be assigned or embedded in a
+string:
 
 ```basic
 CLS                      ' statement: sends clear-screen sequence

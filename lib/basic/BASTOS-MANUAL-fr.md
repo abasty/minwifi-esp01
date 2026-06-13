@@ -144,6 +144,16 @@ b$ = "\e[2J"          ' effacement écran ANSI
 c$ = "\x1b\x41\x42"  ' Échap + 'A' + 'B'
 ```
 
+### Caractères semi-graphiques
+
+Appuyer sur **Ctrl+G** pour basculer entre les jeux G0 (ASCII) et G1
+(semi-graphiques). Les caractères tapés en mode G1 sont affichés depuis le jeu
+semi-graphique. Les images suivantes montrent la correspondance entre les
+caractères G0 au clavier et leurs équivalents semi-graphiques G1 :
+
+![Correspondance G0↔G1](g02g1.png)
+![Correspondance G0↔G1 disjoint](g02g1-dis.png)
+
 ### Caractères UTF-8 supportés (conversion Minitel)
 
 Lors du `LOAD` d'un fichier `.bas` ASCII, BASTOS convertit une liste limitée
@@ -322,7 +332,10 @@ IF expression THEN instruction
 40 PRINT "positif"
 ```
 
-⚠️ **Piège courant** : `IF a > 0 THEN a=a-1` ne fonctionnera pas comme prévu. `a=a-1` est traité comme une comparaison (« a est-il égal à a-1 ? »), ce qui évalue à `0` (faux). Utiliser `LET` pour en faire une affectation : `IF a > 0 THEN LET a = a - 1`.
+⚠️ **Piège courant** : `IF a > 0 THEN a=a-1` ne fonctionnera pas comme prévu.
+`a=a-1` est traité comme une comparaison (« a est-il égal à a-1 ? »), ce qui
+évalue à `0` (faux). Utiliser `LET` pour en faire une affectation : `IF a > 0
+THEN LET a = a - 1`.
 
 ### FOR / NEXT
 
@@ -514,7 +527,22 @@ Exemple de session :
 
 ## Affichage et TTY
 
-Les fonctions TTY renvoient une chaîne contenant la séquence d'échappement correspondante. Utilisées comme instruction, elles se comportent comme `PRINT ...; ` (émettent la séquence sans saut de ligne final). Utilisées comme expression, elles peuvent être affectées ou intégrées dans une chaîne :
+L'écran dispose de deux modes d'affichage : **Vidéotex (40 colonnes)** et
+**Téléinformatique (80 colonnes)**. La ligne 0 est une ligne d'état ; la zone
+d'affichage comporte 24 lignes en dessous.
+
+Les caractères proviennent de deux jeux : **G0 (ASCII)** pour le texte régulier,
+et **G1 (semi-graphiques)** pour les graphiques à base de pixels. En G0, les
+attributs sont soit locaux (INK, INVERSE, FLASH, SIZE) soit globaux (PAPER,
+UNDERLINE) ; les attributs globaux doivent être précédés d'un séparateur espace.
+En G1, tous les attributs sont locaux et ne nécessitent pas de séparateur ;
+cependant, SIZE et INVERSE ne sont pas supportés, et UNDERLINE gère les
+semi-graphiques disjoints.
+
+Les fonctions TTY renvoient une chaîne contenant la séquence d'échappement
+correspondante. Utilisées comme instruction, elles se comportent comme `PRINT
+...; ` (émettent la séquence sans saut de ligne final). Utilisées comme
+expression, elles peuvent être affectées ou intégrées dans une chaîne :
 
 ```basic
 CLS                      ' instruction : envoie la séquence d'effacement écran
