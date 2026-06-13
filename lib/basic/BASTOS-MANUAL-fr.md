@@ -31,24 +31,20 @@ BASTOS dispose de trois modes opérationnels :
   revenir au mode précédent (soit exécution, soit interactif).
 
 ```mermaid
-stateDiagram-v2
-    interactif: Mode interactif
-    execution: Mode exécution
-    connecte: Mode connecté
-    
-    [*] --> interactif
-    interactif --> execution: RUN / GOTO
-    interactif --> connecte: MINITEL
-    execution --> interactif: ESC ESC
-    execution --> connecte: MINITEL
-    connecte --> execution: ESC ESC
-    connecte --> interactif: ESC ESC
-    
-    linkStyle 1 stroke:#0066cc
-    linkStyle 2 stroke:#00cc66
-    linkStyle 3 stroke:#ff6600
-    linkStyle 4 stroke:#00cc66
-    linkStyle 5,6 stroke:#ff6600
+flowchart TD
+    start([Démarrage])
+    interactif["Mode interactif"]
+    execution["Mode exécution"]
+    connecte["Mode connecté"]
+
+    start --> interactif
+    interactif --> |RUN/GOTO| execution
+    interactif -->|MINITEL| connecte
+    execution -->|ESC ESC| interactif
+    execution -->|MINITEL| connecte
+    connecte -->|ESC ESC| execution
+    connecte -->|ESC ESC| interactif
+    linkStyle default stroke:#3f3,stroke-width:2px,color:green;
 ```
 
 ---

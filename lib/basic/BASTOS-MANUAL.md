@@ -30,24 +30,20 @@ BASTOS has three operational modes:
   mode (either execution or interactive).
 
 ```mermaid
-stateDiagram-v2
-    interactive: Interactive mode
-    execution: Execution mode
-    connected: Connected mode
-    
-    [*] --> interactive
-    interactive --> execution: RUN / GOTO
-    interactive --> connected: MINITEL
-    execution --> interactive: ESC ESC
-    execution --> connected: MINITEL
-    connected --> execution: ESC ESC
-    connected --> interactive: ESC ESC
-    
-    linkStyle 1 stroke:#0066cc
-    linkStyle 2 stroke:#00cc66
-    linkStyle 3 stroke:#ff6600
-    linkStyle 4 stroke:#00cc66
-    linkStyle 5,6 stroke:#ff6600
+flowchart TD
+    start([Start])
+    interactive["Interactive mode"]
+    execution["Execution mode"]
+    connected["Connected mode"]
+
+    start --> interactive
+    interactive -->|RUN / GOTO| execution
+    interactive -->|MINITEL| connected
+    execution -->|ESC ESC| interactive
+    execution -->|MINITEL| connected
+    connected -->|ESC ESC| execution
+    connected -->|ESC ESC| interactive
+    linkStyle default stroke:#3f3,stroke-width:2px,color:green;
 ```
 
 ---
