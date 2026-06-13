@@ -336,11 +336,11 @@ NEXT var
 
 ```basic
 10 FOR i = 1 TO 5
-20   PRINT i
+20 PRINT i
 30 NEXT i
 
 40 FOR i = 10 TO 1 STEP -1
-50   PRINT i
+50 PRINT i
 60 NEXT i
 ```
 
