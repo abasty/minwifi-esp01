@@ -19,7 +19,7 @@ immediately (interactive mode).
 | `RUN` | Run from first line |
 | `RUN linenumber` | Run from a specific line |
 | `RUN "file.bas"` | Load and run ASCII program |
-| `RUN "file.bst", linenumber` | Load and run binary program from a specific line |
+| `RUN "file.bst", linenumber` | Load and run binary program and variables from a specific line |
 | `LIST` | List 20 lines from current position |
 | `LIST linenum` | List 20 lines starting from `linenum` |
 | `LIST linenum, count` | List `count` lines from `linenum` |
@@ -28,10 +28,10 @@ immediately (interactive mode).
 | `STOP` | Pause execution |
 | `CONT` | Resume after `STOP` |
 | `SAVE "file.bas"` | Save program as ASCII |
-| `SAVE "file.bst"` | Save program as binary |
+| `SAVE "file.bst"` | Save program and variables as binary |
 | `SAVE "file.var"` | Save variables only |
 | `LOAD "file.bas"` | Load ASCII program |
-| `LOAD "file.bst"` | Load binary program |
+| `LOAD "file.bst"` | Load program and variables from binary |
 | `LOAD "file.var"` | Load variables only |
 | `ERASE "file"` | Delete file |
 | `CAT` | List files |

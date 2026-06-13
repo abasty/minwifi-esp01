@@ -19,7 +19,7 @@ sans numéro, est interprétée immédiatement (mode interactif).
 | `RUN` | Exécuter depuis la première ligne |
 | `RUN numligne` | Exécuter depuis une ligne précise |
 | `RUN "fichier.bas"` | Charger et exécuter un programme ASCII |
-| `RUN "fichier.bst", numligne` | Charger et exécuter un programme binaire depuis une ligne |
+| `RUN "fichier.bst", numligne` | Charger et exécuter un programme binaire et ses variables depuis une ligne |
 | `LIST` | Lister 20 lignes depuis la position courante |
 | `LIST numligne` | Lister 20 lignes depuis `numligne` |
 | `LIST numligne, nombre` | Lister `nombre` lignes depuis `numligne` |
@@ -28,10 +28,10 @@ sans numéro, est interprétée immédiatement (mode interactif).
 | `STOP` | Suspendre l'exécution |
 | `CONT` | Reprendre après `STOP` |
 | `SAVE "fichier.bas"` | Sauvegarder le programme en ASCII |
-| `SAVE "fichier.bst"` | Sauvegarder le programme en binaire |
+| `SAVE "fichier.bst"` | Sauvegarder le programme et les variables en binaire |
 | `SAVE "fichier.var"` | Sauvegarder les variables uniquement |
 | `LOAD "fichier.bas"` | Charger un programme ASCII |
-| `LOAD "fichier.bst"` | Charger un programme binaire |
+| `LOAD "fichier.bst"` | Charger le programme et les variables depuis un fichier binaire |
 | `LOAD "fichier.var"` | Charger les variables uniquement |
 | `ERASE "fichier"` | Supprimer un fichier |
 | `CAT` | Lister les fichiers locaux |
