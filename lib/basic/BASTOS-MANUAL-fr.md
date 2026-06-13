@@ -149,35 +149,35 @@ c$ = "\x1b\x41\x42"  ' Échap + 'A' + 'B'
 Lors du `LOAD` d'un fichier `.bas` ASCII, BASTOS convertit une liste limitée
 de caractères UTF-8 en séquences Minitel (préfixe SS2, code `0x19`).
 
-| UTF-8 | Unicode | Séquence Minitel produite |
-|-------|---------|---------------------------|
-| à | U+00E0 | `\x19Aa` |
-| è | U+00E8 | `\x19Ae` |
-| ù | U+00F9 | `\x19Au` |
-| é | U+00E9 | `\x19Be` |
-| â | U+00E2 | `\x19Ca` |
-| ê | U+00EA | `\x19Ce` |
-| î | U+00EE | `\x19Ci` |
-| ô | U+00F4 | `\x19Co` |
-| û | U+00FB | `\x19Cu` |
-| ä | U+00E4 | `\x19Ha` |
-| ë | U+00EB | `\x19He` |
-| ï | U+00EF | `\x19Hi` |
-| ö | U+00F6 | `\x19Ho` |
-| ü | U+00FC | `\x19Hu` |
-| ç | U+00E7 | `\x19Kc` |
-| Ç | U+00C7 | `\x19KC` |
-| ß | U+00DF | `\x19\x7B` |
-| £ | U+00A3 | `\x19\x23` |
-| § | U+00A7 | `\x19\x27` |
-| ° | U+00B0 | `\x19\x30` |
-| ± | U+00B1 | `\x19\x31` |
-| ÷ | U+00F7 | `\x19\x38` |
-| ¼ | U+00BC | `\x19\x34` |
-| ½ | U+00BD | `\x19\x35` |
-| ¾ | U+00BE | `\x19\x36` |
-| Œ | U+0152 | `\x19\x6A` |
-| œ | U+0153 | `\x19\x7A` |
+| Glyph | Séquence UTF-8 | Séquence Minitel produite |
+|-------|----------------|---------------------------|
+| à | `\xC3\xA0` | `\x19Aa` |
+| è | `\xC3\xA8` | `\x19Ae` |
+| ù | `\xC3\xB9` | `\x19Au` |
+| é | `\xC3\xA9` | `\x19Be` |
+| â | `\xC3\xA2` | `\x19Ca` |
+| ê | `\xC3\xAA` | `\x19Ce` |
+| î | `\xC3\xAE` | `\x19Ci` |
+| ô | `\xC3\xB4` | `\x19Co` |
+| û | `\xC3\xBB` | `\x19Cu` |
+| ä | `\xC3\xA4` | `\x19Ha` |
+| ë | `\xC3\xAB` | `\x19He` |
+| ï | `\xC3\xAF` | `\x19Hi` |
+| ö | `\xC3\xB6` | `\x19Ho` |
+| ü | `\xC3\xBC` | `\x19Hu` |
+| ç | `\xC3\xA7` | `\x19Kc` |
+| Ç | `\xC3\x87` | `\x19KC` |
+| ß | `\xC3\x9F` | `\x19\x7B` |
+| £ | `\xC2\xA3` | `\x19\x23` |
+| § | `\xC2\xA7` | `\x19\x27` |
+| ° | `\xC2\xB0` | `\x19\x30` |
+| ± | `\xC2\xB1` | `\x19\x31` |
+| ÷ | `\xC3\xB7` | `\x19\x38` |
+| ¼ | `\xC2\xBC` | `\x19\x34` |
+| ½ | `\xC2\xBD` | `\x19\x35` |
+| ¾ | `\xC2\xBE` | `\x19\x36` |
+| Œ | `\xC5\x92` | `\x19\x6A` |
+| œ | `\xC5\x93` | `\x19\x7A` |
 
 Les autres caractères UTF-8 ne sont pas convertis et restent inchangés.
 
