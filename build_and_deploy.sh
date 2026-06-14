@@ -5,7 +5,7 @@ set -e
 PIO_PATH="/home/$USER/.platformio/penv/bin/pio"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Set DEPLOY_SCP_FOLDER via parameter or modify this line directly
-DEPLOY_SCP_FOLDER="${1:-}"
+DEPLOY_SCP_FOLDER="${1:-abasty-retro:/var/ftp}"
 
 # === Functions ===
 die() {
@@ -132,9 +132,15 @@ log "Deploying BASTOS files..."
 if [[ ! -d "disk" ]] || [[ -z "$(ls -A disk 2>/dev/null)" ]]; then
     die "No BASTOS files found in disk/ directory"
 fi
-if ! scp disk/* "${DEPLOY_SCP_FOLDER}/bastos/"; then
-    die "Failed to deploy BASTOS files"
-fi
+
+# Use find -L to follow symlinks and copy real files
+while IFS= read -r -d '' file; do
+    rel_path="${file#disk/}"
+    if ! scp "$file" "${DEPLOY_SCP_FOLDER}/bastos/${rel_path}"; then
+        die "Failed to deploy BASTOS file: $file"
+    fi
+done < <(find -L disk -type f -print0)
+
 log "✓ BASTOS files deployed"
 
 log "All done!"
