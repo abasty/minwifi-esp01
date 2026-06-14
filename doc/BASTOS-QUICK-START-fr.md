@@ -1,10 +1,51 @@
-# 1. Sortir du mode connecté ou d'une exécution Basic
+![bastos](bastos-title.png)
 
-Appuyer 2 fois sur la touche "ESC", si ça ne marche pas, appuyer sur le bouton
-RESET. Si on ne veut pas exécuter le programme `autoexec.bas` au démarrage, un
-appui long sur le bouton RESET permet de l'éviter.
+# 1. Aperçu
 
-# 2. Se connecter à un réseau Wi-Fi
+BASTOS est un dialecte BASIC conçu spécifiquement pour fonctionner sur terminal
+Minitel via liaison série. Les programmes sont composés de lignes numérotées
+exécutées dans l'ordre.
+
+BASTOS dispose de trois modes opérationnels :
+
+- **Mode interactif** : Les lignes entrées sont interprétées immédiatement. Si
+  une ligne possède un numéro, elle est enregistrée dans le programme. C'est le
+  mode d'entrée des commandes et d'édition des lignes de programme.
+
+- **Mode exécution** : Un programme est en train de s'exécuter (lancé avec `RUN`
+  ou `GOTO`). Le clavier peut être lu avec `INPUT`, `VKEY` et `INKEY$`. L'écran
+  est contrôlé par `PRINT` et les commandes TTY. Appuyer deux fois sur ESC
+  permet de sortir du mode exécution et de revenir au mode interactif.
+
+- **Mode connecté** : BASTOS est connecté à un serveur via la commande
+  `MINITEL`. Les entrées clavier sont envoyées au serveur, et l'écran affiche la
+  réponse du serveur. Appuyer deux fois sur ESC permet de sortir du mode
+  connecté et de revenir au mode précédent (soit exécution, soit interactif).
+
+```mermaid
+flowchart TD
+    start([Démarrage])
+    interactif["Mode interactif"]
+    execution["Mode exécution"]
+    connecte["Mode connecté"]
+
+    start --> interactif
+    interactif --> |RUN/GOTO| execution
+    interactif -->|MINITEL| connecte
+    execution -->|ESC ESC| interactif
+    execution -->|MINITEL| connecte
+    connecte -->|ESC ESC| execution
+    connecte -->|ESC ESC| interactif
+    linkStyle default stroke:#3f3,stroke-width:2px,color:green;
+```
+
+# 2. Sortir du mode connecté ou d'une exécution Basic
+
+Appuyer sur le bouton RESET du SonOff. Si on ne veut pas exécuter le programme
+`autoexec.bas` au démarrage, un appui long sur le bouton RESET permet de
+l'éviter.
+
+# 3. Se connecter à un réseau Wi-Fi
 
 Pour voir les réseaux connus :
 
@@ -34,7 +75,7 @@ WIFI "<nom du réseau>"
 OK
 ```
 
-# 3. Se connecter au FTP BASTOS
+# 4. Se connecter au FTP BASTOS
 
 Il faut être connecté au Wi-Fi.
 
@@ -60,18 +101,18 @@ FTP "bastos"
 OK
 ```
 
-# 4. Télécharger et exécuter "snake.bas"
+# 5. Télécharger et exécuter "meteor.bas"
 
 Il faut être connecté au FTP BASTOS.
 
-Pour voir le disque distant FTP : `FTP CAT`. Pour télécharger "snake.bas" :
+Pour voir le disque distant FTP : `FTP CAT`. Pour télécharger "meteor.bas" :
 
 ```
-FTP GET "snake.bas"
+FTP GET "meteor.bas"
 OK
 ```
 
-Le fichier `snake.bas` est téléchargé depuis le FTP BASTOS et sauvegardé sur le
+Le fichier `meteor.bas` est téléchargé depuis le FTP BASTOS et sauvegardé sur le
 disque local.
 
 Il n'est pas nécessaire d'être connecté pour exécuter des programmes Basic sur
@@ -86,13 +127,13 @@ WIFI STOP
 Pour voir le disque local : `CAT`.
 
 
-Pour charger et exécuter "snake.bas" depuis le disque local :
+Pour charger et exécuter "meteor.bas" depuis le disque local :
 
 ```
-RUN "snake"
+RUN "meteor"
 ```
 
-# 5. Se connecter à des services Minitel
+# 6. Se connecter à des services Minitel
 
 Il faut être connecté au Wi-Fi.
 
