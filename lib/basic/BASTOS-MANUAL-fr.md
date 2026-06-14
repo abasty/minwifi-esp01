@@ -12,7 +12,7 @@ sans numéro, est interprétée immédiatement (mode interactif).
 ```
 
 BASTOS s'exécute sur les modules SonOff Basic reliés par port série à des
-terminaux Minitel 1B, Minitel 2 ou Magic Club, dont il utilise le clavier et
+terminaux Minitel 1B, Minitel 2 ou Magis Club, dont il utilise le clavier et
 l'écran. Il se connecte à Internet via WiFi (commande `WIFI`), accède aux
 serveurs Minitel par TCP ou WebSockets (commande `MINITEL`), et échange des
 fichiers avec des serveurs FTP (commande `FTP`).
@@ -67,8 +67,10 @@ flowchart TD
 | `LIST` | Lister 20 lignes depuis la position courante |
 | `LIST numligne` | Lister 20 lignes depuis `numligne` |
 | `LIST numligne, nombre` | Lister `nombre` lignes depuis `numligne` |
+| `LL` | Identique à `LIST` |
 | `NEW` | Supprimer toutes les lignes du programme et les variables |
-| `CLEAR` / `END` | Effacer les variables et stopper l'exécution |
+| `CLEAR` | Effacer les variables et stopper l'exécution |
+| `END` | Terminer le programme et effacer les variables |
 | `STOP` | Suspendre l'exécution |
 | `CONT` | Reprendre après `STOP` |
 | `SAVE "fichier.bas"` | Sauvegarder le programme en ASCII |
@@ -89,8 +91,8 @@ flowchart TD
 
 ### Sortie vers écran
 
-Affiche des expressions à l'écran, suivies d'un saut de ligne. `?` est un
-raccourci pour `PRINT`.
+La commande `PRINT` affiche des expressions à l'écran, suivies d'un saut de
+ligne. `?` est un raccourci pour `PRINT`.
 
 ```basic
 PRINT expr [, expr ...]      ' Espace entre les éléments
@@ -145,8 +147,9 @@ expression, elles peuvent être affectées ou intégrées dans une chaîne :
 ```basic
 CLS                      ' instruction : envoie la séquence d'effacement écran
 c$ = CLS                 ' expression : stocke la séquence dans c$
-PRINT INK(3) "bonjour"   ' en ligne : changer la couleur puis afficher
-m$ = AT(10,13) + "hi"   ' construire une chaîne avec positionnement
+PRINT INK 3 "bonjour"    ' en ligne : changer la couleur puis afficher
+m$ = AT 10, 13           ' construire une chaîne avec positionnement
+m$ = m$ + "hi"
 ```
 
 En mode Videotex (MODE 0 ou MODE 1), les fonctions TTY émettent des séquences
@@ -162,15 +165,106 @@ CURSOR n             ' 0=masquer, 1=afficher le curseur
 BEEP                 ' Émettre un bip
 MODE n               ' Mode écran : ≤1 = 40 cols Videotex, ≥2 = 80 cols téléinformatique
 LINE0                ' Placer le curseur en ligne 0, colonne 1 (ligne d'état)
+ECHO n               ' 0=écho désactivé, 1=écho activé
+G0                   ' Passer au jeu de caractères ASCII
+G1                   ' Passer au jeu de caractères semi-graphiques
+SCROLL 0             ' Mode page
+SCROLL 1             ' Mode rouleau
+SCROLL               ' En mode rouleau, scrolle vers le haut
+SCROLL UP            ' En mode rouleau, scrolle vers le haut
+SCROLL DOWN          ' En mode rouleau, scrolle vers le bas
+INS LINE             ' Insérer une ligne
+DEL LINE             ' Supprimer une ligne
+DEL CHAR             ' Supprimer un caractère
 ```
+
+Exemple illustrant `DEL CHAR` :
+
+```basic
+10 CLS
+20 FOR i = 1 TO 24
+30 PRINT REP$ 40, "*";
+40 NEXT i
+50 AT 12, 15
+60 PRINT ">>> DEL CHAR <<<"
+70 PAUSE 1000
+80 AT 12, 20
+90 FOR i = 1 TO 20
+100 DEL CHAR
+110 PAUSE 100
+120 NEXT i
+```
+
+Ce programme remplit l'écran d'astérisques (lignes 10-40), affiche un message au
+centre (lignes 50-60), puis positionne le curseur ligne 12, colonne 20 et
+supprime 20 caractères consécutifs, créant un « trou » visible dans l'affichage.
 
 #### Positionnement du curseur
 
 ```basic
-AT ligne, col; expr
+AT ligne, col
 ```
 
 Lignes et colonnes sont indexées à partir de 1.
+
+En mode Videotex, les mouvements relatifs du curseur peuvent être insérés dans
+les chaînes par leur code hexadécimal :
+
+```basic
+PRINT "Bonjour\x08\x08Hi"  ' Reculer deux fois, afficher "Hi"
+```
+
+| Code | Hexa | Déplacement |
+|------|------|-------------|
+| 8 | `\x08` | Gauche (retour arrière) |
+| 9 | `\x09` | Droite (tabulation) |
+| 10 | `\x0a` | Bas (saut de ligne) |
+| 11 | `\x0b` | Haut (tabulation verticale) |
+
+Exemple de dessin d'un cadre avec les caractères semi-graphiques G1 :
+
+```basic
+10 CLS
+30 REM "Cadre 20x10 au centre"
+40 x = 10
+50 y = 7
+60 w = 20
+70 h = 10
+80 REM "Coin haut gauche"
+90 AT y, x
+100 PRINT G1 "7";
+110 REM "Ligne horizontale haut"
+120 FOR i = 1 TO w - 2
+130 PRINT "\x23";
+140 NEXT i
+150 REM "Coin haut droit"
+160 PRINT "k"
+170 REM "Lignes verticales"
+180 FOR i = 1 TO h - 2
+190 AT y + i, x
+200 PRINT G1; "5";
+210 AT y + i, x + w - 1
+220 PRINT G1; "j"
+230 NEXT i
+240 REM "Coin bas gauche"
+250 AT y + h - 1, x ; G1
+260 PRINT "u";
+270 REM "Ligne horizontale bas"
+280 FOR i = 1 TO w - 2
+290 PRINT "p";
+300 NEXT i
+310 REM "Coin bas droit"
+320 PRINT "z"
+340 AT y + 5, x + 5
+350 PRINT "BASTOS"
+```
+
+Ce programme dessine un cadre de 20×10 caractères centré à l'écran en utilisant
+les caractères semi-graphiques G1. Le cadre utilise : `7` (coin haut gauche),
+`\x23` (ligne horizontale haute), `k` (coin haut droit), `5` (ligne verticale
+gauche), `j` (ligne verticale droite), `u` (coin bas gauche), `p` (ligne
+horizontale basse) et `z` (coin bas droit). Le texte « BASTOS » est affiché à
+l'intérieur du cadre en mode G0 (ASCII).
 
 #### Couleurs et attributs
 
@@ -180,10 +274,12 @@ PAPER couleur        ' Couleur d'arrière-plan (0-7) ; sans effet en mode télé
 FLASH n              ' 0=normal, 1=clignotant
 INVERSE n            ' 0=normal, 1=vidéo inverse
 UNDERLINE n          ' 0=normal, 1=souligné
+SIZE n               ' 0=normale, 1=double hauteur, 2=double largeur, 3=double taille
 ```
 
 En mode téléinformatique, `INK 7` active la surbrillance ; `INK 0`–`6` la
-désactive. `PAPER` est sans effet.
+désactive. `PAPER` est sans effet. `SIZE` est un attribut local en mode
+Videotex.
 
 #### Graphiques
 
@@ -196,15 +292,17 @@ haut).
 ```basic
 PLOT x, y            ' Allumer un pixel
 UNPLOT x, y          ' Éteindre un pixel
-TEST(x, y)           ' Renvoie 1 si le pixel est allumé, 0 sinon
+TEST x, y            ' Renvoie 1 si le pixel est allumé, 0 sinon
 ```
 
 #### Vitesse
 
+Définir la vitesse du port série entre SonOff et Minitel :
+
 ```basic
-SLOW                 ' Vitesse normale (défaut)
-FAST                 ' Vitesse rapide
-FAST2                ' Vitesse plus rapide
+SLOW                 ' 1200 bps (défaut)
+FAST                 ' 4800 bps
+FAST2                ' 9600 bps (Minitel 2 et Magis Club uniquement)
 ```
 
 ### Sortie vers variable
@@ -248,8 +346,10 @@ Codes VKEY des touches de fonction du Minitel :
 Lecture non bloquante (sans attente) :
 
 ```basic
-k$ = INKEY$
-IF k$ <> "" THEN PRINT "Touche : " k$
+10 k$ = INKEY$
+20 IF k$ <> "" THEN PRINT "Touche : " k$
+30 PAUSE 100
+40 GOTO 10
 ```
 
 Les touches non imprimables (comme les touches de fonction) ne peuvent pas être
@@ -476,6 +576,23 @@ PRINT INT(a / b)    ' parenthèses pour grouper
 
 ## Structures de contrôle
 
+### REM
+
+Ajouter des commentaires aux lignes de programme. `REM` n'est pas une structure
+de contrôle à proprement parler ; elle provoque simplement la poursuite de
+l'exécution à la ligne suivante sans effectuer aucune action.
+
+```basic
+REM "commentaire"
+```
+
+```basic
+10 REM "Initialiser les variables"
+20 x = 0
+30 REM "Ceci est un commentaire"
+40 PRINT x
+```
+
 ### IF / THEN
 
 ```basic
@@ -560,7 +677,52 @@ PRINT "Terminé"
 
 ---
 
-## Base de données
+## Fichiers et Base de données
+
+### Fichiers
+
+Lire le contenu d'un fichier sous forme de chaîne.
+
+```basic
+contenu$ = FILE "nomfichier"                  ' Lire tout le fichier
+donnees$ = FILE "nomfichier", offset, taille  ' Lire taille octets à offset
+```
+
+La fonction `FILE` renvoie le contenu du fichier sous forme de chaîne. La forme
+complète lit le fichier entier, tandis que la forme partielle lit un nombre
+spécifique d'octets à partir d'un offset donné.
+
+```basic
+10 REM "Lire le fichier de configuration"
+20 config$ = FILE "config.txt"
+30 PRINT config$
+```
+
+Exemple de lecture et affichage d'un fichier ligne par ligne avec limite de 39
+colonnes :
+
+```basic
+10 CLS ;AT 24,1;CURSOR 0
+20 FAST
+1000 a$=FILE "bastos.txt"
+1100 deb=1
+1110 fin=INDEX a$,"\n",deb
+1120 IF fin<=0 THEN 2000
+1130 l$=a$(deb,fin-1)
+1140 deb=fin+1
+1150 PRINT l$( TO 39)
+1210 PAUSE 50
+1220 GOTO 1110
+2000 CURSOR 1
+```
+
+Ce programme lit le fichier entier en mémoire (ligne 1000), puis l'analyse ligne
+par ligne en utilisant `INDEX` pour trouver les sauts de ligne (ligne 1110).
+Chaque ligne est extraite (ligne 1130) et seuls les 39 premiers caractères sont
+affichés (ligne 1150), garantissant un affichage correct sur un écran Vidéotex
+de 40 colonnes.
+
+### Base de données
 
 BASTOS dispose d'un magasin clé/valeur organisé en sets numérotés.
 
