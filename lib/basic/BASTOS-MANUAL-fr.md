@@ -1,9 +1,25 @@
 # Manuel du langage BASTOS
 
-BASTOS est un dialecte BASIC conçu pour esp8266 et esp32c, qui équipent les
-modules SonOff Basic R2/R3 et R4. Les programmes sont
-composés de lignes numérotées exécutées dans l'ordre ; la ligne 0, ou une ligne
-sans numéro, est interprétée immédiatement (mode interactif).
+## Présentation
+
+### Matériel
+
+BASTOS-S est un ordinateur composé de deux éléments reliés par un câble série DIN-5 :
+
+- **Terminal Minitel** (Minitel 1B, Minitel 2 ou Magis Club) : fournit l'écran Vidéotex (40 colonnes × 25 lignes avec affichage semi-graphique), le clavier AZERTY avec touches de fonction, et l'alimentation électrique via la prise péri-informatique.
+
+- **Module SonOff Basic** (R2, R3 ou R4) équipé d'un microcontrôleur esp8266 ou esp32c (ESP32-C3) :
+  - CPU RISC-V 160 MHz (R4) ou Tensilica Xtensa 80 MHz (R2/R3)
+  - RAM : ~56 KB pour BASTOS sur R4, ~32 KB sur R2/R3 (variables, base de données, programme)
+  - Disque local : ~1,4 MB sur R4, ~512 KB sur R2/R3 (LittleFS sur Flash) pour les programmes (.bas), les variables sauvegardées et la base de données
+  - WiFi 802.11 b/g/n pour la connexion Internet
+  - Port série : 1200 et 4800 bps (Minitel 1B), jusqu'à 9600 bps (Minitel 2 et Magis Club)
+
+**BASTOS-EDI** est un environnement de développement intégré qui s'exécute dans un conteneur Docker. Il comprend l'interpréteur BASTOS accessible via WebSocket, un émulateur Minitel qui s'y connecte, et un éditeur avec coloration syntaxique. BASTOS-EDI permet de développer et tester des programmes sur PC via navigateur web. Les programmes ainsi développés peuvent être transférés sur BASTOS-S par FTP.
+
+### Le langage BASTOS
+
+BASTOS est un dialecte BASIC conçu spécifiquement pour fonctionner sur terminal Minitel via liaison série. Les programmes sont composés de lignes numérotées exécutées dans l'ordre ; la ligne 0, ou une ligne sans numéro, est interprétée immédiatement (mode interactif).
 
 ```basic
 10 PRINT "Bonjour !"
@@ -11,11 +27,18 @@ sans numéro, est interprétée immédiatement (mode interactif).
 30 GOTO 10
 ```
 
-BASTOS s'exécute sur les modules SonOff Basic reliés par port série à des
-terminaux Minitel 1B, Minitel 2 ou Magis Club, dont il utilise le clavier et
-l'écran. Il se connecte à Internet via WiFi (commande `WIFI`), accède aux
-serveurs Minitel par TCP ou WebSockets (commande `MINITEL`), et échange des
-fichiers avec des serveurs FTP (commande `FTP`).
+Le langage offre les capacités suivantes :
+
+- **Contrôle du Minitel** : affichage Vidéotex, positionnement curseur, attributs (couleurs, taille, clignotement), semi-graphique
+- **Stockage local** : sauvegarde et chargement de programmes et variables sur le disque local (LittleFS)
+- **Base de données** : stockage clé/valeur persistant avec les commandes `GET`, `PUT`, `DB`
+- **Connectivité Internet** :
+  - Connexion WiFi (commande `WIFI`)
+  - Accès aux serveurs Minitel via TCP ou WebSockets (commande `MINITEL`)
+  - Transfert de fichiers via FTP (commande `FTP`)
+- **Fonctions mathématiques** : trigonométrie, logarithmes, racine carrée, aléatoire
+- **Tableaux** : variables dimensionnées avec `DIM`
+- **Structures de contrôle** : boucles `FOR`/`NEXT`, branchements `IF`/`THEN`, `GOTO`, `GOSUB`/`RETURN`
 
 ---
 

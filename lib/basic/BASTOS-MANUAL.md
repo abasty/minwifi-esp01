@@ -1,9 +1,25 @@
 # BASTOS Language Manual
 
-BASTOS is a BASIC dialect designed for esp8266 and esp32c, which power SonOff
-Basic R2/R3 and R4 modules. Programs are made of
-numbered lines executed in order; line 0, or no line number, is interpreted
-immediately (interactive mode).
+## Presentation
+
+### Hardware
+
+BASTOS-S is a computer system composed of two elements connected by a DIN-5 serial cable:
+
+- **Minitel terminal** (Minitel 1B, Minitel 2, or Magis Club): provides the Videotex screen (40 columns × 25 lines with semi-graphic display), AZERTY keyboard with function keys, and electrical power via the peripheral port.
+
+- **SonOff Basic module** (R2, R3, or R4) equipped with an esp8266 or esp32c (ESP32-C3) microcontroller:
+  - RISC-V CPU 160 MHz (R4) or Tensilica Xtensa 80 MHz (R2/R3)
+  - RAM: ~56 KB for BASTOS on R4, ~32 KB on R2/R3 (variables, database, program)
+  - Local disk: ~1.4 MB on R4, ~512 KB on R2/R3 (LittleFS on Flash) for programs (.bas), saved variables, and database
+  - WiFi 802.11 b/g/n for Internet connection
+  - Serial port: 1200 and 4800 bps (Minitel 1B), up to 9600 bps (Minitel 2 and Magis Club)
+
+**BASTOS-EDI** is an integrated development environment running in a Docker container. It includes the BASTOS interpreter accessible via WebSocket, a Minitel emulator that connects to it, and an editor with syntax highlighting. BASTOS-EDI allows developing and testing programs on PC via web browser. Programs developed this way can be transferred to BASTOS-S via FTP.
+
+### The BASTOS Language
+
+BASTOS is a BASIC dialect designed specifically to run on Minitel terminals via serial connection. Programs are made of numbered lines executed in order; line 0, or no line number, is interpreted immediately (interactive mode).
 
 ```basic
 10 PRINT "Hello, World!"
@@ -11,11 +27,18 @@ immediately (interactive mode).
 30 GOTO 10
 ```
 
-BASTOS runs on SonOff Basic modules connected via serial port to Minitel 1B,
-Minitel 2 or Magis Club terminals, using their keyboard and screen. It connects
-to the Internet via WiFi (`WIFI` command), accesses Minitel servers over TCP or
-WebSockets (`MINITEL` command), and exchanges files with FTP servers (`FTP`
-command).
+The language offers the following capabilities:
+
+- **Minitel control**: Videotex display, cursor positioning, attributes (colors, size, blinking), semi-graphics
+- **Local storage**: save and load programs and variables on local disk (LittleFS)
+- **Database**: persistent key/value storage with `GET`, `PUT`, `DB` commands
+- **Internet connectivity**:
+  - WiFi connection (`WIFI` command)
+  - Access to Minitel servers via TCP or WebSockets (`MINITEL` command)
+  - File transfer via FTP (`FTP` command)
+- **Mathematical functions**: trigonometry, logarithms, square root, random
+- **Arrays**: dimensioned variables with `DIM`
+- **Control structures**: `FOR`/`NEXT` loops, `IF`/`THEN` branching, `GOTO`, `GOSUB`/`RETURN`
 
 ---
 
