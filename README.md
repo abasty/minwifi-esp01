@@ -47,8 +47,8 @@ Pour une utilisation complète du système, consultez
 
 Ce projet contient plusieurs cibles de build :
 
-- **Firmware ESP8266 Sonoff** (`sonoff`) : pour module IoT Sonoff
-- **Firmware ESP32-C3** (`sonoff-r4`) : pour module ESP32-C3
+- **Firmware ESP8266** (`sonoff`) : pour Sonoff Basic R2/R3
+- **Firmware ESP32-C3** (`sonoff-r4`) : pour Sonoff Basic R4
 - **Binaire Linux** (`bastos`) : version Linux pour tests et développement
 - **Fichiers BASTOS** (`disk/`) : programmes et données
 
@@ -105,6 +105,7 @@ optionnel :
   configuration
 
 Le script effectue (selon la configuration) :
-1. Compilation des firmware Sonoff et ESP32-C3
+1. Compilation des firmware ESP8266 et ESP32-C3
 2. Compilation de la version Linux
 3. Copie des binaires et fichiers BASTOS via SCP (optionnel)
+4. Copie de la documentation via SCP (optionnel)

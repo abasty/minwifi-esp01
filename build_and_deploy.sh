@@ -153,4 +153,22 @@ if [[ -n "$DEPLOY_SCP_FOLDER" ]]; then
     log "✓ BASTOS files deployed"
 fi
 
+# Deploy documentation files (only if DEPLOY_SCP_FOLDER is set)
+if [[ -n "$DEPLOY_SCP_FOLDER" ]]; then
+    log "Deploying documentation files..."
+    if [[ ! -d "doc" ]] || [[ -z "$(ls -A doc 2>/dev/null)" ]]; then
+        die "No documentation files found in doc/ directory"
+    fi
+
+    # Use find -L to follow symlinks and copy real files
+    while IFS= read -r -d '' file; do
+        rel_path="${file#doc/}"
+        if ! scp "$file" "${DEPLOY_SCP_FOLDER}/doc/${rel_path}"; then
+            die "Failed to deploy documentation file: $file"
+        fi
+    done < <(find -L doc -type f -print0)
+
+    log "✓ Documentation files deployed"
+fi
+
 log "All done!"
