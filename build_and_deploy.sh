@@ -4,8 +4,7 @@ set -e
 # === Configuration ===
 PIO_PATH="/home/$USER/.platformio/penv/bin/pio"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Set DEPLOY_SCP_FOLDER via parameter or modify this line directly
-DEPLOY_SCP_FOLDER="${1:-abasty-retro:/var/ftp}"
+DEPLOY_SCP_FOLDER="$1"
 
 # === Functions ===
 die() {
@@ -17,13 +16,17 @@ log() {
     echo "[$(date +'%H:%M:%S')] $*"
 }
 
-show_help() {
+warn() {
+    echo "[$(date +'%H:%M:%S')] WARNING: $*" >&2
+}
+
+show_deploy_help() {
     cat <<EOF
-Build and deploy artifacts for minwifi-esp01
+To deploy artifacts, provide DEPLOY_SCP_FOLDER:
 
 Usage: $0 [DEPLOY_SCP_FOLDER]
 
-DEPLOY_SCP_FOLDER is required and should be in the format: user@host:/path/to/deploy
+DEPLOY_SCP_FOLDER should be in the format: user@host:/path/to/deploy
 
 Example:
   $0 user@remote:/var/ftp
@@ -31,15 +34,6 @@ Example:
 You can also set DEPLOY_SCP_FOLDER directly in the script (line 8).
 
 EOF
-}
-
-check_deploy_folder() {
-    if [[ -z "$DEPLOY_SCP_FOLDER" ]]; then
-        echo "ERROR: DEPLOY_SCP_FOLDER is not set" >&2
-        echo >&2
-        show_help
-        exit 1
-    fi
 }
 
 check_pio() {
@@ -78,7 +72,11 @@ pio_build_and_deploy() {
     fi
     log "✓ Build successful for $target"
 
-    # 3. Copy the firmware to the scp folder
+    # 3. Copy the firmware to the scp folder (only if DEPLOY_SCP_FOLDER is set)
+    if [[ -z "$DEPLOY_SCP_FOLDER" ]]; then
+        return 0
+    fi
+
     local firmware_src=".pio/build/${target}/firmware.bin"
     if [[ ! -f "$firmware_src" ]]; then
         die "Firmware file not found: $firmware_src"
@@ -94,16 +92,26 @@ pio_build_and_deploy() {
 # === Main ===
 cd "$SCRIPT_DIR" || die "Failed to change to script directory"
 
-# Verify DEPLOY_SCP_FOLDER is set
-check_deploy_folder
+# Check if DEPLOY_SCP_FOLDER is set
+if [[ -z "$DEPLOY_SCP_FOLDER" ]]; then
+    warn "DEPLOY_SCP_FOLDER not set - build only, no deployment"
+    echo >&2
+    show_deploy_help
+fi
 
 log "Starting build and deploy process"
-log "Deploy folder: $DEPLOY_SCP_FOLDER"
+if [[ -n "$DEPLOY_SCP_FOLDER" ]]; then
+    log "Deploy folder: $DEPLOY_SCP_FOLDER"
+fi
 
 # Verify dependencies
 check_pio
-command -v scp &> /dev/null || die "scp not found in PATH"
 command -v make &> /dev/null || die "make not found in PATH"
+
+# Check scp only if deployment is needed
+if [[ -n "$DEPLOY_SCP_FOLDER" ]]; then
+    command -v scp &> /dev/null || die "scp not found in PATH"
+fi
 
 # Build and deploy platformio targets
 pio_build_and_deploy sonoff
@@ -120,27 +128,29 @@ fi
 popd > /dev/null
 log "✓ Linux version built"
 
-# Deploy Linux version
-log "Deploying Linux version..."
-if ! scp "lib/basic/test/bin/bastos" "${DEPLOY_SCP_FOLDER}/firmware/"; then
-    die "Failed to deploy Linux version"
-fi
-log "✓ Linux version deployed"
-
-# Deploy BASTOS files
-log "Deploying BASTOS files..."
-if [[ ! -d "disk" ]] || [[ -z "$(ls -A disk 2>/dev/null)" ]]; then
-    die "No BASTOS files found in disk/ directory"
-fi
-
-# Use find -L to follow symlinks and copy real files
-while IFS= read -r -d '' file; do
-    rel_path="${file#disk/}"
-    if ! scp "$file" "${DEPLOY_SCP_FOLDER}/bastos/${rel_path}"; then
-        die "Failed to deploy BASTOS file: $file"
+# Deploy Linux version (only if DEPLOY_SCP_FOLDER is set)
+if [[ -n "$DEPLOY_SCP_FOLDER" ]]; then
+    log "Deploying Linux version..."
+    if ! scp "lib/basic/test/bin/bastos" "${DEPLOY_SCP_FOLDER}/firmware/"; then
+        die "Failed to deploy Linux version"
     fi
-done < <(find -L disk -type f -print0)
+    log "✓ Linux version deployed"
 
-log "✓ BASTOS files deployed"
+    # Deploy BASTOS files
+    log "Deploying BASTOS files..."
+    if [[ ! -d "disk" ]] || [[ -z "$(ls -A disk 2>/dev/null)" ]]; then
+        die "No BASTOS files found in disk/ directory"
+    fi
+
+    # Use find -L to follow symlinks and copy real files
+    while IFS= read -r -d '' file; do
+        rel_path="${file#disk/}"
+        if ! scp "$file" "${DEPLOY_SCP_FOLDER}/bastos/${rel_path}"; then
+            die "Failed to deploy BASTOS file: $file"
+        fi
+    done < <(find -L disk -type f -print0)
+
+    log "✓ BASTOS files deployed"
+fi
 
 log "All done!"
