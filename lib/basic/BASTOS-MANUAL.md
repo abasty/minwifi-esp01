@@ -1,13 +1,80 @@
 # BASTOS Language Manual
 
-BASTOS is a BASIC dialect designed for the ESP01 board. Programs are made of
-numbered lines executed in order; line 0, or no line number, is interpreted
-immediately (interactive mode).
+## Presentation
+
+### Hardware
+
+BASTOS-S is a computer system composed of two elements connected by a DIN-5 serial cable:
+
+- **Minitel terminal** (Minitel 1B, Minitel 2, or Magis Club): provides the Videotex screen (40 columns × 25 lines with semi-graphic display), AZERTY keyboard with function keys, and electrical power via the peripheral port.
+
+- **SonOff Basic module** (R2, R3, or R4) equipped with an esp8266 or esp32c (ESP32-C3) microcontroller:
+  - RISC-V CPU 160 MHz (R4) or Tensilica Xtensa 80 MHz (R2/R3)
+  - RAM: ~56 KB for BASTOS on R4, ~32 KB on R2/R3 (variables, database, program)
+  - Local disk: ~1.4 MB on R4, ~512 KB on R2/R3 (LittleFS on Flash) for programs (.bas), saved variables, and database
+  - WiFi 802.11 b/g/n for Internet connection
+  - Serial port: 1200 and 4800 bps (Minitel 1B), up to 9600 bps (Minitel 2 and Magis Club)
+
+**BASTOS-EDI** is an integrated development environment running in a Docker container. It includes the BASTOS interpreter accessible via WebSocket, a Minitel emulator that connects to it, and an editor with syntax highlighting. BASTOS-EDI allows developing and testing programs on PC via web browser. Programs developed this way can be transferred to BASTOS-S via FTP.
+
+### The BASTOS Language
+
+BASTOS is a BASIC dialect designed specifically to run on Minitel terminals via serial connection. Programs are made of numbered lines executed in order; line 0, or no line number, is interpreted immediately (interactive mode).
 
 ```basic
 10 PRINT "Hello, World!"
 20 PAUSE 1000
 30 GOTO 10
+```
+
+The language offers the following capabilities:
+
+- **Minitel control**: Videotex display, cursor positioning, attributes (colors, size, blinking), semi-graphics
+- **Local storage**: save and load programs and variables on local disk (LittleFS)
+- **Database**: persistent key/value storage with `GET`, `PUT`, `DB` commands
+- **Internet connectivity**:
+  - WiFi connection (`WIFI` command)
+  - Access to Minitel servers via TCP or WebSockets (`MINITEL` command)
+  - File transfer via FTP (`FTP` command)
+- **Mathematical functions**: trigonometry, logarithms, square root, random
+- **Arrays**: dimensioned variables with `DIM`
+- **Control structures**: `FOR`/`NEXT` loops, `IF`/`THEN` branching, `GOTO`, `GOSUB`/`RETURN`
+
+---
+
+## BASTOS Modes
+
+BASTOS has three operational modes:
+
+- **Interactive mode**: Entered lines are interpreted immediately. If a line has
+  a line number, it is stored in the program. This is the command entry and
+  program line editing mode.
+
+- **Execution mode**: A program is running (started with `RUN` or `GOTO`). The
+  keyboard can be read with `INPUT`, `VKEY`, and `INKEY$`. The screen is
+  controlled by `PRINT` and TTY commands. Press ESC twice to exit execution and
+  return to interactive mode.
+
+- **Connected mode**: BASTOS is connected to a server via the `MINITEL` command.
+  Keyboard input is sent to the server, and screen output displays the server's
+  response. Press ESC twice to exit connected mode and return to the previous
+  mode (either execution or interactive).
+
+```mermaid
+flowchart TD
+    start([Start])
+    interactive["Interactive mode"]
+    execution["Execution mode"]
+    connected["Connected mode"]
+
+    start --> interactive
+    interactive -->|RUN / GOTO| execution
+    interactive -->|MINITEL| connected
+    execution -->|ESC ESC| interactive
+    execution -->|MINITEL| connected
+    connected -->|ESC ESC| execution
+    connected -->|ESC ESC| interactive
+    linkStyle default stroke:#3f3,stroke-width:2px,color:green;
 ```
 
 ---
@@ -19,19 +86,21 @@ immediately (interactive mode).
 | `RUN` | Run from first line |
 | `RUN linenumber` | Run from a specific line |
 | `RUN "file.bas"` | Load and run ASCII program |
-| `RUN "file.bst", linenumber` | Load and run binary program from a specific line |
+| `RUN "file.bst", linenumber` | Load and run binary program and variables from a specific line |
 | `LIST` | List 20 lines from current position |
 | `LIST linenum` | List 20 lines starting from `linenum` |
 | `LIST linenum, count` | List `count` lines from `linenum` |
+| `LL` | Same as `LIST` |
 | `NEW` | Delete all program lines and vriables |
-| `CLEAR` / `END` | Clear variables and stop execution |
+| `CLEAR` | Clear variables and stop execution |
+| `END` | Terminate program and clear variables |
 | `STOP` | Pause execution |
 | `CONT` | Resume after `STOP` |
 | `SAVE "file.bas"` | Save program as ASCII |
-| `SAVE "file.bst"` | Save program as binary |
+| `SAVE "file.bst"` | Save program and variables as binary |
 | `SAVE "file.var"` | Save variables only |
 | `LOAD "file.bas"` | Load ASCII program |
-| `LOAD "file.bst"` | Load binary program |
+| `LOAD "file.bst"` | Load program and variables from binary |
 | `LOAD "file.var"` | Load variables only |
 | `ERASE "file"` | Delete file |
 | `CAT` | List files |
@@ -41,11 +110,12 @@ immediately (interactive mode).
 
 ---
 
-## PRINT / INPUT
+## Input / Output
 
-### PRINT
+### Output to screen
 
-Prints expressions to the screen, followed by a newline. `?` is a shorthand for `PRINT`.
+The `PRINT` command prints expressions to the screen, followed by a newline. `?`
+is a shorthand for `PRINT`.
 
 ```basic
 PRINT expr [, expr ...]      ' Space between items
@@ -57,8 +127,8 @@ PRINT                        ' Print empty line
 Use a trailing `;` to suppress the final newline:
 
 ```basic
-PRINT "Enter value: ";
-INPUT n
+10 PRINT "Enter value: ";
+20 INPUT n
 ```
 
 Numeric expressions and string variables can be mixed freely:
@@ -74,17 +144,198 @@ Position output with `AT line, col`:
 AT 5, 10; "Hello"
 ```
 
-Redirect all output to a string variable:
+### Minitel Screen Control
+
+The screen has two display modes: **Videotex (40 columns)** and
+**Téléinformatique (80 columns)**. Line 0 is a status line; the display area
+consists of 24 lines below it. Accessing line 0 with `LINE0` (equivalent to
+`AT 0,1`) saves the current cursor position and attributes. To exit line 0
+and return to the display area, use `AT` or `"\n"` (newline); `"\n"`
+restores both the saved position and attributes.
+
+Characters are drawn from two sets: **G0 (ASCII)** for regular text, and **G1
+(semi-graphics)** for pixel-based graphics. On G0, attributes are either local
+(INK, INVERSE, FLASH, SIZE) or global (PAPER, UNDERLINE); global attributes must
+be preceded by a space separator. On G1, all attributes are local and require no
+separator; however, SIZE and INVERSE are not supported, and UNDERLINE controls
+disjoint semi-graphics.
+
+TTY functions return a string containing the corresponding escape sequence. Used
+as a statement, they behave as `PRINT ...; ` (output the sequence with no
+trailing newline). Used as an expression, they can be assigned or embedded in a
+string:
 
 ```basic
-OUTPUT START m$
-  CLS
-  AT 10, 13; "*** METEOR ***"
+CLS                      ' statement: sends clear-screen sequence
+c$ = CLS                 ' expression: stores the sequence in c$
+PRINT INK 3 "hello"      ' inline: set color then print
+m$ = AT 10, 13           ' build a string with positioning
+m$ = m$ + "hi"
+```
+
+In Videotex mode (MODE 0 or MODE 1), TTY functions emit Videotex sequences. In
+80-column mode (MODE 2), they emit CSI sequences (`ESC [ ...`).
+
+#### Screen
+
+```basic
+CLS                  ' Clear screen
+CLEOL                ' Clear to end of line
+CURSOR n             ' 0=hide, 1=show cursor
+BEEP                 ' Sound bell
+MODE n               ' Screen mode: ≤1 = 40 cols Videotex, ≥2 = 80-column
+LINE0                ' Move cursor to line 0, column 1 (status line)
+ECHO n               ' 0=echo off, 1=echo on
+G0                   ' Switch to ASCII character set
+G1                   ' Switch to semi-graphic character set
+SCROLL 0             ' Page mode
+SCROLL 1             ' Scroll mode
+SCROLL               ' In scroll mode, scrolls up
+SCROLL UP            ' In scroll mode, scrolls up
+SCROLL DOWN          ' In scroll mode, scrolls down
+INS LINE             ' Insert line
+DEL LINE             ' Delete line
+DEL CHAR             ' Delete character
+```
+
+Example demonstrating `DEL CHAR`:
+
+```basic
+10 CLS
+20 FOR i = 1 TO 24
+30 PRINT REP$ 40, "*";
+40 NEXT i
+50 AT 12, 15
+60 PRINT ">>> DEL CHAR <<<"
+70 PAUSE 1000
+80 AT 12, 20
+90 FOR i = 1 TO 20
+100 DEL CHAR
+110 PAUSE 100
+120 NEXT i
+```
+
+This program fills the screen with asterisks (lines 10-40), displays a message at
+the center (line 50-60), then positions the cursor at line 12, column 20 and
+deletes 20 consecutive characters, creating a visible "hole" in the display.
+
+#### Cursor positioning
+
+```basic
+AT line, col
+```
+
+Lines and columns are 1-indexed.
+
+In Videotex mode, relative cursor movements can be inserted in strings using hex
+codes:
+
+```basic
+PRINT "Hello\x08\x08Hi"  ' Backspace twice, print "Hi"
+```
+
+| Code | Hex | Movement |
+|------|-----|----------|
+| 8 | `\x08` | Left (backspace) |
+| 9 | `\x09` | Right (tab) |
+| 10 | `\x0a` | Down (line feed) |
+| 11 | `\x0b` | Up (vertical tab) |
+
+Example drawing a frame using G1 semi-graphic characters:
+
+```basic
+10 CLS
+30 REM "Cadre 20x10 au centre"
+40 x = 10
+50 y = 7
+60 w = 20
+70 h = 10
+80 REM "Coin haut gauche"
+90 AT y, x
+100 PRINT G1 "7";
+110 REM "Ligne horizontale haut"
+120 FOR i = 1 TO w - 2
+130 PRINT "\x23";
+140 NEXT i
+150 REM "Coin haut droit"
+160 PRINT "k"
+170 REM "Lignes verticales"
+180 FOR i = 1 TO h - 2
+190 AT y + i, x
+200 PRINT G1; "5";
+210 AT y + i, x + w - 1
+220 PRINT G1; "j"
+230 NEXT i
+240 REM "Coin bas gauche"
+250 AT y + h - 1, x ; G1
+260 PRINT "u";
+270 REM "Ligne horizontale bas"
+280 FOR i = 1 TO w - 2
+290 PRINT "p";
+300 NEXT i
+310 REM "Coin bas droit"
+320 PRINT "z"
+340 AT y + 5, x + 5
+350 PRINT "BASTOS"
+```
+
+This program draws a 20×10 character frame centered on screen using G1
+semi-graphic characters. The frame uses: `7` (top-left corner), `\x23`
+(horizontal top line), `k` (top-right corner), `5` (left vertical line), `j`
+(right vertical line), `u` (bottom-left corner), `p` (horizontal bottom line),
+and `z` (bottom-right corner). The text "BASTOS" is displayed inside the frame
+in G0 (ASCII) mode.
+
+#### Colors and attributes
+
+```basic
+INK color            ' Foreground color (0-7)
+PAPER color          ' Background color (0-7); no effect in 80-column mode (≥2)
+FLASH n              ' 0=off, 1=blinking
+INVERSE n            ' 0=normal, 1=inverted
+UNDERLINE n          ' 0=off, 1=underlined
+SIZE n               ' 0=normal, 1=double height, 2=double width, 3=double size
+```
+
+In 80-column mode, `INK 7` enables bold/bright; `INK 0`–`6` disables it. `PAPER`
+has no effect. `SIZE` is a local attribute in Videotex mode.
+
+#### Graphics
+
+Each screen character is a semi-graphic matrix of 3 rows × 2 columns of pixels.
+The screen (excluding line 0) has 24 lines of 40 characters, giving **80 pixels
+wide × 72 pixels tall**. The origin **(0, 0) is at the bottom-left corner**: x
+ranges from 0–79 (left to right), y ranges from 0–71 (bottom to top).
+
+```basic
+PLOT x, y            ' Set pixel
+UNPLOT x, y          ' Clear pixel
+TEST x, y            ' Returns 1 if pixel set, 0 otherwise
+```
+
+#### Speed
+
+Set the serial port speed between SonOff and Minitel:
+
+```basic
+SLOW                 ' 1200 bps (default)
+FAST                 ' 4800 bps
+FAST2                ' 9600 bps (Minitel 2 and Magis Club only)
+```
+
+### Output to variable
+
+Redirect output to a string variable:
+
+```basic
+OUTPUT m$
+CLS
+AT 10, 13; "*** METEOR ***"
 OUTPUT STOP
 PRINT m$
 ```
 
-### INPUT
+### Keyboard input
 
 Reads a value from the keyboard and assigns it to a variable.
 
@@ -97,16 +348,37 @@ INPUT "prompt", variable
 - For a string variable (`$`), reads until Enter.
 - After input, `VKEY` holds the validation key code.
 
-```basic
-10 INPUT "Enter your name: ", n$
-20 PRINT "Hello, " n$
-```
+VKEY codes for Minitel function keys:
+
+| Key | VKEY | Notes |
+|-----|------|-------|
+| Enter / ENVOI | 13 | Ends input |
+| CORRECTION | 127 | Deletes last character; not returned by INPUT |
+| ANNULATION | 1 | Clears entire input; not returned by INPUT |
+| REPETITION | 2 | Ends input |
+| SUITE | 4 | Ends input |
+| RETOUR | 5 | Ends input |
+| SOMMAIRE | 6 | Ends input |
+| GUIDE | 14 | Ends input |
 
 Non-blocking key read (no wait):
 
 ```basic
-k$ = INKEY$
-IF k$ <> "" THEN PRINT "Pressed: " k$
+10 k$ = INKEY$
+20 IF k$ <> "" THEN PRINT "Pressed: " k$
+30 PAUSE 100
+40 GOTO 10
+```
+
+Non-printable keys (like function keys) cannot be read as regular characters.
+Use `CODE INKEY$` to get the numeric code:
+
+```basic
+10 k = CODE INKEY$
+20 PAUSE 100
+30 IF k = 0 THEN GOTO 10
+40 PRINT "Key code: "; k
+50 GOTO 10
 ```
 
 ---
@@ -142,6 +414,15 @@ a$ = "hello\n"
 b$ = "\e[2J"          ' ANSI clear screen
 c$ = "\x1b\x41\x42"  ' Escape + 'A' + 'B'
 ```
+
+### Semi-graphic characters
+
+Press **Ctrl+G** to toggle between G0 (ASCII) and G1 (semi-graphic) character
+sets. Characters typed while in G1 mode are displayed from the semi-graphic set.
+The following images show the mapping between G0 keyboard characters and their
+G1 semi-graphic equivalents:
+
+![G0↔G1 mapping](g02g1.png)
 
 ### Supported UTF-8 characters (Minitel conversion)
 
@@ -242,7 +523,8 @@ z$ = CHR$ 0
 ia$ = CHR$(CODE a$ & 223)   ' parentheses for grouping only
 ```
 
-Substring indices use the `TO` keyword. `start` defaults to `1`, `end` defaults to `LEN s$`:
+Substring indices use the `TO` keyword. `start` defaults to `1`, `end` defaults
+to `LEN s$`:
 
 ```basic
 a$ = "Alice and Bob"
@@ -307,6 +589,23 @@ PRINT INT(a / b)    ' parentheses for grouping
 
 ## Control structures
 
+### REM
+
+Add comments to program lines. `REM` is not a control structure per se; it
+simply causes execution to continue to the next line without performing any
+action.
+
+```basic
+REM "comment"
+```
+
+```basic
+10 REM "Initialize variables"
+20 x = 0
+30 REM "This is a comment"
+40 PRINT x
+```
+
 ### IF / THEN
 
 ```basic
@@ -320,6 +619,10 @@ IF expression THEN statement
 30 IF x = 0 THEN 10
 40 PRINT "positive"
 ```
+
+⚠️ **Common pitfall**: `IF a > 0 THEN a=a-1` will not work as expected. The
+`a=a-1` is treated as a comparison (is `a` equal to `a-1`?), which evaluates to
+`0` (false). Use `LET` to make it an assignment: `IF a > 0 THEN LET a = a - 1`.
 
 ### FOR / NEXT
 
@@ -335,11 +638,11 @@ NEXT var
 
 ```basic
 10 FOR i = 1 TO 5
-20   PRINT i
+20 PRINT i
 30 NEXT i
 
 40 FOR i = 10 TO 1 STEP -1
-50   PRINT i
+50 PRINT i
 60 NEXT i
 ```
 
@@ -385,7 +688,50 @@ PRINT "Done"
 
 ---
 
-## Database
+## Files and Database
+
+### Files
+
+Read file content as a string.
+
+```basic
+content$ = FILE "filename"              ' Read entire file
+data$ = FILE "filename", offset, size   ' Read size bytes at offset
+```
+
+The `FILE` function returns the file content as a string. The full form reads
+the entire file, while the partial form reads a specific number of bytes
+starting at a given offset.
+
+```basic
+10 REM "Read configuration file"
+20 config$ = FILE "config.txt"
+30 PRINT config$
+```
+
+Example reading and displaying a file line by line with 39-column limit:
+
+```basic
+10 CLS ;AT 24,1;CURSOR 0
+20 FAST
+1000 a$=FILE "bastos.txt"
+1100 deb=1
+1110 fin=INDEX a$,"\n",deb
+1120 IF fin<=0 THEN 2000
+1130 l$=a$(deb,fin-1)
+1140 deb=fin+1
+1150 PRINT l$( TO 39)
+1210 PAUSE 50
+1220 GOTO 1110
+2000 CURSOR 1
+```
+
+This program reads the entire file into memory (line 1000), then parses it line
+by line using `INDEX` to find newlines (line 1110). Each line is extracted
+(line 1130) and only the first 39 characters are displayed (line 1150),
+ensuring proper display on a 40-column Videotex screen.
+
+### Database
 
 BASTOS provides a simple key/value store organized in numbered sets.
 
@@ -393,11 +739,12 @@ BASTOS provides a simple key/value store organized in numbered sets.
 GET set              ' Returns all keys of the set as a string
 GET set, "key"       ' Returns the value associated with a key
 PUT set, "key", "value"  ' Store or update a key/value pair
-DB LIST n            ' List all entries in set n
-DB ERASE n, "key"    ' Delete entry by key from set n
+DB LIST set            ' List all entries in set
+DB ERASE set, "key"    ' Delete entry by key from set
 ```
 
-Sets are numbered starting from 0. Keys and values are strings. WiFi, Minitel, and FTP connections use specific sets to persist their configuration.
+Sets are numbered starting from 0. Keys and values are strings. WiFi, Minitel,
+and FTP connections use specific sets to persist their configuration.
 
 ```basic
 PUT 1, "city", "Paris"
@@ -444,7 +791,8 @@ Network connections are identified by a URN whose parts are separated by `:`:
 protocol:host:port[:path[:login[:password]]]
 ```
 
-For `ftp`, `login` defaults to `anonymous` and `password` to `pat@frites.be` if omitted.
+For `ftp`, `login` defaults to `anonymous` and `password` to
+`pat@frites.be` if omitted.
 
 | Protocol | Description |
 |----------|-------------|
@@ -507,62 +855,3 @@ Example session:
 ```
 
 ---
-
-## Display and TTY
-
-TTY functions return a string containing the corresponding escape sequence. Used as a statement, they behave as `PRINT ...; ` (output the sequence with no trailing newline). Used as an expression, they can be assigned or embedded in a string:
-
-```basic
-CLS                      ' statement: sends clear-screen sequence
-c$ = CLS                 ' expression: stores the sequence in c$
-PRINT INK(3) "hello"     ' inline: set color then print
-m$ = AT(10,13) + "hi"   ' build a string with positioning
-```
-
-In Teletext mode (≤1), TTY functions emit Videotex sequences. In VT100 mode (≥2), they emit CSI sequences (`ESC [ ...`).
-
-### Screen
-
-```basic
-CLS                  ' Clear screen
-CLEOL                ' Clear to end of line
-CURSOR n             ' 0=hide, 1=show cursor
-BEEP                 ' Sound bell
-MODE n               ' Screen mode: ≤1 = 40 cols Teletext, ≥2 = 80 cols VT100
-```
-
-### Cursor positioning
-
-```basic
-AT line, col; expr
-```
-
-Lines and columns are 1-indexed.
-
-### Colors and attributes
-
-```basic
-INK color            ' Foreground color (0-7)
-PAPER color          ' Background color (0-7); no effect in VT100 mode (≥2)
-FLASH n              ' 0=off, 1=blinking
-INVERSE n            ' 0=normal, 1=inverted
-UNDERLINE n          ' 0=off, 1=underlined
-```
-
-In VT100 mode, `INK 7` enables bold/bright; `INK 0`–`6` disables it. `PAPER` has no effect.
-
-### Graphics
-
-```basic
-PLOT x, y            ' Set pixel
-UNPLOT x, y          ' Clear pixel
-TEST(x, y)           ' Returns 1 if pixel set, 0 otherwise
-```
-
-### Speed
-
-```basic
-SLOW                 ' Normal speed (default)
-FAST                 ' High speed
-FAST2                ' Higher speed
-```
