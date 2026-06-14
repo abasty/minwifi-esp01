@@ -1,4 +1,4 @@
-![bastos](bastos-title.png)
+![bastos](doc/bastos-title.png)
 
 # 1. Sortir du mode connecté ou d'une exécution Basic
 
