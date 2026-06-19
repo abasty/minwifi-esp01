@@ -2,3 +2,7 @@ title: MinWifi ESP01 — BASTOS
 description: Documentation du système BASTOS pour terminal Minitel via ESP8266
 theme: minima
 lang: fr
+
+exclude:
+  - TODO.md
+  - mode80.md
