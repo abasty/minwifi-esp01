@@ -1,3 +1,7 @@
+---
+title: Quick Start
+---
+
 ![bastos](bastos-title.png)
 
 # 1. Aperçu

@@ -1,3 +1,10 @@
+---
+title: BASTOS Language Manual
+nav_exclude: true
+---
+
+![bastos](bastos-title.png)
+
 # BASTOS Language Manual
 
 ## Presentation

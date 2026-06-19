@@ -1,3 +1,9 @@
+---
+title: Manuel du langage BASTOS
+---
+
+![bastos](bastos-title.png)
+
 # Manuel du langage BASTOS
 
 ## Présentation
