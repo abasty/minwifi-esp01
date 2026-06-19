@@ -1,47 +1,9 @@
 ![bastos](docs/bastos-title.png)
 
-# 1. Aperçu
+# 1. Documentation utilisateur
 
-BASTOS est un dialecte BASIC conçu spécifiquement pour fonctionner sur terminal
-Minitel via liaison série. Les programmes sont composés de lignes numérotées
-exécutées dans l'ordre.
-
-BASTOS dispose de trois modes opérationnels :
-
-- **Mode interactif** : Les lignes entrées sont interprétées immédiatement. Si
-  une ligne possède un numéro, elle est enregistrée dans le programme. C'est le
-  mode d'entrée des commandes et d'édition des lignes de programme.
-
-- **Mode exécution** : Un programme est en train de s'exécuter (lancé avec `RUN`
-  ou `GOTO`). Le clavier peut être lu avec `INPUT`, `VKEY` et `INKEY$`. L'écran
-  est contrôlé par `PRINT` et les commandes TTY. Appuyer deux fois sur ESC
-  permet de sortir du mode exécution et de revenir au mode interactif.
-
-- **Mode connecté** : BASTOS est connecté à un serveur via la commande
-  `MINITEL`. Les entrées clavier sont envoyées au serveur, et l'écran affiche la
-  réponse du serveur. Appuyer deux fois sur ESC permet de sortir du mode
-  connecté et de revenir au mode précédent (soit exécution, soit interactif).
-
-```mermaid
-flowchart TD
-    start([Démarrage])
-    interactif["Mode interactif"]
-    execution["Mode exécution"]
-    connecte["Mode connecté"]
-
-    start --> interactif
-    interactif --> |RUN/GOTO| execution
-    interactif -->|MINITEL| connecte
-    execution -->|ESC ESC| interactif
-    execution -->|MINITEL| connecte
-    connecte -->|ESC ESC| execution
-    connecte -->|ESC ESC| interactif
-    linkStyle default stroke:#3f3,stroke-width:2px,color:green;
-```
-
-Pour une utilisation complète du système, consultez
-[BASTOS-QUICK-START-fr.md](docs/BASTOS-QUICK-START-fr.md) ou
-[BASTOS-MANUAL-fr.md](docs/BASTOS-MANUAL-fr.md).
+La documentation utilisateur est disponible en ligne sur [Documentation en
+ligne](https://abasty.github.io/minwifi-esp01/)
 
 # 2. Compiler et déployer
 
