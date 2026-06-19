@@ -1,5 +1,5 @@
 ---
-title: Quick Start
+title: Démarrage rapide
 ---
 
 ![bastos](bastos-title.png)
