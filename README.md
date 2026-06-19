@@ -1,4 +1,4 @@
-![bastos](doc/bastos-title.png)
+![bastos](docs/bastos-title.png)
 
 # 1. Aperçu
 
@@ -40,8 +40,8 @@ flowchart TD
 ```
 
 Pour une utilisation complète du système, consultez
-[BASTOS-QUICK-START-fr.md](doc/BASTOS-QUICK-START-fr.md) ou
-[BASTOS-MANUAL-fr.md](doc/BASTOS-MANUAL-fr.md).
+[BASTOS-QUICK-START-fr.md](docs/BASTOS-QUICK-START-fr.md) ou
+[BASTOS-MANUAL-fr.md](docs/BASTOS-MANUAL-fr.md).
 
 # 2. Compiler et déployer
 
