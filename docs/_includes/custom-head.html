@@ -3,11 +3,12 @@
   mermaid.initialize({ startOnLoad: false });
 
   document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('code.language-mermaid').forEach(el => {
-      const div = document.createElement('pre');
-      div.classList.add('mermaid');
-      div.textContent = el.textContent;
-      el.parentElement.replaceWith(div);
+    document.querySelectorAll('div.language-mermaid').forEach(container => {
+      const code = container.querySelector('code');
+      const pre = document.createElement('pre');
+      pre.classList.add('mermaid');
+      pre.textContent = code ? code.textContent : container.textContent;
+      container.replaceWith(pre);
     });
     mermaid.run();
   });
