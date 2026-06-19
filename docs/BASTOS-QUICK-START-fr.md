@@ -45,10 +45,17 @@ flowchart TD
 
 # 2. Redémarrage
 
-Appuyer sur le bouton RESET du SonOff pour faire un redémarrage _hardware_.
-
-Si on ne veut pas exécuter le programme `autoexec.bas` au démarrage, un appui
-long sur le bouton RESET permet de l'éviter.
+* La commande `BASTOS` permet de redéfinir les attributs par défaut pour BASTOS
+  et afficher l'invite de commande initiale
+* La commande `RESET` permet de réinitialiser BASTOS et de revenir en mode
+  `SLOW` (prise à 1200 bps)
+* Un appui court sur le bouton RESET est équivalent à la commande `RESET`
+* Un appui long sur le bouton RESET fait `RESET` **et** n'exécute pas
+  `autoexec.bas` au re-démarrage
+* La suppression du fichier `autoexec.bas`, après un appui long sur RESET, peut
+  aider à sortir d'une boucle infernale
+* Finalement en ultime : Débrancher le module BASTOS et le rebrancher de/sur la
+  DIN du Minitel
 
 # 3. Se connecter à un réseau Wi-Fi
 
@@ -196,20 +203,3 @@ SSID "Aba" et de mot de passe "toto".
 
 `WIFI "\x41\x62\x61"`, ou `WIFI "Aba"` dans cet exemple permettront de se
 connecter au réseau.
-
-## Tout est planté
-
-* Pour sortir d'un programme en exécution ou du mode connecté, appuyer 2 fois
-  consécutivement sur ESC
-* En connexion sur un service Minitel la touche "Connexion/Fin" peut aider.
-* La commande `BASTOS` permet de redéfinir les attributs par défaut pour BASTOS
-  et afficher l'invite de commande initiale
-* La commande `RESET` permet de réinitialiser BASTOS et de revenir en mode
-  `SLOW` (prise à 1200 bps)
-* Un appui court sur le bouton RESET est équivalent à la commande `RESET`
-* Un appui long sur le bouton RESET fait `RESET` **et** n'exécute pas
-  `autoexec.bas` au re-démarrage
-* La suppression du fichier `autoexec.bas` peut aussi aider à sortir d'une
-  boucle infernale (de la même façon que l'appui long sur RESET)
-* Finalement en ultime : Débrancher le module BASTOS et le rebrancher de/sur la
-  DIN du Minitel
