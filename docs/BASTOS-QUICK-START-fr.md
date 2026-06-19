@@ -43,11 +43,12 @@ flowchart TD
     linkStyle default stroke:#3f3,stroke-width:2px,color:green;
 ```
 
-# 2. Sortir du mode connecté ou d'une exécution Basic
+# 2. Redémarrage
 
-Appuyer sur le bouton RESET du SonOff. Si on ne veut pas exécuter le programme
-`autoexec.bas` au démarrage, un appui long sur le bouton RESET permet de
-l'éviter.
+Appuyer sur le bouton RESET du SonOff pour faire un redémarrage _hardware_.
+
+Si on ne veut pas exécuter le programme `autoexec.bas` au démarrage, un appui
+long sur le bouton RESET permet de l'éviter.
 
 # 3. Se connecter à un réseau Wi-Fi
 
