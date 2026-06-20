@@ -3,6 +3,7 @@ title: Démarrage rapide
 ---
 
 ![bastos](bastos-title.png)
+![Documentation BASTOS](qr.png)
 
 # 1. Aperçu
 
