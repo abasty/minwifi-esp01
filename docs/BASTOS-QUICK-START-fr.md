@@ -3,7 +3,15 @@ title: Démarrage rapide
 ---
 
 <!-- ![bastos](bastos-title.png) -->
-![Documentation BASTOS](qr.png)
+
+```{=latex}
+\begin{center}
+```
+![](qr.png){width=60%}
+```{=latex}
+\end{center}
+\newpage
+```
 
 # 0. Mise en route
 
