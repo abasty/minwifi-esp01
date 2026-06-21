@@ -53,7 +53,13 @@ def process(md_file, output_dir, puppeteer_config=None):
         counter[0] += 1
         return f'![Diagramme]({path})'
 
-    return re.sub(r'```mermaid\n(.*?)```', replace, content, flags=re.DOTALL)
+    content = re.sub(r'```mermaid\n(.*?)```', replace, content, flags=re.DOTALL)
+
+    content = content.replace('<!-- center-on -->', '```{=latex}\n\\begin{center}\n```')
+    content = content.replace('<!-- center-off -->', '```{=latex}\n\\end{center}\n```')
+    content = content.replace('<!-- pagebreak -->', '```{=latex}\n\\newpage\n```')
+
+    return content
 
 
 if __name__ == '__main__':

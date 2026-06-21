@@ -4,14 +4,11 @@ title: Démarrage rapide
 
 <!-- ![bastos](bastos-title.png) -->
 
-```{=latex}
-\begin{center}
-```
+<!-- center-on -->
 ![](qr.png){width=60%}
-```{=latex}
-\end{center}
-\newpage
-```
+<!-- center-off -->
+
+<!-- pagebreak -->
 
 # 0. Mise en route
 
