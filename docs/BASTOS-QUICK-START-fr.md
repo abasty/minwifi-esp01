@@ -15,15 +15,14 @@ Selon le modèle, la prise peut-être cachée par une glissière.
 Brancher le Minitel, l'allumer (interrupteur sur M1B), sortir du mode veille la
 cas échéant.
 
-Quand le module est alimenté, la DEL bleue commence à clignoter, puis passe en
-état fixe dès que la communication série est établie entre le module et le
-Minitel.
+Quand le module est alimenté, la LED bleue commence à clignoter lentement, puis
+passe en état fixe dès que la communication série est établie avec le Minitel.
 
-Le Minitel affiche alors le message d'initialisation de BASTOS :
+L'écran du Minitel affiche alors le message d'initialisation de BASTOS :
 
-![Invite](message-bastos.png)
+![Message BASTOS](message-bastos.png)
 
-# 1. Aperçu
+# 1. Premiers pas
 
 BASTOS est un dialecte BASIC conçu spécifiquement pour fonctionner sur terminal
 Minitel via liaison série. Les programmes sont composés de lignes numérotées
@@ -60,6 +59,15 @@ flowchart TD
     connecte -->|ESC ESC| execution
     connecte -->|ESC ESC| interactif
     linkStyle default stroke:#3f3,stroke-width:2px,color:green;
+```
+
+Au démarrage, si un fichier `autoexec.bas` existe sur le disque local, la
+commande `RUN "autoexec.bas"` est **automatiquement** exécutée.
+
+Exemple de programme `autoexec.bas` :
+
+```
+10 RUN "connect.bas"
 ```
 
 # 2. Redémarrage
@@ -171,9 +179,8 @@ Il faut être connecté au Wi-Fi.
 La connexion aux services Minitel présents sur Internet se fait par TCP,
 éventuellement avec une sur-couche WebSocket. Certains services purement RTC,
 aujourd'hui sur VoIP, sont néanmoins accessibles à BASTOS par le service
-Internet "Minipavi" de Jean-Arthur qui agit en temps que passerelle.
-
-Merci Jean-Arthur !
+Internet "Minipavi" qui agit en tant que passerelle (merci _ludojoey_, plus
+d'info sur <https://www.minipavi.fr/>).
 
 Pour voir les services Minitel déjà configurés :
 

@@ -84,6 +84,15 @@ flowchart TD
     linkStyle default stroke:#3f3,stroke-width:2px,color:green;
 ```
 
+At startup, if an `autoexec.bas` file exists on the local disk, the command
+`RUN "autoexec.bas"` is **automatically** executed.
+
+Example `autoexec.bas` program:
+
+```basic
+10 RUN "connect.bas"
+```
+
 ---
 
 ## Program commands
