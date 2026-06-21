@@ -5,6 +5,24 @@ title: Démarrage rapide
 ![bastos](bastos-title.png)
 ![Documentation BASTOS](qr.png)
 
+# 0. Mise en route
+
+Brancher le module BASTOS sur la prise péri-informatique à l'arrière du Minitel.
+Selon le modèle, la prise peut-être cachée par une glissière.
+
+![Prise péri-informatique](M1B-M2-MC-prises-512.png)
+
+Brancher le Minitel, l'allumer (interrupteur sur M1B), sortir du mode veille la
+cas échéant.
+
+Quand le module est alimenté, la DEL bleue commence à clignoter, puis passe en
+état fixe dès que la communication série est établie entre le module et le
+Minitel.
+
+Le Minitel affiche alors le message d'initialisation de BASTOS :
+
+![Invite](message-bastos.png)
+
 # 1. Aperçu
 
 BASTOS est un dialecte BASIC conçu spécifiquement pour fonctionner sur terminal
