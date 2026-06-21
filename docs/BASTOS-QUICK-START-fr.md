@@ -2,7 +2,7 @@
 title: Démarrage rapide
 ---
 
-![bastos](bastos-title.png)
+<!-- ![bastos](bastos-title.png) -->
 ![Documentation BASTOS](qr.png)
 
 # 0. Mise en route
