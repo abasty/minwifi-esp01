@@ -1,0 +1,16 @@
+% --- Images ---
+% Garder les images à leur position dans le texte (pas de flottant)
+\usepackage{float}
+\floatplacement{figure}{H}
+% Redimensionner automatiquement à la largeur de la colonne
+\usepackage{graphicx}
+\setkeys{Gin}{width=\linewidth,keepaspectratio}
+
+% --- Blocs de code ---
+% fvextra étend fancyvrb avec breaklines/breakanywhere
+\usepackage{fvextra}
+\RecustomVerbatimEnvironment{verbatim}{Verbatim}{%
+  fontsize=\normalsize,%
+  breaklines=true,%
+  breakanywhere=true%
+}
