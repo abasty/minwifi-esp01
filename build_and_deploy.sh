@@ -55,9 +55,9 @@ check_env_exists() {
     fi
 }
 
-# Build and deploy a platformio target. The platformio.ini file describes each
-# possible target
-pio_build_and_deploy() {
+# Build a platformio target. The platformio.ini file describes each possible
+# target
+pio_build() {
     local target=$1
     log "Building and deploying target: $target"
 
@@ -71,22 +71,183 @@ pio_build_and_deploy() {
         die "Build failed for target $target"
     fi
     log "✓ Build successful for $target"
+}
 
-    # 3. Copy the firmware to the scp folder (only if DEPLOY_SCP_FOLDER is set)
-    if [[ -z "$DEPLOY_SCP_FOLDER" ]]; then
-        return 0
+# Collect firmware binaries for a given target into a staging directory.
+# For esp8266 targets (sonoff): only firmware.bin is needed.
+# For esp32 targets (sonoff-r4): bootloader.bin, partitions.bin, boot_app0.bin
+# and firmware.bin are all required.
+collect_bins() {
+    local target=$1
+    local staging=$2
+
+    local build_dir=".pio/build/${target}"
+    local target_dir="${staging}/${target}"
+    mkdir -p "$target_dir"
+
+    case "$target" in
+        sonoff)
+            cp "${build_dir}/firmware.bin" "$target_dir/"
+            ;;
+        sonoff-r4)
+            local boot_app0
+            boot_app0="$(find "$HOME/.platformio/packages" \
+                -path "*/framework-arduinoespressif32/tools/partitions/boot_app0.bin" \
+                -print -quit 2>/dev/null)"
+            [[ -f "$boot_app0" ]] || die "boot_app0.bin not found in platformio packages"
+
+            cp "${build_dir}/bootloader.bin"  "$target_dir/"
+            cp "${build_dir}/partitions.bin"  "$target_dir/"
+            cp "${build_dir}/firmware.bin"    "$target_dir/"
+            cp "$boot_app0"                   "$target_dir/"
+            ;;
+        *)
+            die "collect_bins: unknown target '$target'"
+            ;;
+    esac
+    log "✓ Binaries collected for $target"
+}
+
+# Write the flash.sh script into the staging directory and make it executable.
+write_flash_script() {
+    local staging=$1
+
+    cat > "${staging}/flash.sh" << 'FLASH_SCRIPT'
+#!/bin/bash
+# flash.sh — Flash a Sonoff Basic R2/R3 (ESP8266) or R4 (ESP32-C3)
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+die() { echo "ERROR: $*" >&2; exit 1; }
+log() { echo "[$(date +'%H:%M:%S')] $*"; }
+
+# --- Port detection ---
+detect_port() {
+    if [[ -n "$PORT" ]]; then
+        echo "$PORT"
+        return
     fi
 
-    local firmware_src=".pio/build/${target}/firmware.bin"
-    if [[ ! -f "$firmware_src" ]]; then
-        die "Firmware file not found: $firmware_src"
+    local ports=(/dev/ttyUSB*)
+    local count=${#ports[@]}
+
+    if [[ $count -eq 0 ]] || [[ ! -e "${ports[0]}" ]]; then
+        die "No /dev/ttyUSB* device found. Connect the adapter and retry,
+     or set PORT=/dev/ttyUSBx explicitly."
     fi
 
-    log "Deploying firmware to $DEPLOY_SCP_FOLDER..."
-    if ! scp "$firmware_src" "${DEPLOY_SCP_FOLDER}/firmware/${target}_firmware.bin"; then
-        die "Failed to deploy firmware for $target"
+    if [[ $count -gt 1 ]]; then
+        echo "ERROR: Multiple USB serial ports detected:" >&2
+        for p in "${ports[@]}"; do echo "  $p" >&2; done
+        die "Please specify the port: PORT=/dev/ttyUSBx $0 [r2|r4]"
     fi
-    log "✓ Firmware deployed: ${target}_firmware.bin"
+
+    echo "${ports[0]}"
+}
+
+# --- Chip detection via esptool ---
+detect_chip() {
+    local port=$1
+    local chip_line
+
+    command -v esptool &>/dev/null || die "esptool not found in PATH. Install it with: pip install esptool"
+
+    chip_line="$(esptool --port "$port" --before default_reset chip_id 2>&1 \
+                 | grep -i "^Chip is" | head -1)"
+
+    if echo "$chip_line" | grep -qi "ESP8266"; then
+        echo "esp8266"
+    elif echo "$chip_line" | grep -qi "ESP32-C3"; then
+        echo "esp32c3"
+    else
+        echo "unknown"
+    fi
+}
+
+# --- Flash functions ---
+flash_r2() {
+    local port=$1
+    local fw="${SCRIPT_DIR}/sonoff/firmware.bin"
+    [[ -f "$fw" ]] || die "Firmware not found: $fw"
+
+    log "Flashing Sonoff R2/R3 (ESP8266) on $port..."
+    esptool \
+        --before default_reset --after hard_reset \
+        --chip esp8266 \
+        --port "$port" --baud 230400 \
+        write_flash 0x0 "$fw"
+    log "✓ Done."
+}
+
+flash_r4() {
+    local port=$1
+    local dir="${SCRIPT_DIR}/sonoff-r4"
+    [[ -f "${dir}/firmware.bin" ]] || die "Firmware not found: ${dir}/firmware.bin"
+
+    log "Flashing Sonoff R4 (ESP32-C3) on $port..."
+    esptool \
+        --before default_reset --after hard_reset \
+        --chip esp32c3 \
+        --port "$port" --baud 460800 \
+        write_flash -z \
+        --flash_mode dio --flash_freq 80m --flash_size 4MB \
+        0x0000 "${dir}/bootloader.bin" \
+        0x8000 "${dir}/partitions.bin" \
+        0xe000 "${dir}/boot_app0.bin" \
+        0x10000 "${dir}/firmware.bin"
+    log "✓ Done."
+}
+
+# --- Main ---
+TARGET="${1:-}"
+PORT="$(detect_port)"
+log "Using port: $PORT"
+
+if [[ -z "$TARGET" ]]; then
+    log "No target specified, detecting chip..."
+    CHIP="$(detect_chip "$PORT")"
+    log "Detected chip: $CHIP"
+    case "$CHIP" in
+        esp8266)  TARGET="r2" ;;
+        esp32c3)  TARGET="r4" ;;
+        *)        die "Could not detect chip. Specify target manually: $0 [r2|r4]" ;;
+    esac
+fi
+
+case "$TARGET" in
+    r2|sonoff)    flash_r2 "$PORT" ;;
+    r4|sonoff-r4) flash_r4 "$PORT" ;;
+    *) die "Unknown target '$TARGET'. Use: $0 [r2|r4]" ;;
+esac
+FLASH_SCRIPT
+
+    chmod +x "${staging}/flash.sh"
+    log "✓ flash.sh written"
+}
+
+# Build the combined flash archive after both sonoff targets have been built.
+build_flash_archive() {
+    local archive="sonoff-flash.tgz"
+    local staging
+    staging="$(mktemp -d)"
+    trap 'rm -rf "$staging"' RETURN
+
+    log "Assembling flash archive..."
+    collect_bins sonoff    "$staging"
+    collect_bins sonoff-r4 "$staging"
+    write_flash_script     "$staging"
+
+    tar -czf "${SCRIPT_DIR}/${archive}" -C "$staging" .
+    log "✓ Archive created: ${SCRIPT_DIR}/${archive}"
+
+    if [[ -n "$DEPLOY_SCP_FOLDER" ]]; then
+        log "Deploying flash archive..."
+        if ! scp "$archive" "${DEPLOY_SCP_FOLDER}/firmware/"; then
+            die "Failed to deploy $archive"
+        fi
+        log "✓ Archive deployed: ${DEPLOY_SCP_FOLDER}/firmware/${archive}"
+    fi
 }
 
 # === Main ===
@@ -114,8 +275,9 @@ if [[ -n "$DEPLOY_SCP_FOLDER" ]]; then
 fi
 
 # Build and deploy platformio targets
-pio_build_and_deploy sonoff
-pio_build_and_deploy sonoff-r4
+pio_build sonoff
+pio_build sonoff-r4
+build_flash_archive
 
 # Build Linux version
 log "Building Linux version..."
@@ -151,24 +313,6 @@ if [[ -n "$DEPLOY_SCP_FOLDER" ]]; then
     done < <(find -L disk -type f -print0)
 
     log "✓ BASTOS files deployed"
-fi
-
-# Deploy documentation files (only if DEPLOY_SCP_FOLDER is set)
-if [[ -n "$DEPLOY_SCP_FOLDER" ]]; then
-    log "Deploying documentation files..."
-    if [[ ! -d "doc" ]] || [[ -z "$(ls -A doc 2>/dev/null)" ]]; then
-        die "No documentation files found in doc/ directory"
-    fi
-
-    # Use find -L to follow symlinks and copy real files
-    while IFS= read -r -d '' file; do
-        rel_path="${file#doc/}"
-        if ! scp "$file" "${DEPLOY_SCP_FOLDER}/doc/${rel_path}"; then
-            die "Failed to deploy documentation file: $file"
-        fi
-    done < <(find -L doc -type f -print0)
-
-    log "✓ Documentation files deployed"
 fi
 
 log "All done!"

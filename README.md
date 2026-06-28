@@ -31,11 +31,6 @@ Ce projet contient plusieurs cibles de build :
 
 1. Dans VSCode, ouvrir la barre latérale PlatformIO
 2. Sélectionner **Project Tasks** → **Build** pour la cible actuelle
-3. Ou utiliser le terminal VSCode :
-   ```bash
-   pio run -e sonoff          # Compiler pour Sonoff
-   pio run -e sonoff-r4       # Compiler pour ESP32-C3
-   ```
 
 Le firmware compilé se trouve dans `.pio/build/<target>/firmware.bin`
 
@@ -71,8 +66,45 @@ optionnel :
 - Si pas de déploiement : un **WARNING** s'affiche avec les instructions de
   configuration
 
-Le script effectue (selon la configuration) :
-1. Compilation des firmware ESP8266 et ESP32-C3
-2. Compilation de la version Linux
-3. Copie des binaires et fichiers BASTOS via SCP (optionnel)
-4. Copie de la documentation via SCP (optionnel)
+Le script effectue :
+1. Compilation des firmwares ESP8266 (`sonoff`) et ESP32-C3 (`sonoff-r4`)
+2. Création de l'archive `sonoff-flash.tgz` contenant les binaires de flash et
+   un script `flash.sh` pour flasher un Sonoff Basic R2/R3/SV ou R4
+3. Compilation de la version Linux (`bastos`)
+4. Si `DEPLOY_SCP_FOLDER` est défini : déploiement de `sonoff-flash.tgz`,
+   du binaire Linux et des fichiers `disk/` sur le serveur distant
+
+## Flasher un Sonoff à partir de l'archive
+
+L'archive `sonoff-flash.tgz` est auto-suffisante pour flasher un Sonoff sans
+avoir à compiler les sources.
+
+### Prérequis
+
+- **esptool** : `sudo apt install esptool`
+- Un adaptateur **USB-UART** (CP2102, CH340, FTDI…) connecté au Sonoff
+
+### Récupérer l'archive
+
+```bash
+curl -o sonoff-flash.tgz "ftp://anonymous:@abasty-retro.fr:2121/firmware/sonoff-flash.tgz"
+tar -xzf sonoff-flash.tgz
+```
+
+### Flasher
+
+> **Mise en mode flash** : maintenir le bouton du Sonoff enfoncé prendant 3
+> secondes lors de la mise sous tension (par exemple en branchant la prise USB
+> sur le PC). Ensuite, lancer `flash.sh`.
+
+```bash
+# Détection automatique du port et du modèle (R2/R3/SV ou R4)
+./flash.sh
+
+# Ou en spécifiant le modèle explicitement
+./flash.sh r2       # Sonoff Basic R2/R3/SV (ESP8266)
+./flash.sh r4       # Sonoff Basic R4 (ESP32-C3)
+
+# Si plusieurs adaptateurs USB-UART sont connectés, préciser le port
+PORT=/dev/ttyUSB1 ./flash.sh
+```

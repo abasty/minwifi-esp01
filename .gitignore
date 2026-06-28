@@ -7,4 +7,3 @@ Minitel.*
 lib/basic/test/bin/**
 lib/basic/test/obj/**
 lib/basic/test/taille.txt
-build_and_deploy.sh
