@@ -1324,7 +1324,7 @@ static bool eval_print(bool implicit) {
     bool ln = true;
 
     while (result && *bmem->bstate.read_ptr != 0 &&
-           *bmem->bstate.read_ptr != ':') {
+           *bmem->bstate.read_ptr != ':' && *bmem->bstate.read_ptr != '\'') {
         ln = true;
         if (eval_expr(TOKEN_NUMBER | TOKEN_STRING)) {
             if (bmem->bstate.do_eval) {
@@ -2401,9 +2401,16 @@ static int8_t eval_prog(prog_t *prog, bool do_eval) {
     prog_t *entry_pc = bmem->bstate.pc;
     bool eval = true;
     bool jumped = false;
-    while (*bmem->bstate.read_ptr != 0) {
+    while (bmem->bstate.read_ptr && *bmem->bstate.read_ptr != 0 &&
+           *bmem->bstate.read_ptr != '\'') {
         eval = eval_instruction() || eval_if() || eval_for() || eval_next();
         if (!eval || bmem->bstate.error != BERROR_NONE)
+            break;
+
+        // LOAD replaces the whole program in memory and resets read_ptr to
+        // NULL since this line's own storage may no longer be valid:
+        // nothing more can be read from it.
+        if (!bmem->bstate.read_ptr)
             break;
 
         // A jump (GOTO/GOSUB/RETURN/RUN/NEXT) leaves this line: whatever
@@ -2420,8 +2427,12 @@ static int8_t eval_prog(prog_t *prog, bool do_eval) {
 
     // Syntax check end of line (skipped when we deliberately jumped away
     // mid-line: the remaining ':'-statements are left for a later resume).
+    // A trailing comment is a valid end of line too: it is kept for LIST
+    // but never interpreted.
     if (!jumped) {
-        eval = eval && (bmem->bstate.read_ptr == 0 || *bmem->bstate.read_ptr == 0);
+        eval = eval && (bmem->bstate.read_ptr == 0 ||
+                         *bmem->bstate.read_ptr == 0 ||
+                         *bmem->bstate.read_ptr == '\'');
     }
 
     // Free evaluator state

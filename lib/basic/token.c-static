@@ -287,6 +287,14 @@ char *untokenize(uint8_t *input) {
             os_redir_print_string("<=");
         } else if (token == TOKEN_COMPARE_GE) {
             os_redir_print_string(">=");
+        } else if (token == '\'') {
+            // Comment: the raw text runs to the end of the tokenized line.
+            // Always insert a space before the quote so it never sticks to
+            // whatever precedes it.
+            os_redir_print_string(" '");
+            os_redir_print_string((char *)state.read_ptr);
+            while (*state.read_ptr != 0)
+                state.read_ptr++;
         } else {
             char token_str[2] = {token, 0};
             os_redir_print_string(token_str);
@@ -312,6 +320,18 @@ int8_t tokenize(tokenizer_state_t *state, char *input, bool parcel) {
         if (c == ' ') {
             state->read_ptr++;
             continue;
+        }
+        if (c == '\'') {
+            // Comment: the marker and the raw text up to the end of the
+            // line are kept as-is (so LIST can show them back), but are
+            // never interpreted. Nothing can follow a comment on a line.
+            *state->write_ptr++ = c;
+            state->read_ptr++;
+            while ((c = *state->read_ptr)) {
+                *state->write_ptr++ = c;
+                state->read_ptr++;
+            }
+            break;
         }
         if (c == '"') {
             // string
