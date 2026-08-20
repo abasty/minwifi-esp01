@@ -158,6 +158,7 @@ uint8_t output_func[] = {
 
 static void running_state_clear() {
     bmem->bstate.pc = 0;
+    bmem->bstate.pc_offset = 0;
     bmem->bstate.sp = 0;
     bmem->list_start = 0;
     memset(bmem->loops, 0, sizeof(bmem->loops));
@@ -1322,7 +1323,8 @@ static bool eval_print(bool implicit) {
     bool result = true;
     bool ln = true;
 
-    while (result && *bmem->bstate.read_ptr != 0) {
+    while (result && *bmem->bstate.read_ptr != 0 &&
+           *bmem->bstate.read_ptr != ':') {
         ln = true;
         if (eval_expr(TOKEN_NUMBER | TOKEN_STRING)) {
             if (bmem->bstate.do_eval) {
@@ -1537,7 +1539,16 @@ static void eval_gosub() {
         return;
     }
 
-    prog_t *next = bmem_prog_next_line(bmem->bstate.pc);
+    // Resume right after this GOSUB on its own line (possibly followed by
+    // more ':'-separated statements), not necessarily at the next line.
+    // Skip the ':' itself so the resumed line starts exactly where the
+    // outer statement loop expects: at the beginning of a statement.
+    uint8_t *resume_ptr = bmem->bstate.read_ptr;
+    if (*resume_ptr == ':')
+        resume_ptr++;
+    uint16_t return_line_no = bmem->bstate.prog->line_no;
+    uint16_t return_offset = (uint16_t)(resume_ptr - bmem->bstate.prog->line);
+
     bmem->bstate.pc = bmem_prog_get_line_or_next(bmem->bstate.number);
     bmem->bstate.running = bmem->bstate.pc != 0;
 
@@ -1546,7 +1557,9 @@ static void eval_gosub() {
         return;
     }
 
-    bmem->returns[bmem->bstate.sp++].line_no = next ? next->line_no : 0;
+    bmem->returns[bmem->bstate.sp].line_no = return_line_no;
+    bmem->returns[bmem->bstate.sp].offset = return_offset;
+    bmem->bstate.sp++;
 }
 
 static void eval_return() {
@@ -1555,9 +1568,10 @@ static void eval_return() {
         return;
     }
 
-    uint16_t line_no = bmem->returns[--bmem->bstate.sp].line_no;
-    bmem->bstate.pc = bmem_prog_get_line_or_next(line_no);
+    return_t ret = bmem->returns[--bmem->bstate.sp];
+    bmem->bstate.pc = bmem_prog_get_line_or_next(ret.line_no);
     bmem->bstate.running = bmem->bstate.pc != 0;
+    bmem->bstate.pc_offset = bmem->bstate.pc ? ret.offset : 0;
 }
 
 static bool eval_save() {
@@ -2351,9 +2365,16 @@ static bool eval_next() {
     var->numbers[0] += loop->step;
     float cmp = loop->step >= 0 ? loop->limit - var->numbers[0]
                                 : var->numbers[0] - loop->limit;
-    bmem->bstate.pc =
-        cmp >= 0 ? loop->for_line : bmem_prog_next_line(bmem->bstate.prog);
-    if (cmp < 0) {
+    if (cmp >= 0) {
+        // Jump back to the FOR line (which may be this same line when the
+        // whole loop lives on one ':'-separated line): mark it explicitly
+        // so the caller does not mistake it for a straight fall-through.
+        bmem->bstate.pc = loop->for_line;
+        bmem->bstate.in_goto = 1;
+    } else {
+        // Loop done: leave pc untouched so execution falls through to any
+        // remaining ':'-separated statements on this line, then the normal
+        // next-line advance takes over.
         loop->for_line = 0;
     }
 
@@ -2363,18 +2384,45 @@ static bool eval_next() {
 static int8_t eval_prog(prog_t *prog, bool do_eval) {
     // Init evaluator state
     bmem->bstate.do_eval = do_eval ? 1 : 0;
-    bmem->bstate.read_ptr = prog->line;
+    // pc_offset only makes sense to resume a RUN right after a GOSUB (set by
+    // eval_return()); a plain syntax check of a freshly typed line always
+    // starts at its beginning.
+    bmem->bstate.read_ptr = prog->line + (do_eval ? bmem->bstate.pc_offset : 0);
+    bmem->bstate.pc_offset = 0;
     bmem->bstate.token = 0;
     bmem->bstate.string = 0;
     bmem->bstate.error = BERROR_NONE;
     bmem->bstate.prog = prog;
     bmem->bstate.in_goto = 0;
 
-    // Do syntax check or eval
-    bool eval = eval_instruction() || eval_if() || eval_for() || eval_next();
+    // Do syntax check or eval, one statement at a time, separated by ':'.
+    // pc is only meaningful as a "did we jump away" signal while actually
+    // running: statements never touch it during a syntax check.
+    prog_t *entry_pc = bmem->bstate.pc;
+    bool eval = true;
+    bool jumped = false;
+    while (*bmem->bstate.read_ptr != 0) {
+        eval = eval_instruction() || eval_if() || eval_for() || eval_next();
+        if (!eval || bmem->bstate.error != BERROR_NONE)
+            break;
 
-    // Syntax check end of line.
-    eval = eval && (bmem->bstate.read_ptr == 0 || *bmem->bstate.read_ptr == 0);
+        // A jump (GOTO/GOSUB/RETURN/RUN/NEXT) leaves this line: whatever
+        // follows on this line must not run now (it stays for a later
+        // resume, e.g. after a GOSUB's matching RETURN).
+        if (bmem->bstate.pc != entry_pc || bmem->bstate.in_goto) {
+            jumped = true;
+            break;
+        }
+
+        if (!eval_token(':'))
+            break;
+    }
+
+    // Syntax check end of line (skipped when we deliberately jumped away
+    // mid-line: the remaining ':'-statements are left for a later resume).
+    if (!jumped) {
+        eval = eval && (bmem->bstate.read_ptr == 0 || *bmem->bstate.read_ptr == 0);
+    }
 
     // Free evaluator state
     bmem->bstate.string = 0;
@@ -2384,8 +2432,6 @@ static int8_t eval_prog(prog_t *prog, bool do_eval) {
     if (!eval && bmem->bstate.error == BERROR_NONE) {
         bmem->bstate.error = BERROR_SYNTAX;
     }
-
-    // TODO: We can support multiple intructions on the same line here
 
     return bmem->bstate.error;
 }
