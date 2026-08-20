@@ -355,7 +355,7 @@ int8_t tokenize(tokenizer_state_t *state, char *input, bool parcel) {
             state->write_ptr++;
         } else if (c == ';' || c == ',' || c == '+' || c == '-' || c == '|' ||
                    c == '&' || c == '*' || c == '/' || c == '%' || c == '(' ||
-                   c == ')') {
+                   c == ')' || c == ':') {
             *state->write_ptr++ = *state->read_ptr++;
         } else {
             // syntax error

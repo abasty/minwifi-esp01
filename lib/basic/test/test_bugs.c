@@ -385,6 +385,81 @@ static void test_bug6_str_length(void) {
 }
 
 /* ======================================================================== */
+/* Feature — ':' multi-statement lines (eval.c-static, eval_prog() et al.)   */
+/*           Several statements can now be chained on one physical line,     */
+/*           separated by ':'.                                               */
+/* ======================================================================== */
+static void test_colon_basic_sequence(void) {
+    printf("Colon: basic multi-statement sequencing\n");
+
+    /* PRINT "A": PRINT "B": PRINT "C" must run all three in order. */
+    const char *lines[] = {
+        "10 PRINT \"A\": PRINT \"B\": PRINT \"C\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("A/B/C all printed in order",
+          strstr(out, "A") && strstr(out, "B") && strstr(out, "C"));
+}
+
+static void test_colon_if_then(void) {
+    printf("Colon: IF true THEN executes rest of line, false skips all\n");
+
+    /*
+     * Everything after THEN, up to the end of the physical line, is part
+     * of the conditional block: it all runs if the test is true, and is
+     * all skipped (including further ':'-statements) if it is false.
+     */
+    const char *lines[] = {
+        "10 IF 1 THEN PRINT \"T1\": PRINT \"T2\"",
+        "20 IF 0 THEN PRINT \"F1\": PRINT \"F2\"",
+        "30 PRINT \"END\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("true branch runs both statements", strstr(out, "T1") && strstr(out, "T2"));
+    check("false branch skips both statements", !strstr(out, "F1") && !strstr(out, "F2"));
+    check("execution continues after the IF line", strstr(out, "END") != NULL);
+}
+
+static void test_colon_single_line_for_next(void) {
+    printf("Colon: single-line FOR/NEXT loop\n");
+
+    /* FOR and NEXT can now live on the very same physical line. */
+    const char *lines[] = {
+        "10 FOR I=1 TO 3: PRINT I: NEXT I",
+        "20 PRINT \"DONE\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("loop body ran for each iteration (1,2,3 present)",
+          strstr(out, "1") && strstr(out, "2") && strstr(out, "3"));
+    check("execution continues after loop exits", strstr(out, "DONE") != NULL);
+}
+
+static void test_colon_gosub_return(void) {
+    printf("Colon: GOSUB followed by more statements resumes after RETURN\n");
+
+    /*
+     * RETURN must resume right after the GOSUB on its own line, not just
+     * at the start of the next physical line.
+     */
+    const char *lines[] = {
+        "10 GOSUB 100: PRINT \"AFTER\"",
+        "20 PRINT \"END\"",
+        "30 STOP",
+        "100 PRINT \"SUB\"",
+        "110 RETURN",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("subroutine ran", strstr(out, "SUB") != NULL);
+    check("statement after GOSUB on same line ran after RETURN",
+          strstr(out, "AFTER") != NULL);
+    check("execution continues to next line", strstr(out, "END") != NULL);
+}
+
+/* ======================================================================== */
 /* main                                                                       */
 /* ======================================================================== */
 int main(void) {
@@ -400,6 +475,18 @@ int main(void) {
     printf("\n");
 
     test_bug6_str_length();
+    printf("\n");
+
+    test_colon_basic_sequence();
+    printf("\n");
+
+    test_colon_if_then();
+    printf("\n");
+
+    test_colon_single_line_for_next();
+    printf("\n");
+
+    test_colon_gosub_return();
     printf("\n");
 
     printf("=== Results: %d/%d tests passed ===\n",

@@ -65,6 +65,7 @@ typedef struct
 typedef struct
 {
     uint16_t line_no;
+    uint16_t offset;
 } return_t;
 
 // Bastos evaluation state
@@ -77,6 +78,7 @@ struct eval_state_s {
     uint8_t *read_ptr;
     char *string;
     float number;
+    uint16_t pc_offset;
 
     uint8_t token;
     uint8_t input_var_token;
