@@ -84,6 +84,7 @@ struct eval_state_s {
     uint8_t input_var_token;
     int8_t error;
     int8_t sp;
+    uint8_t for_sp;
 
     uint8_t in_goto: 1;
     uint8_t do_eval: 1;
@@ -108,6 +109,7 @@ typedef struct {
     uint8_t *db_start;
     uint8_t *db_end;
     loop_t loops['Z' - 'A' + 1];
+    uint8_t for_stack['Z' - 'A' + 1]; // loop indices, in nesting order
     return_t returns[EVAL_RETURNS_SIZE];
     uint8_t io_buffer[IO_BUFFER_SIZE];
     uint16_t list_start;

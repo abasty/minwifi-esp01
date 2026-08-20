@@ -433,6 +433,81 @@ static void test_bug7_load_immediate_null_read_ptr(void) {
 }
 
 /* ======================================================================== */
+/* Feature — variable-less NEXT (eval.c-static, eval_next()/eval_for())      */
+/*           FOR/NEXT nesting is a stack (bstate.for_sp / bmem->for_stack):  */
+/*           NEXT always closes the innermost currently active loop. A      */
+/*           bare NEXT just omits the (optional) consistency-check name;    */
+/*           naming any loop other than the innermost one is a mismatch     */
+/*           error, since it can never be closed out of order.              */
+/* ======================================================================== */
+static void test_next_bare_nested(void) {
+    printf("NEXT: bare NEXT closes the innermost loop first\n");
+
+    const char *lines[] = {
+        "10 FOR I=1 TO 2",
+        "20 FOR J=1 TO 2",
+        "30 PRINT I;J",
+        "40 NEXT",
+        "50 NEXT",
+        "60 PRINT \"DONE\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("all four (I,J) pairs printed in nested order",
+          strstr(out, "11") && strstr(out, "12") && strstr(out, "21") &&
+          strstr(out, "22"));
+    check("execution continues after both loops exit",
+          strstr(out, "DONE") != NULL);
+}
+
+static void test_next_bare_mixed_with_explicit(void) {
+    printf("NEXT: an explicit NEXT and a bare NEXT can be mixed\n");
+
+    const char *lines[] = {
+        "10 FOR I=1 TO 2",
+        "20 FOR J=1 TO 2",
+        "30 PRINT I;J",
+        "40 NEXT J",
+        "50 NEXT",
+        "60 PRINT \"DONE\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("all four (I,J) pairs printed in nested order",
+          strstr(out, "11") && strstr(out, "12") && strstr(out, "21") &&
+          strstr(out, "22"));
+    check("bare NEXT correctly picks up the outer loop afterwards",
+          strstr(out, "DONE") != NULL);
+}
+
+static void test_next_bare_no_active_loop(void) {
+    printf("NEXT: bare NEXT with no active loop is a runtime error\n");
+
+    const char *lines[] = {
+        "10 NEXT",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("running a bare NEXT outside any loop reports an error",
+          strstr(out, "Error") != NULL);
+}
+
+static void test_next_wrong_variable_is_error(void) {
+    printf("NEXT: naming a loop other than the innermost one is an error\n");
+
+    /* J is the innermost active loop here: "NEXT I" must be rejected. */
+    const char *lines[] = {
+        "10 FOR I=1 TO 2",
+        "20 FOR J=1 TO 2",
+        "30 NEXT I",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("NEXT naming a non-innermost loop reports an error",
+          strstr(out, "Error") != NULL);
+}
+
+/* ======================================================================== */
 /* Feature — ':' multi-statement lines (eval.c-static, eval_prog() et al.)   */
 /*           Several statements can now be chained on one physical line,     */
 /*           separated by ':'.                                               */
@@ -601,6 +676,18 @@ int main(void) {
     printf("\n");
 
     test_bug7_load_immediate_null_read_ptr();
+    printf("\n");
+
+    test_next_bare_nested();
+    printf("\n");
+
+    test_next_bare_mixed_with_explicit();
+    printf("\n");
+
+    test_next_bare_no_active_loop();
+    printf("\n");
+
+    test_next_wrong_variable_is_error();
     printf("\n");
 
     test_colon_basic_sequence();
