@@ -160,6 +160,7 @@ static void running_state_clear() {
     bmem->bstate.pc = 0;
     bmem->bstate.pc_offset = 0;
     bmem->bstate.sp = 0;
+    bmem->bstate.for_sp = 0;
     bmem->list_start = 0;
     memset(bmem->loops, 0, sizeof(bmem->loops));
     bmem->inkey = 0;
@@ -2331,6 +2332,11 @@ static bool eval_for() {
     loop->step = step;
     // TODO: Search for next and run next? Check in emulator
 
+    // Track nesting order so a variable-less NEXT can target the innermost
+    // active loop.
+    if (bmem->bstate.for_sp < sizeof(bmem->for_stack))
+        bmem->for_stack[bmem->bstate.for_sp++] = (uint8_t)loop_index;
+
     return true;
 }
 
@@ -2338,23 +2344,46 @@ static bool eval_next() {
     if (!eval_token(TOKEN_KEYWORD_NEXT))
         return false;
 
-    if (!eval_variable_ref() || *bmem->bstate.var_ref != TOKEN_VARIABLE_NUMBER)
+    // The loop variable is optional: NEXT (with or without one) always
+    // closes the innermost currently active FOR loop, like a stack — a
+    // named variable is only a consistency check on which loop that is.
+    bool has_var = eval_variable_ref();
+    if (has_var && *bmem->bstate.var_ref != TOKEN_VARIABLE_NUMBER)
         return false;
 
     if (!bmem->bstate.do_eval)
         return true;
 
-    int loop_index = bmem->bstate.var_ref[1] - 'A';
-    if (loop_index < 0 || loop_index > 25) {
-        bmem->bstate.error = BERROR_RANGE;
-        return true;
-    }
-
-    loop_t *loop = bmem->loops + loop_index;
-    if (loop->for_line == 0) {
+    if (bmem->bstate.for_sp == 0) {
         bmem->bstate.error = BERROR_RUN;
         return true;
     }
+
+    int loop_index = bmem->for_stack[bmem->bstate.for_sp - 1];
+
+    char synth_ref[3];
+    if (has_var) {
+        int named_index = bmem->bstate.var_ref[1] - 'A';
+        if (named_index < 0 || named_index > 25) {
+            bmem->bstate.error = BERROR_RANGE;
+            return true;
+        }
+        if (named_index != loop_index) {
+            // NEXT must close the innermost active loop; naming any other
+            // one is a mismatch.
+            bmem->bstate.error = BERROR_RUN;
+            return true;
+        }
+    } else {
+        // Synthesize a var_ref for the innermost loop's own variable, in
+        // the same [marker][letter][0] shape eval_variable_ref() produces.
+        synth_ref[0] = TOKEN_VARIABLE_NUMBER;
+        synth_ref[1] = (char)('A' + loop_index);
+        synth_ref[2] = 0;
+        bmem->bstate.var_ref = synth_ref;
+    }
+
+    loop_t *loop = bmem->loops + loop_index;
 
     var_t *var = bmem_var_get(bmem->bstate.var_ref);
     if (var == 0) {
@@ -2376,6 +2405,7 @@ static bool eval_next() {
         // remaining ':'-separated statements on this line, then the normal
         // next-line advance takes over.
         loop->for_line = 0;
+        bmem->bstate.for_sp--;
     }
 
     return true;
