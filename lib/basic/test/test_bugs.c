@@ -34,6 +34,7 @@
 #define _GNU_SOURCE
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <poll.h>
 #include <stdbool.h>
@@ -104,34 +105,38 @@ int hal_print_buffer(uint8_t *buffer, int n) {
     return n;
 }
 
+/*
+ * Real file I/O (not a stub): needed so LOAD/SAVE regression tests (e.g.
+ * test_bug_load_immediate_null_read_ptr) can exercise the actual code path,
+ * matching how bastos.c's own HAL implements these.
+ */
 int hal_open(const char *pathname, int flags) {
-    (void)pathname;
-    (void)flags;
-    return -1;
+    if ((flags & O_CREAT) != 0)
+        return creat(pathname, 0644);
+    return open(pathname, flags);
 }
 
-int hal_close(int fd) {
-    (void)fd;
-    return 0;
-}
+int hal_close(int fd) { return close(fd); }
 
 int hal_write(int fd, const void *buf, int count) {
-    (void)fd;
-    (void)buf;
-    (void)count;
-    return -1;
+    return write(fd, buf, count);
 }
 
 int hal_read(int fd, void *buf, int count) {
-    (void)fd;
-    (void)buf;
-    (void)count;
+    struct pollfd input[1] = {{.fd = fd, .events = POLLIN}};
+    int ret = poll(input, 1, 1);
+    if (ret > 0)
+        return read(fd, buf, count);
     return 0;
 }
 
 int hal_get_file_size(const char *pathname) {
-    (void)pathname;
-    return 0;
+    int fd = hal_open(pathname, O_RDONLY);
+    if (fd < 0)
+        return 0;
+    int fsize = lseek(fd, 0, SEEK_END);
+    hal_close(fd);
+    return fsize;
 }
 
 int hal_file(const char *pathname, char *buffer, uint16_t offset, uint16_t size) {
@@ -144,10 +149,7 @@ int hal_file(const char *pathname, char *buffer, uint16_t offset, uint16_t size)
 
 size_t hal_cat(void) { return 0; }
 
-int hal_erase(const char *pathname) {
-    (void)pathname;
-    return 0;
-}
+int hal_erase(const char *pathname) { return unlink(pathname); }
 
 int hal_wifi_scan(void) { return 0; }
 
@@ -385,6 +387,52 @@ static void test_bug6_str_length(void) {
 }
 
 /* ======================================================================== */
+/* Bug 7 — eval.c-static eval_prog()  LOAD as an immediate command crashes  */
+/*         the interpreter. bastos_load() (bio.c) resets bstate.read_ptr to */
+/*         NULL after a successful load, since the temporary immediate-mode */
+/*         line's own storage (at the old prog_end) is no longer valid once */
+/*         the whole program has been replaced. The ':'-statement loop in   */
+/*         eval_prog() dereferenced read_ptr unconditionally right after    */
+/*         LOAD returned (via eval_token(':')), segfaulting on NULL.        */
+/* ======================================================================== */
+static void test_bug7_load_immediate_null_read_ptr(void) {
+    printf("Bug 7: LOAD as an immediate command crashes on NULL read_ptr\n");
+
+    const char *path = "regress_bug7.bas";
+    FILE *fp = fopen(path, "w");
+    if (fp) {
+        fputs("10 PRINT \"LOADED\"\n", fp);
+        fclose(fp);
+    }
+
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    /*
+     * Before fix: this call segfaults the whole process (a crash is not a
+     * regular test failure, but if this line is ever removed and the bug
+     * comes back, the test binary will die here instead of completing).
+     * After fix: LOAD succeeds silently and execution continues normally.
+     */
+    capture_clear();
+    const char *cmd = "LOAD \"regress_bug7\"\r";
+    bastos_send_keys(cmd, strlen(cmd), false);
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+    check("LOAD as an immediate command does not crash the interpreter", true);
+
+    capture_clear();
+    bastos_send_keys("RUN\r", 4, false);
+    for (int i = 0; i < 500000 && strstr(g_output, "Ready") == NULL; i++)
+        bastos_loop();
+    check("the loaded program actually runs", strstr(g_output, "LOADED") != NULL);
+
+    bastos_done();
+    remove(path);
+}
+
+/* ======================================================================== */
 /* Feature — ':' multi-statement lines (eval.c-static, eval_prog() et al.)   */
 /*           Several statements can now be chained on one physical line,     */
 /*           separated by ':'.                                               */
@@ -460,6 +508,81 @@ static void test_colon_gosub_return(void) {
 }
 
 /* ======================================================================== */
+/* Feature — ''' end-of-line comment (token.c-static, tokenize())            */
+/*           Everything from a ''' up to the end of the physical line is     */
+/*           kept verbatim in the stored program (so LIST shows it back),    */
+/*           but has no effect: it is never interpreted.                     */
+/* ======================================================================== */
+static void test_comment_trailing(void) {
+    printf("Comment: trailing ''' after a statement is ignored\n");
+
+    const char *lines[] = {
+        "10 PRINT \"A\" ' this text must never run",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("statement before the comment still runs", strstr(out, "A") != NULL);
+    check("comment text is not printed", strstr(out, "never") == NULL);
+}
+
+static void test_comment_after_colon_statements(void) {
+    printf("Comment: ''' after ':'-separated statements ignores the rest\n");
+
+    /*
+     * The comment must swallow everything after it on the line, including
+     * any ':' inside the comment text (it must not be mistaken for another
+     * statement separator).
+     */
+    const char *lines[] = {
+        "10 PRINT \"A\": PRINT \"B\" ' comment: with a colon inside it",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("statements before the comment still run",
+          strstr(out, "A") && strstr(out, "B"));
+    check("comment text (and the ':' inside it) is not interpreted",
+          strstr(out, "comment") == NULL && strstr(out, "with") == NULL);
+}
+
+static void test_comment_only_line(void) {
+    printf("Comment: a line that is only a comment does not break the program\n");
+
+    const char *lines[] = {
+        "5 ' just a note, nothing to run here",
+        "10 PRINT \"OK\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("program still runs normally", strstr(out, "OK") != NULL);
+}
+
+static void test_comment_preserved_in_list(void) {
+    printf("Comment: text is kept in the stored line and shown by LIST\n");
+
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    /* Enter a line whose comment even contains a ':' and quote-like text. */
+    const char *entry = "10 PRINT \"''toto''\" ' mon commentaire\r";
+    bastos_send_keys(entry, strlen(entry), false);
+    bastos_loop();
+    bastos_loop();
+
+    capture_clear();
+    bastos_send_keys("LIST\r", 5, false);
+    bastos_loop();
+    bastos_loop();
+
+    check("LIST reproduces the comment text verbatim",
+          strstr(g_output, "mon commentaire") != NULL);
+    check("LIST still shows the statement that precedes the comment",
+          strstr(g_output, "PRINT") != NULL && strstr(g_output, "toto") != NULL);
+
+    bastos_done();
+}
+
+/* ======================================================================== */
 /* main                                                                       */
 /* ======================================================================== */
 int main(void) {
@@ -477,6 +600,9 @@ int main(void) {
     test_bug6_str_length();
     printf("\n");
 
+    test_bug7_load_immediate_null_read_ptr();
+    printf("\n");
+
     test_colon_basic_sequence();
     printf("\n");
 
@@ -487,6 +613,18 @@ int main(void) {
     printf("\n");
 
     test_colon_gosub_return();
+    printf("\n");
+
+    test_comment_trailing();
+    printf("\n");
+
+    test_comment_after_colon_statements();
+    printf("\n");
+
+    test_comment_only_line();
+    printf("\n");
+
+    test_comment_preserved_in_list();
     printf("\n");
 
     printf("=== Results: %d/%d tests passed ===\n",
