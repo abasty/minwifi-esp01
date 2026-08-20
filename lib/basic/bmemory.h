@@ -112,6 +112,7 @@ typedef struct {
     uint8_t for_stack['Z' - 'A' + 1]; // loop indices, in nesting order
     return_t returns[EVAL_RETURNS_SIZE];
     uint8_t io_buffer[IO_BUFFER_SIZE];
+    uint8_t io_cursor; // offset from io_buffer of the edit cursor in the current line
     uint16_t list_start;
     char inkey;
     char vkey;
