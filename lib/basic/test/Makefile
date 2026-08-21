@@ -16,7 +16,7 @@ CFLAGS = -O0 -g
 # C++ flags
 CXXFLAGS =
 # Preprocessor flags
-CPPFLAGS = -DMINITEL=1 -Wall -Werror -I ..
+CPPFLAGS = -Wall -Werror -I ..
 # dependency-generation flags
 DEPFLAGS = -MMD -MP
 # linker flags

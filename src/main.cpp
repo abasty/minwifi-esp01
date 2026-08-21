@@ -33,12 +33,7 @@
 #include <FS.h>
 #include <LittleFS.h>
 
-#ifdef MINITEL
 #include "tty-minitel.h"
-#else
-#include "tty-vt100.h"
-#endif
-
 #include "bio.h"
 #include "os.h"
 
