@@ -104,4 +104,5 @@ static const char *keywords =
     "VKE""\xd9"
     "INDE""\xd8"
     "FIL""\xc5"
+    "ELS""\xc5"
 ;

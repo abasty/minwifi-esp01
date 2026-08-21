@@ -254,7 +254,7 @@ char *untokenize(uint8_t *input) {
         if ((token & TOKEN_KEYWORD) != 0) {
             if (token == TOKEN_KEYWORD_TO || token == TOKEN_KEYWORD_STEP ||
                 token == TOKEN_KEYWORD_THEN || token == TOKEN_KEYWORD_OR ||
-                token == TOKEN_KEYWORD_AND) {
+                token == TOKEN_KEYWORD_AND || token == TOKEN_KEYWORD_ELSE) {
                 os_redir_print_string(" ");
             }
             untokenize_keyword(&state, keywords);
