@@ -504,6 +504,39 @@ finalize:
         bmem->io_cursor = bmem->io_cursor >= shift ? bmem->io_cursor - shift : 0;
     }
 
+    // If EDIT staged a line (bmem->io_edit_line), load it now that
+    // io_buffer holds only whatever is genuinely still queued (normally
+    // nothing): prepend the line's own text directly into io_buffer, show
+    // it — it was never echoed while EDIT ran, so the user needs to see
+    // what they're about to edit — and place the cursor at its end.
+    if (bmem->io_edit_line != 0) {
+        uint16_t edit_line = bmem->io_edit_line;
+        bmem->io_edit_line = 0;
+        prog_t *prog = bmem_prog_get_line_or_next(edit_line);
+        if (prog && prog->line_no == edit_line) {
+            uint8_t remainder[IO_BUFFER_SIZE];
+            strcpy((char *)remainder, (char *)bmem->io_buffer);
+
+            bmem->io_buffer[0] = 0;
+            os_set_redirect_prefill(true);
+            os_redir_print_integer("%d ", (int)prog->line_no);
+            untokenize(prog->line);
+            os_set_redirect_prefill(false);
+
+            size_t edit_len = strlen((char *)bmem->io_buffer);
+            hal_print_buffer(bmem->io_buffer, (int)edit_len);
+
+            size_t room = sizeof(bmem->io_buffer) - 1 - edit_len;
+            size_t rem_len = strlen((char *)remainder);
+            if (rem_len > room)
+                rem_len = room;
+            memcpy(bmem->io_buffer + edit_len, remainder, rem_len);
+            bmem->io_buffer[edit_len + rem_len] = 0;
+
+            bmem->io_cursor = (uint8_t)edit_len;
+        }
+    }
+
     // Handle error
     if (err != BERROR_NONE) {
         os_redir_print_integer("Error %d\r\n", (int)-err);

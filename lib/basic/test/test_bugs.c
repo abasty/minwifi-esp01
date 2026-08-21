@@ -912,6 +912,143 @@ static void test_line_edit_finalize_shift(void) {
 }
 
 /* ======================================================================== */
+/* Feature — EDIT <line_no> (eval.c-static eval_edit(), bio.c              */
+/*           bastos_input()'s finalize step)                                */
+/*           Loads the given line's own text directly into io_buffer,       */
+/*           shows it on screen, and places the cursor at its end — ready   */
+/*           to be edited instead of retyped from scratch.                  */
+/* ======================================================================== */
+static void test_edit_shows_the_staged_line(void) {
+    printf("EDIT: the staged line is echoed to the screen when it loads\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT \"HELLO\"");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("EDIT 10");
+    type_raw("\r");
+    check("the line's own text is shown right when EDIT resolves",
+          strstr(g_output, "10 PRINT \"HELLO\"") != NULL);
+
+    bastos_done();
+}
+
+static void test_edit_prefills_at_end(void) {
+    printf("EDIT: stages the line's text with the cursor at the end\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT \"HELLO\"");
+    type_raw("\r");
+
+    type_raw("EDIT 10");
+    type_raw("\r");
+
+    /* A character typed right after EDIT must land at the true end of the
+     * staged text (proving the cursor was placed there, not left at 0). */
+    bastos_send_keys("9", 1, false);
+    bastos_loop();
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("typed char landed after the staged line's own text",
+          strstr(g_output, "10 PRINT \"HELLO\"9") != NULL);
+
+    bastos_done();
+}
+
+static void test_edit_unmodified_round_trips(void) {
+    printf("EDIT: pressing Enter with no changes leaves the line untouched\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT \"HELLO\"");
+    type_raw("\r");
+    type_raw("EDIT 10");
+    type_raw("\r");
+    type_raw("\r"); /* submit the staged line as-is, no edits made */
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("line is unchanged after an EDIT immediately followed by Enter",
+          strstr(g_output, "10 PRINT \"HELLO\"") != NULL);
+
+    bastos_done();
+}
+
+static void test_edit_allows_modification(void) {
+    printf("EDIT: the staged text can be edited with Correction/insert before submitting\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT \"HELLO\"");
+    type_raw("\r");
+    type_raw("EDIT 10");
+    type_raw("\r");
+
+    /* Replace the trailing O" with X" using Correction then insert. */
+    bastos_send_keys("\x7f", 1, false); /* remove closing quote */
+    bastos_loop();
+    bastos_send_keys("\x7f", 1, false); /* remove O */
+    bastos_loop();
+    bastos_send_keys("X\"", 2, false);
+    bastos_loop();
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("edited line stored the modification",
+          strstr(g_output, "10 PRINT \"HELLX\"") != NULL);
+    check("old text is gone", strstr(g_output, "HELLO") == NULL);
+
+    bastos_done();
+}
+
+static void test_edit_left_arrow_echoes_one_backspace(void) {
+    printf("EDIT: normal line-editing keys work on the staged text\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT \"HELLO\"");
+    type_raw("\r");
+    type_raw("EDIT 10");
+    type_raw("\r");
+
+    capture_clear();
+    bastos_send_keys("\x08", 1, true); /* left-arrow over the closing quote */
+    bastos_loop();
+    check("left-arrow on the staged line echoes exactly one backspace",
+          g_output_len == 1 && g_output[0] == '\x08');
+
+    bastos_done();
+}
+
+static void test_edit_nonexistent_line_is_error(void) {
+    printf("EDIT: editing a line number that doesn't exist is a runtime error\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("EDIT 99");
+    type_raw("\r");
+    check("EDIT on a missing line reports an error", strstr(g_output, "Error") != NULL);
+
+    bastos_done();
+}
+
+/* ======================================================================== */
 /* Feature — variable-less NEXT (eval.c-static, eval_next()/eval_for())      */
 /*           FOR/NEXT nesting is a stack (bstate.for_sp / bmem->for_stack):  */
 /*           NEXT always closes the innermost currently active loop. A      */
@@ -1191,6 +1328,24 @@ int main(void) {
     printf("\n");
 
     test_line_edit_finalize_shift();
+    printf("\n");
+
+    test_edit_shows_the_staged_line();
+    printf("\n");
+
+    test_edit_prefills_at_end();
+    printf("\n");
+
+    test_edit_unmodified_round_trips();
+    printf("\n");
+
+    test_edit_allows_modification();
+    printf("\n");
+
+    test_edit_left_arrow_echoes_one_backspace();
+    printf("\n");
+
+    test_edit_nonexistent_line_is_error();
     printf("\n");
 
     test_next_bare_nested();

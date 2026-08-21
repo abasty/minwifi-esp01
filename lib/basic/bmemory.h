@@ -113,6 +113,8 @@ typedef struct {
     return_t returns[EVAL_RETURNS_SIZE];
     uint8_t io_buffer[IO_BUFFER_SIZE];
     uint8_t io_cursor; // offset from io_buffer of the edit cursor in the current line
+    uint16_t io_edit_line; // set by EDIT, consumed by bastos_input() once the
+                            // current command has been removed from io_buffer
     uint16_t list_start;
     char inkey;
     char vkey;
@@ -122,6 +124,7 @@ typedef struct {
     uint64_t pause_start_time;
     int sock;
     int output_fd;
+    uint8_t output_prefill; // 1 while os_redir_print_* should write into io_buffer
     char output_var[B_NAME_SIZE_MAX];
     eval_state_t bstate;
     uint8_t paper;

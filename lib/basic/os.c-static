@@ -70,6 +70,15 @@ static int g_ftp_fd = -1;
 
 static void os_set_redirect(int fd) { bmem->output_fd = fd; }
 
+// While active, redirects os_redir_print_* output into bmem->io_buffer
+// instead of the terminal — used by EDIT (via bastos_input()) to build the
+// line it stages for the next input directly where it will be edited, not
+// through the terminal or a BASIC variable. The caller is responsible for
+// io_buffer's content before/after (see bastos_input()'s finalize step).
+static void os_set_redirect_prefill(bool active) {
+    bmem->output_prefill = active ? 1 : 0;
+}
+
 static int os_concat_buffer(const char *name, const char *buffer, int n) {
     var_t *var = bmem_var_get(name);
     if (!var || n == 0)
@@ -97,6 +106,19 @@ static int os_concat_buffer(const char *name, const char *buffer, int n) {
     return n;
 }
 
+static int os_redir_print_to_prefill(const char *buffer, int n) {
+    size_t len = strlen((char *)bmem->io_buffer);
+    int room = (int)(sizeof(bmem->io_buffer) - 1 - len);
+    if (room < 0)
+        room = 0;
+    int copy = n < room ? n : room;
+    if (copy > 0) {
+        memcpy(bmem->io_buffer + len, buffer, copy);
+        bmem->io_buffer[len + copy] = 0;
+    }
+    return copy;
+}
+
 static int os_redir_print_buffer(const char *buffer, int n) {
     // Redir to fd
     if (bmem->output_fd >= 0)
@@ -106,18 +128,22 @@ static int os_redir_print_buffer(const char *buffer, int n) {
     if (*bmem->output_var != 0)
         return os_concat_buffer(bmem->output_var, buffer, n);
 
+    // Redir to the EDIT staging area (bmem->io_buffer itself)
+    if (bmem->output_prefill)
+        return os_redir_print_to_prefill(buffer, n);
+
     return hal_print_buffer((uint8_t *) buffer, n);
 }
 
 static int os_redir_print_string(const char *s) {
-    if (bmem->output_fd >= 0 || *bmem->output_var != 0)
+    if (bmem->output_fd >= 0 || *bmem->output_var != 0 || bmem->output_prefill)
         return os_redir_print_buffer(s, strlen(s));
 
     return hal_print_string(s);
 }
 
 static int os_redir_print_integer(const char *format, int i) {
-    if (bmem->output_fd >= 0 || *bmem->output_var != 0) {
+    if (bmem->output_fd >= 0 || *bmem->output_var != 0 || bmem->output_prefill) {
         char buffer[80];
         int len = snprintf(buffer, sizeof(buffer), format, i);
         return os_redir_print_buffer(buffer, len);
@@ -126,7 +152,7 @@ static int os_redir_print_integer(const char *format, int i) {
 }
 
 static int os_redir_print_float(float f) {
-    if (bmem->output_fd >= 0 || *bmem->output_var != 0) {
+    if (bmem->output_fd >= 0 || *bmem->output_var != 0 || bmem->output_prefill) {
         char buffer[16];
         int len = snprintf(buffer, sizeof(buffer), "%g", f);
         return os_redir_print_buffer(buffer, len);
