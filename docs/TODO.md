@@ -68,16 +68,15 @@ En display filter on peut mettre : `not tcp.len == 0`
   (<https://randomnerdtutorials.com/esp32-write-data-littlefs-arduino/>)
 * [ ] TAB
 * [ ] RAND
-* [ ] EDIT line, EDIT tout seul édite la dernière entrée (raccourci: fleche
-  haut). définir une zone à partir de la ligne actuelle et sur 4 lignes pour
+* [x] EDIT line, EDIT tout seul édite la dernière entrée (raccourci: fleche
+  haut). ~~définir une zone à partir de la ligne actuelle et sur 4 lignes pour
   pouvoir entrer au max 128 caractères : mode roleau, on se déplace de 3 lignes
   vers le bas, on demande la position curseur => l, c. On remonte en l-3, 1 ; on
-  cleol ; on insere 4 lignes, on commence l'édition
-* [ ] Ajouter `EDIT <LINE_NO>`, integration "edit_min" ?
+  cleol ; on insere 4 lignes, on commence l'édition~~
 * [ ] Gérer les codes DINSC, FINSC et définir les commandes BASTOS associées
 * [ ] Ctrl+C à la place de ESC /ESC ?
-* [ ] Quand on est connécté à un service, voir ce que fait ESC et CX/Fin
-* [ ] À définir : support des touches de mise en pages dans les différents modes
+* [ ] Quand on est connecté à un service, voir ce que fait ESC et CX/Fin
+* [x] À définir : support des touches de mise en pages dans les différents modes
   de BASTOS (CLI, INPUT, INKEY/PAUSE, prévoir un mode EDIT)
 * [ ] Supprimer `BIN`, remplacer par `BASE$(<N>, <BASE>, <MAX>)`.
 * [ ] File System :
@@ -95,7 +94,7 @@ En display filter on peut mettre : `not tcp.len == 0`
   sous-programme <LINENO>. Quand `RETURN` est appelé, soit le temps est écoulé
   et le programme reprend après le `PAUSE`, soit on continue la pause jusqu'à
   épuisement du temps
-* [ ] Faire NEXT tout seul remonte au dernier FOR
+* [x] Faire NEXT tout seul remonte au dernier FOR
 * [ ] PEEK (y compris variables OS ?) / POKE / USR : adresses converties par
   rapport au début du bloc (0 à 32K+4K). PEEK16 / POKE16. Les pointeurs
   pourraient être à l'extérieur et dans le bstate on ne mettrait que des offsets

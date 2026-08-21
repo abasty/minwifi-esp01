@@ -660,9 +660,33 @@ PRINT INT(a / b)    ' parenthèses pour grouper
 
 ## Structures de contrôle
 
-### REM
+### Instructions multiples sur une ligne (`:`)
 
-Ajouter des commentaires aux lignes de programme. `REM` n'est pas une structure
+Plusieurs instructions peuvent être placées sur la même ligne, séparées par
+`:` :
+
+```basic
+10 a = 1 : b = 2 : c = 3
+20 PRINT a : PRINT b : PRINT c
+```
+
+Avec `IF`, l'instruction (ou la suite d'instructions séparées par `:`) qui
+suit `THEN` n'est exécutée que si la condition est vraie ; sinon, **tout le
+reste de la ligne** est ignoré :
+
+```basic
+10 IF x > 0 THEN PRINT "positif" : compteur = compteur + 1
+```
+
+Une boucle `FOR`/`NEXT` complète peut elle aussi tenir sur une seule ligne :
+
+```basic
+10 FOR i = 1 TO 3 : PRINT i : NEXT
+```
+
+### REM et commentaires (`'`)
+
+`REM` ajoute un commentaire sur sa propre ligne. Ce n'est pas une structure
 de contrôle à proprement parler ; elle provoque simplement la poursuite de
 l'exécution à la ligne suivante sans effectuer aucune action.
 
@@ -675,6 +699,16 @@ REM "commentaire"
 20 x = 0
 30 REM "Ceci est un commentaire"
 40 PRINT x
+```
+
+Une apostrophe `'` introduit également un commentaire, mais en fin de ligne,
+après une ou plusieurs instructions : tout ce qui suit `'` jusqu'à la fin de
+la ligne est ignoré à l'exécution, y compris un `:` éventuel. Le commentaire
+reste conservé dans le programme et réapparaît tel quel avec `LIST`.
+
+```basic
+10 x = 1 ' initialise x
+20 PRINT x : PRINT x * 2 ' affiche x puis son double
 ```
 
 ### IF / THEN
@@ -702,11 +736,17 @@ THEN LET a = a - 1`.
 FOR var = début TO fin
 FOR var = début TO fin STEP pas
 NEXT var
+NEXT
 ```
 
 - `var` doit être une lettre unique `A`–`Z`.
 - Un `STEP` négatif compte à rebours.
 - Les boucles peuvent être imbriquées.
+- `NEXT` sans variable referme toujours la boucle la plus imbriquée
+  actuellement active.
+- `NEXT var` doit obligatoirement nommer cette même boucle la plus
+  imbriquée ; nommer une boucle englobante non encore refermée provoque une
+  erreur.
 
 ```basic
 10 FOR i = 1 TO 5
@@ -716,6 +756,14 @@ NEXT var
 40 FOR i = 10 TO 1 STEP -1
 50 PRINT i
 60 NEXT i
+```
+
+```basic
+10 FOR i = 1 TO 2
+20   FOR j = 1 TO 2
+30     PRINT i; j
+40   NEXT           ' referme la boucle j (la plus imbriquée)
+50 NEXT i            ' referme la boucle i
 ```
 
 ### GOTO

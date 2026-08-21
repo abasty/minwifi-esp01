@@ -650,11 +650,34 @@ PRINT INT(a / b)    ' parentheses for grouping
 
 ## Control structures
 
-### REM
+### Multiple statements on one line (`:`)
 
-Add comments to program lines. `REM` is not a control structure per se; it
-simply causes execution to continue to the next line without performing any
-action.
+Several statements can be placed on the same line, separated by `:`:
+
+```basic
+10 a = 1 : b = 2 : c = 3
+20 PRINT a : PRINT b : PRINT c
+```
+
+With `IF`, the statement (or the `:`-separated run of statements) after
+`THEN` only runs if the condition is true; otherwise **the rest of the
+line** is skipped entirely:
+
+```basic
+10 IF x > 0 THEN PRINT "positive" : counter = counter + 1
+```
+
+A whole `FOR`/`NEXT` loop can also fit on a single line:
+
+```basic
+10 FOR i = 1 TO 3 : PRINT i : NEXT
+```
+
+### REM and comments (`'`)
+
+`REM` adds a comment on its own line. It is not a control structure per se;
+it simply causes execution to continue to the next line without performing
+any action.
 
 ```basic
 REM "comment"
@@ -665,6 +688,16 @@ REM "comment"
 20 x = 0
 30 REM "This is a comment"
 40 PRINT x
+```
+
+A single quote `'` also introduces a comment, but at the end of a line,
+after one or more statements: everything after `'` through the end of the
+line is ignored at runtime, including any `:` it contains. The comment is
+kept in the stored program and reappears verbatim with `LIST`.
+
+```basic
+10 x = 1 ' initialize x
+20 PRINT x : PRINT x * 2 ' print x then its double
 ```
 
 ### IF / THEN
@@ -691,11 +724,16 @@ IF expression THEN statement
 FOR var = start TO end
 FOR var = start TO end STEP step
 NEXT var
+NEXT
 ```
 
 - `var` must be a single letter `A`–`Z`.
 - Negative `STEP` counts down.
 - Loops may be nested.
+- `NEXT` with no variable always closes the innermost loop currently
+  active.
+- `NEXT var` must name that same innermost loop; naming an outer loop that
+  hasn't been closed yet is an error.
 
 ```basic
 10 FOR i = 1 TO 5
@@ -705,6 +743,14 @@ NEXT var
 40 FOR i = 10 TO 1 STEP -1
 50 PRINT i
 60 NEXT i
+```
+
+```basic
+10 FOR i = 1 TO 2
+20   FOR j = 1 TO 2
+30     PRINT i; j
+40   NEXT           ' closes the j loop (the innermost one)
+50 NEXT i            ' closes the i loop
 ```
 
 ### GOTO
