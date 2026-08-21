@@ -111,31 +111,40 @@ En mode interactif, chaque ligne tapée peut être éditée avant d'être valid�
   bip (caractère BEL) et affiche l'erreur, mais **reste en mode édition**
   avec le texte tapé conservé, prêt à être corrigé et validé à nouveau — la
   ligne n'est jamais perdue ni silencieusement rejetée.
+  - **SUITE** valide comme ENVOI, mais si la ligne validée est une ligne
+    numérotée du programme, charge en plus automatiquement la ligne
+    **suivante** du programme pour l'éditer, si elle existe.
+  - **RETOUR** valide comme ENVOI, mais charge automatiquement la ligne
+    **précédente** du programme pour l'éditer, si elle existe. SUITE et
+    RETOUR permettent ainsi de parcourir et corriger une suite de lignes
+    sans retaper `EDIT` à chaque fois.
 - **ESC ESC** (deux appuis consécutifs) : abandonne la ligne en cours de
   saisie sans la valider. Si elle avait été rappelée avec `EDIT` ou la
   flèche haut puis modifiée, la ligne d'origine du programme reste
   inchangée, même après une tentative de validation en erreur.
 
-La commande `EDIT numligne` a le même effet que la flèche haut, mais permet
-de cibler explicitement n'importe quelle ligne numérotée du programme, pas
-seulement la dernière.
+| État de départ | Touche(s) | Effet | État d'arrivée |
+|---|---|---|---|
+| Ligne vide | Caractère, ◄ ou ► | insertion ou déplacement du curseur | Édition en cours |
+| Édition en cours | Caractère, ◄, ► ou CORRECTION | modification de la ligne | Édition en cours |
+| Édition en cours | ANNULATION | efface toute la ligne | Ligne vide |
+| Ligne vide | ▲ | rappelle la dernière ligne validée | Édition en cours |
+| Édition en cours | Validation, syntaxe correcte | la ligne est stockée | Ligne vide |
+| Édition en cours | SUITE, syntaxe correcte, ligne suivante existante | la ligne est stockée, la ligne suivante est chargée | Édition en cours |
+| Édition en cours | RETOUR, syntaxe correcte, ligne précédente existante | la ligne est stockée, la ligne précédente est chargée | Édition en cours |
+| Édition en cours | Validation, erreur de syntaxe | bip + message d'erreur | Erreur (reste en édition) |
+| Erreur (reste en édition) | Correction, puis Validation | la ligne corrigée est stockée | Ligne vide |
+| Erreur (reste en édition) | ESC ESC | abandon de la ligne | Ligne vide |
 
-```mermaid
-flowchart TD
-    vide(["Ligne vide"])
-    edition["Édition en cours"]
-    erreur["Erreur : bip + message<br/>(reste en édition)"]
+La commande `EDIT [numligne]` a un effet proche de la flèche haut, mais
+permet de cibler explicitement une ligne du programme :
 
-    vide -->|"Caractère / ◄ / ►"| edition
-    edition -->|"Caractère / ◄ / ► / CORRECTION"| edition
-    edition -->|ANNULATION| vide
-    vide -->|"▲ rappel dernière ligne"| edition
-    edition -->|Validation OK| vide
-    edition -->|Validation en erreur| erreur
-    erreur -->|Correction + Validation| vide
-    erreur -->|ESC ESC| vide
-    linkStyle default stroke:#3f3,stroke-width:2px,color:green;
-```
+- `EDIT` seul, ou `EDIT 0`, édite la **première** ligne du programme. Ne
+  fait rien si le programme est vide.
+- `EDIT numligne` édite la ligne `numligne` si elle existe, sinon la
+  première ligne **suivante** existante (même logique que `GOTO`). Ne fait
+  rien si aucune ligne ne correspond (programme vide, ou `numligne`
+  au-delà de la dernière ligne).
 
 ---
 
@@ -151,7 +160,7 @@ flowchart TD
 | `LIST numligne` | Lister 20 lignes depuis `numligne` |
 | `LIST numligne, nombre` | Lister `nombre` lignes depuis `numligne` |
 | `LL` | Identique à `LIST` |
-| `EDIT numligne` | Rappeler une ligne du programme pour l'éditer (voir [Édition de ligne](#édition-de-ligne-mode-interactif)) |
+| `EDIT [numligne]` | Rappeler une ligne du programme pour l'éditer (voir [Édition de ligne](#édition-de-ligne-mode-interactif)) |
 | `NEW` | Supprimer toutes les lignes du programme et les variables |
 | `CLEAR` | Effacer les variables et stopper l'exécution |
 | `END` | Terminer le programme et effacer les variables |

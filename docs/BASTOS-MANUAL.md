@@ -112,30 +112,39 @@ validated:
   (BEL character) and displays the error, but **stays in edit mode** with
   the typed text preserved, ready to be fixed and resubmitted — the line is
   never lost or silently discarded.
+  - **SUITE** validates like ENVOI, but if the validated line is a
+    numbered program line, it also automatically loads the **next**
+    program line for editing, if there is one.
+  - **RETOUR** validates like ENVOI, but automatically loads the
+    **previous** program line for editing, if there is one. SUITE and
+    RETOUR make it easy to step through and fix a run of lines without
+    retyping `EDIT` each time.
 - **ESC ESC** (two consecutive presses): abandons the line being typed
   without validating it. If it had been recalled with `EDIT` or the up
   arrow and then modified, the original line in the program is left
   unchanged, even after a failed validation attempt.
 
-The `EDIT linenum` command has the same effect as the up arrow, but lets
-you explicitly target any numbered program line, not just the last one.
+| From state | Key(s) | Effect | To state |
+|---|---|---|---|
+| Empty line | Character, ◄ or ► | insert / move the cursor | Editing |
+| Editing | Character, ◄, ► or CORRECTION | modify the line | Editing |
+| Editing | ANNULATION | clears the whole line | Empty line |
+| Empty line | ▲ | recalls the last validated line | Editing |
+| Editing | Validation, valid syntax | the line is stored | Empty line |
+| Editing | SUITE, valid syntax, next line exists | the line is stored, the next line is loaded | Editing |
+| Editing | RETOUR, valid syntax, previous line exists | the line is stored, the previous line is loaded | Editing |
+| Editing | Validation, syntax error | beep + error message | Error (stays in edit mode) |
+| Error (stays in edit mode) | Fix, then Validation | the fixed line is stored | Empty line |
+| Error (stays in edit mode) | ESC ESC | abandons the line | Empty line |
 
-```mermaid
-flowchart TD
-    empty(["Empty line"])
-    editing["Editing"]
-    error["Error: beep + message<br/>(stays in edit mode)"]
+The `EDIT [linenum]` command has a similar effect to the up arrow, but lets
+you explicitly target a program line:
 
-    empty -->|"Character / <- / ->"| editing
-    editing -->|"Character / <- / -> / CORRECTION"| editing
-    editing -->|ANNULATION| empty
-    empty -->|"Up: recall last line"| editing
-    editing -->|Validation OK| empty
-    editing -->|Validation: error| error
-    error -->|Fix + Validation| empty
-    error -->|ESC ESC| empty
-    linkStyle default stroke:#3f3,stroke-width:2px,color:green;
-```
+- `EDIT` alone, or `EDIT 0`, edits the **first** line of the program. Does
+  nothing if the program is empty.
+- `EDIT linenum` edits line `linenum` if it exists, otherwise the first
+  **following** existing line (same logic as `GOTO`). Does nothing if no
+  line matches (empty program, or `linenum` past the last line).
 
 ---
 
@@ -151,7 +160,7 @@ flowchart TD
 | `LIST linenum` | List 20 lines starting from `linenum` |
 | `LIST linenum, count` | List `count` lines from `linenum` |
 | `LL` | Same as `LIST` |
-| `EDIT linenum` | Recall a program line for editing (see [Line editing](#line-editing-interactive-mode)) |
+| `EDIT [linenum]` | Recall a program line for editing (see [Line editing](#line-editing-interactive-mode)) |
 | `NEW` | Delete all program lines and vriables |
 | `CLEAR` | Clear variables and stop execution |
 | `END` | Terminate program and clear variables |
