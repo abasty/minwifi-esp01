@@ -29,11 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef MINITEL
 #include "tty-minitel.h"
-#else
-#include "tty-vt100.h"
-#endif
 
 #include "bdb.h"
 #include "berror.h"

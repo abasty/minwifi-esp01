@@ -18,9 +18,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#ifdef MINITEL
 #include "tty-minitel.h"
-#endif
 
 #include "bio.h"
 #include "os.h"

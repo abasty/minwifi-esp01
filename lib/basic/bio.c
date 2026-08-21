@@ -27,11 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef MINITEL
 #include "tty-minitel.h"
-#else
-#include "tty-vt100.h"
-#endif
 
 #include "os-private.h"
 
@@ -82,12 +78,10 @@ static void bastos_handle_escape() {
     os_redir_print_string("*Break*\r\n");
 }
 
-// G0 (bio.h's charset-reset macro, resolved from tty-minitel.h or
-// tty-vt100.h at build time) only means something while the terminal is
-// actually in native Minitel Videotex mode. There is no G0/G1
+// G0 (tty-minitel.h's charset-reset macro) only means something while the
+// terminal is actually in native Minitel Videotex mode. There is no G0/G1
 // charset-shift concept in 80-column mode (MODE 80, bstate.screen_mode) —
-// matching the VT100 build, where G0 is always empty — so nothing needs
-// to be sent there.
+// nothing needs to be sent there.
 static const char *mode_g0() {
     return bmem->bstate.screen_mode ? "" : G0;
 }
@@ -290,9 +284,9 @@ static void move_cursor_left(uint8_t **end, uint8_t **cur, uint8_t *line_start, 
 
 // Moves *cur forward one logical character by re-printing it — printing
 // already advances the terminal's own cursor, so no separate "cursor right"
-// escape is needed (portable across Minitel and VT100 alike). Discards any
-// still-pending sequence right before the cursor first (see
-// discard_pending), then moves normally from the resulting position.
+// escape is needed. Discards any still-pending sequence right before the
+// cursor first (see discard_pending), then moves normally from the
+// resulting position.
 static void move_cursor_right(uint8_t **end, uint8_t **cur, uint8_t *line_start, bool echo) {
     if (pending_unit_width(line_start, *cur) > 0)
         discard_pending(end, cur, line_start);

@@ -29,11 +29,7 @@
 #include "os-private.h"
 #include "os.h"
 
-#ifdef MINITEL
 #include "tty-minitel.h"
-#else
-#include "tty-vt100.h"
-#endif
 
 #define AUTOEXEC_FILE "autoexec.bas"
 #define AUTOLOAD_DB_FILE "autoload.db"
@@ -305,9 +301,7 @@ static int os_wifi_connect(const char *ssid) {
         }
     }
 
-#ifdef MINITEL
     os_redir_print_string(LINE0 CLEOL "\r\n");
-#endif
     return ret;
 }
 
