@@ -93,6 +93,50 @@ Example `autoexec.bas` program:
 10 RUN "connect.bas"
 ```
 
+### Line editing (interactive mode)
+
+In interactive mode, each line being typed can be edited before it is
+validated:
+
+- **◄ / ►** (left/right arrows): move the cursor within the line being
+  typed, without deleting anything.
+- **CORRECTION** (key 127): deletes the character before the cursor.
+- **ANNULATION** (key 1): clears the whole line being typed.
+- **▲** (up arrow): recalls the last validated line for further editing —
+  the last numbered program line (same as `EDIT linenum` would do), or the
+  last immediate command typed if no numbered line has been validated
+  since. Does nothing if no line has been validated yet, or if the recalled
+  numbered line has since been deleted from the program.
+- **Validation** (ENVOI/Enter, REPETITION, SUITE, RETOUR, SOMMAIRE or
+  GUIDE): submits the line. If it contains a syntax error, BASTOS beeps
+  (BEL character) and displays the error, but **stays in edit mode** with
+  the typed text preserved, ready to be fixed and resubmitted — the line is
+  never lost or silently discarded.
+- **ESC ESC** (two consecutive presses): abandons the line being typed
+  without validating it. If it had been recalled with `EDIT` or the up
+  arrow and then modified, the original line in the program is left
+  unchanged, even after a failed validation attempt.
+
+The `EDIT linenum` command has the same effect as the up arrow, but lets
+you explicitly target any numbered program line, not just the last one.
+
+```mermaid
+flowchart TD
+    empty(["Empty line"])
+    editing["Editing"]
+    error["Error: beep + message<br/>(stays in edit mode)"]
+
+    empty -->|"Character / <- / ->"| editing
+    editing -->|"Character / <- / -> / CORRECTION"| editing
+    editing -->|ANNULATION| empty
+    empty -->|"Up: recall last line"| editing
+    editing -->|Validation OK| empty
+    editing -->|Validation: error| error
+    error -->|Fix + Validation| empty
+    error -->|ESC ESC| empty
+    linkStyle default stroke:#3f3,stroke-width:2px,color:green;
+```
+
 ---
 
 ## Program commands
@@ -107,6 +151,7 @@ Example `autoexec.bas` program:
 | `LIST linenum` | List 20 lines starting from `linenum` |
 | `LIST linenum, count` | List `count` lines from `linenum` |
 | `LL` | Same as `LIST` |
+| `EDIT linenum` | Recall a program line for editing (see [Line editing](#line-editing-interactive-mode)) |
 | `NEW` | Delete all program lines and vriables |
 | `CLEAR` | Clear variables and stop execution |
 | `END` | Terminate program and clear variables |
@@ -605,11 +650,34 @@ PRINT INT(a / b)    ' parentheses for grouping
 
 ## Control structures
 
-### REM
+### Multiple statements on one line (`:`)
 
-Add comments to program lines. `REM` is not a control structure per se; it
-simply causes execution to continue to the next line without performing any
-action.
+Several statements can be placed on the same line, separated by `:`:
+
+```basic
+10 a = 1 : b = 2 : c = 3
+20 PRINT a : PRINT b : PRINT c
+```
+
+With `IF`, the statement (or the `:`-separated run of statements) after
+`THEN` only runs if the condition is true; otherwise **the rest of the
+line** is skipped entirely:
+
+```basic
+10 IF x > 0 THEN PRINT "positive" : counter = counter + 1
+```
+
+A whole `FOR`/`NEXT` loop can also fit on a single line:
+
+```basic
+10 FOR i = 1 TO 3 : PRINT i : NEXT
+```
+
+### REM and comments (`'`)
+
+`REM` adds a comment on its own line. It is not a control structure per se;
+it simply causes execution to continue to the next line without performing
+any action.
 
 ```basic
 REM "comment"
@@ -620,6 +688,16 @@ REM "comment"
 20 x = 0
 30 REM "This is a comment"
 40 PRINT x
+```
+
+A single quote `'` also introduces a comment, but at the end of a line,
+after one or more statements: everything after `'` through the end of the
+line is ignored at runtime, including any `:` it contains. The comment is
+kept in the stored program and reappears verbatim with `LIST`.
+
+```basic
+10 x = 1 ' initialize x
+20 PRINT x : PRINT x * 2 ' print x then its double
 ```
 
 ### IF / THEN
@@ -646,11 +724,16 @@ IF expression THEN statement
 FOR var = start TO end
 FOR var = start TO end STEP step
 NEXT var
+NEXT
 ```
 
 - `var` must be a single letter `A`–`Z`.
 - Negative `STEP` counts down.
 - Loops may be nested.
+- `NEXT` with no variable always closes the innermost loop currently
+  active.
+- `NEXT var` must name that same innermost loop; naming an outer loop that
+  hasn't been closed yet is an error.
 
 ```basic
 10 FOR i = 1 TO 5
@@ -660,6 +743,14 @@ NEXT var
 40 FOR i = 10 TO 1 STEP -1
 50 PRINT i
 60 NEXT i
+```
+
+```basic
+10 FOR i = 1 TO 2
+20   FOR j = 1 TO 2
+30     PRINT i; j
+40   NEXT           ' closes the j loop (the innermost one)
+50 NEXT i            ' closes the i loop
 ```
 
 ### GOTO

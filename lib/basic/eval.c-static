@@ -49,6 +49,7 @@ static bool eval_string_tty();
 static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims);
 static void eval_load();
 static void eval_goto(uint16_t line_no);
+static bool eval_edit();
 
 extern bmem_t *bmem;
 
@@ -2241,8 +2242,8 @@ static bool eval_ftp() {
 static bool eval_instruction() {
     return eval_print(false) || eval_input() || eval_simple_instruction() ||
            eval_run() || eval_rem() || eval_dim() || eval_list() ||
-           eval_put() || eval_db() || eval_wifi() || eval_minitel() ||
-           eval_ftp() || eval_output() || eval_let();
+           eval_edit() || eval_put() || eval_db() || eval_wifi() ||
+           eval_minitel() || eval_ftp() || eval_output() || eval_let();
 }
 
 static bool eval_if() {
@@ -2408,6 +2409,39 @@ static bool eval_next() {
         bmem->bstate.for_sp--;
     }
 
+    return true;
+}
+
+// EDIT <line_no>: validates the target line exists and remembers it in
+// bmem->io_edit_line. Once bastos_input() has removed this EDIT command
+// itself from io_buffer, it loads that line's own text into io_buffer,
+// shows it, and places the cursor at its end — ready to be edited with the
+// arrow keys/Correction instead of retyped from scratch. Deferred this way
+// because io_buffer still holds the EDIT command itself while this runs;
+// overwriting it now would corrupt bastos_input()'s own bookkeeping.
+static bool eval_edit() {
+    if (!eval_token(TOKEN_KEYWORD_EDIT))
+        return false;
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    int32_t line_no = (int32_t)bmem->bstate.number;
+    if (line_no < 1 || line_no > 65535) {
+        bmem->bstate.error = BERROR_RANGE;
+        return true;
+    }
+
+    prog_t *prog = bmem_prog_get_line_or_next((uint16_t)line_no);
+    if (!prog || prog->line_no != (uint16_t)line_no) {
+        bmem->bstate.error = BERROR_RUN;
+        return true;
+    }
+
+    bmem->io_edit_line = (uint16_t)line_no;
     return true;
 }
 

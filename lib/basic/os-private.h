@@ -63,6 +63,7 @@ static void os_cat(void);
 
 // OS printing and redirect functions
 static void os_set_redirect(int fd);
+static void os_set_redirect_prefill(bool active);
 static int os_redir_print_string(const char *s);
 static int os_redir_print_integer(const char *format, int i);
 static int os_redir_print_float(float f);

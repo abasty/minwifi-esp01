@@ -92,6 +92,51 @@ Exemple de programme `autoexec.bas` :
 10 RUN "connect.bas"
 ```
 
+### Édition de ligne (mode interactif)
+
+En mode interactif, chaque ligne tapée peut être éditée avant d'être validée :
+
+- **◄ / ►** (flèches gauche/droite) : déplacent le curseur sur la ligne en
+  cours de saisie, sans rien effacer.
+- **CORRECTION** (touche 127) : efface le caractère situé avant le curseur.
+- **ANNULATION** (touche 1) : efface toute la ligne en cours de saisie.
+- **▲** (flèche haut) : rappelle la dernière ligne validée pour l'éditer à
+  nouveau — la dernière ligne numérotée du programme (comme le ferait `EDIT
+  numligne`), ou la dernière commande immédiate tapée si aucune ligne
+  numérotée n'a été validée depuis. Ne fait rien si aucune ligne n'a encore
+  été validée, ou si la ligne numérotée rappelée a depuis été supprimée du
+  programme.
+- **Validation** (ENVOI, REPETITION, SUITE, RETOUR, SOMMAIRE ou GUIDE) :
+  soumet la ligne. Si elle contient une erreur de syntaxe, BASTOS émet un
+  bip (caractère BEL) et affiche l'erreur, mais **reste en mode édition**
+  avec le texte tapé conservé, prêt à être corrigé et validé à nouveau — la
+  ligne n'est jamais perdue ni silencieusement rejetée.
+- **ESC ESC** (deux appuis consécutifs) : abandonne la ligne en cours de
+  saisie sans la valider. Si elle avait été rappelée avec `EDIT` ou la
+  flèche haut puis modifiée, la ligne d'origine du programme reste
+  inchangée, même après une tentative de validation en erreur.
+
+La commande `EDIT numligne` a le même effet que la flèche haut, mais permet
+de cibler explicitement n'importe quelle ligne numérotée du programme, pas
+seulement la dernière.
+
+```mermaid
+flowchart TD
+    vide(["Ligne vide"])
+    edition["Édition en cours"]
+    erreur["Erreur : bip + message<br/>(reste en édition)"]
+
+    vide -->|"Caractère / ◄ / ►"| edition
+    edition -->|"Caractère / ◄ / ► / CORRECTION"| edition
+    edition -->|ANNULATION| vide
+    vide -->|"▲ rappel dernière ligne"| edition
+    edition -->|Validation OK| vide
+    edition -->|Validation en erreur| erreur
+    erreur -->|Correction + Validation| vide
+    erreur -->|ESC ESC| vide
+    linkStyle default stroke:#3f3,stroke-width:2px,color:green;
+```
+
 ---
 
 ## Commandes du programme
@@ -106,6 +151,7 @@ Exemple de programme `autoexec.bas` :
 | `LIST numligne` | Lister 20 lignes depuis `numligne` |
 | `LIST numligne, nombre` | Lister `nombre` lignes depuis `numligne` |
 | `LL` | Identique à `LIST` |
+| `EDIT numligne` | Rappeler une ligne du programme pour l'éditer (voir [Édition de ligne](#édition-de-ligne-mode-interactif)) |
 | `NEW` | Supprimer toutes les lignes du programme et les variables |
 | `CLEAR` | Effacer les variables et stopper l'exécution |
 | `END` | Terminer le programme et effacer les variables |
@@ -614,9 +660,33 @@ PRINT INT(a / b)    ' parenthèses pour grouper
 
 ## Structures de contrôle
 
-### REM
+### Instructions multiples sur une ligne (`:`)
 
-Ajouter des commentaires aux lignes de programme. `REM` n'est pas une structure
+Plusieurs instructions peuvent être placées sur la même ligne, séparées par
+`:` :
+
+```basic
+10 a = 1 : b = 2 : c = 3
+20 PRINT a : PRINT b : PRINT c
+```
+
+Avec `IF`, l'instruction (ou la suite d'instructions séparées par `:`) qui
+suit `THEN` n'est exécutée que si la condition est vraie ; sinon, **tout le
+reste de la ligne** est ignoré :
+
+```basic
+10 IF x > 0 THEN PRINT "positif" : compteur = compteur + 1
+```
+
+Une boucle `FOR`/`NEXT` complète peut elle aussi tenir sur une seule ligne :
+
+```basic
+10 FOR i = 1 TO 3 : PRINT i : NEXT
+```
+
+### REM et commentaires (`'`)
+
+`REM` ajoute un commentaire sur sa propre ligne. Ce n'est pas une structure
 de contrôle à proprement parler ; elle provoque simplement la poursuite de
 l'exécution à la ligne suivante sans effectuer aucune action.
 
@@ -629,6 +699,16 @@ REM "commentaire"
 20 x = 0
 30 REM "Ceci est un commentaire"
 40 PRINT x
+```
+
+Une apostrophe `'` introduit également un commentaire, mais en fin de ligne,
+après une ou plusieurs instructions : tout ce qui suit `'` jusqu'à la fin de
+la ligne est ignoré à l'exécution, y compris un `:` éventuel. Le commentaire
+reste conservé dans le programme et réapparaît tel quel avec `LIST`.
+
+```basic
+10 x = 1 ' initialise x
+20 PRINT x : PRINT x * 2 ' affiche x puis son double
 ```
 
 ### IF / THEN
@@ -656,11 +736,17 @@ THEN LET a = a - 1`.
 FOR var = début TO fin
 FOR var = début TO fin STEP pas
 NEXT var
+NEXT
 ```
 
 - `var` doit être une lettre unique `A`–`Z`.
 - Un `STEP` négatif compte à rebours.
 - Les boucles peuvent être imbriquées.
+- `NEXT` sans variable referme toujours la boucle la plus imbriquée
+  actuellement active.
+- `NEXT var` doit obligatoirement nommer cette même boucle la plus
+  imbriquée ; nommer une boucle englobante non encore refermée provoque une
+  erreur.
 
 ```basic
 10 FOR i = 1 TO 5
@@ -670,6 +756,14 @@ NEXT var
 40 FOR i = 10 TO 1 STEP -1
 50 PRINT i
 60 NEXT i
+```
+
+```basic
+10 FOR i = 1 TO 2
+20   FOR j = 1 TO 2
+30     PRINT i; j
+40   NEXT           ' referme la boucle j (la plus imbriquée)
+50 NEXT i            ' referme la boucle i
 ```
 
 ### GOTO

@@ -9,9 +9,6 @@ fully functional.
 ### BIN
 Binary conversion function (similar to CHR$, STR$)
 
-### EDIT
-Line editor command for modifying program lines
-
 ### ORIGIN
 Set graphics origin point (for PLOT/UNPLOT coordinate system)
 

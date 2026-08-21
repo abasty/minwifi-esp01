@@ -433,6 +433,982 @@ static void test_bug7_load_immediate_null_read_ptr(void) {
 }
 
 /* ======================================================================== */
+/* Feature — line editing (bio.c, bastos_send_keys() and helpers)            */
+/*           Left/right arrow keys move an edit cursor over the current      */
+/*           line; typed characters insert at the cursor instead of always   */
+/*           being appended; Correction (Backspace) deletes before the       */
+/*           cursor instead of always the last character of the buffer.      */
+/* ======================================================================== */
+static void type_raw(const char *s) {
+    bastos_send_keys(s, strlen(s), false);
+    bastos_loop();
+    bastos_loop();
+}
+
+static void test_line_edit_insert_at_cursor(void) {
+    printf("Line edit: typed characters insert at the cursor, not always at the end\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT 13");
+    type_raw("\x08");   /* cursor between '1' and '3' */
+    type_raw("2");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("character inserted mid-line, not appended at the end",
+          strstr(g_output, "10 PRINT 123") != NULL);
+
+    bastos_done();
+}
+
+static void test_line_edit_consecutive_inserts(void) {
+    printf("Line edit: several inserts in a row keep landing at the cursor\n");
+    /*
+     * Regression for a cursor desync: after inserting mid-line, the terminal
+     * cursor must be walked back to right after the just-typed character,
+     * not back to where the insert started. Getting that wrong doesn't
+     * break the buffer content (this test would still pass on that front
+     * alone) — it only shows up visually, as a second insert overwriting
+     * instead of shifting the tail right. Assert on the exact echoed bytes
+     * of each insert, not just the final LIST text, so a regression here
+     * is actually caught.
+     */
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    const char *line = "10 PRINT 9";
+    for (const char *p = line; *p; p++) {
+        bastos_send_keys(p, 1, true);
+        bastos_loop();
+    }
+    bastos_send_keys("\x08", 1, true); /* cursor right before the '9' */
+    bastos_loop();
+
+    capture_clear();
+    bastos_send_keys("1", 1, true);
+    bastos_loop();
+    check("first insert prints the new char + tail, cursor back after it",
+          g_output_len == 3 && memcmp(g_output, "19\x08", 3) == 0);
+
+    capture_clear();
+    bastos_send_keys("2", 1, true);
+    bastos_loop();
+    check("second insert lands right after the first, not overwriting it",
+          g_output_len == 3 && memcmp(g_output, "29\x08", 3) == 0);
+
+    capture_clear();
+    bastos_send_keys("3", 1, true);
+    bastos_loop();
+    check("third insert also lands correctly",
+          g_output_len == 3 && memcmp(g_output, "39\x08", 3) == 0);
+
+    type_raw("\r");
+    capture_clear();
+    type_raw("LIST\r");
+    check("all three inserts landed in typed order before the '9'",
+          strstr(g_output, "10 PRINT 1239") != NULL);
+
+    bastos_done();
+}
+
+static void test_line_edit_correction_at_cursor(void) {
+    printf("Line edit: Correction deletes before the cursor, not always the last char\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT 123");
+    type_raw("\x08\x08"); /* cursor between '1' and '2' */
+    type_raw("\x7f");     /* delete the '1' before the cursor */
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("Correction removed the char before the cursor",
+          strstr(g_output, "10 PRINT 23") != NULL);
+    check("Correction did not just chop the last char off the end",
+          strstr(g_output, "10 PRINT 12") == NULL);
+
+    bastos_done();
+}
+
+static void test_line_edit_right_arrow_returns_to_append(void) {
+    printf("Line edit: right-arrow moves back toward the end\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    /* Two lefts then one right must net to "one left" (cursor between '2'
+     * and '4'), proving right-arrow actually moves forward rather than
+     * being a no-op that happens to land in the right place by luck. All
+     * digits, so the line round-trips through LIST unchanged (unlike a
+     * letter, which would parse as a separate, reformatted variable name). */
+    type_raw("10 PRINT 124");
+    type_raw("\x08\x08");
+    type_raw("\x09");
+    type_raw("3");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("right-arrow moved the cursor forward by exactly one",
+          strstr(g_output, "10 PRINT 1234") != NULL);
+
+    bastos_done();
+}
+
+static void test_line_edit_ctrl_a_clears_both_sides(void) {
+    printf("Line edit: Ctrl+A clears the whole line regardless of cursor position\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT 1");
+    type_raw("\x08");        /* cursor before the '1' */
+    type_raw("\x01");        /* Ctrl+A: Annulation */
+    type_raw("20 PRINT 2\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("only the second line survives", strstr(g_output, "20 PRINT 2") != NULL);
+    check("no remnant of the cancelled first line",
+          strstr(g_output, "10 PRINT") == NULL);
+
+    bastos_done();
+}
+
+static void test_line_edit_multibyte_atomic(void) {
+    printf("Line edit: left-arrow/Correction move over a multi-byte accent as one unit\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    /* Build "e-acute" (SS2 'B' 'e') at the end of the line, one keystroke at
+     * a time, matching how a real keyboard delivers it. */
+    char ss2[2] = {(char)0x19, 0};
+    bastos_send_keys(ss2, 1, false);
+    bastos_loop();
+    bastos_send_keys("B", 1, false);
+    bastos_loop();
+    bastos_send_keys("e", 1, false);
+    bastos_loop();
+
+    /* One left-arrow press, echoed, must send exactly one backspace even
+     * though the accent is 3 raw bytes: it is one screen column. Move back
+     * right afterwards so the cursor sits after the accent again. */
+    capture_clear();
+    bastos_send_keys("\x08", 1, true);
+    bastos_loop();
+    check("left-arrow over a 3-byte accent sends exactly one backspace",
+          g_output_len == 1 && g_output[0] == '\x08');
+    bastos_send_keys("\x09", 1, false);
+    bastos_loop();
+
+    /* Correction now removes the whole accent in one press; the line must
+     * not retain any orphaned SS2/diacritic bytes. */
+    bastos_send_keys("\x7f", 1, false);
+    bastos_loop();
+    type_raw("10 PRINT \"X\"\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("no orphaned SS2/diacritic bytes remain",
+          strstr(g_output, "10 PRINT \"X\"") != NULL);
+
+    bastos_done();
+}
+
+static void test_line_edit_ss2_mid_line_before_diacritic_byte(void) {
+    printf("Line edit: inserting an accent mid-line, right before a diacritic-class byte\n");
+    /*
+     * Regression: inserting SS2 mid-line, immediately before existing tail
+     * content whose first byte happens to be a diacritic code (A/B/C/H/K —
+     * 'C' here), used to print the dangling, still-incomplete SS2 directly
+     * next to that unrelated byte in the same redraw. The Minitel would
+     * then try (and fail) to combine them, advancing the cursor by fewer
+     * columns than the naive per-byte backspace count assumed, drifting
+     * the terminal cursor out of sync with our model.
+     *
+     * The fix defers the echo of an in-progress SS2 sequence until it
+     * resolves, then reprints the whole completed group + tail as one
+     * atomic redraw — so nothing is ever shown that a real Minitel could
+     * misinterpret. This test asserts on exact echoed bytes at each step,
+     * not just the final LIST text, so a regression here is caught even
+     * though the buffer content alone was already correct before the fix.
+     */
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    const char *line = "10 PRINT \"AC\"";
+    for (const char *p = line; *p; p++) {
+        bastos_send_keys(p, 1, true);
+        bastos_loop();
+    }
+    bastos_send_keys("\x08\x08", 2, true); /* cursor between A and C */
+    bastos_loop();
+    bastos_loop();
+
+    char ss2[2] = {(char)0x19, 0};
+    capture_clear();
+    bastos_send_keys(ss2, 1, true);
+    bastos_loop();
+    check("SS2 alone produces no output (deferred, not yet resolved)",
+          g_output_len == 0);
+
+    capture_clear();
+    bastos_send_keys("B", 1, true);
+    bastos_loop();
+    check("SS2+diacritic still produces no output (always needs one more byte)",
+          g_output_len == 0);
+
+    capture_clear();
+    bastos_send_keys("e", 1, true);
+    bastos_loop();
+    check("completing the accent prints the whole group + tail atomically",
+          g_output_len == 7 && memcmp(g_output, "\x19"
+                                                  "BeC\"\x08\x08",
+                                       7) == 0);
+
+    type_raw("\r");
+    capture_clear();
+    type_raw("LIST\r");
+    check("the accent landed correctly between A and C",
+          strstr(g_output, "A\x19"
+                            "BeC\"") != NULL);
+
+    bastos_done();
+}
+
+static void test_line_edit_ss2_abandoned_by_other_keys(void) {
+    printf("Line edit: an in-progress accent is abandoned by any other key\n");
+    char ss2[2] = {(char)0x19, 0};
+
+    /* Left-arrow while SS2 is pending: silently discarded, no echo. */
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+    const char *line = "10 PRINT \"AC\"";
+    for (const char *p = line; *p; p++) {
+        bastos_send_keys(p, 1, true);
+        bastos_loop();
+    }
+    bastos_send_keys("\x08\x08", 2, true);
+    bastos_loop();
+    bastos_loop();
+    bastos_send_keys(ss2, 1, true);
+    bastos_loop();
+
+    capture_clear();
+    bastos_send_keys("\x08", 1, true); /* left-arrow abandons the pending SS2 */
+    bastos_loop();
+    check("left-arrow while SS2 is pending produces no output",
+          g_output_len == 0);
+
+    bastos_send_keys("X", 1, true);
+    bastos_loop();
+    type_raw("\r");
+    capture_clear();
+    type_raw("LIST\r");
+    check("abandoned SS2 is gone, X landed where it was",
+          strstr(g_output, "10 PRINT \"AXC\"") != NULL);
+    bastos_done();
+
+    /* Correction while SS2 is pending: also silently discarded. */
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+    for (const char *p = line; *p; p++) {
+        bastos_send_keys(p, 1, true);
+        bastos_loop();
+    }
+    bastos_send_keys("\x08\x08", 2, true);
+    bastos_loop();
+    bastos_loop();
+    bastos_send_keys(ss2, 1, true);
+    bastos_loop();
+
+    capture_clear();
+    bastos_send_keys("\x7f", 1, true); /* Correction abandons the pending SS2 */
+    bastos_loop();
+    check("Correction while SS2 is pending produces no output",
+          g_output_len == 0);
+
+    type_raw("\r");
+    capture_clear();
+    type_raw("LIST\r");
+    check("abandoned SS2 leaves the original content untouched",
+          strstr(g_output, "10 PRINT \"AC\"") != NULL);
+    bastos_done();
+
+    /* Enter (validation) while SS2+diacritic is pending: discarded before
+     * the line is submitted, no dangling SS2 ends up stored. */
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+    for (const char *p = line; *p; p++) {
+        bastos_send_keys(p, 1, true);
+        bastos_loop();
+    }
+    bastos_send_keys("\x08\x08", 2, true);
+    bastos_loop();
+    bastos_loop();
+    bastos_send_keys(ss2, 1, true);
+    bastos_loop();
+    bastos_send_keys("B", 1, true);
+    bastos_loop();
+
+    capture_clear();
+    bastos_send_keys("\r", 1, true);
+    bastos_loop();
+    check("Enter while SS2+diacritic is pending only echoes the normal "
+          "validation sequence",
+          g_output_len == 3 && memcmp(g_output, "\x0f\x0d\x0a", 3) == 0);
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("no dangling SS2 was stored", strstr(g_output, "10 PRINT \"AC\"") != NULL);
+    bastos_done();
+}
+
+static void test_line_edit_up_down_absorbed_when_typing(void) {
+    printf("Line edit: Up/Down are absorbed once something is typed, untouched when empty\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    /* Buffer empty: Up/Down are not BASTOS input keys, so they are echoed
+     * raw to the terminal exactly as before this change. */
+    capture_clear();
+    bastos_send_keys("\x0b", 1, true); /* Up */
+    bastos_loop();
+    check("Up is passed through to the terminal when the buffer is empty",
+          g_output_len == 1 && g_output[0] == '\x0b');
+
+    capture_clear();
+    bastos_send_keys("\x0a", 1, true); /* Down */
+    bastos_loop();
+    check("Down is passed through to the terminal when the buffer is empty",
+          g_output_len == 1 && g_output[0] == '\x0a');
+
+    /* Once something has been typed, both keys must be silently absorbed:
+     * no echo, no effect on the buffer content. */
+    type_raw("10 PRINT 1");
+
+    capture_clear();
+    bastos_send_keys("\x0b", 1, true);
+    bastos_loop();
+    check("Up produces no output once the buffer has content", g_output_len == 0);
+
+    capture_clear();
+    bastos_send_keys("\x0a", 1, true);
+    bastos_loop();
+    check("Down produces no output once the buffer has content", g_output_len == 0);
+
+    type_raw("\r");
+    capture_clear();
+    type_raw("LIST\r");
+    check("the line is unaffected by the absorbed keys",
+          strstr(g_output, "10 PRINT 1") != NULL);
+
+    bastos_done();
+}
+
+static void test_line_edit_works_when_buffer_full(void) {
+    printf("Line edit: Correction and arrow keys still work when the buffer is full\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    /* "10 '" + lots of 'A's: a numbered comment is valid BASIC regardless of
+     * how long/what its text is, so this is guaranteed to tokenize and get
+     * stored once entered, however much of the filler actually made it in. */
+    char filler[200];
+    memset(filler, 'A', sizeof(filler) - 1);
+    filler[sizeof(filler) - 1] = 0;
+    type_raw("10 '");
+    type_raw(filler); /* overflows the io_buffer; extra bytes are silently dropped */
+
+    type_raw("\x08"); /* movement must still work when full */
+    type_raw("\x7f"); /* deletion must still work when full */
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("interpreter survives and responds after a full-buffer edit",
+          strstr(g_output, "'A") != NULL);
+
+    bastos_done();
+}
+
+static void test_line_edit_input_statement(void) {
+    printf("Line edit: cursor editing also works while an INPUT statement is reading\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    const char *prog[] = {"10 INPUT A$", "20 PRINT A$", NULL};
+    for (const char **l = prog; *l; l++) {
+        char buf[64];
+        snprintf(buf, sizeof(buf), "%s\r", *l);
+        bastos_send_keys(buf, strlen(buf), false);
+        bastos_loop();
+        bastos_loop();
+    }
+
+    capture_clear();
+    bastos_send_keys("RUN\r", 4, false);
+    for (int i = 0; i < 2000; i++)
+        bastos_loop(); /* let RUN reach the INPUT prompt */
+
+    bastos_send_keys("WRLD", 4, false);
+    bastos_loop();
+    bastos_send_keys("\x08\x08\x08", 3, false); /* cursor before 'R' */
+    bastos_loop();
+    bastos_send_keys("O", 1, false);
+    bastos_loop();
+    bastos_send_keys("\r", 1, false);
+
+    for (int i = 0; i < 500000 && strstr(g_output, "Ready") == NULL; i++)
+        bastos_loop();
+
+    check("edited INPUT value used by the program", strstr(g_output, "WORLD") != NULL);
+
+    bastos_done();
+}
+
+static void test_line_edit_finalize_shift(void) {
+    printf("Line edit: cursor stays correct after a queued line shifts the buffer\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    /* One complete line + a second, partially-typed line, in a single batch. */
+    const char *batch = "10 PRINT 1\r20 PRINT 2";
+    bastos_send_keys(batch, strlen(batch), false);
+    bastos_loop(); /* drains line 10, shifting line 20's partial content down */
+    bastos_loop();
+
+    bastos_send_keys("\x08", 1, false); /* cursor before the trailing '2' */
+    bastos_loop();
+    bastos_send_keys("9", 1, false); /* insert into the now-shifted line */
+    bastos_loop();
+    bastos_send_keys("\r", 1, false);
+    bastos_loop();
+    bastos_loop();
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("first (already-committed) line intact",
+          strstr(g_output, "10 PRINT 1") != NULL);
+    check("second line's mid-batch edit landed at the right (shifted) position",
+          strstr(g_output, "20 PRINT 92") != NULL);
+
+    bastos_done();
+}
+
+static void test_line_edit_correction_erases_with_spaces_in_mode80(void) {
+    printf("Line edit: Correction erases the stale character with spaces in 80-column mode (MODE 2)\n");
+    /*
+     * Regression: an "erase to end of line" escape (Videotex CLEOL 0x18, or
+     * its ANSI ESC [ K equivalent) is not reliably supported by real
+     * hardware in 80-column mode — it left stray characters on screen and
+     * lost cursor sync. Correction must instead use the same plain
+     * backspace/space/backspace technique already relied on elsewhere
+     * (os_get_string()), which only needs a bare backspace and a printable
+     * space and so behaves identically in both screen modes.
+     */
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("MODE 2");
+    type_raw("\r");
+
+    type_raw("AB");
+    capture_clear();
+    bastos_send_keys("\x7f", 1, true); /* Correction */
+    bastos_loop();
+    check("Correction uses plain backspace/space/backspace, not an erase escape",
+          g_output_len == 3 && memcmp(g_output, "\x08 \x08", 3) == 0);
+
+    bastos_done();
+}
+
+static void test_line_edit_insert_redraws_without_erase_escape_in_mode80(void) {
+    printf("Line edit: mid-line insert redraws without any erase escape in 80-column mode (MODE 2)\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("MODE 2");
+    type_raw("\r");
+
+    type_raw("AC");
+    bastos_send_keys("\x08", 1, false); /* cursor between A and C */
+    bastos_loop();
+
+    capture_clear();
+    bastos_send_keys("B", 1, true); /* insert B: AC -> ABC, mid-line redraw */
+    bastos_loop();
+    check("mid-line insert just reprints the tail and backs up, no erase escape",
+          g_output_len == 3 && memcmp(g_output, "BC\x08", 3) == 0);
+
+    bastos_done();
+}
+
+static void test_line_edit_annulation_erases_with_spaces_in_mode80(void) {
+    printf("Line edit: Annulation (Ctrl+A) erases the whole line with spaces in 80-column mode (MODE 2)\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("MODE 2");
+    type_raw("\r");
+
+    type_raw("AB");
+    capture_clear();
+    bastos_send_keys("\x01", 1, true); /* Annulation */
+    bastos_loop();
+    check("Annulation uses plain backspace/space/backspace, not an erase escape",
+          g_output_len == 6 && memcmp(g_output, "\x08\x08  \x08\x08", 6) == 0);
+
+    bastos_done();
+}
+
+/* ======================================================================== */
+/* Feature — EDIT <line_no> (eval.c-static eval_edit(), bio.c              */
+/*           bastos_input()'s finalize step)                                */
+/*           Loads the given line's own text directly into io_buffer,       */
+/*           shows it on screen, and places the cursor at its end — ready   */
+/*           to be edited instead of retyped from scratch.                  */
+/* ======================================================================== */
+static void test_edit_shows_the_staged_line(void) {
+    printf("EDIT: the staged line is echoed to the screen when it loads\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT \"HELLO\"");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("EDIT 10");
+    type_raw("\r");
+    check("the line's own text is shown right when EDIT resolves",
+          strstr(g_output, "10 PRINT \"HELLO\"") != NULL);
+
+    bastos_done();
+}
+
+static void test_edit_prefills_at_end(void) {
+    printf("EDIT: stages the line's text with the cursor at the end\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT \"HELLO\"");
+    type_raw("\r");
+
+    type_raw("EDIT 10");
+    type_raw("\r");
+
+    /* A character typed right after EDIT must land at the true end of the
+     * staged text (proving the cursor was placed there, not left at 0). */
+    bastos_send_keys("9", 1, false);
+    bastos_loop();
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("typed char landed after the staged line's own text",
+          strstr(g_output, "10 PRINT \"HELLO\"9") != NULL);
+
+    bastos_done();
+}
+
+static void test_edit_unmodified_round_trips(void) {
+    printf("EDIT: pressing Enter with no changes leaves the line untouched\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT \"HELLO\"");
+    type_raw("\r");
+    type_raw("EDIT 10");
+    type_raw("\r");
+    type_raw("\r"); /* submit the staged line as-is, no edits made */
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("line is unchanged after an EDIT immediately followed by Enter",
+          strstr(g_output, "10 PRINT \"HELLO\"") != NULL);
+
+    bastos_done();
+}
+
+static void test_edit_allows_modification(void) {
+    printf("EDIT: the staged text can be edited with Correction/insert before submitting\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT \"HELLO\"");
+    type_raw("\r");
+    type_raw("EDIT 10");
+    type_raw("\r");
+
+    /* Replace the trailing O" with X" using Correction then insert. */
+    bastos_send_keys("\x7f", 1, false); /* remove closing quote */
+    bastos_loop();
+    bastos_send_keys("\x7f", 1, false); /* remove O */
+    bastos_loop();
+    bastos_send_keys("X\"", 2, false);
+    bastos_loop();
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("edited line stored the modification",
+          strstr(g_output, "10 PRINT \"HELLX\"") != NULL);
+    check("old text is gone", strstr(g_output, "HELLO") == NULL);
+
+    bastos_done();
+}
+
+static void test_edit_escape_after_syntax_error_keeps_original_line(void) {
+    printf("EDIT: cancelling with ESC after a syntax error does not lose the original line\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT \"HELLO\"");
+    type_raw("\r");
+    type_raw("EDIT 10");
+    type_raw("\r");
+
+    /* Break the syntax: remove the closing quote and add a dangling '+'. */
+    bastos_send_keys("\x7f", 1, false);
+    bastos_loop();
+    bastos_send_keys("+", 1, false);
+    bastos_loop();
+
+    capture_clear();
+    type_raw("\r");
+    check("the broken submission beeps and reports an error",
+          g_output_len > 0 && g_output[0] == '\x07' &&
+          strstr(g_output, "Error") != NULL);
+
+    /* Give up on the edit instead of fixing it. */
+    bastos_send_keys("\x1b", 1, false);
+    bastos_loop();
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("the original line 10 is still there",
+          strstr(g_output, "10 PRINT \"HELLO\"") != NULL);
+
+    bastos_done();
+}
+
+static void test_edit_left_arrow_echoes_one_backspace(void) {
+    printf("EDIT: normal line-editing keys work on the staged text\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT \"HELLO\"");
+    type_raw("\r");
+    type_raw("EDIT 10");
+    type_raw("\r");
+
+    capture_clear();
+    bastos_send_keys("\x08", 1, true); /* left-arrow over the closing quote */
+    bastos_loop();
+    check("left-arrow on the staged line echoes exactly one backspace",
+          g_output_len == 1 && g_output[0] == '\x08');
+
+    bastos_done();
+}
+
+static void test_edit_nonexistent_line_is_error(void) {
+    printf("EDIT: editing a line number that doesn't exist is a runtime error\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("EDIT 99");
+    type_raw("\r");
+    check("EDIT on a missing line reports an error", strstr(g_output, "Error") != NULL);
+
+    bastos_done();
+}
+
+/* ======================================================================== */
+/* Feature — Up-arrow recall of the last stored numbered line or immediate  */
+/*           command (bio.c bastos_load_edit_line() / io_last_line /        */
+/*           io_recall_len), complementing EDIT <line_no> for the common    */
+/*           case of re-editing whatever was just entered without having    */
+/*           to know or retype its line number.                             */
+/* ======================================================================== */
+static void test_recall_noop_if_line_since_deleted(void) {
+    printf("Recall: Up-arrow silently does nothing if the recalled line no longer exists\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+    type_raw("10"); /* empty body for an existing line number: deletes it */
+    type_raw("\r");
+
+    capture_clear();
+    bastos_send_keys("\x0b", 1, true); /* Up: line 10 no longer exists */
+    bastos_loop();
+    check("nothing is echoed for a since-deleted line", g_output_len == 0);
+
+    bastos_done();
+}
+
+static void test_recall_numbered_line_via_up_arrow(void) {
+    printf("Recall: Up-arrow reloads the last stored numbered line\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT \"HI\"");
+    type_raw("\r");
+
+    capture_clear();
+    bastos_send_keys("\x0b", 1, true); /* Up: buffer is empty, nothing typed since */
+    bastos_loop();
+    check("Up-arrow echoes the untokenized line",
+          strstr(g_output, "10 PRINT \"HI\"") != NULL);
+
+    /* Resubmitting the recalled text unmodified must not duplicate/corrupt it. */
+    type_raw("\r");
+    capture_clear();
+    type_raw("LIST\r");
+    check("the line is still stored exactly once",
+          strstr(g_output, "10 PRINT \"HI\"") != NULL);
+
+    bastos_done();
+}
+
+static void test_recall_immediate_command_via_up_arrow(void) {
+    printf("Recall: Up-arrow reloads the last immediate command's raw text\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("print 1");
+    capture_clear();
+    type_raw("\r");
+    check("the immediate command ran", strstr(g_output, "1") != NULL);
+
+    capture_clear();
+    bastos_send_keys("\x0b", 1, true); /* Up: recall it for editing */
+    bastos_loop();
+    /* tokenize() case-folds identifier-like words in place; clearing bit 7
+     * recovers that normalized (uppercase) form, same as LIST would show. */
+    check("Up-arrow echoes the last immediate command back",
+          strstr(g_output, "PRINT 1") != NULL);
+
+    /* It must still be a valid, resubmittable line. */
+    capture_clear();
+    type_raw("\r");
+    check("resubmitting the recalled command runs it again",
+          strstr(g_output, "1") != NULL);
+
+    bastos_done();
+}
+
+static void test_recall_discarded_by_new_typing(void) {
+    printf("Recall: typing something new discards the pending recall instead of mixing with it\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("print 1");
+    type_raw("\r");
+
+    /* Don't press Up: type a fresh line directly. */
+    type_raw("10 PRINT 2");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("only the freshly typed numbered line was stored",
+          strstr(g_output, "10 PRINT 2") != NULL);
+    check("no leftover from the earlier immediate command leaked in",
+          strstr(g_output, "PRINT 1") == NULL);
+
+    bastos_done();
+}
+
+static void test_recall_survives_a_blank_enter(void) {
+    printf("Recall: pressing Enter with nothing typed doesn't lose the pending recall\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("print 1");
+    capture_clear();
+    type_raw("\r");
+    check("the immediate command ran", strstr(g_output, "1") != NULL);
+
+    /* Press Enter again with nothing typed: must behave as a no-op (CRLF
+     * only, same as an empty buffer) and not resubmit or discard the
+     * pending recall. */
+    capture_clear();
+    bastos_send_keys("\r", 1, true);
+    bastos_loop();
+    check("a blank Enter only echoes CRLF, no duplicate execution and no error",
+          strstr(g_output, "Error") == NULL && strstr(g_output, "1") == NULL);
+
+    capture_clear();
+    bastos_send_keys("\x0b", 1, true); /* Up: still recalls "PRINT 1" */
+    bastos_loop();
+    check("Up-arrow still recalls the previous entry after the blank Enter",
+          strstr(g_output, "PRINT 1") != NULL);
+
+    bastos_done();
+}
+
+static void test_recall_not_offered_for_autoexec_banner(void) {
+    printf("Recall: the autoexec fallback banner is not offered for Up-arrow recall\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    /* No autoexec.bas exists in the test disk, so bmem_init() already
+     * queued and ran the internal "bastos" banner fallback during the
+     * warmup loops above. A fresh prompt must behave exactly as if nothing
+     * had run yet: Up passes through untouched. */
+    capture_clear();
+    bastos_send_keys("\x0b", 1, true);
+    bastos_loop();
+    check("Up is passed through, not a recall of the internal banner command",
+          g_output_len == 1 && g_output[0] == '\x0b');
+
+    bastos_done();
+}
+
+/* ======================================================================== */
+/* Feature — stay in edit mode on a syntax error (bio.c bastos_input())      */
+/*           Validating a line that isn't valid BASIC beeps (BEL, char 7)    */
+/*           and leaves the typed text in the input buffer instead of       */
+/*           discarding it, so it can be fixed and resubmitted — reusing    */
+/*           the existing validation key handling, not a separate command.  */
+/* ======================================================================== */
+static void test_syntax_error_beeps_and_stays_editable(void) {
+    printf("Syntax error: beeps and keeps the invalid line editable\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    /* "PRINT +" is invalid: a dangling operator with no right-hand side. */
+    capture_clear();
+    type_raw("10 PRINT +");
+    type_raw("\r");
+    check("invalid line beeps (BEL) and reports the error",
+          g_output_len > 0 && g_output[0] == '\x07' &&
+          strstr(g_output, "Error") != NULL);
+
+    /* "Error N" moved the terminal cursor to a fresh row below the line
+     * being edited, so the line must be re-echoed after it or the screen
+     * and the internal cursor/buffer state no longer match. */
+    {
+        char *err_pos = strstr(g_output, "Error");
+        check("the invalid line is re-echoed on screen after the error message",
+              err_pos != NULL && strstr(err_pos, "10 PRINT +") != NULL);
+    }
+
+    /* Fix it in place: remove the '+' and supply a valid operand. */
+    bastos_send_keys("\x7f", 1, false);
+    bastos_loop();
+    bastos_send_keys("1", 1, false);
+    bastos_loop();
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("the fixed line was stored correctly",
+          strstr(g_output, "10 PRINT 1") != NULL);
+
+    bastos_done();
+}
+
+static void test_syntax_error_never_stores_invalid_line(void) {
+    printf("Syntax error: the invalid text is never stored as a program line\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT +");
+    type_raw("\r");
+
+    /* Cancel the still-pending invalid line instead of fixing it. */
+    type_raw("\x01");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("nothing was stored", g_output_len == 0);
+
+    bastos_done();
+}
+
+static void test_valid_line_does_not_beep(void) {
+    printf("Syntax error: a valid line does not beep\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+    check("no BEL and no error for valid syntax",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    bastos_done();
+}
+
+static void test_runtime_error_does_not_stay_in_edit_mode(void) {
+    printf("Syntax error: a runtime error (valid syntax) does not stay in edit mode\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    /* Valid syntax, but the target file does not exist: a runtime error,
+     * not a syntax error, so the prompt must move on normally afterwards. */
+    capture_clear();
+    type_raw("LOAD \"does_not_exist\"");
+    type_raw("\r");
+    check("runtime error does not beep",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    /* A fresh command right after must run on its own, not get appended to
+     * anything left over from the failed LOAD. */
+    capture_clear();
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+    capture_clear();
+    type_raw("LIST\r");
+    check("the interpreter is back to normal, ready for a fresh command",
+          strstr(g_output, "10 PRINT 1") != NULL);
+
+    bastos_done();
+}
+
+/* ======================================================================== */
 /* Feature — variable-less NEXT (eval.c-static, eval_next()/eval_for())      */
 /*           FOR/NEXT nesting is a stack (bstate.for_sp / bmem->for_stack):  */
 /*           NEXT always closes the innermost currently active loop. A      */
@@ -676,6 +1652,102 @@ int main(void) {
     printf("\n");
 
     test_bug7_load_immediate_null_read_ptr();
+    printf("\n");
+
+    test_line_edit_insert_at_cursor();
+    printf("\n");
+
+    test_line_edit_consecutive_inserts();
+    printf("\n");
+
+    test_line_edit_correction_at_cursor();
+    printf("\n");
+
+    test_line_edit_right_arrow_returns_to_append();
+    printf("\n");
+
+    test_line_edit_ctrl_a_clears_both_sides();
+    printf("\n");
+
+    test_line_edit_multibyte_atomic();
+    printf("\n");
+
+    test_line_edit_ss2_mid_line_before_diacritic_byte();
+    printf("\n");
+
+    test_line_edit_ss2_abandoned_by_other_keys();
+    printf("\n");
+
+    test_line_edit_up_down_absorbed_when_typing();
+    printf("\n");
+
+    test_line_edit_works_when_buffer_full();
+    printf("\n");
+
+    test_line_edit_input_statement();
+    printf("\n");
+
+    test_line_edit_finalize_shift();
+    printf("\n");
+
+    test_line_edit_correction_erases_with_spaces_in_mode80();
+    printf("\n");
+
+    test_line_edit_insert_redraws_without_erase_escape_in_mode80();
+    printf("\n");
+
+    test_line_edit_annulation_erases_with_spaces_in_mode80();
+    printf("\n");
+
+    test_edit_shows_the_staged_line();
+    printf("\n");
+
+    test_edit_prefills_at_end();
+    printf("\n");
+
+    test_edit_unmodified_round_trips();
+    printf("\n");
+
+    test_edit_allows_modification();
+    printf("\n");
+
+    test_edit_escape_after_syntax_error_keeps_original_line();
+    printf("\n");
+
+    test_edit_left_arrow_echoes_one_backspace();
+    printf("\n");
+
+    test_edit_nonexistent_line_is_error();
+    printf("\n");
+
+    test_recall_noop_if_line_since_deleted();
+    printf("\n");
+
+    test_recall_numbered_line_via_up_arrow();
+    printf("\n");
+
+    test_recall_immediate_command_via_up_arrow();
+    printf("\n");
+
+    test_recall_discarded_by_new_typing();
+    printf("\n");
+
+    test_recall_survives_a_blank_enter();
+    printf("\n");
+
+    test_recall_not_offered_for_autoexec_banner();
+    printf("\n");
+
+    test_syntax_error_beeps_and_stays_editable();
+    printf("\n");
+
+    test_syntax_error_never_stores_invalid_line();
+    printf("\n");
+
+    test_valid_line_does_not_beep();
+    printf("\n");
+
+    test_runtime_error_does_not_stay_in_edit_mode();
     printf("\n");
 
     test_next_bare_nested();
