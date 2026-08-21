@@ -116,6 +116,7 @@ origin
 vkey
 index
 file
+else
 EOF
 
 # Do not sort to preserve save/load compatibility

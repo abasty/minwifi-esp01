@@ -273,8 +273,6 @@ static void test_bug1_unplot(void) {
      * After fix:  *addr &= ~cbit → only bit for (0,0) cleared.
      *             TEST 1,0 != 0  →  IF condition is true → "PASS" is printed.
      *
-     * Note: this BASIC variant does not support ELSE on the same line as IF/THEN,
-     * so we use a single IF THEN without an ELSE branch.
      */
     const char *lines[] = {
         "10 PLOT 0,0",
@@ -1609,6 +1607,339 @@ static void test_colon_gosub_return(void) {
 }
 
 /* ======================================================================== */
+/* Feature — ELSE for IF/THEN (eval.c-static: eval_if(), eval_else(),        */
+/*           eval_skip_token()). A false condition scans forward (without    */
+/*           evaluating) for a matching ELSE at the same IF-nesting depth;   */
+/*           a true condition falls through the then-clause's ':'-chain as   */
+/*           before and, on reaching an unconsumed ELSE, skips its clause.   */
+/* ======================================================================== */
+static void test_else_true_false_branches(void) {
+    printf("ELSE: true runs THEN only, false runs ELSE only\n");
+
+    const char *lines[] = {
+        "10 IF 1 THEN PRINT \"A\" ELSE PRINT \"B\"",
+        "20 IF 0 THEN PRINT \"C\" ELSE PRINT \"D\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("true condition prints the THEN branch", strstr(out, "A") != NULL);
+    check("true condition does not print the ELSE branch", strstr(out, "B") == NULL);
+    check("false condition prints the ELSE branch", strstr(out, "D") != NULL);
+    check("false condition does not print the THEN branch", strstr(out, "C") == NULL);
+}
+
+static void test_else_absent_no_regression(void) {
+    printf("ELSE: a false IF with no ELSE present still skips to end of line\n");
+
+    const char *lines[] = {
+        "10 IF 0 THEN PRINT \"A\"",
+        "20 PRINT \"END\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("nothing printed for the false, else-less THEN", strstr(out, "A") == NULL);
+    check("execution continues to the next line", strstr(out, "END") != NULL);
+}
+
+static void test_else_multi_statement_clauses(void) {
+    printf("ELSE: THEN and ELSE clauses each span multiple ':'-statements\n");
+
+    const char *lines[] = {
+        "10 LET a=0: LET b=0",
+        "20 IF 1 THEN LET a=1: LET b=2 ELSE LET a=9: LET b=9",
+        "30 PRINT a; b",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("both THEN statements ran", strstr(out, "12") != NULL);
+    check("the ELSE clause never ran", strstr(out, "9") == NULL);
+}
+
+static void test_else_nested_if_outer_false_skips_whole_then(void) {
+    printf("ELSE: outer false with no outer ELSE skips a whole nested IF/ELSE unit\n");
+
+    /*
+     * The critical depth-tracking case: the outer IF's forward scan must
+     * skip over the entire inner "IF 1 THEN LET b=2 ELSE LET b=9" —
+     * including the inner ELSE — without mistaking it for the outer's own
+     * (absent) ELSE.
+     */
+    const char *lines[] = {
+        "10 LET b=0",
+        "20 IF 0 THEN LET a=1: IF 1 THEN LET b=2 ELSE LET b=9",
+        "30 PRINT b",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("b is untouched: neither branch of the nested IF ran",
+          strstr(out, "0") != NULL && strstr(out, "2") == NULL &&
+          strstr(out, "9") == NULL);
+}
+
+static void test_else_nested_if_outer_true_inner_false_with_else(void) {
+    printf("ELSE: outer true runs a nested IF, which takes its own ELSE\n");
+
+    const char *lines[] = {
+        "10 LET a=0: LET b=0",
+        "20 IF 1 THEN LET a=1: IF 0 THEN LET b=2 ELSE LET b=9",
+        "30 PRINT a; b",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("outer THEN ran and inner ELSE ran", strstr(out, "19") != NULL);
+}
+
+static void test_else_nested_if_inside_else_clause(void) {
+    printf("ELSE: a nested IF inside an ELSE clause is skipped when the outer is true\n");
+
+    const char *lines[] = {
+        "10 LET a=0",
+        "20 IF 1 THEN LET a=1 ELSE LET a=2: IF 1 THEN LET a=3 ELSE LET a=9",
+        "30 PRINT a",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("only the outer THEN ran; the whole ELSE (with its nested IF) was skipped",
+          strstr(out, "1") != NULL && strstr(out, "2") == NULL &&
+          strstr(out, "3") == NULL && strstr(out, "9") == NULL);
+}
+
+static void test_else_doubly_nested_depth(void) {
+    printf("ELSE: the nesting-depth counter tracks two levels, not just one\n");
+
+    /*
+     * Outer condition is false with no outer ELSE, and its then-clause
+     * contains a nested IF whose own then-clause contains a further
+     * nested IF — the scan must walk depth 0->1->2->1->0 in one pass
+     * before correctly concluding there is no ELSE for the outer IF.
+     */
+    const char *lines[] = {
+        "10 LET p=0: LET q=0: LET r=0",
+        "20 IF 0 THEN LET p=1: IF 1 THEN LET q=1: IF 1 THEN LET r=99 ELSE LET r=1 ELSE LET r=2",
+        "30 PRINT p; q; r",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("the entire outer then-clause (both nested IFs) was skipped",
+          strstr(out, "000") != NULL);
+}
+
+static void test_else_save_load_roundtrip(void) {
+    printf("ELSE: a program containing ELSE survives a SAVE/LOAD round trip\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 IF 1 THEN PRINT \"A\" ELSE PRINT \"B\"");
+    type_raw("\r");
+    type_raw("SAVE \"else_test\"");
+    type_raw("\r");
+    for (int i = 0; i < 1000; i++)
+        bastos_loop();
+
+    type_raw("NEW");
+    type_raw("\r");
+    type_raw("LOAD \"else_test\"");
+    type_raw("\r");
+    for (int i = 0; i < 1000; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("the loaded program still contains the ELSE clause",
+          strstr(g_output, "ELSE") != NULL);
+
+    capture_clear();
+    type_raw("RUN\r");
+    for (int i = 0; i < 500000 && strstr(g_output, "Ready") == NULL; i++)
+        bastos_loop();
+    check("the loaded program still runs correctly", strstr(g_output, "A") != NULL);
+
+    hal_erase("else_test.bas");
+    bastos_done();
+}
+
+static void test_else_bare_linenum_goto(void) {
+    printf("ELSE: bare line numbers on THEN and ELSE act as GOTO targets\n");
+
+    const char *lines_true[] = {
+        "10 IF 1 THEN 40 ELSE 60",
+        "20 PRINT \"X\"",
+        "30 END",
+        "40 PRINT \"THEN\"",
+        "50 GOTO 30",
+        "60 PRINT \"ELSE\"",
+        NULL
+    };
+    const char *out_true = run_program(lines_true);
+    check("true condition jumps to the THEN line number",
+          strstr(out_true, "THEN") != NULL && strstr(out_true, "ELSE") == NULL);
+
+    const char *lines_false[] = {
+        "10 IF 0 THEN 40 ELSE 60",
+        "20 PRINT \"X\"",
+        "30 END",
+        "40 PRINT \"THEN\"",
+        "50 GOTO 30",
+        "60 PRINT \"ELSE\"",
+        NULL
+    };
+    const char *out_false = run_program(lines_false);
+    check("false condition jumps to the ELSE line number",
+          strstr(out_false, "ELSE") != NULL && strstr(out_false, "THEN") == NULL);
+}
+
+static void test_else_gosub_in_then_with_else_present(void) {
+    printf("ELSE: GOSUB in a THEN-clause with an ELSE present resumes past it, not into it\n");
+
+    /*
+     * Regression for the trickiest interaction: GOSUB's recorded resume
+     * offset lands exactly on the unconsumed ELSE token. On RETURN,
+     * eval_prog() starts a fresh call with else_pending reset to 0, so
+     * eval_else() must correctly treat this as "skip the else-clause"
+     * (the original condition was true), not re-run it or error.
+     */
+    const char *lines[] = {
+        "10 IF 1 THEN GOSUB 1000 ELSE PRINT \"NO\"",
+        "20 PRINT \"AFTER\"",
+        "30 END",
+        "1000 PRINT \"SUB\"",
+        "1010 RETURN",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("the subroutine ran once", strstr(out, "SUB") != NULL);
+    check("the else-clause never ran", strstr(out, "NO") == NULL);
+    check("execution continues normally after the RETURN",
+          strstr(out, "AFTER") != NULL);
+}
+
+static void test_else_gosub_in_else_clause(void) {
+    printf("ELSE: GOSUB inside an ELSE clause runs and RETURN resumes correctly\n");
+
+    const char *lines[] = {
+        "10 IF 0 THEN PRINT \"NO\" ELSE GOSUB 1000",
+        "20 PRINT \"AFTER\"",
+        "30 END",
+        "1000 PRINT \"SUB\"",
+        "1010 RETURN",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("the then-clause never ran", strstr(out, "NO") == NULL);
+    check("the subroutine in the else-clause ran", strstr(out, "SUB") != NULL);
+    check("execution continues normally after the RETURN",
+          strstr(out, "AFTER") != NULL);
+}
+
+static void test_else_syntax_check_does_not_beep(void) {
+    printf("ELSE: typing a well-formed IF/THEN/ELSE line does not beep or error\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("10 IF 1 THEN PRINT \"A\" ELSE PRINT \"B\"");
+    type_raw("\r");
+    check("no BEL and no error for a well-formed ELSE line",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    bastos_done();
+}
+
+static void test_else_list_roundtrip(void) {
+    printf("ELSE: LIST shows correct spacing around ELSE and re-tokenizes identically\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 IF 1 THEN PRINT \"A\" ELSE PRINT \"B\"");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("ELSE has a leading space, not glued to the previous token",
+          strstr(g_output, "\" ELSE") != NULL);
+    check("ELSE has a trailing space before PRINT",
+          strstr(g_output, "ELSE PRINT") != NULL);
+
+    bastos_done();
+}
+
+static void test_else_skips_string_with_embedded_nul(void) {
+    printf("ELSE: the false-branch scanner skips a string with an embedded NUL correctly\n");
+
+    /*
+     * tokenize_string() allows an escaped \x00, so a skipped string's
+     * payload can contain a raw NUL byte before its real end. The skip
+     * primitive must use the string's length prefix, not scan for a NUL,
+     * or it would stop early and never find the ELSE below.
+     */
+    const char *lines[] = {
+        "10 IF 0 THEN PRINT \"a\\x00b\" ELSE PRINT \"OK\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("the ELSE branch was found and ran despite the embedded NUL",
+          strstr(out, "OK") != NULL);
+}
+
+static void test_else_skips_string_with_apostrophe(void) {
+    printf("ELSE: the false-branch scanner skips a string containing ' correctly\n");
+
+    const char *lines[] = {
+        "10 IF 0 THEN PRINT \"it's\" ELSE PRINT \"OK\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("the apostrophe inside the string was not mistaken for a comment",
+          strstr(out, "OK") != NULL);
+}
+
+static void test_else_orphan_is_a_noop(void) {
+    printf("ELSE: an ELSE with no preceding IF on the line is a silent no-op\n");
+
+    const char *lines[] = {
+        "10 PRINT \"BEFORE\"",
+        "20 ELSE PRINT \"ORPHAN\"",
+        "30 PRINT \"AFTER\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("the orphan ELSE's clause never ran", strstr(out, "ORPHAN") == NULL);
+    check("execution continues normally past it",
+          strstr(out, "BEFORE") != NULL && strstr(out, "AFTER") != NULL);
+}
+
+static void test_else_inherits_equals_ambiguity(void) {
+    printf("ELSE: a bare 'a=1' after THEN/ELSE is a GOTO attempt, not an assignment (pre-existing)\n");
+
+    /*
+     * eval_if() tries eval_expr(TOKEN_NUMBER) before eval_instruction()
+     * after THEN, so a bare "a=1" parses as the comparison (a==1) used as
+     * a computed GOTO target, not an assignment — every real .bas file
+     * already uses "THEN LET var=..." for this reason. eval_else() mirrors
+     * THEN's grammar exactly, so it inherits the same trap. This is a
+     * pre-existing, out-of-scope quirk being pinned down, not fixed.
+     *
+     * Not run to completion: any resulting GOTO 0/1 resolves to this
+     * program's first line, looping forever. Only the syntax-check is
+     * exercised, confirming ELSE's grammar doesn't change this behavior.
+     */
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("10 IF 1 THEN a=1 ELSE a=2");
+    type_raw("\r");
+    check("the ambiguous line is still accepted as valid syntax",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    bastos_done();
+}
+
+/* ======================================================================== */
 /* Feature — ''' end-of-line comment (token.c-static, tokenize())            */
 /*           Everything from a ''' up to the end of the physical line is     */
 /*           kept verbatim in the stored program (so LIST shows it back),    */
@@ -1828,6 +2159,57 @@ int main(void) {
     printf("\n");
 
     test_colon_gosub_return();
+    printf("\n");
+
+    test_else_true_false_branches();
+    printf("\n");
+
+    test_else_absent_no_regression();
+    printf("\n");
+
+    test_else_multi_statement_clauses();
+    printf("\n");
+
+    test_else_nested_if_outer_false_skips_whole_then();
+    printf("\n");
+
+    test_else_nested_if_outer_true_inner_false_with_else();
+    printf("\n");
+
+    test_else_nested_if_inside_else_clause();
+    printf("\n");
+
+    test_else_doubly_nested_depth();
+    printf("\n");
+
+    test_else_bare_linenum_goto();
+    printf("\n");
+
+    test_else_gosub_in_then_with_else_present();
+    printf("\n");
+
+    test_else_gosub_in_else_clause();
+    printf("\n");
+
+    test_else_syntax_check_does_not_beep();
+    printf("\n");
+
+    test_else_list_roundtrip();
+    printf("\n");
+
+    test_else_skips_string_with_embedded_nul();
+    printf("\n");
+
+    test_else_skips_string_with_apostrophe();
+    printf("\n");
+
+    test_else_orphan_is_a_noop();
+    printf("\n");
+
+    test_else_inherits_equals_ambiguity();
+    printf("\n");
+
+    test_else_save_load_roundtrip();
     printf("\n");
 
     test_comment_trailing();

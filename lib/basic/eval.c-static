@@ -1324,7 +1324,8 @@ static bool eval_print(bool implicit) {
     bool ln = true;
 
     while (result && *bmem->bstate.read_ptr != 0 &&
-           *bmem->bstate.read_ptr != ':' && *bmem->bstate.read_ptr != '\'') {
+           *bmem->bstate.read_ptr != ':' && *bmem->bstate.read_ptr != '\'' &&
+           *bmem->bstate.read_ptr != TOKEN_KEYWORD_ELSE) {
         ln = true;
         if (eval_expr(TOKEN_NUMBER | TOKEN_STRING)) {
             if (bmem->bstate.do_eval) {
@@ -2243,6 +2244,33 @@ static bool eval_instruction() {
            eval_minitel() || eval_ftp() || eval_output() || eval_let();
 }
 
+// Advances *ptr past exactly one token's marker + payload, without
+// evaluating it. Returns false at end-of-statement (0 or comment marker),
+// leaving *ptr unchanged. TOKEN_STRING must use its 2-byte length prefix
+// (matching eval_string_const()), not a NUL scan: tokenize_string() allows
+// an escaped embedded \x00, so a raw NUL can appear inside a string's
+// payload before its real end. TOKEN_VARIABLE_* names are safe to
+// NUL-scan (identifier characters can't contain one). Keywords, compare
+// operators, and single-char tokens have no payload beyond the marker
+// byte already consumed below.
+static bool eval_skip_token(uint8_t **ptr) {
+    uint8_t token = **ptr;
+    if (token == 0 || token == '\'')
+        return false;
+    (*ptr)++;
+    if (token == TOKEN_NUMBER) {
+        *ptr += 4;
+    } else if (token == TOKEN_STRING) {
+        uint16_t len = (*ptr)[0] | ((*ptr)[1] << 8);
+        *ptr += 2 + len + 1;
+    } else if (token == TOKEN_VARIABLE_NUMBER || token == TOKEN_VARIABLE_STRING) {
+        while (**ptr)
+            (*ptr)++;
+        (*ptr)++;
+    }
+    return true;
+}
+
 static bool eval_if() {
     if (!eval_token(TOKEN_KEYWORD_IF))
         return false;
@@ -2252,10 +2280,35 @@ static bool eval_if() {
 
     if (bmem->bstate.do_eval) {
         if (bmem->bstate.number == 0) {
-            // If test is negative, ignore end of line
-            bmem->bstate.read_ptr =
-                bmem->bstate.prog->line + bmem->bstate.prog->len;
-            return true;
+            // Test is false: scan forward (without evaluating) for a
+            // matching ELSE at this IF's nesting depth, since a nested IF
+            // can appear on the same line via ':' and has its own ELSE
+            // that must not be mistaken for ours. If found, leave it
+            // unconsumed and flag it so eval_else() runs its clause
+            // instead of skipping it. If not found before end of line (or
+            // a comment), fall back to the original "ignore end of line"
+            // behavior.
+            uint8_t *ptr = bmem->bstate.read_ptr;
+            int depth = 0;
+            for (;;) {
+                uint8_t token = *ptr;
+                if (token == 0 || token == '\'') {
+                    bmem->bstate.read_ptr =
+                        bmem->bstate.prog->line + bmem->bstate.prog->len;
+                    return true;
+                }
+                if (token == TOKEN_KEYWORD_IF) {
+                    depth++;
+                } else if (token == TOKEN_KEYWORD_ELSE) {
+                    if (depth == 0) {
+                        bmem->bstate.read_ptr = ptr;
+                        bmem->bstate.else_pending = 1;
+                        return true;
+                    }
+                    depth--;
+                }
+                eval_skip_token(&ptr);
+            }
         }
     }
 
@@ -2272,6 +2325,33 @@ static bool eval_if() {
         return false;
 
     return true;
+}
+
+// ELSE: reached in two ways. (1) Falling through a TRUE then-clause's
+// ':'-chain during real execution — this else-clause must not run, so skip
+// the rest of the line, mirroring eval_if()'s own "no matching else" case.
+// (2) A syntax check, or resuming into the clause eval_if()'s false branch
+// found and flagged via else_pending — parse its body exactly like THEN's,
+// so any further ':'-separated statements are picked up normally by
+// eval_prog()'s outer loop afterwards, same as a then-clause's tail.
+static bool eval_else() {
+    if (!eval_token(TOKEN_KEYWORD_ELSE))
+        return false;
+
+    if (bmem->bstate.do_eval && !bmem->bstate.else_pending) {
+        bmem->bstate.read_ptr =
+            bmem->bstate.prog->line + bmem->bstate.prog->len;
+        return true;
+    }
+    bmem->bstate.else_pending = 0;
+
+    if (eval_expr(TOKEN_NUMBER)) {
+        if (bmem->bstate.do_eval)
+            eval_goto(bmem->bstate.number);
+        return true;
+    }
+
+    return eval_instruction();
 }
 
 static bool eval_for() {
@@ -2455,6 +2535,7 @@ static int8_t eval_prog(prog_t *prog, bool do_eval) {
     bmem->bstate.error = BERROR_NONE;
     bmem->bstate.prog = prog;
     bmem->bstate.in_goto = 0;
+    bmem->bstate.else_pending = 0;
 
     // Do syntax check or eval, one statement at a time, separated by ':'.
     // pc is only meaningful as a "did we jump away" signal while actually
@@ -2464,7 +2545,8 @@ static int8_t eval_prog(prog_t *prog, bool do_eval) {
     bool jumped = false;
     while (bmem->bstate.read_ptr && *bmem->bstate.read_ptr != 0 &&
            *bmem->bstate.read_ptr != '\'') {
-        eval = eval_instruction() || eval_if() || eval_for() || eval_next();
+        eval = eval_instruction() || eval_if() || eval_for() || eval_next() ||
+               eval_else();
         if (!eval || bmem->bstate.error != BERROR_NONE)
             break;
 
@@ -2482,7 +2564,10 @@ static int8_t eval_prog(prog_t *prog, bool do_eval) {
             break;
         }
 
-        if (!eval_token(':'))
+        // ELSE abuts its clause the same way THEN abuts the condition (no
+        // colon before it): also continue when the next, unconsumed byte
+        // is ELSE, not just after a literal ':'.
+        if (!eval_token(':') && *bmem->bstate.read_ptr != TOKEN_KEYWORD_ELSE)
             break;
     }
 

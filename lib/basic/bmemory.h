@@ -94,6 +94,8 @@ struct eval_state_s {
     uint8_t debug: 1;
     uint8_t g_mode: 1;
     uint8_t screen_mode: 1;
+    uint8_t else_pending: 1; // set by eval_if()'s false branch when it found
+                              // a matching ELSE, consumed by eval_else()
 
     prog_buffer_t token_buffer;
 };
