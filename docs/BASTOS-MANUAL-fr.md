@@ -92,6 +92,51 @@ Exemple de programme `autoexec.bas` :
 10 RUN "connect.bas"
 ```
 
+### Édition de ligne (mode interactif)
+
+En mode interactif, chaque ligne tapée peut être éditée avant d'être validée :
+
+- **◄ / ►** (flèches gauche/droite) : déplacent le curseur sur la ligne en
+  cours de saisie, sans rien effacer.
+- **CORRECTION** (touche 127) : efface le caractère situé avant le curseur.
+- **ANNULATION** (touche 1) : efface toute la ligne en cours de saisie.
+- **▲** (flèche haut) : rappelle la dernière ligne validée pour l'éditer à
+  nouveau — la dernière ligne numérotée du programme (comme le ferait `EDIT
+  numligne`), ou la dernière commande immédiate tapée si aucune ligne
+  numérotée n'a été validée depuis. Ne fait rien si aucune ligne n'a encore
+  été validée, ou si la ligne numérotée rappelée a depuis été supprimée du
+  programme.
+- **Validation** (ENVOI, REPETITION, SUITE, RETOUR, SOMMAIRE ou GUIDE) :
+  soumet la ligne. Si elle contient une erreur de syntaxe, BASTOS émet un
+  bip (caractère BEL) et affiche l'erreur, mais **reste en mode édition**
+  avec le texte tapé conservé, prêt à être corrigé et validé à nouveau — la
+  ligne n'est jamais perdue ni silencieusement rejetée.
+- **ESC ESC** (deux appuis consécutifs) : abandonne la ligne en cours de
+  saisie sans la valider. Si elle avait été rappelée avec `EDIT` ou la
+  flèche haut puis modifiée, la ligne d'origine du programme reste
+  inchangée, même après une tentative de validation en erreur.
+
+La commande `EDIT numligne` a le même effet que la flèche haut, mais permet
+de cibler explicitement n'importe quelle ligne numérotée du programme, pas
+seulement la dernière.
+
+```mermaid
+flowchart TD
+    vide(["Ligne vide"])
+    edition["Édition en cours"]
+    erreur["Erreur : bip + message<br/>(reste en édition)"]
+
+    vide -->|"Caractère / ◄ / ►"| edition
+    edition -->|"Caractère / ◄ / ► / CORRECTION"| edition
+    edition -->|ANNULATION| vide
+    vide -->|"▲ rappel dernière ligne"| edition
+    edition -->|Validation OK| vide
+    edition -->|Validation en erreur| erreur
+    erreur -->|Correction + Validation| vide
+    erreur -->|ESC ESC| vide
+    linkStyle default stroke:#3f3,stroke-width:2px,color:green;
+```
+
 ---
 
 ## Commandes du programme
@@ -106,6 +151,7 @@ Exemple de programme `autoexec.bas` :
 | `LIST numligne` | Lister 20 lignes depuis `numligne` |
 | `LIST numligne, nombre` | Lister `nombre` lignes depuis `numligne` |
 | `LL` | Identique à `LIST` |
+| `EDIT numligne` | Rappeler une ligne du programme pour l'éditer (voir [Édition de ligne](#édition-de-ligne-mode-interactif)) |
 | `NEW` | Supprimer toutes les lignes du programme et les variables |
 | `CLEAR` | Effacer les variables et stopper l'exécution |
 | `END` | Terminer le programme et effacer les variables |
