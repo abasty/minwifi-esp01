@@ -978,6 +978,49 @@ static void test_line_edit_annulation_erases_with_spaces_in_mode80(void) {
     bastos_done();
 }
 
+static void test_ctrl_enter_clears_screen_in_mode80(void) {
+    printf("Line edit: Ctrl+Enter (byte 12) clears the screen in 80-column mode (MODE 2)\n");
+    /*
+     * On a real Minitel keyboard, Ctrl+Enter sends the same byte 12 in
+     * both 40- and 80-column mode. In 40-column/Videotex mode, 0x0C is
+     * itself the native CLS code, so echoing it raw already clears the
+     * screen with no BASTOS-side help. In 80-column/ANSI mode the
+     * terminal doesn't understand a raw 0x0C as "clear screen", so
+     * BASTOS must translate it to the ANSI clear+home sequence instead.
+     */
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("MODE 2");
+    type_raw("\r");
+
+    capture_clear();
+    bastos_send_keys("\x0c", 1, true); /* Ctrl+Enter */
+    bastos_loop();
+    check("byte 12 is translated to the ANSI clear+home sequence in mode 80",
+          g_output_len == 7 && memcmp(g_output, "\x1b[2J\x1b[H", 7) == 0);
+
+    bastos_done();
+}
+
+static void test_ctrl_enter_passes_through_raw_in_mode40(void) {
+    printf("Line edit: Ctrl+Enter (byte 12) is echoed raw in 40-column mode (unchanged)\n");
+    /* Default mode (40 columns): the real Minitel already interprets a
+     * raw 0x0C as CLS natively, so BASTOS must not translate it here. */
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    bastos_send_keys("\x0c", 1, true); /* Ctrl+Enter */
+    bastos_loop();
+    check("byte 12 is echoed raw, unmodified, in mode 40",
+          g_output_len == 1 && g_output[0] == '\x0c');
+
+    bastos_done();
+}
+
 static void test_mode80_survives_new(void) {
     printf("MODE: MODE 2 (80 columns) is not reset by NEW\n");
     /*
@@ -2078,6 +2121,12 @@ int main(void) {
     printf("\n");
 
     test_line_edit_annulation_erases_with_spaces_in_mode80();
+    printf("\n");
+
+    test_ctrl_enter_clears_screen_in_mode80();
+    printf("\n");
+
+    test_ctrl_enter_passes_through_raw_in_mode40();
     printf("\n");
 
     test_mode80_survives_new();

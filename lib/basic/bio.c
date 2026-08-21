@@ -415,6 +415,21 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
             }
         }
 
+        // Ctrl+Enter (byte 12): on a real Minitel keyboard this sends the
+        // same code in both 40- and 80-column mode, but only means
+        // "clear screen" natively to the terminal in 40-column/Videotex
+        // mode, where 0x0C is itself the CLS code — echoing it raw there
+        // already works. In 80-column/ANSI mode the terminal doesn't
+        // recognize a raw 0x0C as clear-screen, so translate it to the
+        // ANSI equivalent instead of echoing it raw (which would do
+        // nothing there).
+        if (*src == '\x0c' && bmem->bstate.screen_mode) {
+            bmem_screen_clear();
+            if (echo && !eval_inputting())
+                hal_print_string(MODE80_CLS);
+            return;
+        }
+
         // Up/Down: once something has been typed, silently absorb them
         // instead of letting them leak through to the terminal — they have
         // no action yet (reserved for a possible future use, e.g. command
