@@ -115,6 +115,14 @@ typedef struct {
     uint8_t io_cursor; // offset from io_buffer of the edit cursor in the current line
     uint16_t io_edit_line; // set by EDIT, consumed by bastos_input() once the
                             // current command has been removed from io_buffer
+    uint16_t io_last_line; // line number of the last line successfully stored,
+                            // for Up-arrow recall (0 = none)
+    uint8_t io_recall_len;  // > 0 while the last immediate command's raw text
+                             // is kept resident at the start of io_buffer for
+                             // Up-arrow recall (0 = none pending)
+    uint8_t io_no_recall;   // set around a system-injected command (autoexec's
+                             // banner fallback) so it isn't mistaken for
+                             // something the user typed and offered for recall
     uint16_t list_start;
     char inkey;
     char vkey;

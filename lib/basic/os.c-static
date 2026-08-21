@@ -71,10 +71,11 @@ static int g_ftp_fd = -1;
 static void os_set_redirect(int fd) { bmem->output_fd = fd; }
 
 // While active, redirects os_redir_print_* output into bmem->io_buffer
-// instead of the terminal — used by EDIT (via bastos_input()) to build the
-// line it stages for the next input directly where it will be edited, not
-// through the terminal or a BASIC variable. The caller is responsible for
-// io_buffer's content before/after (see bastos_input()'s finalize step).
+// instead of the terminal — used by bastos_load_edit_line() (bio.c), the
+// shared staging step behind both EDIT <line_no> and the Up-arrow recall
+// of a stored numbered line, to build the line directly where it will be
+// edited, not through the terminal or a BASIC variable. The caller is
+// responsible for io_buffer's content before/after.
 static void os_set_redirect_prefill(bool active) {
     bmem->output_prefill = active ? 1 : 0;
 }
@@ -128,7 +129,7 @@ static int os_redir_print_buffer(const char *buffer, int n) {
     if (*bmem->output_var != 0)
         return os_concat_buffer(bmem->output_var, buffer, n);
 
-    // Redir to the EDIT staging area (bmem->io_buffer itself)
+    // Redir to the edit staging area (bmem->io_buffer itself)
     if (bmem->output_prefill)
         return os_redir_print_to_prefill(buffer, n);
 
@@ -223,6 +224,9 @@ static void os_autoexec(void) {
         bmem->bstate.pc = bmem_prog_first_line();
         bmem->bstate.running = bmem->bstate.pc != 0;
     } else {
+        // System-injected, not something the user typed: don't let it
+        // become an Up-arrow recall target once bastos_input() processes it.
+        bmem->io_no_recall = 1;
         bastos_send_keys("bastos\n", 7, false);
     }
 }

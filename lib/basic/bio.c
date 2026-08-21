@@ -78,6 +78,7 @@ static void bastos_handle_escape() {
     bastos_stop();
     *bmem->io_buffer = 0;
     bmem->io_cursor = 0;
+    bmem->io_recall_len = 0; // any resident recall text is being wiped too
     os_redir_print_string("*Break*\r\n");
 }
 
@@ -296,6 +297,40 @@ static void clear_current_line(uint8_t **end, uint8_t **cur, uint8_t *line_start
     **end = 0;
 }
 
+// Loads line_no's own text into io_buffer for editing — used both by EDIT
+// <line_no> and by the Up-arrow recall of the last stored numbered line:
+// prepend its untokenized text ahead of whatever is already queued there,
+// show it, and place the cursor at its end. No-op if line_no is 0 or no
+// longer exists.
+static void bastos_load_edit_line(uint16_t line_no) {
+    if (line_no == 0)
+        return;
+    prog_t *edit_prog = bmem_prog_get_line_or_next(line_no);
+    if (!edit_prog || edit_prog->line_no != line_no)
+        return;
+
+    uint8_t remainder[IO_BUFFER_SIZE];
+    strcpy((char *)remainder, (char *)bmem->io_buffer);
+
+    bmem->io_buffer[0] = 0;
+    os_set_redirect_prefill(true);
+    os_redir_print_integer("%d ", (int)edit_prog->line_no);
+    untokenize(edit_prog->line);
+    os_set_redirect_prefill(false);
+
+    size_t edit_len = strlen((char *)bmem->io_buffer);
+    hal_print_buffer(bmem->io_buffer, (int)edit_len);
+
+    size_t room = sizeof(bmem->io_buffer) - 1 - edit_len;
+    size_t rem_len = strlen((char *)remainder);
+    if (rem_len > room)
+        rem_len = room;
+    memcpy(bmem->io_buffer + edit_len, remainder, rem_len);
+    bmem->io_buffer[edit_len + rem_len] = 0;
+
+    bmem->io_cursor = (uint8_t)edit_len;
+}
+
 void bastos_send_keys(const char *keys, size_t n, bool echo) {
     uint8_t *src = (uint8_t *)keys;
     uint8_t *dst = bmem->io_buffer;
@@ -327,6 +362,29 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
     // the key is sent to terminal. Some filtered sequences does not come here
     // anyway (INS/ DEL sequences for example), see os_get_key().
     if (!is_char_input_key(*src)) {
+        // Up: recall the last successfully-submitted line for further
+        // editing, as long as nothing has been typed since. Two sources:
+        // an immediate command's raw text, kept resident right here in
+        // io_buffer (tokenize() only ever tags bit 7 on former keyword-end
+        // bytes, so clearing it recovers exactly what was typed); or, for
+        // a numbered line, its own text loaded from program memory.
+        if (*src == '\x0b') {
+            if (bmem->io_recall_len != 0) {
+                uint8_t recall_len = bmem->io_recall_len;
+                for (uint8_t i = 0; i < recall_len; i++)
+                    bmem->io_buffer[i] &= (uint8_t)~KEYWORD_END_TAG;
+                bmem->io_recall_len = 0;
+                bmem->io_cursor = recall_len;
+                if (echo)
+                    hal_print_buffer(bmem->io_buffer, recall_len);
+                return;
+            }
+            if (*bmem->io_buffer == 0 && bmem->io_last_line != 0) {
+                bastos_load_edit_line(bmem->io_last_line);
+                return;
+            }
+        }
+
         // Up/Down: once something has been typed, silently absorb them
         // instead of letting them leak through to the terminal — they have
         // no action yet (reserved for a possible future use, e.g. command
@@ -336,6 +394,28 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
         if (echo && !eval_inputting())
             hal_print_buffer(src, 1);
         return;
+    }
+
+    // Enter with a pending recall and nothing typed since: submit an empty
+    // line (no-op, same as Enter on a truly empty buffer) instead of either
+    // resubmitting the stale text as a duplicate command or discarding it —
+    // Up-arrow must still bring back that same previous entry afterward.
+    if (bmem->io_recall_len != 0 &&
+        (*src == '\r' || *src == 2 || *src == 4 || *src == 5 || *src == 6 || *src == 14)) {
+        bmem->vkey = *src;
+        if (echo)
+            hal_print_string(G0 "\r\n");
+        return;
+    }
+
+    // A pending Up-arrow recall (the last immediate command, kept resident
+    // in io_buffer) is only valid until the user starts a real edit; any
+    // other accepted editing key here discards it first so it can't get
+    // mixed into a new line.
+    if (bmem->io_recall_len != 0) {
+        bmem->io_buffer[0] = 0;
+        bmem->io_recall_len = 0;
+        bmem->io_cursor = 0;
     }
 
     // Find the terminal 0 in io buffer
@@ -438,7 +518,6 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
 static int8_t bastos_input() {
     int8_t err = BERROR_NONE;
     bool syntax_error = false;
-    size_t typed_len = 0;
 
     // Find first command end
     uint8_t *next = bmem->io_buffer;
@@ -449,16 +528,14 @@ static int8_t bastos_input() {
     if (*next == 0)
         return BERROR_NONE;
 
-    // Mark first command end with 0 and point to next one
+    // Mark first command end with 0 and point to next one. cmd_len is the
+    // length of exactly what was typed for this command; tokenize() below
+    // only ever mutates it by tagging bit 7 on the last character of each
+    // recognized keyword (its own bookkeeping) — it never touches anything
+    // else — so io_buffer[0..cmd_len) stays recoverable as plain text just
+    // by clearing that bit, with no separate copy needed.
+    uint16_t cmd_len = (uint16_t)(next - bmem->io_buffer);
     *next++ = 0;
-
-    // Keep a clean copy of exactly what was typed before tokenize() gets a
-    // chance to run: it mutates the command in place (tagging the last
-    // character of each keyword for its own bookkeeping), so io_buffer can
-    // no longer be trusted as "what the user typed" once it has run — only
-    // this copy can, for restoring the line on a syntax error.
-    char typed[IO_BUFFER_SIZE];
-    strcpy(typed, (char *)bmem->io_buffer);
 
     // Prepare move of the next commands to buffer start
     uint8_t *src = next;
@@ -485,7 +562,8 @@ static int8_t bastos_input() {
     // anything yet. This matters because bmem_prog_line_new() unconditionally
     // deletes any existing line with this number as part of inserting the
     // new one — checking first means an invalid replacement (e.g. after
-    // EDIT + a typo) never wipes out the original line's content.
+    // recalling a line and making a typo) never wipes out its original
+    // content.
     uint16_t len = line.write_ptr - line.read_ptr;
     prog_t *check = (prog_t *)&bmem->bstate.token_buffer;
     check->line_no = line.line_no;
@@ -513,22 +591,48 @@ static int8_t bastos_input() {
             bmem_prog_line_free(prog);
     }
 
+    // A positively validated line becomes the new Up-arrow recall target,
+    // replacing whatever was recallable before it. A numbered line is
+    // recalled straight from program memory (bastos_load_edit_line()), so
+    // no buffer bookkeeping is needed here. An immediate command has no
+    // such permanent copy, so its raw text is instead kept resident at the
+    // front of io_buffer below — but only when nothing is already queued
+    // after it (no room for both without a second buffer), and not when it
+    // was itself an EDIT (that takes priority and has its own mechanism),
+    // nor when it was a system-injected command the user never typed.
+    if (bmem->io_no_recall) {
+        bmem->io_no_recall = 0;
+    } else if (prog->line_no != 0) {
+        bmem->io_last_line = prog->line_no;
+        bmem->io_recall_len = 0;
+    } else if (bmem->io_edit_line == 0) {
+        bmem->io_last_line = 0;
+        bmem->io_recall_len = (*src == 0) ? (uint8_t)cmd_len : 0;
+    }
+
 finalize:
     if (syntax_error) {
         // Not valid BASIC: beep and stay in edit mode instead of silently
-        // discarding it, so it can be fixed and resubmitted. Restore the
-        // clean pre-tokenize copy (io_buffer itself may have been mutated
-        // by tokenize()) and fold back in whatever else was queued after
-        // it.
+        // discarding it, so it can be fixed and resubmitted. Recover the
+        // original typed text in place (see cmd_len above) and fold back
+        // in whatever else was queued after it.
         os_redir_print_string("\x07");
-        typed_len = strlen(typed);
-        size_t avail = sizeof(bmem->io_buffer) - 1 - typed_len;
+        for (uint8_t *p = bmem->io_buffer; p < bmem->io_buffer + cmd_len; p++)
+            *p &= (uint8_t)~KEYWORD_END_TAG;
+        size_t avail = sizeof(bmem->io_buffer) - 1 - cmd_len;
         size_t rem_len = strlen((char *)src);
         if (rem_len > avail)
             rem_len = avail;
-        memmove(bmem->io_buffer, typed, typed_len);
-        memmove(bmem->io_buffer + typed_len, src, rem_len + 1);
-        bmem->io_cursor = (uint8_t)typed_len;
+        memmove(bmem->io_buffer + cmd_len, src, rem_len + 1);
+        bmem->io_cursor = (uint8_t)cmd_len;
+    } else if (bmem->io_recall_len != 0) {
+        // The just-executed immediate command is being kept resident (see
+        // above) for a possible Up-arrow recall: leave it exactly where it
+        // is instead of the usual shift-down. It's already correctly
+        // terminated (the '\n' this command ended with was overwritten
+        // with a NUL above), and io_recall_len is only ever set when
+        // nothing else was queued after it.
+        bmem->io_cursor = 0;
     } else {
         // remove first command
         while (*src)
@@ -540,40 +644,16 @@ finalize:
         // did.
         uint16_t shift = (uint16_t)(next - bmem->io_buffer);
         bmem->io_cursor = bmem->io_cursor >= shift ? bmem->io_cursor - shift : 0;
+    }
 
-        // If EDIT staged a line (bmem->io_edit_line), load it now that
-        // io_buffer holds only whatever is genuinely still queued (normally
-        // nothing): prepend the line's own text directly into io_buffer,
-        // show it — it was never echoed while EDIT ran, so the user needs
-        // to see what they're about to edit — and place the cursor at its
-        // end.
-        if (bmem->io_edit_line != 0) {
-            uint16_t edit_line = bmem->io_edit_line;
-            bmem->io_edit_line = 0;
-            prog_t *edit_prog = bmem_prog_get_line_or_next(edit_line);
-            if (edit_prog && edit_prog->line_no == edit_line) {
-                uint8_t remainder[IO_BUFFER_SIZE];
-                strcpy((char *)remainder, (char *)bmem->io_buffer);
-
-                bmem->io_buffer[0] = 0;
-                os_set_redirect_prefill(true);
-                os_redir_print_integer("%d ", (int)edit_prog->line_no);
-                untokenize(edit_prog->line);
-                os_set_redirect_prefill(false);
-
-                size_t edit_len = strlen((char *)bmem->io_buffer);
-                hal_print_buffer(bmem->io_buffer, (int)edit_len);
-
-                size_t room = sizeof(bmem->io_buffer) - 1 - edit_len;
-                size_t rem_len = strlen((char *)remainder);
-                if (rem_len > room)
-                    rem_len = room;
-                memcpy(bmem->io_buffer + edit_len, remainder, rem_len);
-                bmem->io_buffer[edit_len + rem_len] = 0;
-
-                bmem->io_cursor = (uint8_t)edit_len;
-            }
-        }
+    // If EDIT staged a line (bmem->io_edit_line), load it now that
+    // io_buffer holds only whatever is genuinely still queued (normally
+    // nothing) — it was never echoed while EDIT ran, so the user needs to
+    // see it now.
+    if (!syntax_error && bmem->io_edit_line != 0) {
+        uint16_t edit_line = bmem->io_edit_line;
+        bmem->io_edit_line = 0;
+        bastos_load_edit_line(edit_line);
     }
 
     // Handle error
@@ -586,7 +666,7 @@ finalize:
     // point into the (no longer visible) line above it. Re-echo the line so
     // what's on screen matches that state again.
     if (syntax_error) {
-        hal_print_buffer(bmem->io_buffer, (int)typed_len);
+        hal_print_buffer(bmem->io_buffer, (int)cmd_len);
     }
 
     return err;

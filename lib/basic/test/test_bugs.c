@@ -1084,6 +1084,156 @@ static void test_edit_nonexistent_line_is_error(void) {
 }
 
 /* ======================================================================== */
+/* Feature — Up-arrow recall of the last stored numbered line or immediate  */
+/*           command (bio.c bastos_load_edit_line() / io_last_line /        */
+/*           io_recall_len), complementing EDIT <line_no> for the common    */
+/*           case of re-editing whatever was just entered without having    */
+/*           to know or retype its line number.                             */
+/* ======================================================================== */
+static void test_recall_noop_if_line_since_deleted(void) {
+    printf("Recall: Up-arrow silently does nothing if the recalled line no longer exists\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+    type_raw("10"); /* empty body for an existing line number: deletes it */
+    type_raw("\r");
+
+    capture_clear();
+    bastos_send_keys("\x0b", 1, true); /* Up: line 10 no longer exists */
+    bastos_loop();
+    check("nothing is echoed for a since-deleted line", g_output_len == 0);
+
+    bastos_done();
+}
+
+static void test_recall_numbered_line_via_up_arrow(void) {
+    printf("Recall: Up-arrow reloads the last stored numbered line\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT \"HI\"");
+    type_raw("\r");
+
+    capture_clear();
+    bastos_send_keys("\x0b", 1, true); /* Up: buffer is empty, nothing typed since */
+    bastos_loop();
+    check("Up-arrow echoes the untokenized line",
+          strstr(g_output, "10 PRINT \"HI\"") != NULL);
+
+    /* Resubmitting the recalled text unmodified must not duplicate/corrupt it. */
+    type_raw("\r");
+    capture_clear();
+    type_raw("LIST\r");
+    check("the line is still stored exactly once",
+          strstr(g_output, "10 PRINT \"HI\"") != NULL);
+
+    bastos_done();
+}
+
+static void test_recall_immediate_command_via_up_arrow(void) {
+    printf("Recall: Up-arrow reloads the last immediate command's raw text\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("print 1");
+    capture_clear();
+    type_raw("\r");
+    check("the immediate command ran", strstr(g_output, "1") != NULL);
+
+    capture_clear();
+    bastos_send_keys("\x0b", 1, true); /* Up: recall it for editing */
+    bastos_loop();
+    /* tokenize() case-folds identifier-like words in place; clearing bit 7
+     * recovers that normalized (uppercase) form, same as LIST would show. */
+    check("Up-arrow echoes the last immediate command back",
+          strstr(g_output, "PRINT 1") != NULL);
+
+    /* It must still be a valid, resubmittable line. */
+    capture_clear();
+    type_raw("\r");
+    check("resubmitting the recalled command runs it again",
+          strstr(g_output, "1") != NULL);
+
+    bastos_done();
+}
+
+static void test_recall_discarded_by_new_typing(void) {
+    printf("Recall: typing something new discards the pending recall instead of mixing with it\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("print 1");
+    type_raw("\r");
+
+    /* Don't press Up: type a fresh line directly. */
+    type_raw("10 PRINT 2");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("only the freshly typed numbered line was stored",
+          strstr(g_output, "10 PRINT 2") != NULL);
+    check("no leftover from the earlier immediate command leaked in",
+          strstr(g_output, "PRINT 1") == NULL);
+
+    bastos_done();
+}
+
+static void test_recall_survives_a_blank_enter(void) {
+    printf("Recall: pressing Enter with nothing typed doesn't lose the pending recall\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("print 1");
+    capture_clear();
+    type_raw("\r");
+    check("the immediate command ran", strstr(g_output, "1") != NULL);
+
+    /* Press Enter again with nothing typed: must behave as a no-op (CRLF
+     * only, same as an empty buffer) and not resubmit or discard the
+     * pending recall. */
+    capture_clear();
+    bastos_send_keys("\r", 1, true);
+    bastos_loop();
+    check("a blank Enter only echoes CRLF, no duplicate execution and no error",
+          strstr(g_output, "Error") == NULL && strstr(g_output, "1") == NULL);
+
+    capture_clear();
+    bastos_send_keys("\x0b", 1, true); /* Up: still recalls "PRINT 1" */
+    bastos_loop();
+    check("Up-arrow still recalls the previous entry after the blank Enter",
+          strstr(g_output, "PRINT 1") != NULL);
+
+    bastos_done();
+}
+
+static void test_recall_not_offered_for_autoexec_banner(void) {
+    printf("Recall: the autoexec fallback banner is not offered for Up-arrow recall\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    /* No autoexec.bas exists in the test disk, so bmem_init() already
+     * queued and ran the internal "bastos" banner fallback during the
+     * warmup loops above. A fresh prompt must behave exactly as if nothing
+     * had run yet: Up passes through untouched. */
+    capture_clear();
+    bastos_send_keys("\x0b", 1, true);
+    bastos_loop();
+    check("Up is passed through, not a recall of the internal banner command",
+          g_output_len == 1 && g_output[0] == '\x0b');
+
+    bastos_done();
+}
+
+/* ======================================================================== */
 /* Feature — stay in edit mode on a syntax error (bio.c bastos_input())      */
 /*           Validating a line that isn't valid BASIC beeps (BEL, char 7)    */
 /*           and leaves the typed text in the input buffer instead of       */
@@ -1490,6 +1640,24 @@ int main(void) {
     printf("\n");
 
     test_edit_nonexistent_line_is_error();
+    printf("\n");
+
+    test_recall_noop_if_line_since_deleted();
+    printf("\n");
+
+    test_recall_numbered_line_via_up_arrow();
+    printf("\n");
+
+    test_recall_immediate_command_via_up_arrow();
+    printf("\n");
+
+    test_recall_discarded_by_new_typing();
+    printf("\n");
+
+    test_recall_survives_a_blank_enter();
+    printf("\n");
+
+    test_recall_not_offered_for_autoexec_banner();
     printf("\n");
 
     test_syntax_error_beeps_and_stays_editable();
