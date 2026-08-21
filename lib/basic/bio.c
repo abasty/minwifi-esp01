@@ -82,6 +82,16 @@ static void bastos_handle_escape() {
     os_redir_print_string("*Break*\r\n");
 }
 
+// G0 (bio.h's charset-reset macro, resolved from tty-minitel.h or
+// tty-vt100.h at build time) only means something while the terminal is
+// actually in native Minitel Videotex mode. There is no G0/G1
+// charset-shift concept in 80-column mode (MODE 80, bstate.screen_mode) —
+// matching the VT100 build, where G0 is always empty — so nothing needs
+// to be sent there.
+static const char *mode_g0() {
+    return bmem->bstate.screen_mode ? "" : G0;
+}
+
 static bool is_char_diacritic(char test_char) {
     if (test_char == 'A')
         return true;
@@ -201,18 +211,30 @@ static uint8_t *line_start_of(uint8_t *end) {
 }
 
 // Reprints [from, end) (terminal cursor assumed to already be at `from`),
-// erases any stale trailing column with CLEOL, then walks the terminal
+// overwrites `stale_cols` further columns with spaces to erase any leftover
+// from a shorter previous line (0 when the line only grew, as with an
+// insert; 1 after a single-character delete), then walks the terminal
 // cursor back left to `leave_at` (which must be within [from, end]) — the
 // caller's new logical cursor position, not necessarily where the reprint
 // started (e.g. after an insert, the cursor must end up one column past the
-// character just typed, not back at its start). No-op if echo is off.
-static void redraw_tail(uint8_t *from, uint8_t *end, uint8_t *leave_at, bool echo) {
+// character just typed, not back at its start).
+//
+// Deliberately avoids any "erase to end of line" escape (Videotex CLEOL or
+// its ANSI equivalent): on real hardware, 80-column mode does not reliably
+// support it — Correction/insert were leaving stray characters on screen
+// and losing cursor sync. Plain backspace/space/backspace is used instead,
+// the same technique already relied on elsewhere (e.g. os_get_string()),
+// since it only needs a bare C0 backspace and a printable space, which
+// both modes handle the same way. No-op if echo is off.
+static void redraw_tail(uint8_t *from, uint8_t *end, uint8_t *leave_at, uint8_t stale_cols, bool echo) {
     if (!echo)
         return;
     if (end > from)
         hal_print_buffer(from, end - from);
-    hal_print_string(CLEOL);
-    for (uint8_t cols = visual_width(leave_at, end); cols > 0; cols--)
+    for (uint8_t i = 0; i < stale_cols; i++)
+        hal_print_string(" ");
+    uint8_t back = stale_cols + visual_width(leave_at, end);
+    for (; back > 0; back--)
         hal_print_string("\x08");
 }
 
@@ -233,7 +255,7 @@ static void delete_before_cursor(uint8_t **end, uint8_t **cur, uint8_t *line_sta
     if (width == 2 && *unit_start == SO) {
         bmem->bstate.g_mode = 0;
         if (echo)
-            hal_print_string(G0);
+            hal_print_string(mode_g0());
     }
 
     size_t tail_len = *end - *cur;
@@ -243,7 +265,7 @@ static void delete_before_cursor(uint8_t **end, uint8_t **cur, uint8_t *line_sta
 
     if (echo) {
         hal_print_string("\x08");
-        redraw_tail(unit_start, *end, unit_start, echo);
+        redraw_tail(unit_start, *end, unit_start, 1, echo);
     }
 }
 
@@ -284,12 +306,20 @@ static void move_cursor_right(uint8_t **end, uint8_t **cur, uint8_t *line_start,
 }
 
 // Erases the whole current line on screen (both before and after the
-// cursor) and truncates the buffer back to line_start.
+// cursor) and truncates the buffer back to line_start. Backs up to
+// line_start, resets the charset, then overwrites the entire former line
+// with spaces and backs up again — see redraw_tail() for why this avoids
+// an "erase to end of line" escape.
 static void clear_current_line(uint8_t **end, uint8_t **cur, uint8_t *line_start, bool echo) {
     if (echo) {
         for (uint8_t cols = visual_width(line_start, *cur); cols > 0; cols--)
             hal_print_string("\x08");
-        hal_print_string(G0 CLEOL);
+        hal_print_string(mode_g0());
+        uint8_t total_cols = visual_width(line_start, *end);
+        for (uint8_t i = 0; i < total_cols; i++)
+            hal_print_string(" ");
+        for (uint8_t i = 0; i < total_cols; i++)
+            hal_print_string("\x08");
     }
     bmem->bstate.g_mode = 0;
     *cur = line_start;
@@ -403,8 +433,10 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
     if (bmem->io_recall_len != 0 &&
         (*src == '\r' || *src == 2 || *src == 4 || *src == 5 || *src == 6 || *src == 14)) {
         bmem->vkey = *src;
-        if (echo)
-            hal_print_string(G0 "\r\n");
+        if (echo) {
+            hal_print_string(mode_g0());
+            hal_print_string("\r\n");
+        }
         return;
     }
 
@@ -449,8 +481,10 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
             *dst++ = '\n';
             src++;
             bmem->bstate.g_mode = 0;
-            if (echo)
-                hal_print_string(G0 "\r\n");
+            if (echo) {
+                hal_print_string(mode_g0());
+                hal_print_string("\r\n");
+            }
             line_start = dst;
             cur = dst;
         } else if (*src == 127) { // Correction (DEL): deletes before the cursor
@@ -504,7 +538,7 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
                 cur++;
                 if (pending_unit_width(line_start, cur) == 0) {
                     uint8_t width = char_width_before(line_start, cur);
-                    redraw_tail(cur - width, dst, cur, echo);
+                    redraw_tail(cur - width, dst, cur, 0, echo);
                 }
             }
         }

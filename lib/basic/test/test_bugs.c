@@ -492,19 +492,19 @@ static void test_line_edit_consecutive_inserts(void) {
     bastos_send_keys("1", 1, true);
     bastos_loop();
     check("first insert prints the new char + tail, cursor back after it",
-          g_output_len == 4 && memcmp(g_output, "19\x18\x08", 4) == 0);
+          g_output_len == 3 && memcmp(g_output, "19\x08", 3) == 0);
 
     capture_clear();
     bastos_send_keys("2", 1, true);
     bastos_loop();
     check("second insert lands right after the first, not overwriting it",
-          g_output_len == 4 && memcmp(g_output, "29\x18\x08", 4) == 0);
+          g_output_len == 3 && memcmp(g_output, "29\x08", 3) == 0);
 
     capture_clear();
     bastos_send_keys("3", 1, true);
     bastos_loop();
     check("third insert also lands correctly",
-          g_output_len == 4 && memcmp(g_output, "39\x18\x08", 4) == 0);
+          g_output_len == 3 && memcmp(g_output, "39\x08", 3) == 0);
 
     type_raw("\r");
     capture_clear();
@@ -670,9 +670,9 @@ static void test_line_edit_ss2_mid_line_before_diacritic_byte(void) {
     bastos_send_keys("e", 1, true);
     bastos_loop();
     check("completing the accent prints the whole group + tail atomically",
-          g_output_len == 8 && memcmp(g_output, "\x19"
-                                                  "BeC\"\x18\x08\x08",
-                                       8) == 0);
+          g_output_len == 7 && memcmp(g_output, "\x19"
+                                                  "BeC\"\x08\x08",
+                                       7) == 0);
 
     type_raw("\r");
     capture_clear();
@@ -907,6 +907,75 @@ static void test_line_edit_finalize_shift(void) {
           strstr(g_output, "10 PRINT 1") != NULL);
     check("second line's mid-batch edit landed at the right (shifted) position",
           strstr(g_output, "20 PRINT 92") != NULL);
+
+    bastos_done();
+}
+
+static void test_line_edit_correction_erases_with_spaces_in_mode80(void) {
+    printf("Line edit: Correction erases the stale character with spaces in 80-column mode (MODE 2)\n");
+    /*
+     * Regression: an "erase to end of line" escape (Videotex CLEOL 0x18, or
+     * its ANSI ESC [ K equivalent) is not reliably supported by real
+     * hardware in 80-column mode — it left stray characters on screen and
+     * lost cursor sync. Correction must instead use the same plain
+     * backspace/space/backspace technique already relied on elsewhere
+     * (os_get_string()), which only needs a bare backspace and a printable
+     * space and so behaves identically in both screen modes.
+     */
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("MODE 2");
+    type_raw("\r");
+
+    type_raw("AB");
+    capture_clear();
+    bastos_send_keys("\x7f", 1, true); /* Correction */
+    bastos_loop();
+    check("Correction uses plain backspace/space/backspace, not an erase escape",
+          g_output_len == 3 && memcmp(g_output, "\x08 \x08", 3) == 0);
+
+    bastos_done();
+}
+
+static void test_line_edit_insert_redraws_without_erase_escape_in_mode80(void) {
+    printf("Line edit: mid-line insert redraws without any erase escape in 80-column mode (MODE 2)\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("MODE 2");
+    type_raw("\r");
+
+    type_raw("AC");
+    bastos_send_keys("\x08", 1, false); /* cursor between A and C */
+    bastos_loop();
+
+    capture_clear();
+    bastos_send_keys("B", 1, true); /* insert B: AC -> ABC, mid-line redraw */
+    bastos_loop();
+    check("mid-line insert just reprints the tail and backs up, no erase escape",
+          g_output_len == 3 && memcmp(g_output, "BC\x08", 3) == 0);
+
+    bastos_done();
+}
+
+static void test_line_edit_annulation_erases_with_spaces_in_mode80(void) {
+    printf("Line edit: Annulation (Ctrl+A) erases the whole line with spaces in 80-column mode (MODE 2)\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("MODE 2");
+    type_raw("\r");
+
+    type_raw("AB");
+    capture_clear();
+    bastos_send_keys("\x01", 1, true); /* Annulation */
+    bastos_loop();
+    check("Annulation uses plain backspace/space/backspace, not an erase escape",
+          g_output_len == 6 && memcmp(g_output, "\x08\x08  \x08\x08", 6) == 0);
 
     bastos_done();
 }
@@ -1619,6 +1688,15 @@ int main(void) {
     printf("\n");
 
     test_line_edit_finalize_shift();
+    printf("\n");
+
+    test_line_edit_correction_erases_with_spaces_in_mode80();
+    printf("\n");
+
+    test_line_edit_insert_redraws_without_erase_escape_in_mode80();
+    printf("\n");
+
+    test_line_edit_annulation_erases_with_spaces_in_mode80();
     printf("\n");
 
     test_edit_shows_the_staged_line();
