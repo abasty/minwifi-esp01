@@ -482,6 +482,23 @@ static prog_t *bmem_prog_next_line(prog_t *prog) {
     return next;
 }
 
+// Return the line immediately before prog in line-number order, or 0 if
+// prog is the first line (or doesn't exist). prog_t entries are a flat,
+// forward-only sequence in memory (no back-pointer), so this needs its own
+// scan from the start, unlike bmem_prog_next_line()'s O(1) pointer step.
+static prog_t *bmem_prog_prev_line(prog_t *prog) {
+    if (!prog)
+        return 0;
+
+    prog_t *candidate = bmem_prog_first_line();
+    prog_t *prev = 0;
+    while (candidate && candidate != prog) {
+        prev = candidate;
+        candidate = bmem_prog_next_line(candidate);
+    }
+    return candidate == prog ? prev : 0;
+}
+
 // Return the program line with the given line number or the next line if the
 // line does not exist
 static prog_t *bmem_prog_get_line_or_next(uint16_t line_no) {

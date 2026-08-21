@@ -1226,8 +1226,8 @@ static void test_edit_left_arrow_echoes_one_backspace(void) {
     bastos_done();
 }
 
-static void test_edit_nonexistent_line_is_error(void) {
-    printf("EDIT: editing a line number that doesn't exist is a runtime error\n");
+static void test_edit_past_last_line_is_a_noop(void) {
+    printf("EDIT: a line number past every existing line is a silent no-op (like GOTO)\n");
     bastos_init();
     for (int i = 0; i < 64; i++)
         bastos_loop();
@@ -1238,7 +1238,183 @@ static void test_edit_nonexistent_line_is_error(void) {
     capture_clear();
     type_raw("EDIT 99");
     type_raw("\r");
-    check("EDIT on a missing line reports an error", strstr(g_output, "Error") != NULL);
+    check("no error and nothing staged for editing",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    bastos_done();
+}
+
+static void test_edit_missing_line_number_picks_next_line(void) {
+    printf("EDIT: a missing line number stages the next existing line, like GOTO\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+    type_raw("30 PRINT 3");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("EDIT 20");
+    type_raw("\r");
+    check("line 30 (the next one after 20) was staged and shown",
+          strstr(g_output, "30 PRINT 3") != NULL);
+
+    bastos_done();
+}
+
+static void test_edit_no_argument_targets_first_line(void) {
+    printf("EDIT: no argument targets the first line of the program (like EDIT 0)\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("20 PRINT 2");
+    type_raw("\r");
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("EDIT");
+    type_raw("\r");
+    check("bare EDIT staged the first (lowest-numbered) line",
+          strstr(g_output, "10 PRINT 1") != NULL);
+
+    bastos_done();
+}
+
+static void test_edit_zero_targets_first_line(void) {
+    printf("EDIT: EDIT 0 targets the first line of the program, same as bare EDIT\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("20 PRINT 2");
+    type_raw("\r");
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("EDIT 0");
+    type_raw("\r");
+    check("EDIT 0 staged the first (lowest-numbered) line",
+          strstr(g_output, "10 PRINT 1") != NULL);
+
+    bastos_done();
+}
+
+static void test_edit_no_argument_with_empty_program_is_a_noop(void) {
+    printf("EDIT: no argument with no program loaded does nothing\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("EDIT");
+    type_raw("\r");
+    check("no error and nothing staged for editing",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    bastos_done();
+}
+
+static void test_suite_auto_stages_next_line(void) {
+    printf("SUITE (VKEY 4): after validating a line, the next program line is auto-staged for editing\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+    type_raw("20 PRINT 2");
+    type_raw("\r");
+
+    /* Re-submit line 10 unchanged, but validate with SUITE instead of Enter. */
+    capture_clear();
+    type_raw("10 PRINT 1");
+    bastos_send_keys("\x04", 1, true); /* SUITE */
+    bastos_loop();
+    check("line 20 is automatically staged and shown after SUITE",
+          strstr(g_output, "20 PRINT 2") != NULL);
+
+    bastos_done();
+}
+
+static void test_suite_with_no_next_line_behaves_like_enter(void) {
+    printf("SUITE (VKEY 4): validating the last line behaves like Enter when there's no next line\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("10 PRINT 1");
+    bastos_send_keys("\x04", 1, true); /* SUITE, no line after 10 */
+    bastos_loop();
+    check("no error and nothing extra staged",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    /* Confirm a fresh line can still be typed normally afterward. */
+    type_raw("30 PRINT 3");
+    type_raw("\r");
+    capture_clear();
+    type_raw("LIST\r");
+    check("both lines present, no corruption from the SUITE validation",
+          strstr(g_output, "10 PRINT 1") != NULL &&
+          strstr(g_output, "30 PRINT 3") != NULL);
+
+    bastos_done();
+}
+
+static void test_retour_auto_stages_previous_line(void) {
+    printf("RETOUR (VKEY 5): after validating a line, the previous program line is auto-staged for editing\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+    type_raw("20 PRINT 2");
+    type_raw("\r");
+
+    /* Re-submit line 20 unchanged, but validate with RETOUR instead of Enter. */
+    capture_clear();
+    type_raw("20 PRINT 2");
+    bastos_send_keys("\x05", 1, true); /* RETOUR */
+    bastos_loop();
+    check("line 10 is automatically staged and shown after RETOUR",
+          strstr(g_output, "10 PRINT 1") != NULL);
+
+    bastos_done();
+}
+
+static void test_retour_with_no_previous_line_behaves_like_enter(void) {
+    printf("RETOUR (VKEY 5): validating the first line behaves like Enter when there's no previous line\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("10 PRINT 1");
+    bastos_send_keys("\x05", 1, true); /* RETOUR, no line before 10 */
+    bastos_loop();
+    check("no error and nothing extra staged",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    /* Confirm a fresh line can still be typed normally afterward. */
+    type_raw("30 PRINT 3");
+    type_raw("\r");
+    capture_clear();
+    type_raw("LIST\r");
+    check("both lines present, no corruption from the RETOUR validation",
+          strstr(g_output, "10 PRINT 1") != NULL &&
+          strstr(g_output, "30 PRINT 3") != NULL);
 
     bastos_done();
 }
@@ -2153,7 +2329,31 @@ int main(void) {
     test_edit_left_arrow_echoes_one_backspace();
     printf("\n");
 
-    test_edit_nonexistent_line_is_error();
+    test_edit_past_last_line_is_a_noop();
+    printf("\n");
+
+    test_edit_missing_line_number_picks_next_line();
+    printf("\n");
+
+    test_edit_no_argument_targets_first_line();
+    printf("\n");
+
+    test_edit_zero_targets_first_line();
+    printf("\n");
+
+    test_edit_no_argument_with_empty_program_is_a_noop();
+    printf("\n");
+
+    test_suite_auto_stages_next_line();
+    printf("\n");
+
+    test_suite_with_no_next_line_behaves_like_enter();
+    printf("\n");
+
+    test_retour_auto_stages_previous_line();
+    printf("\n");
+
+    test_retour_with_no_previous_line_behaves_like_enter();
     printf("\n");
 
     test_recall_noop_if_line_since_deleted();

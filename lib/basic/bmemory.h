@@ -149,6 +149,7 @@ static void bmem_prog_line_free(prog_t *prog);
 static prog_t *bmem_prog_line_new(uint16_t line_no, uint8_t *line, uint16_t len);
 static prog_t *bmem_prog_first_line();
 static prog_t *bmem_prog_next_line(prog_t *prog);
+static prog_t *bmem_prog_prev_line(prog_t *prog);
 static prog_t *bmem_prog_get_line_or_next(uint16_t line_no);
 
 // var related functions

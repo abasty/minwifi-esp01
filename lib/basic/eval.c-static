@@ -2500,25 +2500,28 @@ static bool eval_edit() {
     if (!eval_token(TOKEN_KEYWORD_EDIT))
         return false;
 
-    if (!eval_expr(TOKEN_NUMBER))
-        return false;
+    // The line number is optional: EDIT alone (or EDIT 0) targets the
+    // first line of the program, the same way GOTO 0 would.
+    bool has_arg = eval_expr(TOKEN_NUMBER);
 
     if (!bmem->bstate.do_eval)
         return true;
 
-    int32_t line_no = (int32_t)bmem->bstate.number;
-    if (line_no < 1 || line_no > 65535) {
+    int32_t line_no = has_arg ? (int32_t)bmem->bstate.number : 0;
+    if (line_no < 0 || line_no > 65535) {
         bmem->bstate.error = BERROR_RANGE;
         return true;
     }
 
+    // Same lookup GOTO uses: the exact line if it exists, otherwise the
+    // next one after it. If nothing matches (no program at all, or
+    // line_no past every line), silently do nothing — no error, matching
+    // GOTO's own silent "stop running" when its own target doesn't exist.
     prog_t *prog = bmem_prog_get_line_or_next((uint16_t)line_no);
-    if (!prog || prog->line_no != (uint16_t)line_no) {
-        bmem->bstate.error = BERROR_RUN;
+    if (!prog)
         return true;
-    }
 
-    bmem->io_edit_line = (uint16_t)line_no;
+    bmem->io_edit_line = prog->line_no;
     return true;
 }
 

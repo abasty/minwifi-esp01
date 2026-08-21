@@ -654,6 +654,20 @@ static int8_t bastos_input() {
     } else if (prog->line_no != 0) {
         bmem->io_last_line = prog->line_no;
         bmem->io_recall_len = 0;
+
+        // SUITE (VKEY 4) / RETOUR (VKEY 5): behave like ENVOI/Enter, but
+        // also automatically stage the next/previous program line for
+        // editing (if there is one) — a shortcut for reviewing/editing a
+        // run of consecutive lines forwards or backwards.
+        if (bmem->vkey == 4) {
+            prog_t *next_line = bmem_prog_next_line(prog);
+            if (next_line)
+                bmem->io_edit_line = next_line->line_no;
+        } else if (bmem->vkey == 5) {
+            prog_t *prev_line = bmem_prog_prev_line(prog);
+            if (prev_line)
+                bmem->io_edit_line = prev_line->line_no;
+        }
     } else if (bmem->io_edit_line == 0) {
         bmem->io_last_line = 0;
         bmem->io_recall_len = (*src == 0) ? (uint8_t)cmd_len : 0;
