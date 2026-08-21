@@ -167,8 +167,6 @@ static void running_state_clear() {
     bmem->inkey = 0;
     bmem->ofs_c = 0;
     bmem->ofs_l = 0;
-    bmem->bstate.screen_mode = 0;
-    bmem->bstate.scroll_mode = 1;
 }
 
 static bool eval_token(uint8_t c) {
@@ -1779,7 +1777,6 @@ static bool eval_string_tty() {
     }
 
     if (fn == TOKEN_KEYWORD_SCROLL) {
-        bmem->bstate.scroll_mode = arg1 ? 1 : 0;
         if (bmem->bstate.screen_mode) {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, arg1 ? MODE80_ROULEAU_ON : MODE80_ROULEAU_OFF);
         } else {

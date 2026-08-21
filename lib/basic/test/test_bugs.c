@@ -980,6 +980,56 @@ static void test_line_edit_annulation_erases_with_spaces_in_mode80(void) {
     bastos_done();
 }
 
+static void test_mode80_survives_new(void) {
+    printf("MODE: MODE 2 (80 columns) is not reset by NEW\n");
+    /*
+     * Regression: running_state_clear() (shared by RUN/CLEAR/NEW) used to
+     * unconditionally reset bstate.screen_mode to 0 (40 columns), even
+     * though it is a screen/terminal setting, not program execution state.
+     * NEW must leave the current screen mode untouched.
+     */
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("MODE 2");
+    type_raw("\r");
+    type_raw("NEW");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("CLS");
+    type_raw("\r");
+    check("CLS still emits the 80-column (ANSI) clear-screen sequence after NEW",
+          strstr(g_output, "\x1b[2J\x1b[H") != NULL);
+    check("CLS does not fall back to the Videotex clear-screen code",
+          strchr(g_output, '\x0c') == NULL);
+
+    bastos_done();
+}
+
+static void test_mode80_survives_run_with_no_program(void) {
+    printf("MODE: MODE 2 (80 columns) is not reset by RUN, even with no program loaded\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("MODE 2");
+    type_raw("\r");
+    type_raw("RUN"); /* no program in memory: this is a no-op run */
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("CLS");
+    type_raw("\r");
+    check("CLS still emits the 80-column (ANSI) clear-screen sequence after RUN",
+          strstr(g_output, "\x1b[2J\x1b[H") != NULL);
+    check("CLS does not fall back to the Videotex clear-screen code",
+          strchr(g_output, '\x0c') == NULL);
+
+    bastos_done();
+}
+
 /* ======================================================================== */
 /* Feature — EDIT <line_no> (eval.c-static eval_edit(), bio.c              */
 /*           bastos_input()'s finalize step)                                */
@@ -1697,6 +1747,12 @@ int main(void) {
     printf("\n");
 
     test_line_edit_annulation_erases_with_spaces_in_mode80();
+    printf("\n");
+
+    test_mode80_survives_new();
+    printf("\n");
+
+    test_mode80_survives_run_with_no_program();
     printf("\n");
 
     test_edit_shows_the_staged_line();

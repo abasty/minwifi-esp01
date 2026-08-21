@@ -89,7 +89,13 @@
 #define P_CLAVIER_ETENDU PRO3 "\x69\x59\x41"
 #define P_CLAVIER_VIDEOTEX PRO3 "\x6A\x59\x41"
 
-#define MODE_INIT_STRING P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_ROULEAU_ON P_CLAVIER_MINUSCULE P_CLAVIER_ETENDU
+// Force 40-column mode at startup: the terminal may still be in 80-column
+// mode left over from before BASTOS started (bstate.screen_mode always
+// starts at 0/40-column internally, but that's only BASTOS's own state —
+// nothing otherwise tells the physical terminal to match it).
+#define P_MODE_40 PRO2 "\x32\x7e"
+
+#define MODE_INIT_STRING P_ACK_OFF_PRISE P_LOCAL_ECHO_OFF P_MODE_40 P_ROULEAU_ON P_CLAVIER_MINUSCULE P_CLAVIER_ETENDU
 
 // Déconnexion
 #define P_DECONNEXION PRO1 "\x67"
