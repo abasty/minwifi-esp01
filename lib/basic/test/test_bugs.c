@@ -1011,6 +1011,41 @@ static void test_edit_allows_modification(void) {
     bastos_done();
 }
 
+static void test_edit_escape_after_syntax_error_keeps_original_line(void) {
+    printf("EDIT: cancelling with ESC after a syntax error does not lose the original line\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT \"HELLO\"");
+    type_raw("\r");
+    type_raw("EDIT 10");
+    type_raw("\r");
+
+    /* Break the syntax: remove the closing quote and add a dangling '+'. */
+    bastos_send_keys("\x7f", 1, false);
+    bastos_loop();
+    bastos_send_keys("+", 1, false);
+    bastos_loop();
+
+    capture_clear();
+    type_raw("\r");
+    check("the broken submission beeps and reports an error",
+          g_output_len > 0 && g_output[0] == '\x07' &&
+          strstr(g_output, "Error") != NULL);
+
+    /* Give up on the edit instead of fixing it. */
+    bastos_send_keys("\x1b", 1, false);
+    bastos_loop();
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("the original line 10 is still there",
+          strstr(g_output, "10 PRINT \"HELLO\"") != NULL);
+
+    bastos_done();
+}
+
 static void test_edit_left_arrow_echoes_one_backspace(void) {
     printf("EDIT: normal line-editing keys work on the staged text\n");
     bastos_init();
@@ -1044,6 +1079,112 @@ static void test_edit_nonexistent_line_is_error(void) {
     type_raw("EDIT 99");
     type_raw("\r");
     check("EDIT on a missing line reports an error", strstr(g_output, "Error") != NULL);
+
+    bastos_done();
+}
+
+/* ======================================================================== */
+/* Feature — stay in edit mode on a syntax error (bio.c bastos_input())      */
+/*           Validating a line that isn't valid BASIC beeps (BEL, char 7)    */
+/*           and leaves the typed text in the input buffer instead of       */
+/*           discarding it, so it can be fixed and resubmitted — reusing    */
+/*           the existing validation key handling, not a separate command.  */
+/* ======================================================================== */
+static void test_syntax_error_beeps_and_stays_editable(void) {
+    printf("Syntax error: beeps and keeps the invalid line editable\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    /* "PRINT +" is invalid: a dangling operator with no right-hand side. */
+    capture_clear();
+    type_raw("10 PRINT +");
+    type_raw("\r");
+    check("invalid line beeps (BEL) and reports the error",
+          g_output_len > 0 && g_output[0] == '\x07' &&
+          strstr(g_output, "Error") != NULL);
+
+    /* "Error N" moved the terminal cursor to a fresh row below the line
+     * being edited, so the line must be re-echoed after it or the screen
+     * and the internal cursor/buffer state no longer match. */
+    {
+        char *err_pos = strstr(g_output, "Error");
+        check("the invalid line is re-echoed on screen after the error message",
+              err_pos != NULL && strstr(err_pos, "10 PRINT +") != NULL);
+    }
+
+    /* Fix it in place: remove the '+' and supply a valid operand. */
+    bastos_send_keys("\x7f", 1, false);
+    bastos_loop();
+    bastos_send_keys("1", 1, false);
+    bastos_loop();
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("the fixed line was stored correctly",
+          strstr(g_output, "10 PRINT 1") != NULL);
+
+    bastos_done();
+}
+
+static void test_syntax_error_never_stores_invalid_line(void) {
+    printf("Syntax error: the invalid text is never stored as a program line\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT +");
+    type_raw("\r");
+
+    /* Cancel the still-pending invalid line instead of fixing it. */
+    type_raw("\x01");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("nothing was stored", g_output_len == 0);
+
+    bastos_done();
+}
+
+static void test_valid_line_does_not_beep(void) {
+    printf("Syntax error: a valid line does not beep\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+    check("no BEL and no error for valid syntax",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    bastos_done();
+}
+
+static void test_runtime_error_does_not_stay_in_edit_mode(void) {
+    printf("Syntax error: a runtime error (valid syntax) does not stay in edit mode\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    /* Valid syntax, but the target file does not exist: a runtime error,
+     * not a syntax error, so the prompt must move on normally afterwards. */
+    capture_clear();
+    type_raw("LOAD \"does_not_exist\"");
+    type_raw("\r");
+    check("runtime error does not beep",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    /* A fresh command right after must run on its own, not get appended to
+     * anything left over from the failed LOAD. */
+    capture_clear();
+    type_raw("10 PRINT 1");
+    type_raw("\r");
+    capture_clear();
+    type_raw("LIST\r");
+    check("the interpreter is back to normal, ready for a fresh command",
+          strstr(g_output, "10 PRINT 1") != NULL);
 
     bastos_done();
 }
@@ -1342,10 +1483,25 @@ int main(void) {
     test_edit_allows_modification();
     printf("\n");
 
+    test_edit_escape_after_syntax_error_keeps_original_line();
+    printf("\n");
+
     test_edit_left_arrow_echoes_one_backspace();
     printf("\n");
 
     test_edit_nonexistent_line_is_error();
+    printf("\n");
+
+    test_syntax_error_beeps_and_stays_editable();
+    printf("\n");
+
+    test_syntax_error_never_stores_invalid_line();
+    printf("\n");
+
+    test_valid_line_does_not_beep();
+    printf("\n");
+
+    test_runtime_error_does_not_stay_in_edit_mode();
     printf("\n");
 
     test_next_bare_nested();
