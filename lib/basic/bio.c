@@ -69,6 +69,10 @@ void bastos_done() {
 
 bool bastos_is_reset() { return bmem == 0 || bmem->bstate.reset; }
 
+bool bastos_is_connected() { return bmem != 0 && bmem->sock >= 0; }
+
+uint8_t bastos_screen_mode() { return bmem == 0 ? 0 : bmem->bstate.screen_mode; }
+
 static void bastos_handle_escape() {
     bastos_stop();
     *bmem->io_buffer = 0;

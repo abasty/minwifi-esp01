@@ -1330,7 +1330,15 @@ static bool eval_print(bool implicit) {
            *bmem->bstate.read_ptr != ':' && *bmem->bstate.read_ptr != '\'' &&
            *bmem->bstate.read_ptr != TOKEN_KEYWORD_ELSE) {
         ln = true;
+        // Set only around evaluating this one item: a stateful TTY
+        // function (MODE, INK, PAPER) reached from here is actually about
+        // to have its codes sent to the terminal, so it's safe for it to
+        // update its tracked state — unlike, say, "A$ = MODE 2", which
+        // must not affect the real terminal's tracked state since the
+        // codes are only being captured into a string, not sent.
+        bmem->bstate.tty_apply = 1;
         if (eval_expr(TOKEN_NUMBER | TOKEN_STRING)) {
+            bmem->bstate.tty_apply = 0;
             if (bmem->bstate.do_eval) {
                 if (bmem->bstate.token == TOKEN_NUMBER) {
                     os_redir_print_float(bmem->bstate.number);
@@ -1340,17 +1348,21 @@ static bool eval_print(bool implicit) {
                 }
             }
         } else if (eval_string_tty()) {
+            bmem->bstate.tty_apply = 0;
             if (bmem->bstate.do_eval) {
                 os_redir_print_string(string_cstr(bmem->bstate.string));
             }
-        } else if (eval_token(',')) {
-            if (bmem->bstate.do_eval) {
-                os_redir_print_string(" ");
-            }
-        } else if (eval_token(';')) {
-            ln = false;
         } else {
-            result = *bmem->bstate.read_ptr == 0;
+            bmem->bstate.tty_apply = 0;
+            if (eval_token(',')) {
+                if (bmem->bstate.do_eval) {
+                    os_redir_print_string(" ");
+                }
+            } else if (eval_token(';')) {
+                ln = false;
+            } else {
+                result = *bmem->bstate.read_ptr == 0;
+            }
         }
     }
 
@@ -1761,7 +1773,8 @@ static bool eval_string_tty() {
     // 1 arg
     int8_t arg1 = bmem->bstate.number;
     if (fn == TOKEN_KEYWORD_INK) {
-        bmem->ink = arg1;
+        if (bmem->bstate.tty_apply)
+            bmem->ink = arg1;
         if (bmem->bstate.screen_mode) {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s", arg1 == 7 ? MODE80_BOLD : MODE80_BOLD_OFF);
         } else {
@@ -1770,7 +1783,8 @@ static bool eval_string_tty() {
         goto EVAL;
     }
     if (fn == TOKEN_KEYWORD_PAPER) {
-        bmem->paper = arg1;
+        if (bmem->bstate.tty_apply)
+            bmem->paper = arg1;
         if (!bmem->bstate.screen_mode) {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, PAPER, arg1 + PAPER_DELTA);
         }
@@ -1836,13 +1850,23 @@ static bool eval_string_tty() {
     }
 
     if (fn == TOKEN_KEYWORD_MODE) {
-        bool was_mode80 = bmem->bstate.screen_mode != 0;
-        bmem->bstate.screen_mode = (arg1 >= 2) ? 1 : 0;
-        if (bmem->bstate.screen_mode) {
+        // Decided purely from arg1, never from prior state: this whole
+        // block runs even during a syntax-check pass (it's before EVAL:,
+        // which is the only do_eval gate), so a decision based on reading
+        // bstate.screen_mode here would see it already mutated by that
+        // earlier, non-executing pass over the same line.
+        //
+        // The write itself only applies when tty_apply is set (i.e. these
+        // codes are actually about to be sent to the terminal, from
+        // eval_print()) — not when MODE is merely evaluated as a value,
+        // e.g. "A$ = MODE 2", which must not change the tracked mode
+        // without the corresponding codes ever reaching the terminal.
+        if (bmem->bstate.tty_apply)
+            bmem->bstate.screen_mode = (arg1 >= 2) ? 1 : 0;
+        if (arg1 >= 2) {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s", P_80_COLS);
-        } else if (was_mode80) {
-            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s%s%s%s", P_40_COLS,
-                     P_CLAVIER_MINUSCULE, P_CLAVIER_ETENDU, CON);
+        } else if (arg1 == 1) {
+            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s", MODE_INIT_STRING);
         } else {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s", P_40_COLS);
         }
@@ -2670,6 +2694,21 @@ static int8_t eval_prog(prog_t *prog, bool do_eval) {
         // the next line, so the next call to this same line picks up
         // right here once the input actually completes.
         if (bmem->bstate.do_eval && eval_inputting()) {
+            bmem->bstate.pc_offset = (uint16_t)(bmem->bstate.read_ptr - prog->line);
+            bmem->bstate.in_goto = 1;
+            jumped = true;
+            break;
+        }
+
+        // MINITEL just connected: any further ':'-chained statement (e.g.
+        // "MINITEL "x":MODE 1") must not run yet. os_loop() stops calling
+        // bastos_loop() entirely while bmem->sock >= 0 (it hands the main
+        // loop over to os_loop_connected() instead), so nothing will drive
+        // eval_prog_next() again until the user exits connected mode
+        // (ESC ESC) and the socket closes. Suspend mid-line the same way
+        // INPUT does above, so this line resumes right after MINITEL once
+        // that happens, instead of racing ahead now.
+        if (bmem->bstate.do_eval && bmem->sock >= 0) {
             bmem->bstate.pc_offset = (uint16_t)(bmem->bstate.read_ptr - prog->line);
             bmem->bstate.in_goto = 1;
             jumped = true;

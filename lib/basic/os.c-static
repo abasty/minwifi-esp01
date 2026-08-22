@@ -867,7 +867,7 @@ static void os_disconnect(uint8_t set) {
     if (set == DB_MIN_SET) {
         hal_net_disconnect(set, bmem->sock);
         bmem->sock = -1;
-        os_redir_print_string("\r\n" MODE_INIT_STRING CON G0 INK7);
+        os_redir_print_string("\r\n" MODE_INIT_STRING);
         if (!eval_running())
             hal_print_string("Ready\r\n");
     } else if (set == DB_FTP_SET) {
