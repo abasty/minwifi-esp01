@@ -44,7 +44,7 @@ Le langage offre les capacités suivantes :
   - Transfert de fichiers via FTP (commande `FTP`)
 - **Fonctions mathématiques** : trigonométrie, logarithmes, racine carrée, aléatoire
 - **Tableaux** : variables dimensionnées avec `DIM`
-- **Structures de contrôle** : boucles `FOR`/`NEXT`, branchements `IF`/`THEN`, `GOTO`, `GOSUB`/`RETURN`, `LABEL`s nommés
+- **Structures de contrôle** : boucles `FOR`/`NEXT`, branchements `IF`/`THEN`/`ELSE`, `GOTO`, `GOSUB`/`RETURN`, `LABEL`s nommés
 
 ---
 
@@ -720,24 +720,50 @@ reste conservé dans le programme et réapparaît tel quel avec `LIST`.
 20 PRINT x : PRINT x * 2 ' affiche x puis son double
 ```
 
-### IF / THEN
+### IF / THEN / ELSE
 
 ```basic
 IF expression THEN numligne
-IF expression THEN instruction
+IF expression THEN instruction [: instruction ...]
+IF expression THEN ... ELSE numligne
+IF expression THEN ... ELSE instruction [: instruction ...]
 ```
 
 ```basic
 10 INPUT "x : ", x
-20 IF x < 0 THEN PRINT "négatif"
+20 IF x < 0 THEN PRINT "négatif" ELSE PRINT "positif ou nul"
 30 IF x = 0 THEN 10
-40 PRINT "positif"
 ```
 
-⚠️ **Piège courant** : `IF a > 0 THEN a=a-1` ne fonctionnera pas comme prévu.
-`a=a-1` est traité comme une comparaison (« a est-il égal à a-1 ? »), ce qui
-évalue à `0` (faux). Utiliser `LET` pour en faire une affectation : `IF a > 0
-THEN LET a = a - 1`.
+`ELSE` est optionnel. Quand il est présent, il introduit la ou les
+instructions à exécuter quand le test du `IF` est faux ; quand il est
+absent, un test faux saute simplement jusqu'à la fin de la ligne, comme
+avant. Une seule des deux branches s'exécute — une fois qu'une branche
+`THEN` vraie est terminée (y compris ses éventuelles instructions
+`:`-chaînées), un `ELSE` présent sur la même ligne est toujours ignoré, et
+inversement.
+
+`ELSE`, comme `THEN`, accepte soit un numéro de ligne seul (raccourci pour
+`GOTO numligne`), soit une ou plusieurs instructions séparées par `:` :
+
+```basic
+10 IF a = 0 THEN 100 ELSE 200
+```
+
+Les `IF` peuvent être imbriqués sur une même ligne via `:` ; chaque `ELSE`
+se rattache au `IF` non apparié le plus proche, de la même façon que dans
+la plupart des autres langages :
+
+```basic
+10 IF a = 1 THEN PRINT "a": IF b = 1 THEN PRINT "b aussi" ELSE PRINT "pas b"
+```
+
+⚠️ **Piège courant** : `IF a > 0 THEN a=a-1` (et de même juste après `ELSE`)
+ne fonctionnera pas comme prévu. `a=a-1` est traité comme une comparaison
+(« a est-il égal à a-1 ? »), ce qui évalue à `0` (faux) — et BASTOS traite
+en plus un `x=y` utilisé ainsi comme une tentative de `GOTO` plutôt que
+comme une comparaison. Utiliser `LET` pour en faire une affectation : `IF a
+> 0 THEN LET a = a - 1`.
 
 ### FOR / NEXT
 

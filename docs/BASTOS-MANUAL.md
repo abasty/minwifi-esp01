@@ -45,7 +45,7 @@ The language offers the following capabilities:
   - File transfer via FTP (`FTP` command)
 - **Mathematical functions**: trigonometry, logarithms, square root, random
 - **Arrays**: dimensioned variables with `DIM`
-- **Control structures**: `FOR`/`NEXT` loops, `IF`/`THEN` branching, `GOTO`, `GOSUB`/`RETURN`, named `LABEL`s
+- **Control structures**: `FOR`/`NEXT` loops, `IF`/`THEN`/`ELSE` branching, `GOTO`, `GOSUB`/`RETURN`, named `LABEL`s
 
 ---
 
@@ -709,23 +709,48 @@ kept in the stored program and reappears verbatim with `LIST`.
 20 PRINT x : PRINT x * 2 ' print x then its double
 ```
 
-### IF / THEN
+### IF / THEN / ELSE
 
 ```basic
 IF expression THEN linenumber
-IF expression THEN statement
+IF expression THEN statement [: statement ...]
+IF expression THEN ... ELSE linenumber
+IF expression THEN ... ELSE statement [: statement ...]
 ```
 
 ```basic
 10 INPUT "x: ", x
-20 IF x < 0 THEN PRINT "negative"
+20 IF x < 0 THEN PRINT "negative" ELSE PRINT "positive or zero"
 30 IF x = 0 THEN 10
-40 PRINT "positive"
 ```
 
-⚠️ **Common pitfall**: `IF a > 0 THEN a=a-1` will not work as expected. The
-`a=a-1` is treated as a comparison (is `a` equal to `a-1`?), which evaluates to
-`0` (false). Use `LET` to make it an assignment: `IF a > 0 THEN LET a = a - 1`.
+`ELSE` is optional. When present, it introduces the statement(s) to run when
+the `IF` test is false; when absent, a false test simply skips to the end of
+the line, as before. Only one of the two clauses ever runs — once a true
+`THEN` clause finishes (including any further `:`-separated statements), a
+following `ELSE` on the same line is always skipped, and vice versa.
+
+`ELSE`, like `THEN`, accepts either a bare line number (short for `GOTO
+linenumber`) or one or more `:`-separated statements:
+
+```basic
+10 IF a = 0 THEN 100 ELSE 200
+```
+
+`IF` statements can be nested on the same line via `:`; each `ELSE` binds to
+its nearest still-unmatched `IF`, the same way most other languages resolve
+this:
+
+```basic
+10 IF a = 1 THEN PRINT "a": IF b = 1 THEN PRINT "b too" ELSE PRINT "not b"
+```
+
+⚠️ **Common pitfall**: `IF a > 0 THEN a=a-1` (and the same right after
+`ELSE`) will not work as expected. The `a=a-1` is treated as a comparison
+(is `a` equal to `a-1`?), which evaluates to `0` (false) — and BASTOS
+additionally treats a bare `x=y` used this way as a `GOTO` attempt rather
+than a comparison. Use `LET` to make it an assignment: `IF a > 0 THEN LET a
+= a - 1`.
 
 ### FOR / NEXT
 
