@@ -2159,6 +2159,96 @@ static void test_else_inherits_equals_ambiguity(void) {
 }
 
 /* ======================================================================== */
+/* Feature — LABEL "name" (eval.c-static: eval_label_set(),                  */
+/*           bmemory.c-static: bmem_var_label_set()). Executing LABEL       */
+/*           "name" caches the current line's own number under a TOKEN_LABEL */
+/*           variable (a namespace separate from ordinary variables), for    */
+/*           GOTO/GOSUB "name" to look up. This first commit only covers the */
+/*           statement itself; GOTO/GOSUB "name" lands in a later commit.    */
+/* ======================================================================== */
+static void test_label_syntax_check_does_not_beep(void) {
+    printf("LABEL: a well-formed LABEL \"name\" line does not beep or error\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("1000 LABEL \"decadix\"");
+    type_raw("\r");
+    check("no BEL and no error for a well-formed LABEL line",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    bastos_done();
+}
+
+static void test_label_runs_without_error(void) {
+    printf("LABEL: executing LABEL \"name\" runs without error\n");
+
+    const char *lines[] = {
+        "1000 LABEL \"decadix\"",
+        "1010 PRINT \"AFTER\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("execution reaches the line after LABEL",
+          strstr(out, "AFTER") != NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
+}
+
+static void test_label_list_roundtrip(void) {
+    printf("LABEL: LIST shows the label text back correctly\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("1000 LABEL \"decadix\"");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("LIST reproduces the LABEL statement verbatim",
+          strstr(g_output, "1000 LABEL \"decadix\"") != NULL);
+
+    bastos_done();
+}
+
+static void test_label_save_load_roundtrip(void) {
+    printf("LABEL: a program containing LABEL survives a SAVE/LOAD round trip\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("1000 LABEL \"decadix\"");
+    type_raw("\r");
+    type_raw("SAVE \"label_test\"");
+    type_raw("\r");
+    for (int i = 0; i < 1000; i++)
+        bastos_loop();
+
+    type_raw("NEW");
+    type_raw("\r");
+    type_raw("LOAD \"label_test\"");
+    type_raw("\r");
+    for (int i = 0; i < 1000; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("the loaded program still contains the LABEL statement",
+          strstr(g_output, "LABEL \"decadix\"") != NULL);
+
+    capture_clear();
+    type_raw("RUN\r");
+    for (int i = 0; i < 500000 && strstr(g_output, "Ready") == NULL; i++)
+        bastos_loop();
+    check("the loaded program still runs without error",
+          strstr(g_output, "Error") == NULL);
+
+    hal_erase("label_test.bas");
+    bastos_done();
+}
+
+/* ======================================================================== */
 /* Feature — ''' end-of-line comment (token.c-static, tokenize())            */
 /*           Everything from a ''' up to the end of the physical line is     */
 /*           kept verbatim in the stored program (so LIST shows it back),    */
@@ -2459,6 +2549,18 @@ int main(void) {
     printf("\n");
 
     test_else_save_load_roundtrip();
+    printf("\n");
+
+    test_label_syntax_check_does_not_beep();
+    printf("\n");
+
+    test_label_runs_without_error();
+    printf("\n");
+
+    test_label_list_roundtrip();
+    printf("\n");
+
+    test_label_save_load_roundtrip();
     printf("\n");
 
     test_comment_trailing();

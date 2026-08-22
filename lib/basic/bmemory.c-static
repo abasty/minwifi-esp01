@@ -89,6 +89,7 @@ static int bmem_data_size(uint8_t token, uint16_t len, uint32_t *dims) {
     int size = 0;
     switch (token) {
     case TOKEN_VARIABLE_NUMBER:
+    case TOKEN_LABEL:
         size = sizeof(float);
         break;
     case TOKEN_VARIABLE_STRING:
@@ -258,6 +259,25 @@ static var_t *bmem_var_number_set(const char *name, float value) {
     var_t *var = bmem_var_get(name);
     if (var == 0) {
         var = bmem_var_new(name, TOKEN_VARIABLE_NUMBER, 0, 0);
+    }
+
+    if (var == 0)
+        return 0;
+
+    var->numbers[0] = value;
+    return var;
+}
+
+// Create or update a label variable (TOKEN_LABEL-prefixed name, see
+// eval_label_set()/eval_resolve_label() in eval.c-static): its value is a
+// program line number, stored the same way as a number variable, but kept
+// in its own namespace via the type tag baked into `name`'s first byte
+// rather than reusing bmem_var_number_set() (which would hardcode
+// TOKEN_VARIABLE_NUMBER as the stored token, mislabeling it).
+static var_t *bmem_var_label_set(const char *name, float value) {
+    var_t *var = bmem_var_get(name);
+    if (var == 0) {
+        var = bmem_var_new(name, TOKEN_LABEL, 0, 0);
     }
 
     if (var == 0)

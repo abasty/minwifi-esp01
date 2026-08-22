@@ -107,6 +107,7 @@ uint8_t instr1s[] = {
     TOKEN_KEYWORD_ERASE,
     TOKEN_KEYWORD_SAVE,
     TOKEN_KEYWORD_LOAD,
+    TOKEN_KEYWORD_LABEL,
     0,
 };
 
@@ -1590,6 +1591,19 @@ static void eval_load() {
     bmem->bstate.error = bastos_load(string_cstr(bmem->bstate.string));
 }
 
+// LABEL "name": (re)creates the cached line-number variable for this
+// label, in its own TOKEN_LABEL namespace — see bmem_var_label_set()
+// (bmemory.c-static) and eval_resolve_label(), used by GOTO/GOSUB to look
+// a label back up. A normal, side-effecting statement like LET, not a
+// declaration: running it again just refreshes the cached line number.
+static void eval_label_set() {
+    char typed_name[B_NAME_SIZE_MAX];
+    typed_name[0] = TOKEN_LABEL;
+    strncpy(typed_name + 1, string_cstr(bmem->bstate.string), B_NAME_SIZE_MAX - 2);
+    typed_name[B_NAME_SIZE_MAX - 1] = 0;
+    bmem_var_label_set(typed_name, (float)bmem->bstate.prog->line_no);
+}
+
 static void eval_erase() {
     if (hal_erase(string_cstr(bmem->bstate.string)) != 0) {
         bmem->bstate.error = BERROR_IO;
@@ -1910,6 +1924,10 @@ EVAL:
     }
     if (instr == TOKEN_KEYWORD_LOAD) {
         eval_load();
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_LABEL) {
+        eval_label_set();
         return true;
     }
     if (instr == TOKEN_KEYWORD_RETURN) {
