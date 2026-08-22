@@ -1621,7 +1621,10 @@ static uint16_t eval_resolve_label(const char *label_name) {
     if (var)
         return (uint16_t)var->numbers[0];
 
-    return 0;
+    uint16_t line_no = bmem_prog_find_label(label_name);
+    if (line_no != 0)
+        bmem_var_label_set(typed_name, (float)line_no);
+    return line_no;
 }
 
 // GOTO/GOSUB's argument was parsed as TOKEN_NUMBER or TOKEN_STRING (see

@@ -531,6 +531,26 @@ static prog_t *bmem_prog_get_line_or_next(uint16_t line_no) {
     return 0;
 }
 
+// Scan the program for a line whose first statement is LABEL "name" (exact
+// match), used as the cold-path fallback when the name isn't already cached
+// as a TOKEN_LABEL variable. O(program size) — the deliberate cost of a cold
+// label lookup; eval_resolve_label() (eval.c-static) caches the result so
+// every later lookup of the same name is a single variable lookup instead.
+static uint16_t bmem_prog_find_label(const char *label_name) {
+    uint16_t label_len = (uint16_t)strlen(label_name);
+    prog_t *prog = bmem_prog_first_line();
+    while (prog) {
+        if (prog->len >= 4 && prog->line[0] == TOKEN_KEYWORD_LABEL &&
+            prog->line[1] == TOKEN_STRING) {
+            uint16_t len = prog->line[2] | (prog->line[3] << 8);
+            if (len == label_len && memcmp(prog->line + 4, label_name, len) == 0)
+                return prog->line_no;
+        }
+        prog = bmem_prog_next_line(prog);
+    }
+    return 0;
+}
+
 static uint16_t bmem_line_count() {
     uint16_t count = 0;
     prog_t *prog = bmem_prog_first_line();

@@ -2163,8 +2163,8 @@ static void test_else_inherits_equals_ambiguity(void) {
 /*           bmemory.c-static: bmem_var_label_set()). Executing LABEL       */
 /*           "name" caches the current line's own number under a TOKEN_LABEL */
 /*           variable (a namespace separate from ordinary variables), for    */
-/*           GOTO/GOSUB "name" to look up. This first commit only covers the */
-/*           statement itself; GOTO/GOSUB "name" lands in a later commit.    */
+/*           GOTO/GOSUB "name" to look up (see the GOTO/GOSUB "name" section  */
+/*           further down).                                                  */
 /* ======================================================================== */
 static void test_label_syntax_check_does_not_beep(void) {
     printf("LABEL: a well-formed LABEL \"name\" line does not beep or error\n");
@@ -2250,10 +2250,12 @@ static void test_label_save_load_roundtrip(void) {
 
 /* ======================================================================== */
 /* Feature — GOTO/GOSUB "name" (eval.c-static: eval_goto_target(),           */
-/*           eval_resolve_label()). Warm path only: resolves a label name    */
-/*           to a line number by looking up the TOKEN_LABEL variable cached  */
-/*           by a LABEL "name" statement that has already executed. No scan  */
-/*           fallback yet — that lands in a later commit.                    */
+/*           eval_resolve_label()). Resolves a label name to a line number,  */
+/*           warm path first (a TOKEN_LABEL variable already cached by a     */
+/*           LABEL "name" statement that ran), falling back to a program     */
+/*           scan (bmemory.c-static: bmem_prog_find_label()) that caches its */
+/*           result the same way, for a label whose LABEL statement never    */
+/*           ran yet.                                                        */
 /* ======================================================================== */
 static void test_goto_label_warm_path(void) {
     printf("GOTO \"name\": jumps to a label already executed once (warm cache)\n");
@@ -2349,17 +2351,38 @@ static void test_pause_debug_reject_string_argument(void) {
     bastos_done();
 }
 
-static void test_goto_label_not_yet_cached_errors(void) {
-    printf("GOTO \"name\": a label never executed yet is not found (warm path only, no scan)\n");
+static void test_goto_label_cold_scan_forward(void) {
+    printf("GOTO \"name\": reaches a label that has never executed yet (cold scan)\n");
     const char *lines[] = {
         "10 GOTO \"later\"",
-        "20 LABEL \"later\"",
-        "30 PRINT \"HERE\"",
+        "20 PRINT \"SKIPPED\"",
+        "30 LABEL \"later\"",
+        "40 PRINT \"HERE\"",
+        NULL
+    };
+    /* The label at line 30 is only found by scanning the program's stored *
+     * lines — nothing has executed it yet, so no TOKEN_LABEL variable is  *
+     * cached before this GOTO runs.                                      */
+    const char *out = run_program(lines);
+    check("the skipped line was not reached", strstr(out, "SKIPPED") == NULL);
+    check("execution reached the label's line", strstr(out, "HERE") != NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
+}
+
+static void test_gosub_label_cold_scan_forward_return(void) {
+    printf("GOSUB \"name\": reaches a label that has never executed yet, RETURN resumes\n");
+    const char *lines[] = {
+        "10 GOSUB \"sub\": PRINT \"AFTER\"",
+        "20 END",
+        "30 LABEL \"sub\"",
+        "40 PRINT \"IN SUB\"",
+        "50 RETURN",
         NULL
     };
     const char *out = run_program(lines);
-    check("an error was reported (label not cached, no scan fallback yet)",
-          strstr(out, "Error") != NULL);
+    check("subroutine ran", strstr(out, "IN SUB") != NULL);
+    check("resumed after the GOSUB", strstr(out, "AFTER") != NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
 }
 
 static void test_goto_label_unresolvable_errors(void) {
@@ -2724,7 +2747,10 @@ int main(void) {
     test_pause_debug_reject_string_argument();
     printf("\n");
 
-    test_goto_label_not_yet_cached_errors();
+    test_goto_label_cold_scan_forward();
+    printf("\n");
+
+    test_gosub_label_cold_scan_forward_return();
     printf("\n");
 
     test_goto_label_unresolvable_errors();
