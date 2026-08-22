@@ -1,15 +1,17 @@
 20 GOSUB "ChoixWifi"
 100 LABEL "ChoixService":b=0:nc=0:suiv=0
 105 LABEL "AfficheChoix":GOSUB "ListeServices"
-110 LABEL "SaisieChoix":AT 23,1;INK 2;"quitter → ";INK 6;INVERSE 1;SIZE 2;"Q";AT 24,1;"Choix : .\b";CURSOR 1
-120 INPUT c$:k=VKEY
-125 IF c$="Q" OR c$="q" THEN "Fin"
+110 LABEL "SaisieChoix":CURSOR 0;AT 23,1;INK 2;"quitter → ";INK 6;INVERSE 1;SIZE 2;"Q"
+115 AT 24,1;"connect → "; SIZE 2;"#" ';INVERSE 1;"1";INVERSE 0;"-";INVERSE 1;"5"
+120 LABEL "LitTouche":k$=INKEY$:IF k$="" THEN PAUSE 50:GOTO "LitTouche"
+130 IF k$="Q" OR k$="q" THEN "Fin"
+135 k=CODE k$
 140 IF k=6 THEN "ChoixService"
 150 IF k<>4 THEN "TraiteChoix"
 160 IF suiv=0 THEN "SaisieChoix"
 170 b=b+5
 180 GOTO "AfficheChoix"
-200 LABEL "TraiteChoix":c=CODE c$-48
+200 LABEL "TraiteChoix":c=k-48
 220 IF c<=0 OR c>nc THEN "SaisieChoix"
 230 GOSUB 2000+(b+c-1)*10
 240 IF urn$="" THEN "SaisieChoix"
