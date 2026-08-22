@@ -502,38 +502,74 @@ caractères G0 au clavier et leurs équivalents semi-graphiques G1 :
 
 ### Caractères UTF-8 supportés (conversion Minitel)
 
-Lors du `LOAD` d'un fichier `.bas` ASCII, BASTOS convertit une liste limitée
-de caractères UTF-8 en séquences Minitel (préfixe SS2, code `0x19`).
+Le clavier Minitel permet de taper tous ces caractères (accents, symboles,
+flèches, tracé de lignes), mais éditer un programme dans l'éditeur de
+ligne intégré de BASTOS reste bien plus contraignant que dans un éditeur
+de texte sur PC (VSCode par exemple) : coloration syntaxique, copier/coller,
+recherche, voire assistance par IA. Pour écrire et éditer des programmes
+BASTOS sur PC avec ce confort, ces caractères peuvent être saisis sous
+leur forme UTF-8 normale dans un fichier `.bas` ASCII, avec n'importe quel
+éditeur de texte : lors du `LOAD` de ce fichier, BASTOS convertit
+automatiquement une liste limitée de caractères UTF-8 en séquences Minitel
+équivalentes, sans intervention de l'utilisateur.
 
-| Glyph | Séquence UTF-8 | Séquence Minitel produite |
-|-------|----------------|---------------------------|
-| à | `\xC3\xA0` | `\x19Aa` |
-| è | `\xC3\xA8` | `\x19Ae` |
-| ù | `\xC3\xB9` | `\x19Au` |
-| é | `\xC3\xA9` | `\x19Be` |
-| â | `\xC3\xA2` | `\x19Ca` |
-| ê | `\xC3\xAA` | `\x19Ce` |
-| î | `\xC3\xAE` | `\x19Ci` |
-| ô | `\xC3\xB4` | `\x19Co` |
-| û | `\xC3\xBB` | `\x19Cu` |
-| ä | `\xC3\xA4` | `\x19Ha` |
-| ë | `\xC3\xAB` | `\x19He` |
-| ï | `\xC3\xAF` | `\x19Hi` |
-| ö | `\xC3\xB6` | `\x19Ho` |
-| ü | `\xC3\xBC` | `\x19Hu` |
-| ç | `\xC3\xA7` | `\x19Kc` |
-| Ç | `\xC3\x87` | `\x19KC` |
-| ß | `\xC3\x9F` | `\x19\x7B` |
-| £ | `\xC2\xA3` | `\x19\x23` |
-| § | `\xC2\xA7` | `\x19\x27` |
-| ° | `\xC2\xB0` | `\x19\x30` |
-| ± | `\xC2\xB1` | `\x19\x31` |
-| ÷ | `\xC3\xB7` | `\x19\x38` |
-| ¼ | `\xC2\xBC` | `\x19\x34` |
-| ½ | `\xC2\xBD` | `\x19\x35` |
-| ¾ | `\xC2\xBE` | `\x19\x36` |
-| Œ | `\xC5\x92` | `\x19\x6A` |
-| œ | `\xC5\x93` | `\x19\x7A` |
+Les lettres accentuées et symboles passent par le jeu G2 (préfixe SS2,
+code `0x19` — un simple-shift, qui ne perturbe donc pas le jeu de
+caractères actif par ailleurs). Les flèches
+utilisent aussi le jeu G2 de la même façon. Les caractères de tracé de
+lignes sont en revanche de simples glyphes du jeu G0 — le même jeu que les
+chiffres et les lettres — donc ils sont convertis en un seul octet, sans
+aucun décalage de jeu. Deux d'entre eux (`|` pour la barre verticale du
+milieu, `_` pour la barre horizontale du bas) sont déjà de l'ASCII pur : il
+n'y a rien à convertir, le même octet est déjà le code Minitel.
+
+Pour saisir un caractère qui n'est pas directement accessible au clavier,
+la plupart des éditeurs sous Linux (dont VSCode) acceptent la combinaison
+**Ctrl+Maj+U**, suivie des chiffres du point de code, puis **Entrée** ou
+**Espace** — ce sont ces chiffres qui sont indiqués dans la colonne
+« Point de code » ci-dessous. (Sous Windows : taper les chiffres puis
+**Alt+X** dans les éditeurs qui le supportent. Sous macOS : activer la
+disposition clavier « Unicode Hex Input », puis **Option** + chiffres.)
+
+| Glyph | Point de code | Séquence UTF-8 | Séquence Minitel produite |
+|-------|----------------|----------------|---------------------------|
+| à | `E0` | `\xC3\xA0` | `\x19Aa` |
+| è | `E8` | `\xC3\xA8` | `\x19Ae` |
+| ù | `F9` | `\xC3\xB9` | `\x19Au` |
+| é | `E9` | `\xC3\xA9` | `\x19Be` |
+| â | `E2` | `\xC3\xA2` | `\x19Ca` |
+| ê | `EA` | `\xC3\xAA` | `\x19Ce` |
+| î | `EE` | `\xC3\xAE` | `\x19Ci` |
+| ô | `F4` | `\xC3\xB4` | `\x19Co` |
+| û | `FB` | `\xC3\xBB` | `\x19Cu` |
+| ä | `E4` | `\xC3\xA4` | `\x19Ha` |
+| ë | `EB` | `\xC3\xAB` | `\x19He` |
+| ï | `EF` | `\xC3\xAF` | `\x19Hi` |
+| ö | `F6` | `\xC3\xB6` | `\x19Ho` |
+| ü | `FC` | `\xC3\xBC` | `\x19Hu` |
+| ç | `E7` | `\xC3\xA7` | `\x19Kc` |
+| Ç | `C7` | `\xC3\x87` | `\x19KC` |
+| ß | `DF` | `\xC3\x9F` | `\x19\x7B` |
+| £ | `A3` | `\xC2\xA3` | `\x19\x23` |
+| § | `A7` | `\xC2\xA7` | `\x19\x27` |
+| ° | `B0` | `\xC2\xB0` | `\x19\x30` |
+| ± | `B1` | `\xC2\xB1` | `\x19\x31` |
+| ÷ | `F7` | `\xC3\xB7` | `\x19\x38` |
+| ¼ | `BC` | `\xC2\xBC` | `\x19\x34` |
+| ½ | `BD` | `\xC2\xBD` | `\x19\x35` |
+| ¾ | `BE` | `\xC2\xBE` | `\x19\x36` |
+| Œ | `152` | `\xC5\x92` | `\x19\x6A` |
+| œ | `153` | `\xC5\x93` | `\x19\x7A` |
+| ← | `2190` | `\xE2\x86\x90` | `\x19\x2C` |
+| ↑ | `2191` | `\xE2\x86\x91` | `\x19\x2D` |
+| → | `2192` | `\xE2\x86\x92` | `\x19\x2E` |
+| ↓ | `2193` | `\xE2\x86\x93` | `\x19\x2F` |
+| ▏ (verticale, gauche) | `258F` | `\xE2\x96\x8F` | `\x7B` |
+| \| (verticale, milieu) | *(touche clavier)* | `\x7C` | `\x7C` (inchangé) |
+| ▕ (verticale, droite) | `2595` | `\xE2\x96\x95` | `\x7D` |
+| ▔ (horizontale, haut) | `203E` | `\xE2\x80\xBE` | `\x7E` |
+| ─ (horizontale, milieu) | `2500` | `\xE2\x94\x80` | `\x60` |
+| _ (horizontale, bas) | *(touche clavier)* | `\x5F` | `\x5F` (inchangé) |
 
 Les autres caractères UTF-8 ne sont pas convertis et restent inchangés.
 

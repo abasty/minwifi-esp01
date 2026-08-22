@@ -496,38 +496,71 @@ G1 semi-graphic equivalents:
 
 ### Supported UTF-8 characters (Minitel conversion)
 
-When loading an ASCII `.bas` file, BASTOS converts a limited set of UTF-8
-characters into Minitel sequences (SS2 prefix, code `0x19`).
+The Minitel keyboard can type all of these characters (accents, symbols,
+arrows, line-drawing), but editing a program in BASTOS's built-in line
+editor is still far more constrained than in a PC text editor (VSCode, for
+example): syntax highlighting, copy/paste, search, even AI assistance. To
+write and edit BASTOS programs on a PC with that comfort, these characters
+can be typed in their normal UTF-8 form, in an ASCII `.bas` file, with any
+text editor: when that file is LOADed, BASTOS automatically converts a
+limited set of UTF-8 characters into the equivalent Minitel sequences,
+with no action needed from the user.
 
-| Glyph | UTF-8 sequence | Generated Minitel sequence |
-|-------|----------------|----------------------------|
-| à | `\xC3\xA0` | `\x19Aa` |
-| è | `\xC3\xA8` | `\x19Ae` |
-| ù | `\xC3\xB9` | `\x19Au` |
-| é | `\xC3\xA9` | `\x19Be` |
-| â | `\xC3\xA2` | `\x19Ca` |
-| ê | `\xC3\xAA` | `\x19Ce` |
-| î | `\xC3\xAE` | `\x19Ci` |
-| ô | `\xC3\xB4` | `\x19Co` |
-| û | `\xC3\xBB` | `\x19Cu` |
-| ä | `\xC3\xA4` | `\x19Ha` |
-| ë | `\xC3\xAB` | `\x19He` |
-| ï | `\xC3\xAF` | `\x19Hi` |
-| ö | `\xC3\xB6` | `\x19Ho` |
-| ü | `\xC3\xBC` | `\x19Hu` |
-| ç | `\xC3\xA7` | `\x19Kc` |
-| Ç | `\xC3\x87` | `\x19KC` |
-| ß | `\xC3\x9F` | `\x19\x7B` |
-| £ | `\xC2\xA3` | `\x19\x23` |
-| § | `\xC2\xA7` | `\x19\x27` |
-| ° | `\xC2\xB0` | `\x19\x30` |
-| ± | `\xC2\xB1` | `\x19\x31` |
-| ÷ | `\xC3\xB7` | `\x19\x38` |
-| ¼ | `\xC2\xBC` | `\x19\x34` |
-| ½ | `\xC2\xBD` | `\x19\x35` |
-| ¾ | `\xC2\xBE` | `\x19\x36` |
-| Œ | `\xC5\x92` | `\x19\x6A` |
-| œ | `\xC5\x93` | `\x19\x7A` |
+Accented letters and symbols use the G2 set (SS2 prefix, code `0x19` — a
+single-shift, so it doesn't disturb the character set otherwise in
+effect). Arrows also use the G2 set the same
+way. Line-drawing characters are plain G0 glyphs instead — the same
+character set as digits and letters — so they convert to a single byte,
+with no shift at all. Two of them (`|` for the middle vertical bar, `_` for
+the bottom horizontal bar) are already plain ASCII, so there's nothing to
+convert: the same byte already is the Minitel code.
+
+To type a character that isn't directly on the keyboard, most Linux
+editors (including VSCode) accept **Ctrl+Shift+U**, followed by the code
+point digits, then **Enter** or **Space** — those are the digits listed in
+the "Code point" column below. (On Windows: type the digits then **Alt+X**
+in editors that support it. On macOS: enable the "Unicode Hex Input"
+keyboard layout, then **Option** + digits.)
+
+| Glyph | Code point | UTF-8 sequence | Generated Minitel sequence |
+|-------|------------|----------------|----------------------------|
+| à | `E0` | `\xC3\xA0` | `\x19Aa` |
+| è | `E8` | `\xC3\xA8` | `\x19Ae` |
+| ù | `F9` | `\xC3\xB9` | `\x19Au` |
+| é | `E9` | `\xC3\xA9` | `\x19Be` |
+| â | `E2` | `\xC3\xA2` | `\x19Ca` |
+| ê | `EA` | `\xC3\xAA` | `\x19Ce` |
+| î | `EE` | `\xC3\xAE` | `\x19Ci` |
+| ô | `F4` | `\xC3\xB4` | `\x19Co` |
+| û | `FB` | `\xC3\xBB` | `\x19Cu` |
+| ä | `E4` | `\xC3\xA4` | `\x19Ha` |
+| ë | `EB` | `\xC3\xAB` | `\x19He` |
+| ï | `EF` | `\xC3\xAF` | `\x19Hi` |
+| ö | `F6` | `\xC3\xB6` | `\x19Ho` |
+| ü | `FC` | `\xC3\xBC` | `\x19Hu` |
+| ç | `E7` | `\xC3\xA7` | `\x19Kc` |
+| Ç | `C7` | `\xC3\x87` | `\x19KC` |
+| ß | `DF` | `\xC3\x9F` | `\x19\x7B` |
+| £ | `A3` | `\xC2\xA3` | `\x19\x23` |
+| § | `A7` | `\xC2\xA7` | `\x19\x27` |
+| ° | `B0` | `\xC2\xB0` | `\x19\x30` |
+| ± | `B1` | `\xC2\xB1` | `\x19\x31` |
+| ÷ | `F7` | `\xC3\xB7` | `\x19\x38` |
+| ¼ | `BC` | `\xC2\xBC` | `\x19\x34` |
+| ½ | `BD` | `\xC2\xBD` | `\x19\x35` |
+| ¾ | `BE` | `\xC2\xBE` | `\x19\x36` |
+| Œ | `152` | `\xC5\x92` | `\x19\x6A` |
+| œ | `153` | `\xC5\x93` | `\x19\x7A` |
+| ← | `2190` | `\xE2\x86\x90` | `\x19\x2C` |
+| ↑ | `2191` | `\xE2\x86\x91` | `\x19\x2D` |
+| → | `2192` | `\xE2\x86\x92` | `\x19\x2E` |
+| ↓ | `2193` | `\xE2\x86\x93` | `\x19\x2F` |
+| ▏ (vertical, left) | `258F` | `\xE2\x96\x8F` | `\x7B` |
+| \| (vertical, middle) | *(keyboard key)* | `\x7C` | `\x7C` (unchanged) |
+| ▕ (vertical, right) | `2595` | `\xE2\x96\x95` | `\x7D` |
+| ▔ (horizontal, top) | `203E` | `\xE2\x80\xBE` | `\x7E` |
+| ─ (horizontal, middle) | `2500` | `\xE2\x94\x80` | `\x60` |
+| _ (horizontal, bottom) | *(keyboard key)* | `\x5F` | `\x5F` (unchanged) |
 
 Any other UTF-8 characters are not converted and are kept unchanged.
 

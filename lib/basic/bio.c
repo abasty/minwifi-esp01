@@ -971,6 +971,74 @@ static void parse_utf8_to_minitel(char *dst, size_t dst_size, const char *src) {
                 dst_size -= slen;
             }
             src += 2;
+        } else if (prefix == 0xe2) {
+            uint8_t code1 = *(src + 1);
+            uint8_t code2 = *(src + 2);
+            uint8_t seq[4] = {0};
+            if (code1 == 0x86) {
+                // Arrows (G2 set, single-shift SS2)
+                seq[0] = '\x19'; // SS2
+                switch (code2) {
+                case 0x90: // ←
+                    seq[1] = '\x2c';
+                    break;
+                case 0x91: // ↑
+                    seq[1] = '\x2d';
+                    break;
+                case 0x92: // →
+                    seq[1] = '\x2e';
+                    break;
+                case 0x93: // ↓
+                    seq[1] = '\x2f';
+                    break;
+                default:
+                    seq[0] = 0;
+                    break;
+                }
+            } else if (code1 == 0x80 || code1 == 0x94 || code1 == 0x96) {
+                // Line-drawing characters: plain G0 glyphs (same set as
+                // digits/letters), not a G1 mosaic approximation — no
+                // shift needed, just the single byte. (Middle vertical "|"
+                // and bottom horizontal "_" need no entry here at all —
+                // they're already plain ASCII, one byte, unchanged by this
+                // whole function, and that byte already is the target
+                // Minitel code.)
+                if (code1 == 0x80) {
+                    switch (code2) {
+                    case 0xbe: // ▔ horizontal top (U+203E, overline)
+                        seq[0] = '\x7e';
+                        break;
+                    default:
+                        break;
+                    }
+                } else if (code1 == 0x94) {
+                    switch (code2) {
+                    case 0x80: // ─ horizontal middle
+                        seq[0] = '\x60';
+                        break;
+                    default:
+                        break;
+                    }
+                } else { // code1 == 0x96
+                    switch (code2) {
+                    case 0x8f: // ▏ vertical left (U+258F, left one eighth block)
+                        seq[0] = '\x7b';
+                        break;
+                    case 0x95: // ▕ vertical right (U+2595, right one eighth block)
+                        seq[0] = '\x7d';
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            size_t slen = strlen((char *)seq);
+            if (slen < dst_size) {
+                strcpy(dst, (char *)seq);
+                dst += slen;
+                dst_size -= slen;
+            }
+            src += 3;
         } else {
             *dst++ = *src++;
             dst_size--;

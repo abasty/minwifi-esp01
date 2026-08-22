@@ -2876,6 +2876,92 @@ static void test_comment_preserved_in_list(void) {
 }
 
 /* ======================================================================== */
+/* Feature — UTF-8 arrows and line-drawing characters (bio.c:                */
+/*           parse_utf8_to_minitel(), called from os_load_ascii() —          */
+/*           conversion happens when an ASCII .bas source file is LOADed,    */
+/*           not on typed/PRINTed text). Arrows go through the G2 set (SS2   */
+/*           + code, single-shift, no mode change needed). The line-drawing  */
+/*           characters are plain G0 glyphs — the same character set as      */
+/*           digits and letters — so they convert to a single byte with no   */
+/*           shift at all, unlike the G1 mosaic set.                         */
+/* ======================================================================== */
+static void write_ascii_bas_file(const char *name, const char *content) {
+    FILE *f = fopen(name, "wb");
+    fwrite(content, 1, strlen(content), f);
+    fclose(f);
+}
+
+static void test_utf8_arrows_convert_on_load(void) {
+    printf("UTF-8: arrow characters convert to Minitel G2 codes on LOAD\n");
+
+    /* Raw UTF-8 bytes for <-  ^  ->  v, one PRINT statement testing all four. */
+    const char *content =
+        "10 PRINT \"\xe2\x86\x90\xe2\x86\x91\xe2\x86\x92\xe2\x86\x93\"\r\n";
+    write_ascii_bas_file("utf8_arrows_test.bas", content);
+
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("LOAD \"utf8_arrows_test\"");
+    type_raw("\r");
+    for (int i = 0; i < 1000; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("RUN\r");
+    for (int i = 0; i < 500000 && strstr(g_output, "Ready") == NULL; i++)
+        bastos_loop();
+
+    check("left arrow converted to SS2 0x2C",
+          memmem(g_output, g_output_len, "\x19\x2c", 2) != NULL);
+    check("up arrow converted to SS2 0x2D",
+          memmem(g_output, g_output_len, "\x19\x2d", 2) != NULL);
+    check("right arrow converted to SS2 0x2E",
+          memmem(g_output, g_output_len, "\x19\x2e", 2) != NULL);
+    check("down arrow converted to SS2 0x2F",
+          memmem(g_output, g_output_len, "\x19\x2f", 2) != NULL);
+
+    hal_erase("utf8_arrows_test.bas");
+    bastos_done();
+}
+
+static void test_utf8_line_drawing_converts_on_load(void) {
+    printf("UTF-8: line-drawing characters convert to plain G0 codes on LOAD\n");
+
+    /* Raw UTF-8 bytes, in order: vertical left/middle/right, horizontal    *
+     * top/middle/bottom. Middle vertical "|" and bottom horizontal "_"    *
+     * are plain ASCII already — no conversion needed, they pass straight  *
+     * through unchanged, which already is the target Minitel code.       */
+    const char *content =
+        "10 PRINT \"\xe2\x96\x8f|\xe2\x96\x95\xe2\x80\xbe\xe2\x94\x80_\"\r\n";
+    write_ascii_bas_file("utf8_lines_test.bas", content);
+
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("LOAD \"utf8_lines_test\"");
+    type_raw("\r");
+    for (int i = 0; i < 1000; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("RUN\r");
+    for (int i = 0; i < 500000 && strstr(g_output, "Ready") == NULL; i++)
+        bastos_loop();
+
+    /* One contiguous run, in source order, with no shift bytes around any
+     * of them: vertical left, middle, right, horizontal top, middle, bottom. */
+    check("all six line-drawing bytes appear as a single unshifted run",
+          memmem(g_output, g_output_len,
+                 "\x7b\x7c\x7d\x7e\x60\x5f", 6) != NULL);
+
+    hal_erase("utf8_lines_test.bas");
+    bastos_done();
+}
+
+/* ======================================================================== */
 /* main                                                                       */
 /* ======================================================================== */
 int main(void) {
@@ -3194,6 +3280,12 @@ int main(void) {
     printf("\n");
 
     test_comment_preserved_in_list();
+    printf("\n");
+
+    test_utf8_arrows_convert_on_load();
+    printf("\n");
+
+    test_utf8_line_drawing_converts_on_load();
     printf("\n");
 
     printf("=== Results: %d/%d tests passed ===\n",
