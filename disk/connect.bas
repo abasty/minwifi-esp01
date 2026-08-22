@@ -2,22 +2,25 @@
 100 LABEL "ChoixService":b=0:nc=0:suiv=0
 105 LABEL "AfficheChoix":GOSUB "ListeServices"
 110 LABEL "SaisieChoix":CURSOR 0;AT 23,1;INK 2;"quitter → ";INK 6;INVERSE 1;SIZE 2;"Q"
-115 AT 24,1;"connect → "; SIZE 2;"#" ';INVERSE 1;"1";INVERSE 0;"-";INVERSE 1;"5"
+115 AT 24,1;"connect → "; SIZE 2;"#"
 120 LABEL "LitTouche":k$=INKEY$:IF k$="" THEN PAUSE 50:GOTO "LitTouche"
 130 IF k$="Q" OR k$="q" THEN "Fin"
-135 k=CODE k$
-140 IF k=6 THEN "ChoixService"
-150 IF k<>4 THEN "TraiteChoix"
+140 IF k$="\x06" THEN "ChoixService"
+145 IF k$="\x05" THEN "Retour"
+150 IF k$<>"\x04" THEN "TraiteChoix"
 160 IF suiv=0 THEN "SaisieChoix"
 170 b=b+5
 180 GOTO "AfficheChoix"
-200 LABEL "TraiteChoix":c=k-48
+181 LABEL "Retour":IF b=0 THEN "SaisieChoix"
+182 b=b-5
+183 GOTO "AfficheChoix"
+200 LABEL "TraiteChoix":c=CODE k$-48
 220 IF c<=0 OR c>nc THEN "SaisieChoix"
 230 GOSUB 2000+(b+c-1)*10
 240 IF urn$="" THEN "SaisieChoix"
 250 PRINT AT 0,1;"Connecting to ";srv$
 260 MINITEL urn$
-300 GOTO "ChoixService"
+300 GOTO "AfficheChoix"
 1000 LABEL "ListeServices":CURSOR 0;LINE0 ;CLEOL ;CLS ;SCROLL 0;"LISTE DES SERVICES\r\n";INK 4;REP$ 40,"`"
 1010 FOR i=1 TO 4:AT i*4+2,5;INK 4;REP$ 36,"`";"\n":NEXT
 1050 PRINT "\n\n";REP$ 40,"`";
@@ -85,4 +88,4 @@
 3080 IF ssid$(wn,1)=" " THEN "ScanWifi"
 3090 WIFI wn
 3095 GOTO "ChoixWifi"
-4000 LABEL "Fin":CLS:SCROLL 1:END
+4000 LABEL "Fin":CLS:SCROLL 1:CURSOR 1:END
