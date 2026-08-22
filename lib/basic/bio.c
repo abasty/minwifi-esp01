@@ -439,7 +439,12 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
     // line (no-op, same as Enter on a truly empty buffer) instead of either
     // resubmitting the stale text as a duplicate command or discarding it —
     // Up-arrow must still bring back that same previous entry afterward.
-    if (bmem->io_recall_len != 0 &&
+    // This shortcut only makes sense for the interactive immediate-command
+    // prompt: a running program's INPUT has no resident recall text of its
+    // own, so a leftover recall from before RUN must not swallow its first
+    // validation keypress (which would echo CRLF without ever terminating
+    // the line, leaving the INPUT stuck).
+    if (bmem->io_recall_len != 0 && !eval_inputting() &&
         (*src == '\r' || *src == 2 || *src == 4 || *src == 5 || *src == 6 || *src == 14)) {
         bmem->vkey = *src;
         if (echo) {
