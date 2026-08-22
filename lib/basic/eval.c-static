@@ -2658,6 +2658,23 @@ static int8_t eval_prog(prog_t *prog, bool do_eval) {
         // is ELSE, not just after a literal ':'.
         if (!eval_token(':') && *bmem->bstate.read_ptr != TOKEN_KEYWORD_ELSE)
             break;
+
+        // INPUT just switched into input-waiting mode: any further
+        // ':'-chained statement (e.g. "INPUT c$:k=VKEY") must not run yet
+        // — it would otherwise execute immediately with whatever stale
+        // value the input variable / VKEY already held from *before* this
+        // input, not the one the user is about to submit. Suspend
+        // mid-line the same way a GOSUB does: remember where to resume
+        // (pc_offset, already past the ':' just consumed above) and
+        // borrow in_goto to stop eval_prog_next() from advancing pc to
+        // the next line, so the next call to this same line picks up
+        // right here once the input actually completes.
+        if (bmem->bstate.do_eval && eval_inputting()) {
+            bmem->bstate.pc_offset = (uint16_t)(bmem->bstate.read_ptr - prog->line);
+            bmem->bstate.in_goto = 1;
+            jumped = true;
+            break;
+        }
     }
 
     // Syntax check end of line (skipped when we deliberately jumped away

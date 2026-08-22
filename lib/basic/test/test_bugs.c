@@ -1421,6 +1421,55 @@ static void test_suite_with_no_next_line_behaves_like_enter(void) {
     bastos_done();
 }
 
+static void test_vkey_stays_paired_with_queued_validation_keys(void) {
+    printf("VKEY: a second validation key queued right behind the first must not overwrite the "
+           "first input's own VKEY\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 INPUT c$:k=VKEY");
+    type_raw("\r");
+    type_raw("20 PRINT \"[K=\";k;\"C=\";c$;\"]\"");
+    type_raw("\r");
+    type_raw("30 GOTO 10");
+    type_raw("\r");
+
+    capture_clear();
+    bastos_send_keys("RUN\r", 4, false);
+    for (int i = 0; i < 20; i++)
+        bastos_loop();
+
+    /*
+     * Regression: bmem->vkey used to be a single global written the instant
+     * a validation key was appended to io_buffer, but only actually read
+     * back much later, whenever bastos_input() got around to dequeuing
+     * that particular queued line. If a second validation key arrived
+     * before the first queued line was dequeued (e.g. the interpreter
+     * still busy with a screen redraw when the user pressed again), the
+     * global had already moved on to the second key's value by the time
+     * the first line was processed. Sending both keys in one batch here,
+     * with nothing running in between to drain the queue first, forces
+     * exactly that overlap deterministically.
+     */
+    capture_clear();
+    bastos_send_keys("\x04\x06", 2, true); /* SUITE, then SOMMAIRE, back to back */
+    for (int i = 0; i < 20; i++)
+        bastos_loop();
+
+    check("SUITE's own input read back VKEY 4, not a later queued key",
+          strstr(g_output, "[K=4C=]") != NULL);
+    check("SOMMAIRE's own input read back VKEY 6, not a stale key",
+          strstr(g_output, "[K=6C=]") != NULL);
+
+    char *k4 = strstr(g_output, "[K=4C=]");
+    char *k6 = strstr(g_output, "[K=6C=]");
+    check("results appear in the same order the keys were pressed",
+          k4 != NULL && k6 != NULL && k4 < k6);
+
+    bastos_done();
+}
+
 static void test_retour_auto_stages_previous_line(void) {
     printf("RETOUR (VKEY 5): after validating a line, the previous program line is auto-staged for editing\n");
     bastos_init();
@@ -2947,6 +2996,9 @@ int main(void) {
     printf("\n");
 
     test_suite_with_no_next_line_behaves_like_enter();
+    printf("\n");
+
+    test_vkey_stays_paired_with_queued_validation_keys();
     printf("\n");
 
     test_retour_auto_stages_previous_line();

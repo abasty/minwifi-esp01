@@ -223,7 +223,7 @@ static void os_autoexec(void) {
         // System-injected, not something the user typed: don't let it
         // become an Up-arrow recall target once bastos_input() processes it.
         bmem->io_no_recall = 1;
-        bastos_send_keys("bastos\n", 7, false);
+        bastos_send_keys("bastos\r", 7, false);
     }
 }
 

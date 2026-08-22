@@ -1,5 +1,4 @@
-/*
- * Copyright © 2023-2025 Alain Basty
+/* * Copyright © 2023-2025 Alain Basty
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -114,6 +113,14 @@ static bool is_char_input_key(char test_char) {
     return false;
 }
 
+// Any of the keys that submit the current io_buffer line (ENVOI, REPETITION,
+// SUITE, RETOUR, SOMMAIRE, GUIDE). This exact byte is what terminates the
+// submitted line in io_buffer (see the validation branch below) instead of a
+// generic '\n' — see is_validation_key()'s callers for why that matters.
+static bool is_validation_key(uint8_t b) {
+    return b == '\r' || b == 2 || b == 4 || b == 5 || b == 6 || b == 14;
+}
+
 // Byte-width of the logical character immediately before `pos` (never
 // looking further back than `line_start`): 1 for a plain byte, 2 for an
 // SS2- or SO-prefixed character, 3 for SS2+diacritic-code+combined char.
@@ -136,7 +143,7 @@ static uint8_t char_width_before(uint8_t *line_start, uint8_t *pos) {
 // Mirror of char_width_before, looking forward from `pos` instead. Returns 0
 // if `pos` is at (or past) `end` or right before the line's own terminator.
 static uint8_t char_width_at(uint8_t *pos, uint8_t *end) {
-    if (pos >= end || *pos == '\n')
+    if (pos >= end || is_validation_key(*pos))
         return 0;
     if (*pos == SS2 && pos + 2 < end && is_char_diacritic(*(pos + 1)))
         return 3;
@@ -194,12 +201,12 @@ static void discard_pending(uint8_t **end, uint8_t **cur, uint8_t *line_start) {
     *cur = unit_start;
 }
 
-// Position right after the last '\n' still in the buffer before `end`, or
-// bmem->io_buffer itself if there is none — i.e. the start of the line
-// currently being edited.
+// Position right after the last queued line's terminator still in the
+// buffer before `end`, or bmem->io_buffer itself if there is none — i.e.
+// the start of the line currently being edited.
 static uint8_t *line_start_of(uint8_t *end) {
     uint8_t *p = end;
-    while (p > bmem->io_buffer && *(p - 1) != '\n')
+    while (p > bmem->io_buffer && !is_validation_key(*(p - 1)))
         p--;
     return p;
 }
@@ -443,10 +450,11 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
     // prompt: a running program's INPUT has no resident recall text of its
     // own, so a leftover recall from before RUN must not swallow its first
     // validation keypress (which would echo CRLF without ever terminating
-    // the line, leaving the INPUT stuck).
-    if (bmem->io_recall_len != 0 && !eval_inputting() &&
-        (*src == '\r' || *src == 2 || *src == 4 || *src == 5 || *src == 6 || *src == 14)) {
-        bmem->vkey = *src;
+    // the line, leaving the INPUT stuck). No line is queued here, so there
+    // is nothing for VKEY to reflect — unlike the real validation branch
+    // below, this must not touch bmem->vkey (see is_validation_key()'s
+    // callers for why a global write here would be a race).
+    if (bmem->io_recall_len != 0 && !eval_inputting() && is_validation_key(*src)) {
         if (echo) {
             hal_print_string(mode_g0());
             hal_print_string("\r\n");
@@ -482,17 +490,26 @@ void bastos_send_keys(const char *keys, size_t n, bool echo) {
             src++;
             n = 0;
             break;
-        } else if (*src == '\r' || *src == 2 || *src == 4 || *src == 5 || *src == 6 || *src == 14) {
+        } else if (is_validation_key(*src)) {
             // Validation key: always submits the whole line, regardless of
-            // where the edit cursor currently sits.
+            // where the edit cursor currently sits. The key's own byte is
+            // stored as the line's terminator (instead of a generic '\n')
+            // so that whichever key ends up validating THIS particular
+            // queued line can still be recovered correctly at the moment
+            // it's actually dequeued and processed by bastos_input() —
+            // which may be several lines and several more keypresses later
+            // if the interpreter is still busy (e.g. mid-redraw) when keys
+            // arrive faster than they can be consumed. A single shared
+            // bmem->vkey written here immediately, instead, would already
+            // reflect a *later* keypress by the time this line is finally
+            // dequeued.
             if (!room) {
                 src++;
                 n--;
                 continue;
             }
             discard_pending(&dst, &cur, line_start);
-            bmem->vkey = *src;
-            *dst++ = '\n';
+            *dst++ = *src;
             src++;
             bmem->bstate.g_mode = 0;
             if (echo) {
@@ -569,12 +586,19 @@ static int8_t bastos_input() {
 
     // Find first command end
     uint8_t *next = bmem->io_buffer;
-    while (*next && *next != '\n')
+    while (*next && !is_validation_key(*next))
         next++;
 
     // If no command: do nothing
     if (*next == 0)
         return BERROR_NONE;
+
+    // VKEY reflects whichever key actually terminated THIS command — read
+    // from the terminator byte itself (see is_validation_key()'s callers),
+    // not from some separately-tracked "last key pressed" state that could
+    // already have been overwritten by a later keypress still queued behind
+    // this one.
+    bmem->vkey = *next;
 
     // Mark first command end with 0 and point to next one. cmd_len is the
     // length of exactly what was typed for this command; tokenize() below
