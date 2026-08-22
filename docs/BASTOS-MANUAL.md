@@ -45,7 +45,7 @@ The language offers the following capabilities:
   - File transfer via FTP (`FTP` command)
 - **Mathematical functions**: trigonometry, logarithms, square root, random
 - **Arrays**: dimensioned variables with `DIM`
-- **Control structures**: `FOR`/`NEXT` loops, `IF`/`THEN` branching, `GOTO`, `GOSUB`/`RETURN`
+- **Control structures**: `FOR`/`NEXT` loops, `IF`/`THEN` branching, `GOTO`, `GOSUB`/`RETURN`, named `LABEL`s
 
 ---
 
@@ -766,6 +766,7 @@ NEXT
 
 ```basic
 GOTO linenumber
+GOTO "label"
 ```
 
 ```basic
@@ -773,10 +774,14 @@ GOTO linenumber
 20 GOTO 10
 ```
 
+`GOTO` also accepts a label name in quotes instead of a line number — see
+[LABEL](#label) below.
+
 ### GOSUB / RETURN
 
 ```basic
 GOSUB linenumber    ' Call subroutine
+GOSUB "label"        ' Call subroutine by label name
 RETURN              ' Return to caller
 ```
 
@@ -789,6 +794,62 @@ Up to 32 nested calls.
 1000 PRINT "In subroutine"
 1010 RETURN
 ```
+
+### LABEL
+
+```basic
+LABEL "name"
+LABEL START
+```
+
+Gives a line a name so `GOTO`/`GOSUB` can jump to it without knowing its line
+number — handy for a program that gets renumbered or edited over time.
+
+```basic
+1000 LABEL "decadix"
+1010 PRINT "In decadix"
+1020 RETURN
+```
+
+```basic
+10 GOSUB "decadix"
+20 END
+```
+
+The first time a given label name is used as a `GOTO`/`GOSUB` target, BASTOS
+looks for the matching `LABEL "name"` line — either because it already ran
+(the normal case, since `LABEL` executes like any other statement, in
+program order), or if it hasn't run yet, by scanning the whole program for
+it. Either way, the line number is then remembered, so later jumps to the
+same label are instant. A label must be the very first statement on its
+line (`1000 LABEL "decadix"`, optionally followed by more `:`-separated
+statements) to be found by that scan — used elsewhere on a line, `LABEL`
+still works when it actually runs, but won't be found ahead of time.
+`GOTO`/`GOSUB` targeting a label that doesn't exist anywhere in the program
+is an error.
+
+`LABEL START` scans the whole program in a single pass and remembers every
+`LABEL "name"` line it finds, up front — useful at the start of a program
+to avoid paying the scan cost on the first jump to each label:
+
+```basic
+10 LABEL START
+20 GOSUB "decadix"
+30 END
+
+1000 LABEL "decadix"
+1010 PRINT "In decadix"
+1020 RETURN
+```
+
+A plain `RUN` clears all variables, including any remembered label
+positions (from either form of `LABEL`) — so editing a program and then
+editing a line that carries a `LABEL`, without an intervening `RUN`, can
+leave a stale jump target behind until the next `RUN`.
+
+`CLEAR`/`END` also clear remembered label positions, the same as any other
+variable — a label is just a variable in its own namespace. Likewise,
+`FREE`'s variable count includes labels.
 
 ### PAUSE
 

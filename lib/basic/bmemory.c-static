@@ -551,6 +551,29 @@ static uint16_t bmem_prog_find_label(const char *label_name) {
     return 0;
 }
 
+// LABEL START: scan the whole program once, creating/refreshing the cached
+// TOKEN_LABEL variable for every line whose first statement is LABEL
+// "name" (same detection as bmem_prog_find_label(), but for every label in
+// a single pass instead of searching for one specific name) — lets a
+// program warm its whole label cache up front instead of relying on
+// GOTO/GOSUB's individual cold scans.
+static void bmem_prog_label_scan_all() {
+    char typed_name[B_NAME_SIZE_MAX];
+    prog_t *prog = bmem_prog_first_line();
+    while (prog) {
+        if (prog->len >= 4 && prog->line[0] == TOKEN_KEYWORD_LABEL &&
+            prog->line[1] == TOKEN_STRING) {
+            uint16_t len = prog->line[2] | (prog->line[3] << 8);
+            uint16_t copy_len = len < B_NAME_SIZE_MAX - 2 ? len : B_NAME_SIZE_MAX - 2;
+            typed_name[0] = TOKEN_LABEL;
+            memcpy(typed_name + 1, prog->line + 4, copy_len);
+            typed_name[1 + copy_len] = 0;
+            bmem_var_label_set(typed_name, (float)prog->line_no);
+        }
+        prog = bmem_prog_next_line(prog);
+    }
+}
+
 static uint16_t bmem_line_count() {
     uint16_t count = 0;
     prog_t *prog = bmem_prog_first_line();

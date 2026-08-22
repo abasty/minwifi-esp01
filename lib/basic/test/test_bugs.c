@@ -2418,6 +2418,187 @@ static void test_label_and_variable_namespaces_are_separate(void) {
 }
 
 /* ======================================================================== */
+/* Feature — LABEL START (eval.c-static: eval_label(),                       */
+/*           bmemory.c-static: bmem_prog_label_scan_all()). Parses the whole */
+/*           program in one pass, caching a TOKEN_LABEL variable for every   */
+/*           LABEL "name" line found — a way to warm the whole label cache   */
+/*           up front instead of relying on GOTO/GOSUB's individual cold     */
+/*           scans (eval_resolve_label(), from the previous commit). Not     */
+/*           independently observable from BASIC once cached (both warm and  */
+/*           cold-scanned lookups behave identically), so coverage here is   */
+/*           functional: LABEL START doesn't error, round-trips through      */
+/*           LIST/SAVE/LOAD, and every label it should have cached is still  */
+/*           reachable afterwards.                                           */
+/* ======================================================================== */
+static void test_label_start_syntax_check_does_not_beep(void) {
+    printf("LABEL START: syntax-checks cleanly, no beep or error\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("10 LABEL START");
+    type_raw("\r");
+    check("no BEL and no error for LABEL START",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    bastos_done();
+}
+
+static void test_label_start_runs_and_continues_on_same_line(void) {
+    printf("LABEL START: runs without error, and a ':'-chained statement after it still runs\n");
+    const char *lines[] = {
+        "10 LABEL START: PRINT \"AFTER\"",
+        NULL
+    };
+    /* No LABEL "name" lines exist in this program at all — also exercises  *
+     * the empty-scan case (nothing to cache) alongside the colon-chain.    */
+    const char *out = run_program(lines);
+    check("the statement after LABEL START ran", strstr(out, "AFTER") != NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
+}
+
+static void test_label_start_list_roundtrip(void) {
+    printf("LABEL START: LIST shows it back correctly\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 LABEL START");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("LIST reproduces LABEL START verbatim",
+          strstr(g_output, "10 LABEL START") != NULL);
+
+    bastos_done();
+}
+
+static void test_label_start_save_load_roundtrip(void) {
+    printf("LABEL START: a program containing it survives a SAVE/LOAD round trip\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 LABEL START");
+    type_raw("\r");
+    type_raw("SAVE \"label_start_test\"");
+    type_raw("\r");
+    for (int i = 0; i < 1000; i++)
+        bastos_loop();
+
+    type_raw("NEW");
+    type_raw("\r");
+    type_raw("LOAD \"label_start_test\"");
+    type_raw("\r");
+    for (int i = 0; i < 1000; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("the loaded program still contains LABEL START",
+          strstr(g_output, "LABEL START") != NULL);
+
+    capture_clear();
+    type_raw("RUN\r");
+    for (int i = 0; i < 500000 && strstr(g_output, "Ready") == NULL; i++)
+        bastos_loop();
+    check("the loaded program still runs without error",
+          strstr(g_output, "Error") == NULL);
+
+    hal_erase("label_start_test.bas");
+    bastos_done();
+}
+
+static void test_label_start_caches_every_label_in_one_pass(void) {
+    printf("LABEL START: every LABEL in the program is reachable by name, even before its own line ever executes\n");
+    const char *lines[] = {
+        "10 LABEL START",
+        "20 GOSUB \"two\"",
+        "30 GOSUB \"one\"",
+        "40 END",
+        "100 LABEL \"one\"",
+        "110 PRINT \"ONE\"",
+        "120 RETURN",
+        "200 LABEL \"two\"",
+        "210 PRINT \"TWO\"",
+        "220 RETURN",
+        NULL
+    };
+    /* "two" is called before "one" — and both lines 100 and 200 are only   *
+     * ever reached via GOSUB, never by falling through sequentially — so   *
+     * neither label could already be warm-cached from ordinary execution;  *
+     * only LABEL START's own pass over the program could have cached them. */
+    const char *out = run_program(lines);
+    check("subroutine \"two\" ran", strstr(out, "TWO") != NULL);
+    check("subroutine \"one\" ran", strstr(out, "ONE") != NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
+}
+
+/* ======================================================================== */
+/* Feature — CLEAR/END and FREE account for labels the same way they        */
+/*           account for any other variable, since a cached label is just   */
+/*           a variable (TOKEN_LABEL) living in the same vars region —      */
+/*           bmem_vars_clear() (used by CLEAR/END) and bmem_var_count()     */
+/*           (used by FREE) are both token-agnostic, so no dedicated code   */
+/*           was needed for either; this locks that guarantee in with a     */
+/*           test.                                                          */
+/* ======================================================================== */
+static void test_clear_and_free_account_for_labels(void) {
+    printf("CLEAR/FREE: FREE counts a cached label in its vars column, and CLEAR removes it\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("FREE\r");
+    for (int i = 0; i < 1000; i++)
+        bastos_loop();
+    int vars_before = -1;
+    char *obj_line = strstr(g_output, "obj:");
+    if (obj_line)
+        sscanf(obj_line, "obj: %*d %d", &vars_before);
+    check("FREE reported a baseline vars count of 0", vars_before == 0);
+
+    type_raw("10 LABEL \"x\"");
+    type_raw("\r");
+    capture_clear();
+    type_raw("RUN\r");
+    for (int i = 0; i < 500000 && strstr(g_output, "Ready") == NULL; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("FREE\r");
+    for (int i = 0; i < 1000; i++)
+        bastos_loop();
+    int vars_after_label = -1;
+    obj_line = strstr(g_output, "obj:");
+    if (obj_line)
+        sscanf(obj_line, "obj: %*d %d", &vars_after_label);
+    check("FREE's vars count increased by one after LABEL \"x\" ran",
+          vars_after_label == vars_before + 1);
+
+    capture_clear();
+    type_raw("CLEAR\r");
+    for (int i = 0; i < 1000; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("FREE\r");
+    for (int i = 0; i < 1000; i++)
+        bastos_loop();
+    int vars_after_clear = -1;
+    obj_line = strstr(g_output, "obj:");
+    if (obj_line)
+        sscanf(obj_line, "obj: %*d %d", &vars_after_clear);
+    check("CLEAR removed the cached label from the vars count",
+          vars_after_clear == vars_before);
+
+    bastos_done();
+}
+
+/* ======================================================================== */
 /* Feature — ''' end-of-line comment (token.c-static, tokenize())            */
 /*           Everything from a ''' up to the end of the physical line is     */
 /*           kept verbatim in the stored program (so LIST shows it back),    */
@@ -2757,6 +2938,24 @@ int main(void) {
     printf("\n");
 
     test_label_and_variable_namespaces_are_separate();
+    printf("\n");
+
+    test_label_start_syntax_check_does_not_beep();
+    printf("\n");
+
+    test_label_start_runs_and_continues_on_same_line();
+    printf("\n");
+
+    test_label_start_list_roundtrip();
+    printf("\n");
+
+    test_label_start_save_load_roundtrip();
+    printf("\n");
+
+    test_label_start_caches_every_label_in_one_pass();
+    printf("\n");
+
+    test_clear_and_free_account_for_labels();
     printf("\n");
 
     test_comment_trailing();

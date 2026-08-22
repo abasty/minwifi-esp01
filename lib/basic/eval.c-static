@@ -46,6 +46,7 @@ static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims);
 static void eval_load();
 static void eval_goto(uint16_t line_no);
 static bool eval_edit();
+static bool eval_label();
 
 extern bmem_t *bmem;
 
@@ -107,7 +108,6 @@ uint8_t instr1s[] = {
     TOKEN_KEYWORD_ERASE,
     TOKEN_KEYWORD_SAVE,
     TOKEN_KEYWORD_LOAD,
-    TOKEN_KEYWORD_LABEL,
     0,
 };
 
@@ -1975,10 +1975,6 @@ EVAL:
         eval_load();
         return true;
     }
-    if (instr == TOKEN_KEYWORD_LABEL) {
-        eval_label_set();
-        return true;
-    }
     if (instr == TOKEN_KEYWORD_RETURN) {
         eval_return();
         return true;
@@ -2303,7 +2299,7 @@ static bool eval_ftp() {
 static bool eval_instruction() {
     return eval_print(false) || eval_input() || eval_simple_instruction() ||
            eval_run() || eval_rem() || eval_dim() || eval_list() ||
-           eval_edit() || eval_put() || eval_db() || eval_wifi() ||
+           eval_edit() || eval_label() || eval_put() || eval_db() || eval_wifi() ||
            eval_minitel() || eval_ftp() || eval_output() || eval_let();
 }
 
@@ -2585,6 +2581,29 @@ static bool eval_edit() {
         return true;
 
     bmem->io_edit_line = prog->line_no;
+    return true;
+}
+
+// LABEL "name" (see eval_label_set()) or LABEL START, which parses the
+// whole program in one pass and caches every LABEL "name" line it finds
+// (see bmem_prog_label_scan_all(), bmemory.c-static) — a way to warm the
+// whole label cache up front instead of relying on GOTO/GOSUB's individual
+// cold scans (eval_resolve_label()).
+static bool eval_label() {
+    if (!eval_token(TOKEN_KEYWORD_LABEL))
+        return false;
+
+    if (eval_token(TOKEN_KEYWORD_START)) {
+        if (bmem->bstate.do_eval)
+            bmem_prog_label_scan_all();
+        return true;
+    }
+
+    if (!eval_string_expr())
+        return false;
+
+    if (bmem->bstate.do_eval)
+        eval_label_set();
     return true;
 }
 

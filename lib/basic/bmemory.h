@@ -152,6 +152,7 @@ static prog_t *bmem_prog_next_line(prog_t *prog);
 static prog_t *bmem_prog_prev_line(prog_t *prog);
 static prog_t *bmem_prog_get_line_or_next(uint16_t line_no);
 static uint16_t bmem_prog_find_label(const char *label_name);
+static void bmem_prog_label_scan_all();
 
 // var related functions
 static void bmem_vars_clear();
