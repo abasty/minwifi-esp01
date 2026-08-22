@@ -1076,6 +1076,99 @@ static void test_mode80_survives_run_with_no_program(void) {
     bastos_done();
 }
 
+static void test_mode2_sends_bare_80_cols_sequence(void) {
+    printf("MODE 2: sends just the 80-column switch, nothing else\n");
+    const char *lines[] = {
+        "10 A$ = MODE 2",
+        "20 PRINT LEN(A$)",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("MODE 2's sequence is exactly 4 bytes (PRO2 + 2 bytes)",
+          strstr(out, "4") != NULL);
+}
+
+static void test_mode0_sends_bare_40_cols_sequence(void) {
+    printf("MODE 0: sends just the 40-column switch, nothing else\n");
+    const char *lines[] = {
+        "10 A$ = MODE 0",
+        "20 PRINT LEN(A$)",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("MODE 0's sequence is exactly 4 bytes (PRO2 + 2 bytes)",
+          strstr(out, "4") != NULL);
+}
+
+static void test_mode1_sends_full_init_string_unconditionally(void) {
+    printf("MODE 1: always sends the full MODE_INIT_STRING, regardless of prior mode\n");
+    /* Regression: MODE 1 used to only send the keyboard/cursor reset codes  *
+     * when bstate.screen_mode read back as 80-column at that point — but   *
+     * that read happened in code that runs even during a line's syntax-    *
+     * check pass (before EVAL:'s do_eval gate), so a prior MODE 2 on an    *
+     * earlier line got silently undone by the time MODE 1's real execution *
+     * pass ran, and the short 4-byte sequence was sent instead. MODE 1 no  *
+     * longer reads any prior state at all — it must send the full 26-byte  *
+     * MODE_INIT_STRING (containing the lowercase-keyboard-set code) every   *
+     * time, whether or not a MODE 2 came right before it.                  */
+    const char *lines[] = {
+        "10 MODE 2",
+        "20 A$ = MODE 1",
+        "30 PRINT LEN(A$)",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("MODE 1's sequence is the full 26-byte MODE_INIT_STRING",
+          strstr(out, "26") != NULL);
+}
+
+static void test_mode1_sends_full_init_string_even_without_prior_mode2(void) {
+    printf("MODE 1: sends the full MODE_INIT_STRING even with no prior MODE 2 at all\n");
+    const char *lines[] = {
+        "10 A$ = MODE 1",
+        "20 PRINT LEN(A$)",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("MODE 1's sequence is still the full 26-byte MODE_INIT_STRING",
+          strstr(out, "26") != NULL);
+}
+
+static void test_mode1_content_includes_lowercase_keyboard_code(void) {
+    printf("MODE 1: the sequence it sends actually contains the lowercase-keyboard code\n");
+    const char *lines[] = {
+        "10 MODE 2",
+        "20 PRINT MODE 1",
+        NULL
+    };
+    const char *out = run_program(lines);
+    /* P_CLAVIER_MINUSCULE (tty-minitel.h): PRO2 "\x69\x45" = "\x1B\x3A\x69\x45". */
+    check("the lowercase-keyboard-set code is present",
+          memmem(out, strlen(out), "\x1b\x3a\x69\x45", 4) != NULL);
+}
+
+static void test_mode1_resets_screen_mode_as_a_plain_statement(void) {
+    printf("MODE 1: correctly resets screen_mode to 40 columns when used as a plain statement (not just in an expression)\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("MODE 2");
+    type_raw("\r");
+    type_raw("MODE 1");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("CLS");
+    type_raw("\r");
+    check("CLS emits the 40-column (Videotex) clear-screen code after MODE 1",
+          strchr(g_output, '\x0c') != NULL);
+    check("CLS does not emit the 80-column ANSI clear-screen sequence",
+          strstr(g_output, "\x1b[2J\x1b[H") == NULL);
+
+    bastos_done();
+}
+
 static void test_minitel_connect_disables_scroll_in_mode40(void) {
     printf("MINITEL: a successful connect sends the rouleau-off (scroll disable) sequence in 40-column mode\n");
     /* os_connect() (os.c-static) only sends P_ROULEAU_OFF once hal_net_connect *
@@ -3037,6 +3130,24 @@ int main(void) {
     printf("\n");
 
     test_mode80_survives_run_with_no_program();
+    printf("\n");
+
+    test_mode2_sends_bare_80_cols_sequence();
+    printf("\n");
+
+    test_mode0_sends_bare_40_cols_sequence();
+    printf("\n");
+
+    test_mode1_sends_full_init_string_unconditionally();
+    printf("\n");
+
+    test_mode1_sends_full_init_string_even_without_prior_mode2();
+    printf("\n");
+
+    test_mode1_content_includes_lowercase_keyboard_code();
+    printf("\n");
+
+    test_mode1_resets_screen_mode_as_a_plain_statement();
     printf("\n");
 
     test_minitel_connect_disables_scroll_in_mode40();

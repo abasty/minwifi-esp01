@@ -256,7 +256,7 @@ CLS                  ' Effacer l'écran
 CLEOL                ' Effacer jusqu'à la fin de ligne
 CURSOR n             ' 0=masquer, 1=afficher le curseur
 BEEP                 ' Émettre un bip
-MODE n               ' Mode écran : ≤1 = 40 cols Videotex, ≥2 = 80 cols téléinformatique
+MODE n               ' Mode écran : 0/1 = 40 cols Videotex, ≥2 = 80 cols téléinformatique
 LINE0                ' Placer le curseur en ligne 0, colonne 1 (ligne d'état)
 ECHO n               ' 0=écho désactivé, 1=écho activé
 G0                   ' Passer au jeu de caractères ASCII
@@ -270,6 +270,15 @@ INS LINE             ' Insérer une ligne
 DEL LINE             ' Supprimer une ligne
 DEL CHAR             ' Supprimer un caractère
 ```
+
+`MODE 0` et `MODE 1` passent tous les deux en mode Videotex 40 colonnes,
+mais ne sont pas identiques : `MODE 0` envoie uniquement le changement de
+largeur de colonne, tandis que `MODE 1` renvoie en plus toute la séquence
+d'initialisation du terminal (écho local désactivé, mode rouleau, clavier
+minuscule, clavier étendu) — la même que celle envoyée automatiquement au
+démarrage. Utiliser `MODE 1` pour réinitialiser complètement le terminal
+dans son état normal (par exemple après un `MODE 2`), et `MODE 0` quand
+seule la largeur de colonne doit changer.
 
 Exemple illustrant `DEL CHAR` :
 

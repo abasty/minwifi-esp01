@@ -1836,13 +1836,16 @@ static bool eval_string_tty() {
     }
 
     if (fn == TOKEN_KEYWORD_MODE) {
-        bool was_mode80 = bmem->bstate.screen_mode != 0;
+        // Decided purely from arg1, never from prior state: this whole
+        // block runs even during a syntax-check pass (it's before EVAL:,
+        // which is the only do_eval gate), so a decision based on reading
+        // bstate.screen_mode here would see it already mutated by that
+        // earlier, non-executing pass over the same line.
         bmem->bstate.screen_mode = (arg1 >= 2) ? 1 : 0;
-        if (bmem->bstate.screen_mode) {
+        if (arg1 >= 2) {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s", P_80_COLS);
-        } else if (was_mode80) {
-            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s%s%s%s", P_40_COLS,
-                     P_CLAVIER_MINUSCULE, P_CLAVIER_ETENDU, CON);
+        } else if (arg1 == 1) {
+            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s", MODE_INIT_STRING);
         } else {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s", P_40_COLS);
         }

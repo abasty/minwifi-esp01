@@ -253,7 +253,7 @@ CLS                  ' Clear screen
 CLEOL                ' Clear to end of line
 CURSOR n             ' 0=hide, 1=show cursor
 BEEP                 ' Sound bell
-MODE n               ' Screen mode: ≤1 = 40 cols Videotex, ≥2 = 80-column
+MODE n               ' Screen mode: 0/1 = 40 cols Videotex, ≥2 = 80-column
 LINE0                ' Move cursor to line 0, column 1 (status line)
 ECHO n               ' 0=echo off, 1=echo on
 G0                   ' Switch to ASCII character set
@@ -267,6 +267,14 @@ INS LINE             ' Insert line
 DEL LINE             ' Delete line
 DEL CHAR             ' Delete character
 ```
+
+`MODE 0` and `MODE 1` both switch to 40-column Videotex mode, but aren't
+identical: `MODE 0` sends only the bare column-width switch, while `MODE 1`
+also resends the full terminal init sequence (local echo off, scroll mode,
+lowercase keyboard, extended keyboard) — the same one sent automatically at
+startup. Use `MODE 1` to fully reset the terminal back to its normal state
+(for example, after `MODE 2`), and `MODE 0` when only the column width
+itself needs to change.
 
 Example demonstrating `DEL CHAR`:
 
