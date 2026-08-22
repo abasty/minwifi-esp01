@@ -163,9 +163,14 @@ void hal_wifi_disconnect(void) {}
 
 bool hal_wifi_is_connected(void) { return false; }
 
+/* Overridden by tests that need os_connect() to see a successful connect
+ * (e.g. the MINITEL rouleau-off tests below, which exercise code gated on
+ * fd >= 0); every other test relies on the default failure. */
+static bool g_hal_net_connect_should_succeed = false;
+
 int hal_net_connect(split_t *urn) {
     (void)urn;
-    return -1;
+    return g_hal_net_connect_should_succeed ? 3 : -1;
 }
 
 void hal_net_disconnect(uint8_t set, int n) {
@@ -1072,14 +1077,21 @@ static void test_mode80_survives_run_with_no_program(void) {
 }
 
 static void test_minitel_connect_disables_scroll_in_mode40(void) {
-    printf("MINITEL: connecting sends the rouleau-off (scroll disable) sequence in 40-column mode\n");
+    printf("MINITEL: a successful connect sends the rouleau-off (scroll disable) sequence in 40-column mode\n");
+    /* os_connect() (os.c-static) only sends P_ROULEAU_OFF once hal_net_connect *
+     * reports a successful fd, and only for a URN with a recognized protocol  *
+     * prefix (bdb_urn_split()) — a bare host name like "3615" has no proto    *
+     * and never reaches that code at all, so this needs both a "tcp:"-        *
+     * prefixed URN and the connect stub forced to succeed.                    */
     bastos_init();
     for (int i = 0; i < 64; i++)
         bastos_loop();
 
+    g_hal_net_connect_should_succeed = true;
     capture_clear();
-    type_raw("MINITEL \"3615\"");
+    type_raw("MINITEL \"tcp:3615\"");
     type_raw("\r");
+    g_hal_net_connect_should_succeed = false;
     /* P_ROULEAU_OFF (tty-minitel.h): PRO2 "\x6A\x43" = "\x1B\x3A\x6A\x43". */
     check("the 40-column rouleau-off sequence was sent",
           strstr(g_output, "\x1B\x3A\x6A\x43") != NULL);
@@ -1088,10 +1100,11 @@ static void test_minitel_connect_disables_scroll_in_mode40(void) {
 }
 
 static void test_minitel_connect_skips_rouleau_off_in_mode80(void) {
-    printf("MINITEL: connecting does not send the 40-column rouleau-off sequence in 80-column mode\n");
-    /* Regression: eval_minitel() used to send P_ROULEAU_OFF (a 40-column   *
-     * Minitel-specific sequence) unconditionally on every MINITEL connect, *
-     * even in 80-column (ANSI) mode, where it doesn't apply.               */
+    printf("MINITEL: a successful connect does not send the 40-column rouleau-off sequence in 80-column mode\n");
+    /* Regression: os_connect() used to send P_ROULEAU_OFF (a 40-column     *
+     * Minitel-specific sequence) unconditionally on every successful       *
+     * MINITEL connect, even in 80-column (ANSI) mode, where it doesn't     *
+     * apply.                                                               */
     bastos_init();
     for (int i = 0; i < 64; i++)
         bastos_loop();
@@ -1099,9 +1112,11 @@ static void test_minitel_connect_skips_rouleau_off_in_mode80(void) {
     type_raw("MODE 2");
     type_raw("\r");
 
+    g_hal_net_connect_should_succeed = true;
     capture_clear();
-    type_raw("MINITEL \"3615\"");
+    type_raw("MINITEL \"tcp:3615\"");
     type_raw("\r");
+    g_hal_net_connect_should_succeed = false;
     check("the 40-column rouleau-off sequence was not sent",
           strstr(g_output, "\x1B\x3A\x6A\x43") == NULL);
 
