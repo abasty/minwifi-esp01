@@ -50,6 +50,7 @@
 
 #include "bio.h"
 #include "os.h"
+#include "tty-minitel.h"
 
 /* ---- Output capture ---------------------------------------------------- */
 
@@ -1108,18 +1109,22 @@ static void test_mode1_sends_full_init_string_unconditionally(void) {
      * check pass (before EVAL:'s do_eval gate), so a prior MODE 2 on an    *
      * earlier line got silently undone by the time MODE 1's real execution *
      * pass ran, and the short 4-byte sequence was sent instead. MODE 1 no  *
-     * longer reads any prior state at all — it must send the full 26-byte  *
-     * MODE_INIT_STRING (containing the lowercase-keyboard-set code) every   *
-     * time, whether or not a MODE 2 came right before it.                  */
+     * longer reads any prior state at all — it must send the full          *
+     * MODE_INIT_STRING (containing the lowercase-keyboard-set code) every  *
+     * time, whether or not a MODE 2 came right before it. (Length checked  *
+     * against strlen(MODE_INIT_STRING) rather than a hardcoded number, so  *
+     * this doesn't go stale again if the init sequence grows.)             */
     const char *lines[] = {
         "10 MODE 2",
         "20 A$ = MODE 1",
         "30 PRINT LEN(A$)",
         NULL
     };
+    char expected[8];
+    snprintf(expected, sizeof(expected), "%d", (int)strlen(MODE_INIT_STRING));
     const char *out = run_program(lines);
-    check("MODE 1's sequence is the full 26-byte MODE_INIT_STRING",
-          strstr(out, "26") != NULL);
+    check("MODE 1's sequence is the full MODE_INIT_STRING",
+          strstr(out, expected) != NULL);
 }
 
 static void test_mode1_sends_full_init_string_even_without_prior_mode2(void) {
@@ -1129,9 +1134,11 @@ static void test_mode1_sends_full_init_string_even_without_prior_mode2(void) {
         "20 PRINT LEN(A$)",
         NULL
     };
+    char expected[8];
+    snprintf(expected, sizeof(expected), "%d", (int)strlen(MODE_INIT_STRING));
     const char *out = run_program(lines);
-    check("MODE 1's sequence is still the full 26-byte MODE_INIT_STRING",
-          strstr(out, "26") != NULL);
+    check("MODE 1's sequence is still the full MODE_INIT_STRING",
+          strstr(out, expected) != NULL);
 }
 
 static void test_mode1_content_includes_lowercase_keyboard_code(void) {
@@ -1167,6 +1174,58 @@ static void test_mode1_resets_screen_mode_as_a_plain_statement(void) {
           strstr(g_output, "\x1b[2J\x1b[H") == NULL);
 
     bastos_done();
+}
+
+static void test_mode_assignment_does_not_change_tracked_screen_mode(void) {
+    printf("MODE: used as a value (\"X$ = MODE 2\") must not actually change the tracked screen mode\n");
+    /* Regression: eval_string_tty()'s MODE branch used to write            *
+     * bstate.screen_mode unconditionally, on every evaluation — including  *
+     * when the computed codes were only being captured into a string, not  *
+     * sent to the terminal (e.g. a per-service "X$ = MODE 2" line used     *
+     * just to stash the escape sequence for later). That silently flipped  *
+     * the interpreter's internal notion of the current column mode without *
+     * ever telling the real terminal, so every following AT/CLS/etc. used  *
+     * the wrong (80-column) codes even though the terminal was still       *
+     * physically in 40 columns — producing a garbled display.              */
+    const char *lines[] = {
+        "10 X$ = MODE 2",
+        "20 CLS",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("CLS still emits the 40-column (Videotex) clear-screen code",
+          strchr(out, '\x0c') != NULL);
+    check("CLS does not emit the 80-column ANSI clear-screen sequence",
+          strstr(out, "\x1b[2J\x1b[H") == NULL);
+}
+
+static void test_ink_assignment_does_not_change_tracked_ink(void) {
+    printf("INK: used as a value (\"X$ = INK 3\") must not actually change the tracked ink color\n");
+    /* Same class of bug as MODE, for INK's tracked bmem->ink — observed    *
+     * indirectly via PLOT, which re-sends the current ink color before     *
+     * drawing (eval_graphic_fn(), only when it differs from the default,   *
+     * ink 7).                                                              */
+    const char *lines[] = {
+        "10 X$ = INK 3",
+        "20 PLOT 0,0",
+        NULL
+    };
+    const char *out = run_program(lines);
+    /* INK escape (tty-minitel.h): "\x1B" + (n + INK_DELTA); ink 3 -> 0x1B 0x43. */
+    check("PLOT does not include the ink-3 escape (ink was never really changed)",
+          memmem(out, strlen(out), "\x1b\x43", 2) == NULL);
+}
+
+static void test_ink_statement_still_changes_tracked_ink(void) {
+    printf("INK: used as a plain statement still changes the tracked ink color\n");
+    const char *lines[] = {
+        "10 INK 3",
+        "20 PLOT 0,0",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("PLOT includes the ink-3 escape (ink really changed)",
+          memmem(out, strlen(out), "\x1b\x43", 2) != NULL);
 }
 
 static void test_minitel_connect_disables_scroll_in_mode40(void) {
@@ -1212,6 +1271,41 @@ static void test_minitel_connect_skips_rouleau_off_in_mode80(void) {
     g_hal_net_connect_should_succeed = false;
     check("the 40-column rouleau-off sequence was not sent",
           strstr(g_output, "\x1B\x3A\x6A\x43") == NULL);
+
+    bastos_done();
+}
+
+static void test_minitel_suspends_colon_chain_until_connection_ends(void) {
+    printf("MINITEL: a ':'-chained statement after it must not run before the connection ends\n");
+    /* Same bug class already fixed for INPUT in eval_prog()'s colon-loop:  *
+     * MINITEL just connects synchronously (sets bmem->sock) and returns,   *
+     * so without an explicit suspend, the rest of the line ran immediately *
+     * — racing ahead of connected mode, which real firmware's os_loop()    *
+     * only enters on its *next* iteration (it stops calling bastos_loop()  *
+     * entirely while bmem->sock >= 0, switching to os_loop_connected()     *
+     * instead). The test harness normally pumps bastos_loop() in a tight   *
+     * loop regardless of that, so this test mimics os_loop()'s own gate    *
+     * directly: stop pumping the moment bmem->sock becomes connected, the  *
+     * same point at which real firmware would stop too, and inspect        *
+     * interpreter state right there.                                      */
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 MODE 2");
+    type_raw("\r");
+    type_raw("20 MINITEL \"tcp:host\": MODE 1");
+    type_raw("\r");
+
+    g_hal_net_connect_should_succeed = true;
+    bastos_send_keys("RUN\r", 4, false);
+    for (int i = 0; i < 500000 && !bastos_is_connected(); i++)
+        bastos_loop();
+    g_hal_net_connect_should_succeed = false;
+
+    check("the connection is active", bastos_is_connected());
+    check("MODE 1 has not run yet: screen_mode is still 80-column, from MODE 2",
+          bastos_screen_mode() == 1);
 
     bastos_done();
 }
@@ -3150,10 +3244,22 @@ int main(void) {
     test_mode1_resets_screen_mode_as_a_plain_statement();
     printf("\n");
 
+    test_mode_assignment_does_not_change_tracked_screen_mode();
+    printf("\n");
+
+    test_ink_assignment_does_not_change_tracked_ink();
+    printf("\n");
+
+    test_ink_statement_still_changes_tracked_ink();
+    printf("\n");
+
     test_minitel_connect_disables_scroll_in_mode40();
     printf("\n");
 
     test_minitel_connect_skips_rouleau_off_in_mode80();
+    printf("\n");
+
+    test_minitel_suspends_colon_chain_until_connection_ends();
     printf("\n");
 
     test_edit_shows_the_staged_line();

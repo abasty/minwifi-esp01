@@ -1,3 +1,4 @@
+10 MODE 1
 20 GOSUB "ChoixWifi"
 100 LABEL "ChoixService":b=0:nc=0:suiv=0
 105 LABEL "AfficheChoix":GOSUB "ListeServices"
@@ -19,7 +20,7 @@
 230 GOSUB 2000+(b+c-1)*10
 240 IF urn$="" THEN "SaisieChoix"
 250 PRINT AT 0,1;"Connecting to ";srv$
-260 MINITEL urn$
+260 MODE smode:MINITEL srv$,urn$:MODE 1
 300 GOTO "AfficheChoix"
 1000 LABEL "ListeServices":CURSOR 0;LINE0 ;CLEOL ;CLS ;SCROLL 0;"LISTE DES SERVICES\r\n";INK 4;REP$ 40,"`"
 1010 FOR i=1 TO 4:AT i*4+2,5;INK 4;REP$ 36,"`";"\n":NEXT
@@ -44,38 +45,47 @@
 2000 srv$="minipavi"
 2001 urn$="tcp:go.minipavi.fr:516"
 2002 desc$="Kiosque Minipavi"
+2003 smode=0
 2009 RETURN
 2010 srv$="3611"
 2011 urn$="ws:3611.re:80:/ws"
 2012 desc$="Annuaire électronique"
+2013 smode=0
 2019 RETURN
 2020 srv$="3615"
 2021 urn$="ws:3615co.de:80:/ws"
 2022 desc$="Kiosque 3615"
+2023 smode=0
 2029 RETURN
 2030 srv$="hacker"
 2031 urn$="ws:mntl.joher.com:2018:/?echo"
 2032 desc$="Pour geeks rétro, site original"
+2033 smode=0
 2039 RETURN
 2040 srv$="retrocampus"
 2041 urn$="tcp:bbs.retrocampus.com:1651"
 2042 desc$="Passerelle BBS"
+2043 smode=0
 2049 RETURN
 2050 srv$="zboub"
 2051 urn$="tcp:abasty-retro.fr:1967"
 2052 desc$="Portage serveur monovoie 90's"
+2053 smode=0
 2059 RETURN
 2060 srv$="telehack"
 2061 urn$="tcp:telehack.com:23"
 2062 desc$="Serveur Telnet"
+2063 smode=2
 2069 RETURN
 2070 srv$="galaxy"
 2071 urn$="ws:galaxy.microtel.fr:50124"
 2072 desc$="Serveur des années 90"
+2073 smode=0
 2079 RETURN
 2990 srv$=""
 2991 urn$=""
 2992 desc$=""
+2993 smode=0
 2998 RETURN
 3000 LABEL "ChoixWifi":OUTPUT ws$
 3010 WIFI STATUS

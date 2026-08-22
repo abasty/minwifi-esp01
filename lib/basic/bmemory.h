@@ -96,6 +96,16 @@ struct eval_state_s {
     uint8_t screen_mode: 1;
     uint8_t else_pending: 1; // set by eval_if()'s false branch when it found
                               // a matching ELSE, consumed by eval_else()
+    uint8_t tty_apply: 1;    // set by eval_print() around evaluating one
+                              // item: a stateful TTY function (MODE, INK,
+                              // PAPER) may only update its tracked state
+                              // (screen_mode, ink, paper) while this is set,
+                              // since that's the only context where the
+                              // computed codes are actually about to be
+                              // sent to the terminal — not when they're
+                              // merely being computed into a string (e.g.
+                              // "A$ = MODE 2"), which must not affect the
+                              // real terminal's tracked state
 
     prog_buffer_t token_buffer;
 };

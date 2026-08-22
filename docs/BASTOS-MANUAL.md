@@ -1101,6 +1101,16 @@ MINITEL "3615", "ws:3615co.de:80:/ws"
 MINITEL "3615"               ' reconnect using saved name
 ```
 
+Once connected, the program suspends until the user exits connected mode
+(ESC ESC) — a `:`-chained statement after `MINITEL` on the same line only
+runs at that point, not right after the connection is made:
+
+```basic
+10 MODE 2 : MINITEL "3615" : MODE 1
+```
+
+Here, `MODE 1` only runs once the user has come back from connected mode.
+
 ### FTP
 
 ```basic

@@ -1131,6 +1131,18 @@ MINITEL "3615", "ws:3615co.de:80:/ws"
 MINITEL "3615"               ' reconnexion par nom sauvegardé
 ```
 
+Une fois connecté, le programme suspend son exécution jusqu'à ce que
+l'utilisateur quitte le mode connecté (ESC ESC) — une instruction
+`:`-chaînée après `MINITEL` sur la même ligne n'est donc exécutée qu'à ce
+moment-là, pas immédiatement après la connexion :
+
+```basic
+10 MODE 2 : MINITEL "3615" : MODE 1
+```
+
+Ici, `MODE 1` ne s'exécute qu'après que l'utilisateur soit revenu du mode
+connecté.
+
 ### FTP
 
 ```basic

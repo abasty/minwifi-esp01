@@ -83,6 +83,13 @@ void bastos_prog_new(void);
 void bastos_vars_clear(void);
 var_t *bastos_var_get(const char *name);
 
+// Host-side observability of interpreter-internal state that isn't a BASIC
+// variable (used by tests): whether a MINITEL connection is currently
+// active, and the current screen mode (0 = 40-column Videotex, 1 =
+// 80-column).
+bool bastos_is_connected(void);
+uint8_t bastos_screen_mode(void);
+
 // void bmem_test();
 
 #ifdef __cplusplus
