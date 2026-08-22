@@ -1,7 +1,7 @@
 20 GOSUB "ChoixWifi"
 100 LABEL "ChoixService":b=0:nc=0:suiv=0
 105 LABEL "AfficheChoix":GOSUB "ListeServices"
-110 LABEL "SaisieChoix":AT 23,1;"Q: Quitter";AT 24,1;"Choix : .\b";CURSOR 1
+110 LABEL "SaisieChoix":AT 23,1;INK 2;"quitter → ";INK 6;INVERSE 1;SIZE 2;"Q";AT 24,1;"Choix : .\b";CURSOR 1
 120 INPUT c$:k=VKEY
 125 IF c$="Q" OR c$="q" THEN "Fin"
 140 IF k=6 THEN "ChoixService"
@@ -32,8 +32,8 @@
 1166 suiv=0
 1170 IF srv$="" THEN 1190
 1175 suiv=1
-1180 AT 23,17;INK 2;"page suivante >";UNDERLINE 1;" ";INK 6;INVERSE 1;" SUITE  "
-1190 AT 24,17;INK 2;"première page > ";INK 6;INVERSE 1;"SOMMAIRE"
+1180 AT 23,17;INK 2;"page suivante →";UNDERLINE 1;" ";INK 6;INVERSE 1;" SUITE  "
+1190 AT 24,17;INK 2;"première page → ";INK 6;INVERSE 1;"SOMMAIRE"
 1200 RETURN
 1999 REM "Services"
 2000 srv$="minipavi"
