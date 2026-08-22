@@ -745,12 +745,31 @@ this:
 10 IF a = 1 THEN PRINT "a": IF b = 1 THEN PRINT "b too" ELSE PRINT "not b"
 ```
 
-⚠️ **Common pitfall**: `IF a > 0 THEN a=a-1` (and the same right after
-`ELSE`) will not work as expected. The `a=a-1` is treated as a comparison
-(is `a` equal to `a-1`?), which evaluates to `0` (false) — and BASTOS
-additionally treats a bare `x=y` used this way as a `GOTO` attempt rather
-than a comparison. Use `LET` to make it an assignment: `IF a > 0 THEN LET a
-= a - 1`.
+`ELSE` cannot be directly followed by another `IF` — the clause after `ELSE`
+(like the clause after `THEN`) must start with a plain statement, not `IF`
+itself. To test a third case, put a harmless placeholder statement right
+after `ELSE`, then chain the nested `IF` onto it with `:` — `LET x=x` (an
+assignment with no effect) is a common choice:
+
+```basic
+10 IF x < 0 THEN PRINT "negative" ELSE LET x=x: IF x = 0 THEN PRINT "zero" ELSE PRINT "positive"
+```
+
+This prints exactly one of the three labels. If `x < 0` is true, `THEN`
+prints "negative" and the whole `ELSE` (including the nested `IF`) is
+skipped to the end of the line. If `x < 0` is false, execution jumps
+straight to `ELSE`, runs the harmless `LET x=x`, then falls through to the
+nested `IF x = 0 ... ELSE ...`, which decides between "zero" and
+"positive".
+
+⚠️ **Common pitfall**: `IF a > 0 THEN a=a-1` does not do what it looks like —
+the same trap exists right after `ELSE`. BASTOS does not read `a=a-1` as an
+assignment, but as a comparison (is `a` equal to `a-1`?), which evaluates to
+`0` or `1`. That result is then treated exactly like the shortcut line
+number of a `GOTO` (the same mechanism as `THEN 10`): the program actually
+jumps to line `0` or `1`, which is neither an assignment nor a harmless
+no-op. To write a real assignment after `THEN`/`ELSE`, use `LET` explicitly:
+`IF a > 0 THEN LET a = a - 1`.
 
 ### FOR / NEXT
 

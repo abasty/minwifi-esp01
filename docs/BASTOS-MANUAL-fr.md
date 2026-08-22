@@ -758,12 +758,30 @@ la plupart des autres langages :
 10 IF a = 1 THEN PRINT "a": IF b = 1 THEN PRINT "b aussi" ELSE PRINT "pas b"
 ```
 
-⚠️ **Piège courant** : `IF a > 0 THEN a=a-1` (et de même juste après `ELSE`)
-ne fonctionnera pas comme prévu. `a=a-1` est traité comme une comparaison
-(« a est-il égal à a-1 ? »), ce qui évalue à `0` (faux) — et BASTOS traite
-en plus un `x=y` utilisé ainsi comme une tentative de `GOTO` plutôt que
-comme une comparaison. Utiliser `LET` pour en faire une affectation : `IF a
-> 0 THEN LET a = a - 1`.
+`ELSE` ne peut pas être directement suivi d'un autre `IF` — la clause après
+`ELSE` (comme celle après `THEN`) doit commencer par une instruction simple,
+pas par `IF` lui-même. Pour tester un troisième cas, il faut placer une
+instruction sans effet juste après `ELSE`, puis y enchaîner le `IF` imbriqué
+avec `:` — `LET x=x` (une affectation sans effet) est un choix courant :
+
+```basic
+10 IF x < 0 THEN PRINT "négatif" ELSE LET x=x: IF x = 0 THEN PRINT "nul" ELSE PRINT "positif"
+```
+
+Ceci affiche exactement un des trois libellés. Si `x < 0` est vrai, `THEN`
+affiche « négatif » et tout le `ELSE` (y compris le `IF` imbriqué) est
+sauté jusqu'à la fin de la ligne. Si `x < 0` est faux, l'exécution saute
+directement au `ELSE`, exécute le `LET x=x` sans effet, puis enchaîne sur le
+`IF x = 0 ... ELSE ...` imbriqué, qui tranche entre « nul » et « positif ».
+
+⚠️ **Piège courant** : `IF a>0 THEN a=a-1` ne fait pas ce que l'on croit — et
+le même piège existe juste après `ELSE`. BASTOS n'interprète pas `a=a-1`
+comme une affectation, mais comme un test de comparaison (« a est-il égal à
+a-1 ? »), qui vaut `0` ou `1`. Ce résultat est ensuite traité exactement
+comme le numéro de ligne d'un `GOTO` raccourci (le même mécanisme que `THEN
+10`) : le programme saute réellement vers la ligne `0` ou `1`, ce qui n'est
+ni une affectation ni un test sans effet. Pour écrire une vraie affectation
+après `THEN`/`ELSE`, utiliser `LET` explicitement : `IF a>0 THEN LET a=a-1`.
 
 ### FOR / NEXT
 
