@@ -2249,6 +2249,152 @@ static void test_label_save_load_roundtrip(void) {
 }
 
 /* ======================================================================== */
+/* Feature — GOTO/GOSUB "name" (eval.c-static: eval_goto_target(),           */
+/*           eval_resolve_label()). Warm path only: resolves a label name    */
+/*           to a line number by looking up the TOKEN_LABEL variable cached  */
+/*           by a LABEL "name" statement that has already executed. No scan  */
+/*           fallback yet — that lands in a later commit.                    */
+/* ======================================================================== */
+static void test_goto_label_warm_path(void) {
+    printf("GOTO \"name\": jumps to a label already executed once (warm cache)\n");
+    const char *lines[] = {
+        "10 LABEL \"start\"",
+        "20 PRINT \"ONE\"",
+        "30 IF X = 0 THEN LET X = 1: GOTO \"start\"",
+        "40 PRINT \"DONE\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("body ran twice", strstr(out, "ONE") != NULL &&
+          strstr(strstr(out, "ONE") + 1, "ONE") != NULL);
+    check("loop exited and reached the end", strstr(out, "DONE") != NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
+}
+
+static void test_gosub_label_warm_path_return(void) {
+    printf("GOSUB \"name\": jumps to a label already executed once, RETURN resumes\n");
+    const char *lines[] = {
+        "10 X = 0",
+        "20 LABEL \"sub\"",
+        "30 PRINT \"IN SUB\"",
+        "40 IF X = 1 THEN RETURN",
+        "50 GOTO 100",
+        "100 X = 1",
+        "110 GOSUB \"sub\"",
+        "120 PRINT \"AFTER\"",
+        "130 END",
+        NULL
+    };
+    /* Lines 20-40 run once as plain sequential flow first (X=0, RETURN not  *
+     * taken), which is what caches the "sub" label — this is the warm      *
+     * path. GOSUB "sub" on line 110 then reuses that cache, and RETURN     *
+     * resumes right after it, at line 120.                                 */
+    const char *out = run_program(lines);
+    char *first_in_sub = strstr(out, "IN SUB");
+    check("subroutine body ran twice",
+          first_in_sub != NULL && strstr(first_in_sub + 1, "IN SUB") != NULL);
+    check("execution resumed after the GOSUB", strstr(out, "AFTER") != NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
+}
+
+static void test_goto_numeric_still_works(void) {
+    printf("GOTO: a plain line number target still works (regression)\n");
+    const char *lines[] = {
+        "10 PRINT \"A\"",
+        "20 GOTO 40",
+        "30 PRINT \"SKIPPED\"",
+        "40 PRINT \"B\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("jumped past the skipped line", strstr(out, "SKIPPED") == NULL);
+    check("reached the target line", strstr(out, "B") != NULL);
+}
+
+static void test_gosub_numeric_still_works(void) {
+    printf("GOSUB: a plain line number target still works (regression)\n");
+    const char *lines[] = {
+        "10 GOSUB 100: PRINT \"AFTER\"",
+        "20 END",
+        "100 PRINT \"IN SUB\"",
+        "110 RETURN",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("subroutine ran", strstr(out, "IN SUB") != NULL);
+    check("resumed after the GOSUB", strstr(out, "AFTER") != NULL);
+}
+
+static void test_pause_debug_reject_string_argument(void) {
+    printf("PAUSE/DEBUG: still reject a string argument (regression, not widened by GOTO/GOSUB change)\n");
+
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+    capture_clear();
+    type_raw("PAUSE \"x\"");
+    type_raw("\r");
+    check("PAUSE \"x\" beeps as a syntax error",
+          g_output_len > 0 && strchr(g_output, '\x07') != NULL);
+    bastos_done();
+
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+    capture_clear();
+    type_raw("DEBUG \"x\"");
+    type_raw("\r");
+    check("DEBUG \"x\" beeps as a syntax error",
+          g_output_len > 0 && strchr(g_output, '\x07') != NULL);
+    bastos_done();
+}
+
+static void test_goto_label_not_yet_cached_errors(void) {
+    printf("GOTO \"name\": a label never executed yet is not found (warm path only, no scan)\n");
+    const char *lines[] = {
+        "10 GOTO \"later\"",
+        "20 LABEL \"later\"",
+        "30 PRINT \"HERE\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("an error was reported (label not cached, no scan fallback yet)",
+          strstr(out, "Error") != NULL);
+}
+
+static void test_goto_label_unresolvable_errors(void) {
+    printf("GOTO \"name\": a label that exists nowhere errors\n");
+    const char *lines[] = {
+        "10 GOTO \"nope\"",
+        "20 PRINT \"UNREACHABLE\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("an error was reported", strstr(out, "Error") != NULL);
+    check("execution did not reach past the GOTO",
+          strstr(out, "UNREACHABLE") == NULL);
+}
+
+static void test_label_and_variable_namespaces_are_separate(void) {
+    printf("LABEL: a label named \"A\" coexists with an ordinary variable A\n");
+    const char *lines[] = {
+        "10 LABEL \"A\"",
+        "20 IF DONE = 0 THEN LET A = 5: LET DONE = 1",
+        "30 PRINT A",
+        "40 IF DONE = 1 THEN LET DONE = 2: GOTO \"A\"",
+        "50 PRINT \"DONE\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    char *first_five = strstr(out, "5");
+    check("the variable A printed correctly both times",
+          first_five != NULL && strstr(first_five + 1, "5") != NULL);
+    check("the label jump worked (loop reached the end)",
+          strstr(out, "DONE") != NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
+}
+
+/* ======================================================================== */
 /* Feature — ''' end-of-line comment (token.c-static, tokenize())            */
 /*           Everything from a ''' up to the end of the physical line is     */
 /*           kept verbatim in the stored program (so LIST shows it back),    */
@@ -2561,6 +2707,30 @@ int main(void) {
     printf("\n");
 
     test_label_save_load_roundtrip();
+    printf("\n");
+
+    test_goto_label_warm_path();
+    printf("\n");
+
+    test_gosub_label_warm_path_return();
+    printf("\n");
+
+    test_goto_numeric_still_works();
+    printf("\n");
+
+    test_gosub_numeric_still_works();
+    printf("\n");
+
+    test_pause_debug_reject_string_argument();
+    printf("\n");
+
+    test_goto_label_not_yet_cached_errors();
+    printf("\n");
+
+    test_goto_label_unresolvable_errors();
+    printf("\n");
+
+    test_label_and_variable_namespaces_are_separate();
     printf("\n");
 
     test_comment_trailing();
