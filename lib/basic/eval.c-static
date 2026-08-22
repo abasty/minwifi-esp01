@@ -46,6 +46,7 @@ static bool eval_array_ref(uint8_t token, uint8_t *dim_count, uint32_t *dims);
 static void eval_load();
 static void eval_goto(uint16_t line_no);
 static bool eval_edit();
+static bool eval_label();
 
 extern bmem_t *bmem;
 
@@ -111,10 +112,16 @@ uint8_t instr1s[] = {
 };
 
 uint8_t instr1n[] = {
-    TOKEN_KEYWORD_GOSUB,
-    TOKEN_KEYWORD_GOTO,
     TOKEN_KEYWORD_PAUSE,
     TOKEN_KEYWORD_DEBUG,
+    0,
+};
+
+// GOTO/GOSUB accept either a number or a string (label name) argument,
+// unlike the plain-number-only instr1n bucket.
+uint8_t instr1ns[] = {
+    TOKEN_KEYWORD_GOSUB,
+    TOKEN_KEYWORD_GOTO,
     0,
 };
 
@@ -1590,6 +1597,52 @@ static void eval_load() {
     bmem->bstate.error = bastos_load(string_cstr(bmem->bstate.string));
 }
 
+// LABEL "name": (re)creates the cached line-number variable for this
+// label, in its own TOKEN_LABEL namespace — see bmem_var_label_set()
+// (bmemory.c-static) and eval_resolve_label(), used by GOTO/GOSUB to look
+// a label back up. A normal, side-effecting statement like LET, not a
+// declaration: running it again just refreshes the cached line number.
+static void eval_label_set() {
+    char typed_name[B_NAME_SIZE_MAX];
+    typed_name[0] = TOKEN_LABEL;
+    strncpy(typed_name + 1, string_cstr(bmem->bstate.string), B_NAME_SIZE_MAX - 2);
+    typed_name[B_NAME_SIZE_MAX - 1] = 0;
+    bmem_var_label_set(typed_name, (float)bmem->bstate.prog->line_no);
+}
+
+// Resolve a label name to its cached line number, 0 if not (yet) cached.
+static uint16_t eval_resolve_label(const char *label_name) {
+    char typed_name[B_NAME_SIZE_MAX];
+    typed_name[0] = TOKEN_LABEL;
+    strncpy(typed_name + 1, label_name, B_NAME_SIZE_MAX - 2);
+    typed_name[B_NAME_SIZE_MAX - 1] = 0;
+
+    var_t *var = bmem_var_get(typed_name);
+    if (var)
+        return (uint16_t)var->numbers[0];
+
+    uint16_t line_no = bmem_prog_find_label(label_name);
+    if (line_no != 0)
+        bmem_var_label_set(typed_name, (float)line_no);
+    return line_no;
+}
+
+// GOTO/GOSUB's argument was parsed as TOKEN_NUMBER or TOKEN_STRING (see
+// instr1ns) — resolve it to a line number either way.
+static bool eval_goto_target(uint16_t *line_no) {
+    if (bmem->bstate.token != TOKEN_STRING) {
+        *line_no = (uint16_t)bmem->bstate.number;
+        return true;
+    }
+
+    *line_no = eval_resolve_label(string_cstr(bmem->bstate.string));
+    if (*line_no == 0) {
+        bmem->bstate.error = BERROR_RUN;
+        return false;
+    }
+    return true;
+}
+
 static void eval_erase() {
     if (hal_erase(string_cstr(bmem->bstate.string)) != 0) {
         bmem->bstate.error = BERROR_IO;
@@ -1876,6 +1929,10 @@ static bool eval_simple_instruction() {
     if ((instr = eval_token_one_of((char *)instr1n)) && eval_expr(TOKEN_NUMBER))
         goto EVAL;
 
+    // 1 number-or-string instructions (GOTO/GOSUB by line number or label)
+    if ((instr = eval_token_one_of((char *)instr1ns)) && eval_expr(TOKEN_NUMBER | TOKEN_STRING))
+        goto EVAL;
+
     if (eval_token_one_of(tty_codes))
         return eval_print(true);
 
@@ -1890,11 +1947,17 @@ EVAL:
         return true;
     }
     if (instr == TOKEN_KEYWORD_GOTO) {
-        eval_goto(bmem->bstate.number);
+        uint16_t line_no;
+        if (eval_goto_target(&line_no))
+            eval_goto(line_no);
         return true;
     }
     if (instr == TOKEN_KEYWORD_GOSUB) {
-        eval_gosub();
+        uint16_t line_no;
+        if (eval_goto_target(&line_no)) {
+            bmem->bstate.number = (float)line_no;
+            eval_gosub();
+        }
         return true;
     }
     if (instr == TOKEN_KEYWORD_PAUSE) {
@@ -2236,7 +2299,7 @@ static bool eval_ftp() {
 static bool eval_instruction() {
     return eval_print(false) || eval_input() || eval_simple_instruction() ||
            eval_run() || eval_rem() || eval_dim() || eval_list() ||
-           eval_edit() || eval_put() || eval_db() || eval_wifi() ||
+           eval_edit() || eval_label() || eval_put() || eval_db() || eval_wifi() ||
            eval_minitel() || eval_ftp() || eval_output() || eval_let();
 }
 
@@ -2518,6 +2581,29 @@ static bool eval_edit() {
         return true;
 
     bmem->io_edit_line = prog->line_no;
+    return true;
+}
+
+// LABEL "name" (see eval_label_set()) or LABEL START, which parses the
+// whole program in one pass and caches every LABEL "name" line it finds
+// (see bmem_prog_label_scan_all(), bmemory.c-static) — a way to warm the
+// whole label cache up front instead of relying on GOTO/GOSUB's individual
+// cold scans (eval_resolve_label()).
+static bool eval_label() {
+    if (!eval_token(TOKEN_KEYWORD_LABEL))
+        return false;
+
+    if (eval_token(TOKEN_KEYWORD_START)) {
+        if (bmem->bstate.do_eval)
+            bmem_prog_label_scan_all();
+        return true;
+    }
+
+    if (!eval_string_expr())
+        return false;
+
+    if (bmem->bstate.do_eval)
+        eval_label_set();
     return true;
 }
 

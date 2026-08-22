@@ -44,7 +44,7 @@ Le langage offre les capacités suivantes :
   - Transfert de fichiers via FTP (commande `FTP`)
 - **Fonctions mathématiques** : trigonométrie, logarithmes, racine carrée, aléatoire
 - **Tableaux** : variables dimensionnées avec `DIM`
-- **Structures de contrôle** : boucles `FOR`/`NEXT`, branchements `IF`/`THEN`, `GOTO`, `GOSUB`/`RETURN`
+- **Structures de contrôle** : boucles `FOR`/`NEXT`, branchements `IF`/`THEN`, `GOTO`, `GOSUB`/`RETURN`, `LABEL`s nommés
 
 ---
 
@@ -779,6 +779,7 @@ NEXT
 
 ```basic
 GOTO numligne
+GOTO "label"
 ```
 
 ```basic
@@ -787,11 +788,15 @@ GOTO numligne
 30 GOTO 10
 ```
 
+`GOTO` accepte aussi un nom d'étiquette entre guillemets à la place d'un
+numéro de ligne — voir [LABEL](#label) ci-dessous.
+
 ### GOSUB / RETURN
 
 ```basic
-GOSUB numligne    ' Appeler un sous-programme
-RETURN            ' Retourner à l'appelant
+GOSUB numligne     ' Appeler un sous-programme
+GOSUB "label"      ' Appeler un sous-programme par son étiquette
+RETURN             ' Retourner à l'appelant
 ```
 
 Jusqu'à 32 appels imbriqués.
@@ -803,6 +808,68 @@ Jusqu'à 32 appels imbriqués.
 1000 PRINT "Dans le sous-programme"
 1010 RETURN
 ```
+
+### LABEL
+
+```basic
+LABEL "nom"
+LABEL START
+```
+
+Donne un nom à une ligne pour que `GOTO`/`GOSUB` puisse y sauter sans
+connaître son numéro — pratique pour un programme renuméroté ou modifié au
+fil du temps.
+
+```basic
+1000 LABEL "decadix"
+1010 PRINT "Dans decadix"
+1020 RETURN
+```
+
+```basic
+10 GOSUB "decadix"
+20 END
+```
+
+La première fois qu'un nom d'étiquette est utilisé comme cible de
+`GOTO`/`GOSUB`, BASTOS recherche la ligne `LABEL "nom"` correspondante —
+soit parce qu'elle a déjà été exécutée (le cas normal, puisque `LABEL`
+s'exécute comme n'importe quelle instruction, dans l'ordre du programme),
+soit, si elle n'a pas encore été exécutée, en parcourant tout le programme
+pour la trouver. Dans les deux cas, le numéro de ligne est ensuite retenu,
+de sorte que les sauts suivants vers la même étiquette sont instantanés.
+Une étiquette doit être la toute première instruction de sa ligne
+(`1000 LABEL "decadix"`, éventuellement suivie d'autres instructions
+séparées par `:`) pour être trouvée par ce parcours — utilisée ailleurs sur
+une ligne, `LABEL` fonctionne toujours lorsqu'elle s'exécute réellement,
+mais ne sera pas trouvée à l'avance. Un `GOTO`/`GOSUB` ciblant une
+étiquette absente de tout le programme est une erreur.
+
+`LABEL START` parcourt tout le programme en une seule passe et mémorise
+d'avance toutes les lignes `LABEL "nom"` qu'il trouve — utile en début de
+programme pour éviter de payer le coût du parcours au premier saut vers
+chaque étiquette :
+
+```basic
+10 LABEL START
+20 GOSUB "decadix"
+30 END
+
+1000 LABEL "decadix"
+1010 PRINT "Dans decadix"
+1020 RETURN
+```
+
+Un simple `RUN` efface toutes les variables, y compris les positions
+d'étiquettes mémorisées (par l'une ou l'autre forme de `LABEL`) — modifier
+un programme, puis modifier une ligne qui porte un `LABEL`, sans `RUN`
+entre les deux, peut donc laisser une cible de saut obsolète jusqu'au
+prochain `RUN`.
+
+`CLEAR`/`END` effacent également les positions d'étiquettes mémorisées, au
+même titre que n'importe quelle autre variable — une étiquette n'est qu'une
+variable dans son propre espace de noms. De même, le compte de variables de
+`FREE` inclut les étiquettes.
 
 ### PAUSE
 

@@ -117,6 +117,7 @@ vkey
 index
 file
 else
+label
 EOF
 
 # Do not sort to preserve save/load compatibility
