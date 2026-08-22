@@ -2372,9 +2372,12 @@ static bool eval_if() {
     if (!eval_token(TOKEN_KEYWORD_THEN))
         return false;
 
-    if (eval_expr(TOKEN_NUMBER)) {
-        if (bmem->bstate.do_eval)
-            eval_goto(bmem->bstate.number);
+    if (eval_expr(TOKEN_NUMBER | TOKEN_STRING)) {
+        if (bmem->bstate.do_eval) {
+            uint16_t line_no;
+            if (eval_goto_target(&line_no))
+                eval_goto(line_no);
+        }
         return true;
     }
 
@@ -2402,9 +2405,12 @@ static bool eval_else() {
     }
     bmem->bstate.else_pending = 0;
 
-    if (eval_expr(TOKEN_NUMBER)) {
-        if (bmem->bstate.do_eval)
-            eval_goto(bmem->bstate.number);
+    if (eval_expr(TOKEN_NUMBER | TOKEN_STRING)) {
+        if (bmem->bstate.do_eval) {
+            uint16_t line_no;
+            if (eval_goto_target(&line_no))
+                eval_goto(line_no);
+        }
         return true;
     }
 

@@ -750,6 +750,14 @@ inversement.
 10 IF a = 0 THEN 100 ELSE 200
 ```
 
+Une cible seule sur `THEN`/`ELSE` peut aussi être un nom d'[étiquette](#label)
+entre guillemets (raccourci pour `GOTO "nom"`), résolu de la même façon —
+voir LABEL plus bas :
+
+```basic
+10 IF a = 0 THEN "zero" ELSE "nonzero"
+```
+
 Les `IF` peuvent être imbriqués sur une même ligne via `:` ; chaque `ELSE`
 se rattache au `IF` non apparié le plus proche, de la même façon que dans
 la plupart des autres langages :
@@ -860,9 +868,10 @@ LABEL "nom"
 LABEL START
 ```
 
-Donne un nom à une ligne pour que `GOTO`/`GOSUB` puisse y sauter sans
-connaître son numéro — pratique pour un programme renuméroté ou modifié au
-fil du temps.
+Donne un nom à une ligne pour que `GOTO`/`GOSUB` — ainsi qu'une cible seule
+sur `THEN`/`ELSE` (voir [IF / THEN / ELSE](#if--then--else)) — puisse y
+sauter sans connaître son numéro — pratique pour un programme renuméroté ou
+modifié au fil du temps.
 
 ```basic
 1000 LABEL "decadix"
@@ -875,19 +884,19 @@ fil du temps.
 20 END
 ```
 
-La première fois qu'un nom d'étiquette est utilisé comme cible de
-`GOTO`/`GOSUB`, BASTOS recherche la ligne `LABEL "nom"` correspondante —
-soit parce qu'elle a déjà été exécutée (le cas normal, puisque `LABEL`
-s'exécute comme n'importe quelle instruction, dans l'ordre du programme),
-soit, si elle n'a pas encore été exécutée, en parcourant tout le programme
-pour la trouver. Dans les deux cas, le numéro de ligne est ensuite retenu,
-de sorte que les sauts suivants vers la même étiquette sont instantanés.
-Une étiquette doit être la toute première instruction de sa ligne
-(`1000 LABEL "decadix"`, éventuellement suivie d'autres instructions
-séparées par `:`) pour être trouvée par ce parcours — utilisée ailleurs sur
-une ligne, `LABEL` fonctionne toujours lorsqu'elle s'exécute réellement,
-mais ne sera pas trouvée à l'avance. Un `GOTO`/`GOSUB` ciblant une
-étiquette absente de tout le programme est une erreur.
+La première fois qu'un nom d'étiquette est utilisé comme cible de saut
+(`GOTO`/`GOSUB`, ou une cible seule sur `THEN`/`ELSE`), BASTOS recherche la
+ligne `LABEL "nom"` correspondante — soit parce qu'elle a déjà été exécutée
+(le cas normal, puisque `LABEL` s'exécute comme n'importe quelle
+instruction, dans l'ordre du programme), soit, si elle n'a pas encore été
+exécutée, en parcourant tout le programme pour la trouver. Dans les deux
+cas, le numéro de ligne est ensuite retenu, de sorte que les sauts suivants
+vers la même étiquette sont instantanés. Une étiquette doit être la toute
+première instruction de sa ligne (`1000 LABEL "decadix"`, éventuellement
+suivie d'autres instructions séparées par `:`) pour être trouvée par ce
+parcours — utilisée ailleurs sur une ligne, `LABEL` fonctionne toujours
+lorsqu'elle s'exécute réellement, mais ne sera pas trouvée à l'avance.
+Cibler une étiquette absente de tout le programme est une erreur.
 
 `LABEL START` parcourt tout le programme en une seule passe et mémorise
 d'avance toutes les lignes `LABEL "nom"` qu'il trouve — utile en début de

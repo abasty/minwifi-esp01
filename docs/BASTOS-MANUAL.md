@@ -737,6 +737,13 @@ linenumber`) or one or more `:`-separated statements:
 10 IF a = 0 THEN 100 ELSE 200
 ```
 
+A bare target on `THEN`/`ELSE` can also be a quoted [label](#label) name
+(short for `GOTO "name"`), resolved the same way — see LABEL below:
+
+```basic
+10 IF a = 0 THEN "zero" ELSE "nonzero"
+```
+
 `IF` statements can be nested on the same line via `:`; each `ELSE` binds to
 its nearest still-unmatched `IF`, the same way most other languages resolve
 this:
@@ -846,8 +853,10 @@ LABEL "name"
 LABEL START
 ```
 
-Gives a line a name so `GOTO`/`GOSUB` can jump to it without knowing its line
-number — handy for a program that gets renumbered or edited over time.
+Gives a line a name so `GOTO`/`GOSUB` — and a bare target on `THEN`/`ELSE`
+(see [IF / THEN / ELSE](#if--then--else)) — can jump to it without knowing
+its line number — handy for a program that gets renumbered or edited over
+time.
 
 ```basic
 1000 LABEL "decadix"
@@ -860,17 +869,17 @@ number — handy for a program that gets renumbered or edited over time.
 20 END
 ```
 
-The first time a given label name is used as a `GOTO`/`GOSUB` target, BASTOS
-looks for the matching `LABEL "name"` line — either because it already ran
-(the normal case, since `LABEL` executes like any other statement, in
-program order), or if it hasn't run yet, by scanning the whole program for
-it. Either way, the line number is then remembered, so later jumps to the
-same label are instant. A label must be the very first statement on its
-line (`1000 LABEL "decadix"`, optionally followed by more `:`-separated
-statements) to be found by that scan — used elsewhere on a line, `LABEL`
-still works when it actually runs, but won't be found ahead of time.
-`GOTO`/`GOSUB` targeting a label that doesn't exist anywhere in the program
-is an error.
+The first time a given label name is used as a jump target (`GOTO`/`GOSUB`,
+or a bare `THEN`/`ELSE` target), BASTOS looks for the matching `LABEL
+"name"` line — either because it already ran (the normal case, since
+`LABEL` executes like any other statement, in program order), or if it
+hasn't run yet, by scanning the whole program for it. Either way, the line
+number is then remembered, so later jumps to the same label are instant. A
+label must be the very first statement on its line (`1000 LABEL
+"decadix"`, optionally followed by more `:`-separated statements) to be
+found by that scan — used elsewhere on a line, `LABEL` still works when it
+actually runs, but won't be found ahead of time. Targeting a label that
+doesn't exist anywhere in the program is an error.
 
 `LABEL START` scans the whole program in a single pass and remembers every
 `LABEL "name"` line it finds, up front — useful at the start of a program

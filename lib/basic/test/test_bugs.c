@@ -2060,6 +2060,107 @@ static void test_else_bare_linenum_goto(void) {
           strstr(out_false, "ELSE") != NULL && strstr(out_false, "THEN") == NULL);
 }
 
+/* ======================================================================== */
+/* Feature — THEN/ELSE bare label targets (eval.c-static: eval_if(),         */
+/*           eval_else()). THEN and ELSE's existing "bare line number acts   */
+/*           as a GOTO" shortcut also accepts a quoted label name, reusing   */
+/*           eval_goto_target()/eval_resolve_label() unchanged (same warm    */
+/*           cache + cold program scan as GOTO/GOSUB "name").                */
+/* ======================================================================== */
+static void test_then_else_bare_label_goto(void) {
+    printf("THEN/ELSE: bare labels act as GOTO targets, same as bare line numbers\n");
+
+    const char *lines_true[] = {
+        "10 IF 1 THEN \"then_target\" ELSE \"else_target\"",
+        "20 PRINT \"X\"",
+        "30 END",
+        "40 LABEL \"then_target\"",
+        "50 PRINT \"THEN\"",
+        "60 GOTO 30",
+        "70 LABEL \"else_target\"",
+        "80 PRINT \"ELSE\"",
+        NULL
+    };
+    const char *out_true = run_program(lines_true);
+    check("true condition jumps to the THEN label",
+          strstr(out_true, "THEN") != NULL && strstr(out_true, "ELSE") == NULL);
+
+    const char *lines_false[] = {
+        "10 IF 0 THEN \"then_target\" ELSE \"else_target\"",
+        "20 PRINT \"X\"",
+        "30 END",
+        "40 LABEL \"then_target\"",
+        "50 PRINT \"THEN\"",
+        "60 GOTO 30",
+        "70 LABEL \"else_target\"",
+        "80 PRINT \"ELSE\"",
+        NULL
+    };
+    const char *out_false = run_program(lines_false);
+    check("false condition jumps to the ELSE label",
+          strstr(out_false, "ELSE") != NULL && strstr(out_false, "THEN") == NULL);
+}
+
+static void test_then_label_target_forces_cold_scan(void) {
+    printf("THEN: a bare label target that has never executed yet is found via the cold scan\n");
+    const char *lines[] = {
+        "10 IF 1 THEN \"later\"",
+        "20 PRINT \"SKIPPED\"",
+        "30 LABEL \"later\"",
+        "40 PRINT \"HERE\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("the skipped line was not reached", strstr(out, "SKIPPED") == NULL);
+    check("execution reached the label's line", strstr(out, "HERE") != NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
+}
+
+static void test_else_label_target_unresolvable_errors(void) {
+    printf("ELSE: a bare label target that exists nowhere errors\n");
+    const char *lines[] = {
+        "10 IF 0 THEN PRINT \"NO\" ELSE \"nope\"",
+        "20 PRINT \"UNREACHABLE\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("an error was reported", strstr(out, "Error") != NULL);
+    check("execution did not reach past the ELSE",
+          strstr(out, "UNREACHABLE") == NULL);
+}
+
+static void test_then_label_syntax_check_does_not_beep(void) {
+    printf("THEN/ELSE: a well-formed bare label target does not beep or error\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("10 IF 1 THEN \"a\" ELSE \"b\"");
+    type_raw("\r");
+    check("no BEL and no error for a bare label THEN/ELSE target",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    bastos_done();
+}
+
+static void test_then_label_list_roundtrip(void) {
+    printf("THEN/ELSE: LIST shows a bare label target back correctly\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 IF 1 THEN \"a\" ELSE \"b\"");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("LIST reproduces the bare label THEN/ELSE targets verbatim",
+          strstr(g_output, "10 IF 1 THEN \"a\" ELSE \"b\"") != NULL);
+
+    bastos_done();
+}
+
 static void test_else_gosub_in_then_with_else_present(void) {
     printf("ELSE: GOSUB in a THEN-clause with an ELSE present resumes past it, not into it\n");
 
@@ -2930,6 +3031,21 @@ int main(void) {
     printf("\n");
 
     test_else_bare_linenum_goto();
+    printf("\n");
+
+    test_then_else_bare_label_goto();
+    printf("\n");
+
+    test_then_label_target_forces_cold_scan();
+    printf("\n");
+
+    test_else_label_target_unresolvable_errors();
+    printf("\n");
+
+    test_then_label_syntax_check_does_not_beep();
+    printf("\n");
+
+    test_then_label_list_roundtrip();
     printf("\n");
 
     test_else_gosub_in_then_with_else_present();
