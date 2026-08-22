@@ -2221,10 +2221,8 @@ static bool eval_minitel() {
         return false;
 
     uint8_t func = eval_token_one_of((char *)minitel_func);
-    if (func == 0 || func == TOKEN_KEYWORD_START) {
-        hal_print_string(P_ROULEAU_OFF);
+    if (func == 0 || func == TOKEN_KEYWORD_START)
         return eval_connect(DB_MIN_SET);
-    }
 
     if (func == TOKEN_KEYWORD_LIST)
         return eval_db_list(DB_MIN_SET);

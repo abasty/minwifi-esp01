@@ -1071,6 +1071,43 @@ static void test_mode80_survives_run_with_no_program(void) {
     bastos_done();
 }
 
+static void test_minitel_connect_disables_scroll_in_mode40(void) {
+    printf("MINITEL: connecting sends the rouleau-off (scroll disable) sequence in 40-column mode\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("MINITEL \"3615\"");
+    type_raw("\r");
+    /* P_ROULEAU_OFF (tty-minitel.h): PRO2 "\x6A\x43" = "\x1B\x3A\x6A\x43". */
+    check("the 40-column rouleau-off sequence was sent",
+          strstr(g_output, "\x1B\x3A\x6A\x43") != NULL);
+
+    bastos_done();
+}
+
+static void test_minitel_connect_skips_rouleau_off_in_mode80(void) {
+    printf("MINITEL: connecting does not send the 40-column rouleau-off sequence in 80-column mode\n");
+    /* Regression: eval_minitel() used to send P_ROULEAU_OFF (a 40-column   *
+     * Minitel-specific sequence) unconditionally on every MINITEL connect, *
+     * even in 80-column (ANSI) mode, where it doesn't apply.               */
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("MODE 2");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("MINITEL \"3615\"");
+    type_raw("\r");
+    check("the 40-column rouleau-off sequence was not sent",
+          strstr(g_output, "\x1B\x3A\x6A\x43") == NULL);
+
+    bastos_done();
+}
+
 /* ======================================================================== */
 /* Feature — EDIT <line_no> (eval.c-static eval_edit(), bio.c              */
 /*           bastos_input()'s finalize step)                                */
@@ -2749,6 +2786,12 @@ int main(void) {
     printf("\n");
 
     test_mode80_survives_run_with_no_program();
+    printf("\n");
+
+    test_minitel_connect_disables_scroll_in_mode40();
+    printf("\n");
+
+    test_minitel_connect_skips_rouleau_off_in_mode80();
     printf("\n");
 
     test_edit_shows_the_staged_line();

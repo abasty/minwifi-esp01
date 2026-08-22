@@ -839,7 +839,8 @@ static int os_connect(uint8_t set, const char *name, const char *urn) {
             if (g_proto == URN_PROTO_WS || g_proto == URN_PROTO_WSS) {
                 fd = os_ws_connect(fd, split);
             }
-            os_redir_print_string(P_ROULEAU_OFF);
+            if (!bmem->bstate.screen_mode)
+                os_redir_print_string(P_ROULEAU_OFF);
         } else if (set == DB_FTP_SET) {
             fd = os_ftp_connect(fd, split);
             g_ftp_fd = fd;
