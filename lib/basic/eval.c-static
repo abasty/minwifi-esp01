@@ -114,6 +114,7 @@ uint8_t instr1s[] = {
 uint8_t instr1n[] = {
     TOKEN_KEYWORD_PAUSE,
     TOKEN_KEYWORD_DEBUG,
+    TOKEN_KEYWORD_RAND,
     0,
 };
 
@@ -1986,6 +1987,10 @@ EVAL:
     }
     if (instr == TOKEN_KEYWORD_PAUSE) {
         eval_pause();
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_RAND) {
+        srand((unsigned int)bmem->bstate.number);
         return true;
     }
     if (instr == TOKEN_KEYWORD_ERASE) {

@@ -3149,6 +3149,63 @@ static void test_utf8_line_drawing_converts_on_load(void) {
 }
 
 /* ======================================================================== */
+/* Feature — RAND <seed> (eval.c-static: srand() dispatch in instr1n).       */
+/*           Seeds the C library's rand() generator that RND already reads  */
+/*           from, so a program can reproduce the same pseudo-random        */
+/*           sequence across runs.                                          */
+/* ======================================================================== */
+static void test_rand_syntax_check_does_not_beep(void) {
+    printf("RAND: a well-formed RAND <seed> line does not beep or error\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("RAND 42");
+    type_raw("\r");
+    check("no BEL and no error for RAND 42",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    bastos_done();
+}
+
+static void test_rand_seeds_deterministic_sequence(void) {
+    printf("RAND: seeding with the same value reproduces the same RND sequence\n");
+    const char *lines[] = {
+        "10 RAND 42",
+        "20 A = RND",
+        "30 B = RND",
+        "40 RAND 42",
+        "50 C = RND",
+        "60 D = RND",
+        "70 PRINT A = C",
+        "80 PRINT B = D",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("both RND values matched after reseeding with the same value",
+          strstr(out, "1\r\n1\r\n") != NULL);
+    check("no mismatch was reported", strstr(out, "0") == NULL);
+}
+
+static void test_rand_list_roundtrip(void) {
+    printf("RAND: LIST shows it back correctly\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 RAND 42");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("LIST reproduces RAND 42 verbatim",
+          strstr(g_output, "10 RAND 42") != NULL);
+
+    bastos_done();
+}
+
+/* ======================================================================== */
 /* main                                                                       */
 /* ======================================================================== */
 int main(void) {
@@ -3503,6 +3560,15 @@ int main(void) {
     printf("\n");
 
     test_utf8_line_drawing_converts_on_load();
+    printf("\n");
+
+    test_rand_syntax_check_does_not_beep();
+    printf("\n");
+
+    test_rand_seeds_deterministic_sequence();
+    printf("\n");
+
+    test_rand_list_roundtrip();
     printf("\n");
 
     printf("=== Results: %d/%d tests passed ===\n",

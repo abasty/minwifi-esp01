@@ -11,7 +11,7 @@
   <https://www.mudconnect.com/>
 * [x] Protocole FTP intégré à BASTOS (dispo dans le simu)
 * [x] Websockets (sans SSL) intégrées ?
-* [ ] ~~Penser à BASTOS-PI / BASTOS-PC puis BASTOS-P~~
+* [x] ~~Penser à BASTOS-PI / BASTOS-PC puis BASTOS-P~~
 
 ## Bugs
 
@@ -57,38 +57,37 @@ En display filter on peut mettre : `not tcp.len == 0`
 ## Fonctionnalités
 
 * [x] MODE (mode écran, 0,1: Videotext + Clavier étendu, 2:Téléinformatique)
-* [ ] MODE 2 : Commandes TTY
-  - [ ] Conserver le mode dans bstate
-  - [ ] Changer les commandes TTY en mode 80 colones pour suivre "mode80.md"
+* [x] MODE 2 : Commandes TTY
+  - [x] Conserver le mode dans bstate
+  - [x] Changer les commandes TTY en mode 80 colones pour suivre "mode80.md"
 * [ ] Design + Commande mode "Connexion Téléphone" (peut-on utiliser un URN TCP
   et la commande MINITEL vers un service Kiosque serveur sur le téléphone ?)
 * [ ] CAT, FTP CAT : version avec filtre (expression régulière)  et options
   (plusieurs par lignes, pas d'en tête) => rajouter `DIR <PATTERN>`
 * [ ] Ajouter répertoires dans système de fichiers
   (<https://randomnerdtutorials.com/esp32-write-data-littlefs-arduino/>)
-* [ ] TAB
-* [ ] RAND
+* [ ] TAB : Difficile à implémenter si on ne connait pas la ligne en cours
+* [x] RAND
 * [x] EDIT line, EDIT tout seul édite la dernière entrée (raccourci: fleche
   haut). ~~définir une zone à partir de la ligne actuelle et sur 4 lignes pour
   pouvoir entrer au max 128 caractères : mode roleau, on se déplace de 3 lignes
   vers le bas, on demande la position curseur => l, c. On remonte en l-3, 1 ; on
   cleol ; on insere 4 lignes, on commence l'édition~~
 * [ ] Gérer les codes DINSC, FINSC et définir les commandes BASTOS associées
-* [ ] Ctrl+C à la place de ESC /ESC ?
+* [x] Non : ~~Ctrl+C à la place de ESC /ESC ?~~
 * [ ] Quand on est connecté à un service, voir ce que fait ESC et CX/Fin
 * [x] À définir : support des touches de mise en pages dans les différents modes
   de BASTOS (CLI, INPUT, INKEY/PAUSE, prévoir un mode EDIT)
 * [ ] Supprimer `BIN`, remplacer par `BASE$(<N>, <BASE>, <MAX>)`.
-* [ ] File System :
 * [ ] Gestion de la touche Cx/Fin
   * [*] voir avec une interface série PC <-> Minitel, quels codes on reçoit, en
-  mode F en mode C clignotant
+    mode F en mode C clignotant
   * [*] Le traiter pour sortir du mode connecté BASTOS
   * [ ] A tester : réagir en conséquence (envoyer un autre Cx/Fin par la prise
     pour déconnecter le modem ou autre)
 * [ ] Rajouter un `FORMAT$` ?
 * [ ] Break qui arrive plus vite (d'abord sur device, flush sur serial, sur TCP
-  il faudrait avoir un autre canal pour dier à l'mu de flusher ce qu'il a déjà
+  il faudrait avoir un autre canal pour dire à l'ému de flusher ce qu'il a déjà
   reçu)
 * [ ] PAUSE <N>, <LINENO> : Pendant le temps de la pause exécute le
   sous-programme <LINENO>. Quand `RETURN` est appelé, soit le temps est écoulé
@@ -105,7 +104,7 @@ En display filter on peut mettre : `not tcp.len == 0`
 * [ ] Ramener les variables OS dans le bstate
 * [ ] SCREEN : Il faudrait conserver un état et gérer les déplacements curseurs
   (voir dans `MINOLD.PAS`)
-* [ ] Touches de direction : génère un ESC + 2 caractères ([Touches en mode
+* [x] Touches de direction : génère un ESC + 2 caractères ([Touches en mode
   clavier étendu](#touches-en-mode-clavier-%C3%A9tendu))
   * [x] Implémenter dans minterm (clavier virtuel et physique)
   * [x] Implémenter dans `os_get_key()`
@@ -116,6 +115,8 @@ En display filter on peut mettre : `not tcp.len == 0`
 * [*] WebSockets : ça prend 110 KB. L'utilisation de l'API ArduinoHttpClient
   permet d'accéder aux WebSocket cliente avec une API synchrone mais économe (on
   retombe à 340383 octets (au lieu de 436xxx))
+* [x] packed structure (mémoire)
+* [x] flags groupés en bit fields, élimination de bool (mémoire)
 * Nouveau modèle mémoire
   * [ ] redéfinir la gestion mémoire : alloc, free, garbage collector. Tous les
     objets, prog_t, var_t, nommés ou non, sont stockés dans le heap.
@@ -126,8 +127,6 @@ En display filter on peut mettre : `not tcp.len == 0`
     class : 8 bits => 1 handle : 32 bits
 * [ ] Voir s'il est facile de passer en align2 et dimensions sur 2 octets
   (penser à arm32 / arm64)
-* [ ] packed structure (mémoire)
-* [ ] flags groupés en bit fields, élimination de bool (mémoire)
 * [ ] repasser en static ce qu'on peut mettre en static (HAL ? / OS)
 * [ ] Optimisation accès tableau / variable (factorisation number / string,
   name)
@@ -360,7 +359,7 @@ Code | Fonction BastOS | Touche Minitel
  30 | home | (SHIFT ENTER)
 127 | backspace | (CORRECTION)
 
-Les touches REPETITION, SUITE, RETOUR, SOMMAIRE, ENTER, ENVOI et GUIDE valide
+Les touches REPETITION, SUITE, RETOUR, SOMMAIRE, ENTER, ENVOI et GUIDE valident
 une entrée `INPUT`. La touche appuyée est testable avec `VKEY` (retourne un
 entier) après un `INPUT`. Hors mode `INPUT`, `INKEY$` renvoie le caractère
 associé (`\x04`, ...).
@@ -577,7 +576,7 @@ chars = nl * nc = 960
 * [x] Après un reset sur l'ESP : Bannière BASTOS
 * [x] ~~repasser en SPIFS~~
 * [x] Revoir la machine d'état boot : `autoload.db`, `autoexec.bas`
-* [ ] Manuel utilisateur BASTOS (à commencer, à l'ancienne)
+* [x] Manuel utilisateur BASTOS (à commencer, à l'ancienne)
 * [ ] Commandes FS : <https://www.overtakenbyevents.com/amstrad-cpc-amsdos-commands/>
 
 ## Intégration SONOFF

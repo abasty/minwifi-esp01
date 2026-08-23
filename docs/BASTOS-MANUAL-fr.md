@@ -710,6 +710,15 @@ PRINT SQR 2
 PRINT INT(a / b)    ' parenthèses pour grouper
 ```
 
+`RAND graine` initialise le générateur pseudo-aléatoire lu par `RND`, pour
+qu'un programme puisse reproduire la même séquence de valeurs `RND` d'une
+exécution à l'autre (pratique pour des tests, ou un jeu qui veut un niveau
+reproductible à partir d'une graine donnée) :
+
+```basic
+RAND 42
+```
+
 ---
 
 ## Structures de contrôle

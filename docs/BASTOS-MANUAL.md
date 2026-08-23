@@ -696,6 +696,15 @@ PRINT SQR 2
 PRINT INT(a / b)    ' parentheses for grouping
 ```
 
+`RAND seed` seeds the pseudo-random generator `RND` reads from, so a
+program can reproduce the same sequence of `RND` values across runs (handy
+for testing, or for a game that wants a repeatable level from a given
+seed):
+
+```basic
+RAND 42
+```
+
 ---
 
 ## Control structures

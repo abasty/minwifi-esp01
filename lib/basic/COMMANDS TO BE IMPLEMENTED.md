@@ -30,9 +30,6 @@ Call machine code routine
 result = USR address
 ```
 
-### RAND
-Random function (relationship with RND to be clarified)
-
 ### TAB
 Tabulation/cursor positioning function
 
