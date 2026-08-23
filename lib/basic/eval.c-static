@@ -1889,7 +1889,7 @@ static bool eval_string_tty() {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x1b\x5b\x50");
             goto EVAL;
         }
-        // TODO: eval DEL CHAR
+        eval_restore_read_ptr(back_ptr);
         return false;
     }
 
@@ -1898,7 +1898,16 @@ static bool eval_string_tty() {
             snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "\x1b\x5b\x4c");
             goto EVAL;
         }
-        // TODO: eval DEL CHAR
+        if (eval_token(TOKEN_KEYWORD_CHAR)) {
+            if (!eval_float_expr()) {
+                eval_restore_read_ptr(back_ptr);
+                return false;
+            }
+            snprintf(codes, CODE_SEQUENCE_MAX_SIZE, "%s",
+                     bmem->bstate.number != 0 ? MODE80_INSC_ON : MODE80_INSC_OFF);
+            goto EVAL;
+        }
+        eval_restore_read_ptr(back_ptr);
         return false;
     }
 

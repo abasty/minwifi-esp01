@@ -130,5 +130,7 @@
 #define MODE80_UNDERLINE_OFF "\x1B[24m"
 #define MODE80_ROULEAU_ON "\x1B\x3A\x69\x43"
 #define MODE80_ROULEAU_OFF "\x1B\x3A\x6A\x43"
+#define MODE80_INSC_ON "\x1B[4h"
+#define MODE80_INSC_OFF "\x1B[4l"
 
 #endif // TTY_MINITEL_H
