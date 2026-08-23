@@ -2647,10 +2647,20 @@ static bool eval_for() {
         return true;
     }
 
+    // Remember where the loop body starts (right after the FOR clause),
+    // skipping a leading ':' the same way eval_gosub() does — so NEXT can
+    // resume exactly there, not at the start of the line, which matters
+    // when other statements precede FOR on the same ':'-chained line
+    // (e.g. "10 CLS:FOR i=1 TO 26:...:NEXT" must not re-run CLS on every
+    // iteration).
+    uint8_t *body_ptr = bmem->bstate.read_ptr;
+    if (*body_ptr == ':')
+        body_ptr++;
+
     loop->for_line = bmem->bstate.prog;
+    loop->for_offset = (uint16_t)(body_ptr - bmem->bstate.prog->line);
     loop->limit = limit;
     loop->step = step;
-    // TODO: Search for next and run next? Check in emulator
 
     // Track nesting order so a variable-less NEXT can target the innermost
     // active loop.
@@ -2715,10 +2725,13 @@ static bool eval_next() {
     float cmp = loop->step >= 0 ? loop->limit - var->numbers[0]
                                 : var->numbers[0] - loop->limit;
     if (cmp >= 0) {
-        // Jump back to the FOR line (which may be this same line when the
-        // whole loop lives on one ':'-separated line): mark it explicitly
-        // so the caller does not mistake it for a straight fall-through.
+        // Jump back to right after the FOR clause (loop->for_offset), not
+        // to the start of for_line — see eval_for()'s own comment. This
+        // may be the very same line when the whole loop lives on one
+        // ':'-separated line; mark it explicitly (in_goto) so the caller
+        // does not mistake it for a straight fall-through.
         bmem->bstate.pc = loop->for_line;
+        bmem->bstate.pc_offset = loop->for_offset;
         bmem->bstate.in_goto = 1;
     } else {
         // Loop done: leave pc untouched so execution falls through to any

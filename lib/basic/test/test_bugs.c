@@ -3403,6 +3403,51 @@ static void test_ins_char_missing_argument_is_syntax_error(void) {
 }
 
 /* ======================================================================== */
+/* Feature — FOR/NEXT on a ':'-chained line resumes right after FOR, not     */
+/*           at the start of the line (bmemory.h: loop_t.for_offset;        */
+/*           eval.c-static: eval_for(), eval_next()).                       */
+/* ======================================================================== */
+static void test_for_next_one_line_does_not_rerun_preceding_statements(void) {
+    printf("FOR/NEXT: statements before FOR on the same ':'-chained line must not re-run every iteration\n");
+    /* Regression: NEXT used to jump back to the *start* of the FOR line     *
+     * (loop->for_line, offset 0) instead of right after the FOR clause —   *
+     * harmless when FOR is the first thing on its own line (the norm), but *
+     * when other statements precede it on the same line via ':', those     *
+     * statements got silently re-run on every loop iteration too. Here,    *
+     * that statement is CLS: on the buggy code, each iteration's CLS wipes *
+     * out everything printed by earlier iterations, leaving only the last  *
+     * letter on screen instead of the full alphabet.                      */
+    const char *lines[] = {
+        "10 cls:for i=1 to 26:print chr$(64+i);:next",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("all 26 letters are present, not just the last one",
+          strstr(out, "ABCDEFGHIJKLMNOPQRSTUVWXYZ") != NULL);
+}
+
+static void test_for_next_one_line_matches_multi_line_equivalent(void) {
+    printf("FOR/NEXT: writing the loop on one line vs. one statement per line gives the same result\n");
+    const char *one_line[] = {
+        "10 cls:for i=1 to 26:print chr$(64+i);:next",
+        NULL
+    };
+    const char *multi_line[] = {
+        "10 cls",
+        "20 for i=1 to 26",
+        "30 print chr$(64+i);",
+        "40 next",
+        NULL
+    };
+    char one_line_out[256];
+    strncpy(one_line_out, run_program(one_line), sizeof(one_line_out) - 1);
+    one_line_out[sizeof(one_line_out) - 1] = 0;
+    const char *multi_line_out = run_program(multi_line);
+    check("both forms produce identical output",
+          strcmp(one_line_out, multi_line_out) == 0);
+}
+
+/* ======================================================================== */
 /* main                                                                       */
 /* ======================================================================== */
 int main(void) {
@@ -3805,6 +3850,12 @@ int main(void) {
     printf("\n");
 
     test_ins_char_missing_argument_is_syntax_error();
+    printf("\n");
+
+    test_for_next_one_line_does_not_rerun_preceding_statements();
+    printf("\n");
+
+    test_for_next_one_line_matches_multi_line_equivalent();
     printf("\n");
 
     printf("=== Results: %d/%d tests passed ===\n",

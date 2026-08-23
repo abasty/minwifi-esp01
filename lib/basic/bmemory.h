@@ -60,6 +60,10 @@ typedef struct
     float limit;
     float step;
     prog_t *for_line;
+    uint16_t for_offset; // offset of the loop body, right after the FOR
+                          // clause — NEXT resumes there, not at the start
+                          // of for_line, so any statements before FOR on
+                          // the same ':'-chained line aren't re-run
 } loop_t;
 
 typedef struct
