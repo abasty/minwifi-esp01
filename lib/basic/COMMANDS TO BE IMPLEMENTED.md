@@ -6,9 +6,6 @@ fully functional.
 
 ## List of Commands
 
-### BIN
-Binary conversion function (similar to CHR$, STR$)
-
 ### ORIGIN
 Set graphics origin point (for PLOT/UNPLOT coordinate system)
 

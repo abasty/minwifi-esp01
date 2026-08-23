@@ -8,14 +8,21 @@ KEYWORDS_FILE=${TMPDIR}/keywords
 KEYWORDS_C=keywords.c-static
 KEYWORDS_H=keywords.h
 
-# Add keywords after existing ones to preserve load/save compatibility
+# Add keywords after existing ones to preserve load/save compatibility.
+#
+# Exception: "label" sits at "bin"'s old slot (index 4) instead of at the
+# end. bin was a reserved-but-never-implemented keyword removed here; label
+# was, at the time of this change, a keyword added earlier in the very same
+# development session, so no .bst file could possibly have been saved with
+# it at its old (last) index yet — reusing bin's slot for it was free.
+# Every other keyword below keeps the exact index it already had.
 
 cat >${KEYWORDS_FILE} <<EOF
 abs
 acs
 asn
 atn
-bin
+label
 chr$
 code
 cos
@@ -117,7 +124,6 @@ vkey
 index
 file
 else
-label
 EOF
 
 # Do not sort to preserve save/load compatibility

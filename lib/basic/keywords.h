@@ -3,7 +3,7 @@
 #define TOKEN_KEYWORD_ACS ((uint8_t) (1 | 0b10000000))
 #define TOKEN_KEYWORD_ASN ((uint8_t) (2 | 0b10000000))
 #define TOKEN_KEYWORD_ATN ((uint8_t) (3 | 0b10000000))
-#define TOKEN_KEYWORD_BIN ((uint8_t) (4 | 0b10000000))
+#define TOKEN_KEYWORD_LABEL ((uint8_t) (4 | 0b10000000))
 #define TOKEN_KEYWORD_CHR ((uint8_t) (5 | 0b10000000))
 #define TOKEN_KEYWORD_CODE ((uint8_t) (6 | 0b10000000))
 #define TOKEN_KEYWORD_COS ((uint8_t) (7 | 0b10000000))
@@ -105,4 +105,3 @@
 #define TOKEN_KEYWORD_INDEX ((uint8_t) (103 | 0b10000000))
 #define TOKEN_KEYWORD_FILE ((uint8_t) (104 | 0b10000000))
 #define TOKEN_KEYWORD_ELSE ((uint8_t) (105 | 0b10000000))
-#define TOKEN_KEYWORD_LABEL ((uint8_t) (106 | 0b10000000))

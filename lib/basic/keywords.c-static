@@ -3,7 +3,7 @@ static const char *keywords =
     "AC""\xd3"
     "AS""\xce"
     "AT""\xce"
-    "BI""\xce"
+    "LABE""\xcc"
     "CHR""\xa4"
     "COD""\xc5"
     "CO""\xd3"
@@ -105,5 +105,4 @@ static const char *keywords =
     "INDE""\xd8"
     "FIL""\xc5"
     "ELS""\xc5"
-    "LABE""\xcc"
 ;

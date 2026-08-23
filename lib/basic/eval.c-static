@@ -62,7 +62,7 @@ static inline void eval_restore_read_ptr(uint8_t *back_ptr)
 
 uint8_t functions[] = {
     TOKEN_KEYWORD_ABS, TOKEN_KEYWORD_ACS, TOKEN_KEYWORD_ASN,
-    TOKEN_KEYWORD_ATN, TOKEN_KEYWORD_BIN, TOKEN_KEYWORD_COS,
+    TOKEN_KEYWORD_ATN, TOKEN_KEYWORD_COS,
     TOKEN_KEYWORD_EXP, TOKEN_KEYWORD_INT, TOKEN_KEYWORD_LN,
     TOKEN_KEYWORD_SGN, TOKEN_KEYWORD_SIN, TOKEN_KEYWORD_SQR,
     TOKEN_KEYWORD_TAN, TOKEN_KEYWORD_NOT, TOKEN_KEYWORD_TEST,
@@ -421,9 +421,6 @@ static bool eval_function() {
         break;
     case TOKEN_KEYWORD_ATN:
         bmem->bstate.number = atanf(bmem->bstate.number);
-        break;
-    case TOKEN_KEYWORD_BIN:
-        // FIXME
         break;
     case TOKEN_KEYWORD_COS:
         bmem->bstate.number = cosf(bmem->bstate.number);

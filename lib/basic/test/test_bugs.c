@@ -3334,6 +3334,29 @@ static void test_strdollar_list_roundtrip(void) {
 }
 
 /* ======================================================================== */
+/* Feature — BIN removed (create-keywords.sh, eval.c-static). BIN was a     */
+/*           reserved keyword whose only "implementation" was a `// FIXME`  */
+/*           stub in eval_function() that silently passed its argument      */
+/*           through unchanged. Its keyword slot (index 4) was reused for   */
+/*           LABEL instead of being left to shift every later keyword's     */
+/*           index (see create-keywords.sh's own comment on this).          */
+/* ======================================================================== */
+static void test_bin_is_no_longer_a_keyword(void) {
+    printf("BIN: no longer a recognized keyword — using it is a syntax error\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("10 X = BIN 5");
+    type_raw("\r");
+    check("BIN 5 beeps as a syntax error", strchr(g_output, '\x07') != NULL);
+    check("an error was reported", strstr(g_output, "Error") != NULL);
+
+    bastos_done();
+}
+
+/* ======================================================================== */
 /* main                                                                       */
 /* ======================================================================== */
 int main(void) {
@@ -3721,6 +3744,9 @@ int main(void) {
     printf("\n");
 
     test_strdollar_list_roundtrip();
+    printf("\n");
+
+    test_bin_is_no_longer_a_keyword();
     printf("\n");
 
     printf("=== Results: %d/%d tests passed ===\n",

@@ -78,7 +78,10 @@ En display filter on peut mettre : `not tcp.len == 0`
 * [ ] Quand on est connecté à un service, voir ce que fait ESC et CX/Fin
 * [x] À définir : support des touches de mise en pages dans les différents modes
   de BASTOS (CLI, INPUT, INKEY/PAUSE, prévoir un mode EDIT)
-* [ ] Supprimer `BIN`, remplacer par `BASE$(<N>, <BASE>, <MAX>)`.
+* [x] Supprimer `BIN`, remplacer par `BASE$(<N>, <BASE>, <MAX>)`. →
+  implémenté comme extension de `STR$` : `STR$(n, base)` et
+  `STR$(n, base, format)` (le format `"00000000"` etc. joue le rôle du
+  `<MAX>`).
 * [ ] Gestion de la touche Cx/Fin
   * [*] voir avec une interface série PC <-> Minitel, quels codes on reçoit, en
     mode F en mode C clignotant
