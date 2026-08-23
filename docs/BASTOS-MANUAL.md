@@ -264,9 +264,16 @@ SCROLL               ' In scroll mode, scrolls up
 SCROLL UP            ' In scroll mode, scrolls up
 SCROLL DOWN          ' In scroll mode, scrolls down
 INS LINE             ' Insert line
+INS CHAR n           ' 0=off, 1=on — toggle insert-character mode
 DEL LINE             ' Delete line
 DEL CHAR             ' Delete character
 ```
+
+`INS CHAR 1` puts the terminal into insert mode: further printed
+characters push the rest of the line right instead of overwriting it.
+`INS CHAR 0` turns it back off. Unlike most other TTY functions, none of
+`INS`/`DEL`'s forms depend on the current screen mode (40 vs 80 columns) —
+the same codes are sent either way.
 
 `MODE 0` and `MODE 1` both switch to 40-column Videotex mode, but aren't
 identical: `MODE 0` sends only the bare column-width switch, while `MODE 1`

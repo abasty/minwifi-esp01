@@ -267,9 +267,17 @@ SCROLL               ' En mode rouleau, scrolle vers le haut
 SCROLL UP            ' En mode rouleau, scrolle vers le haut
 SCROLL DOWN          ' En mode rouleau, scrolle vers le bas
 INS LINE             ' Insérer une ligne
+INS CHAR n           ' 0=désactivé, 1=activé — bascule le mode insertion
 DEL LINE             ' Supprimer une ligne
 DEL CHAR             ' Supprimer un caractère
 ```
+
+`INS CHAR 1` passe le terminal en mode insertion : les caractères
+affichés ensuite décalent le reste de la ligne vers la droite au lieu de
+l'écraser. `INS CHAR 0` le désactive à nouveau. Contrairement à la plupart
+des autres fonctions TTY, aucune des formes de `INS`/`DEL` ne dépend du
+mode écran courant (40 ou 80 colonnes) — les mêmes codes sont envoyés dans
+les deux cas.
 
 `MODE 0` et `MODE 1` passent tous les deux en mode Videotex 40 colonnes,
 mais ne sont pas identiques : `MODE 0` envoie uniquement le changement de

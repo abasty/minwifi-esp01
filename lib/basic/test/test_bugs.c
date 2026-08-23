@@ -3357,6 +3357,52 @@ static void test_bin_is_no_longer_a_keyword(void) {
 }
 
 /* ======================================================================== */
+/* Feature — INS CHAR <0/1> (eval.c-static: eval_string_tty()'s             */
+/*           TOKEN_KEYWORD_INS branch; tty-minitel.h: MODE80_INSC_ON/OFF).   */
+/*           Toggles terminal insert-character mode (ANSI CSI 4h/4l),        */
+/*           unconditionally — like the existing INS LINE / DEL LINE /       */
+/*           DEL CHAR codes right next to it, this isn't gated by            */
+/*           bstate.screen_mode.                                             */
+/* ======================================================================== */
+static void test_ins_char_on_sends_csi_4h(void) {
+    printf("INS CHAR 1: sends the ANSI insert-mode-on sequence (CSI 4h)\n");
+    const char *lines[] = { "10 INS CHAR 1", NULL };
+    const char *out = run_program(lines);
+    check("CSI 4h (\\x1B[4h) was sent",
+          memmem(out, strlen(out), "\x1b[4h", 4) != NULL);
+}
+
+static void test_ins_char_off_sends_csi_4l(void) {
+    printf("INS CHAR 0: sends the ANSI insert-mode-off sequence (CSI 4l)\n");
+    const char *lines[] = { "10 INS CHAR 0", NULL };
+    const char *out = run_program(lines);
+    check("CSI 4l (\\x1B[4l) was sent",
+          memmem(out, strlen(out), "\x1b[4l", 4) != NULL);
+}
+
+static void test_ins_line_regression(void) {
+    printf("INS LINE: still works (regression, same dispatch block as INS CHAR)\n");
+    const char *lines[] = { "10 INS LINE", NULL };
+    const char *out = run_program(lines);
+    check("CSI L (\\x1B[L) was sent",
+          memmem(out, strlen(out), "\x1b[L", 3) != NULL);
+}
+
+static void test_ins_char_missing_argument_is_syntax_error(void) {
+    printf("INS CHAR: without a 0/1 argument is a syntax error\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("10 INS CHAR");
+    type_raw("\r");
+    check("INS CHAR alone beeps as a syntax error", strchr(g_output, '\x07') != NULL);
+
+    bastos_done();
+}
+
+/* ======================================================================== */
 /* main                                                                       */
 /* ======================================================================== */
 int main(void) {
@@ -3747,6 +3793,18 @@ int main(void) {
     printf("\n");
 
     test_bin_is_no_longer_a_keyword();
+    printf("\n");
+
+    test_ins_char_on_sends_csi_4h();
+    printf("\n");
+
+    test_ins_char_off_sends_csi_4l();
+    printf("\n");
+
+    test_ins_line_regression();
+    printf("\n");
+
+    test_ins_char_missing_argument_is_syntax_error();
     printf("\n");
 
     printf("=== Results: %d/%d tests passed ===\n",

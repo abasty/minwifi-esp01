@@ -143,7 +143,8 @@
 * [ ] Ajouter répertoires dans système de fichiers
   (<https://randomnerdtutorials.com/esp32-write-data-littlefs-arduino/>)
 * [ ] TAB : Difficile à implémenter si on ne connait pas la ligne en cours
-* [ ] Gérer les codes DINSC, FINSC et définir les commandes BASTOS associées
+* [x] Gérer les codes INSC_ON, INSC_OFF et définir les commandes BASTOS
+  associées (`INS CHAR 1`: 1b5b3468, `INS CHAR 0`: 1b5b346c)
 * [ ] Quand on est connecté à un service, voir ce que fait ESC et CX/Fin
 * [ ] Gestion de la touche Cx/Fin
   * [*] voir avec une interface série PC <-> Minitel, quels codes on reçoit, en
