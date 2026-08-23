@@ -44,7 +44,7 @@ Le langage offre les capacités suivantes :
   - Transfert de fichiers via FTP (commande `FTP`)
 - **Fonctions mathématiques** : trigonométrie, logarithmes, racine carrée, aléatoire
 - **Tableaux** : variables dimensionnées avec `DIM`
-- **Structures de contrôle** : boucles `FOR`/`NEXT`, branchements `IF`/`THEN`/`ELSE`, `GOTO`, `GOSUB`/`RETURN`, `LABEL`s nommés
+- **Structures de contrôle** : boucles `FOR`/`NEXT` et `WHILE`/`WEND`, branchements `IF`/`THEN`/`ELSE`, `GOTO`, `GOSUB`/`RETURN`, `LABEL`s nommés
 
 ---
 
@@ -926,10 +926,59 @@ NEXT
 
 ```basic
 10 FOR i = 1 TO 2
-20   FOR j = 1 TO 2
-30     PRINT i; j
-40   NEXT           ' referme la boucle j (la plus imbriquée)
-50 NEXT i            ' referme la boucle i
+20 FOR j = 1 TO 2
+30 PRINT i; j
+40 NEXT           ' referme la boucle j (la plus imbriquée)
+50 NEXT i          ' referme la boucle i
+```
+
+### WHILE / WEND
+
+```basic
+WHILE condition
+WEND
+```
+
+- La condition est vérifiée à chaque fois que `WHILE` est atteint, et de
+  nouveau chaque fois que `WEND` renvoie l'exécution vers lui —
+  contrairement à `FOR`, il n'y a pas de variable de boucle, donc la
+  condition peut dépendre de n'importe quoi.
+- Tant que la condition est vraie, l'exécution continue normalement dans
+  le corps de la boucle ; quand `WEND` est atteint, il revient sur
+  `WHILE` pour la vérifier à nouveau.
+- Dès que la condition est fausse, l'exécution saute directement après le
+  `WEND` correspondant, sans exécuter le corps.
+- Les boucles peuvent être imbriquées, jusqu'à 8 niveaux.
+- Un `WEND` sans `WHILE` actif est une erreur d'exécution.
+- Revenir sur le `WHILE` d'une boucle active autrement que par son propre
+  `WEND` (par exemple avec un `GOTO`) est une erreur d'exécution — la
+  boucle ne peut être revérifiée qu'en atteignant son `WEND`.
+- Si le `WEND` correspondant à un `WHILE` n'est jamais atteint alors que
+  sa condition est fausse (par exemple, aucun `WEND` ne le suit nulle
+  part dans le programme), le programme s'arrête simplement à cet
+  endroit — comme un `GOTO` vers un numéro de ligne qui n'existe pas. Ce
+  n'est pas considéré comme une erreur, car il n'y a pas de moyen fiable
+  de distinguer ce cas d'un `WEND` qui aurait pu être atteint lors d'une
+  autre exécution.
+
+```basic
+10 i = 1
+20 WHILE i <= 5
+30 PRINT i
+40 i = i + 1
+50 WEND
+60 PRINT "fini"
+```
+
+Autre exemple, avec une condition qui ne se contente pas de compter : le
+calcul du PGCD (plus grand commun diviseur) par l'algorithme d'Euclide, dont
+on déduit le PPCM (plus petit commun multiple, `a * b / pgcd(a, b)`) :
+
+```basic
+10 INPUT "A: ", A: INPUT "B: ", B: X = A: Y = B
+20 WHILE Y <> 0: T = X % Y: X = Y: Y = T: WEND
+30 PRINT "PGCD ="; X
+40 PRINT "PPCM ="; A * B / X
 ```
 
 ### GOTO

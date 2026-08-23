@@ -105,4 +105,6 @@ static const char *keywords =
     "INDE""\xd8"
     "FIL""\xc5"
     "ELS""\xc5"
+    "WHIL""\xc5"
+    "WEN""\xc4"
 ;

@@ -45,7 +45,7 @@ The language offers the following capabilities:
   - File transfer via FTP (`FTP` command)
 - **Mathematical functions**: trigonometry, logarithms, square root, random
 - **Arrays**: dimensioned variables with `DIM`
-- **Control structures**: `FOR`/`NEXT` loops, `IF`/`THEN`/`ELSE` branching, `GOTO`, `GOSUB`/`RETURN`, named `LABEL`s
+- **Control structures**: `FOR`/`NEXT` and `WHILE`/`WEND` loops, `IF`/`THEN`/`ELSE` branching, `GOTO`, `GOSUB`/`RETURN`, named `LABEL`s
 
 ---
 
@@ -905,10 +905,56 @@ NEXT
 
 ```basic
 10 FOR i = 1 TO 2
-20   FOR j = 1 TO 2
-30     PRINT i; j
-40   NEXT           ' closes the j loop (the innermost one)
-50 NEXT i            ' closes the i loop
+20 FOR j = 1 TO 2
+30 PRINT i; j
+40 NEXT           ' closes the j loop (the innermost one)
+50 NEXT i          ' closes the i loop
+```
+
+### WHILE / WEND
+
+```basic
+WHILE condition
+WEND
+```
+
+- The condition is checked every time `WHILE` is reached, and again each
+  time `WEND` sends execution back to it — unlike `FOR`, there's no loop
+  variable, so it can depend on anything.
+- As long as the condition is true, execution falls through into the loop
+  body; when `WEND` is reached, it jumps back to `WHILE` to check again.
+- As soon as the condition is false, execution skips straight past the
+  matching `WEND` without running the body.
+- Loops may be nested, up to 8 deep.
+- `WEND` with no active `WHILE` is a run-time error.
+- Jumping back into an active loop's `WHILE` some other way than through
+  its own `WEND` (a bare `GOTO`, for instance) is a run-time error — the
+  loop can only be re-checked by reaching its `WEND`.
+- If a `WHILE`'s matching `WEND` is never reached while its condition is
+  false (for instance, no `WEND` follows it anywhere in the program), the
+  program simply stops there — the same as `GOTO` to a line number that
+  doesn't exist. This is not treated as an error, since there's no
+  reliable way to tell it apart from a `WEND` that would have been
+  reached on a different run.
+
+```basic
+10 i = 1
+20 WHILE i <= 5
+30 PRINT i
+40 i = i + 1
+50 WEND
+60 PRINT "done"
+```
+
+Another example, with a condition that isn't just counting up: the greatest
+common divisor (GCD) via Euclid's algorithm, from which the least common
+multiple (LCM) follows (`a * b / gcd(a, b)`):
+
+```basic
+10 INPUT "A: ", A: INPUT "B: ", B: X = A: Y = B
+20 WHILE Y <> 0: T = X % Y: X = Y: Y = T: WEND
+30 PRINT "GCD ="; X
+40 PRINT "LCM ="; A * B / X
 ```
 
 ### GOTO

@@ -3448,6 +3448,239 @@ static void test_for_next_one_line_matches_multi_line_equivalent(void) {
 }
 
 /* ======================================================================== */
+/* Feature — WHILE <condition> / WEND (eval.c-static: eval_while(),          */
+/*           eval_wend(), eval_while_find_wend(); bmemory.h: while_t,        */
+/*           WHILE_STACK_MAX). WEND jumps back to its WHILE for re-check;    */
+/*           a false WHILE condition scans forward (across lines) for the    */
+/*           matching WEND. Up to 8 nested WHILEs. A WEND with no active     */
+/*           WHILE, a 9th nested WHILE, or reaching an active WHILE some     */
+/*           way other than its own WEND (e.g. a bare GOTO) are all          */
+/*           run-time errors; a WHILE whose matching WEND is never reached   */
+/*           on this run is not an error — the program just stops, like a    */
+/*           GOTO to a line number that doesn't exist.                       */
+/* ======================================================================== */
+static void test_while_wend_basic_loop(void) {
+    printf("WHILE/WEND: a simple counting loop runs the expected number of times\n");
+    const char *lines[] = {
+        "10 i=1",
+        "20 while i<=5",
+        "30 print i;",
+        "40 i=i+1",
+        "50 wend",
+        "60 print \"DONE\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("all 5 iterations printed", strstr(out, "12345") != NULL);
+    check("execution continued past WEND", strstr(out, "DONE") != NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
+}
+
+static void test_while_wend_false_condition_never_runs_body(void) {
+    printf("WHILE/WEND: a condition false from the start skips the body entirely\n");
+    const char *lines[] = {
+        "10 while 0",
+        "20 print \"SKIPPED\"",
+        "30 wend",
+        "40 print \"AFTER\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("the body never ran", strstr(out, "SKIPPED") == NULL);
+    check("execution continued after WEND", strstr(out, "AFTER") != NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
+}
+
+static void test_while_wend_one_line_form(void) {
+    printf("WHILE/WEND: a ':'-chained one-line loop works the same as the multi-line form\n");
+    const char *one_line[] = {
+        "10 i=1:while i<=5:print i;:i=i+1:wend:print \"DONE\"",
+        NULL
+    };
+    const char *multi_line[] = {
+        "10 i=1",
+        "20 while i<=5",
+        "30 print i;",
+        "40 i=i+1",
+        "50 wend",
+        "60 print \"DONE\"",
+        NULL
+    };
+    char one_line_out[256];
+    strncpy(one_line_out, run_program(one_line), sizeof(one_line_out) - 1);
+    one_line_out[sizeof(one_line_out) - 1] = 0;
+    const char *multi_line_out = run_program(multi_line);
+    check("both forms produce identical output",
+          strcmp(one_line_out, multi_line_out) == 0);
+}
+
+static void test_while_wend_nested_eight_deep(void) {
+    printf("WHILE/WEND: 8 nested WHILEs (the maximum) run correctly\n");
+    const char *lines[] = {
+        "10 t=0",
+        "20 a=1:while a<=2",
+        "30 b=1:while b<=2",
+        "40 c=1:while c<=2",
+        "50 d=1:while d<=2",
+        "60 e=1:while e<=2",
+        "70 f=1:while f<=2",
+        "80 g=1:while g<=2",
+        "90 h=1:while h<=2",
+        "100 t=t+1",
+        "110 h=h+1:wend",
+        "120 g=g+1:wend",
+        "130 f=f+1:wend",
+        "140 e=e+1:wend",
+        "150 d=d+1:wend",
+        "160 c=c+1:wend",
+        "170 b=b+1:wend",
+        "180 a=a+1:wend",
+        "190 print t",
+        NULL
+    };
+    const char *out = run_program(lines);
+    /* 2^8 = 256 innermost-body executions */
+    check("the innermost body ran 2^8 = 256 times", strstr(out, "256") != NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
+}
+
+static void test_while_ninth_nesting_errors(void) {
+    printf("WHILE/WEND: a 9th nested WHILE (beyond the 8-deep limit) errors\n");
+    const char *lines[] = {
+        "10 while 1",
+        "20 while 1",
+        "30 while 1",
+        "40 while 1",
+        "50 while 1",
+        "60 while 1",
+        "70 while 1",
+        "80 while 1",
+        "90 while 1",
+        "100 print \"UNREACHABLE\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("an error was reported", strstr(out, "Error") != NULL);
+    check("the 9th loop's body never ran", strstr(out, "UNREACHABLE") == NULL);
+}
+
+static void test_wend_without_while_errors(void) {
+    printf("WEND: with no active WHILE is a run-time error\n");
+    const char *lines[] = {
+        "10 print \"BEFORE\"",
+        "20 wend",
+        "30 print \"UNREACHABLE\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("execution reached the line before WEND", strstr(out, "BEFORE") != NULL);
+    check("an error was reported", strstr(out, "Error") != NULL);
+    check("execution did not continue past the errant WEND",
+          strstr(out, "UNREACHABLE") == NULL);
+}
+
+static void test_while_true_with_no_wend_falls_through_once(void) {
+    printf("WHILE: a true condition with no WEND anywhere just falls through, never looping back\n");
+    /* No WEND at all in the program. A true WHILE condition doesn't need   *
+     * to scan for anything -- it just falls through to the next statement *
+     * like any other, so the body runs exactly once and execution simply  *
+     * continues onward, per the user's own framing: "le programme         *
+     * s'exécute sans jamais revenir sur le WHILE".                        */
+    const char *lines[] = {
+        "10 while 1",
+        "20 print \"ONCE\"",
+        "30 print \"AFTER\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("the body ran exactly once", strstr(out, "ONCE") != NULL);
+    check("execution continued past the loop body", strstr(out, "AFTER") != NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
+}
+
+static void test_while_false_with_no_matching_wend_just_stops(void) {
+    printf("WHILE: a false condition whose matching WEND is never found just stops the program (not an error)\n");
+    /* No WEND anywhere in the program at all: the condition is false right *
+     * away, so eval_while_find_wend() scans forward and runs off the end   *
+     * of the program. Per the user's own framing, this is deliberately     *
+     * NOT an error -- it behaves like a GOTO to a line number that         *
+     * doesn't exist (bmem_prog_get_line_or_next() finding nothing after    *
+     * it either).                                                          */
+    const char *lines[] = {
+        "10 while 0",
+        "20 print \"SKIPPED\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("the loop body never ran", strstr(out, "SKIPPED") == NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
+}
+
+static void test_goto_into_active_while_bypassing_wend_errors(void) {
+    printf("WHILE: a bare GOTO landing back on an active WHILE (bypassing its own WEND) errors\n");
+    const char *lines[] = {
+        "10 i=1",
+        "20 while i<=3",
+        "30 print i;",
+        "40 i=i+1",
+        "50 goto 20",
+        "60 wend",
+        NULL
+    };
+    /* Line 50's GOTO re-enters the WHILE on line 20 directly, never going *
+     * through the WEND on line 60 -- while the loop is still active, so   *
+     * this must be a run-time error per the user's explicit requirement.  */
+    const char *out = run_program(lines);
+    check("an error was reported", strstr(out, "Error") != NULL);
+}
+
+static void test_while_wend_syntax_check_does_not_beep(void) {
+    printf("WHILE/WEND: well-formed lines do not beep or error during syntax check\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("10 WHILE I<10");
+    type_raw("\r");
+    check("no BEL and no error for a well-formed WHILE line",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    capture_clear();
+    type_raw("20 WEND");
+    type_raw("\r");
+    check("no BEL and no error for a well-formed WEND line",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    bastos_done();
+}
+
+static void test_while_wend_list_roundtrip(void) {
+    printf("WHILE/WEND: LIST shows both statements back correctly\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 WHILE I<10");
+    type_raw("\r");
+    type_raw("20 WEND");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    /* Variable names are always LISTed lowercase regardless of how they    *
+     * were typed (token.c-static's untokenize: `*char_str |= 32;`) --      *
+     * an existing, unrelated convention, not something WHILE/WEND itself   *
+     * changes.                                                             */
+    check("LIST reproduces the WHILE statement verbatim",
+          strstr(g_output, "10 WHILE i<10") != NULL);
+    check("LIST reproduces the WEND statement verbatim",
+          strstr(g_output, "20 WEND") != NULL);
+
+    bastos_done();
+}
+
+/* ======================================================================== */
 /* main                                                                       */
 /* ======================================================================== */
 int main(void) {
@@ -3856,6 +4089,39 @@ int main(void) {
     printf("\n");
 
     test_for_next_one_line_matches_multi_line_equivalent();
+    printf("\n");
+
+    test_while_wend_basic_loop();
+    printf("\n");
+
+    test_while_wend_false_condition_never_runs_body();
+    printf("\n");
+
+    test_while_wend_one_line_form();
+    printf("\n");
+
+    test_while_wend_nested_eight_deep();
+    printf("\n");
+
+    test_while_ninth_nesting_errors();
+    printf("\n");
+
+    test_wend_without_while_errors();
+    printf("\n");
+
+    test_while_true_with_no_wend_falls_through_once();
+    printf("\n");
+
+    test_while_false_with_no_matching_wend_just_stops();
+    printf("\n");
+
+    test_goto_into_active_while_bypassing_wend_errors();
+    printf("\n");
+
+    test_while_wend_syntax_check_does_not_beep();
+    printf("\n");
+
+    test_while_wend_list_roundtrip();
     printf("\n");
 
     printf("=== Results: %d/%d tests passed ===\n",

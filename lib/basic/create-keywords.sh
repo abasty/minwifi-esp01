@@ -124,6 +124,8 @@ vkey
 index
 file
 else
+while
+wend
 EOF
 
 # Do not sort to preserve save/load compatibility

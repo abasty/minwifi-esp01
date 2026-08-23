@@ -166,6 +166,7 @@ static void running_state_clear() {
     bmem->bstate.pc_offset = 0;
     bmem->bstate.sp = 0;
     bmem->bstate.for_sp = 0;
+    bmem->bstate.while_sp = 0;
     bmem->list_start = 0;
     memset(bmem->loops, 0, sizeof(bmem->loops));
     bmem->inkey = 0;
@@ -2744,6 +2745,141 @@ static bool eval_next() {
     return true;
 }
 
+// Scans forward for the WEND matching a WHILE whose condition just turned
+// out false, starting right after that condition (line/ptr) — tracking
+// nested WHILE/WEND pairs, and continuing across program lines (unlike
+// eval_if()'s single-line ELSE scanner: a WHILE loop's body is often
+// several lines long). depth 0 is "our own" WEND. On success, *out_line
+// and *out_offset point right after that WEND (and past a ':' right after
+// it, so a caller can resume a statement there the same way a GOSUB's own
+// resume point does). Returns false if the program runs out first (no
+// matching WEND anywhere) — not treated as an error by the caller, see
+// eval_while()'s own comment on that.
+static bool eval_while_find_wend(prog_t *line, uint8_t *ptr, prog_t **out_line,
+                                  uint16_t *out_offset) {
+    int depth = 0;
+    for (;;) {
+        uint8_t token = *ptr;
+        if (token == 0 || token == '\'') {
+            line = bmem_prog_next_line(line);
+            if (!line)
+                return false;
+            ptr = line->line;
+            continue;
+        }
+        if (token == TOKEN_KEYWORD_WHILE) {
+            depth++;
+        } else if (token == TOKEN_KEYWORD_WEND) {
+            if (depth == 0) {
+                eval_skip_token(&ptr);
+                if (*ptr == ':')
+                    ptr++;
+                *out_line = line;
+                *out_offset = (uint16_t)(ptr - line->line);
+                return true;
+            }
+            depth--;
+        }
+        eval_skip_token(&ptr);
+    }
+}
+
+// WHILE <condition>: re-evaluated every time it's reached, unlike FOR
+// (which only checks its own limit/step once and lets NEXT do the
+// counting) — a WHILE's condition can depend on anything, so there is no
+// way to cache it. Tracked by position (line, offset of the WHILE
+// keyword itself — not the condition after it, since a WEND jump must
+// resume right at the keyword so this same function runs again to
+// re-evaluate the condition) rather than by a loop variable, since WHILE
+// has none; matched against the innermost active WHILE (bmem->whiles'
+// top) to tell a genuine re-check (reached via this WHILE's own WEND)
+// apart from a first-time visit (fresh WHILE, or a nested one).
+static bool eval_while() {
+    uint8_t *while_ptr = bmem->bstate.read_ptr;
+
+    if (!eval_token(TOKEN_KEYWORD_WHILE))
+        return false;
+
+    if (!eval_expr(TOKEN_NUMBER))
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    uint16_t while_offset = (uint16_t)(while_ptr - bmem->bstate.prog->line);
+    bool same_as_top = bmem->bstate.while_sp > 0 &&
+                        bmem->whiles[bmem->bstate.while_sp - 1].line == bmem->bstate.prog &&
+                        bmem->whiles[bmem->bstate.while_sp - 1].offset == while_offset;
+
+    // Consumed here either way: only meaningful for the one eval_while()
+    // call immediately following a WEND jump.
+    bool via_wend = bmem->bstate.wend_jump;
+    bmem->bstate.wend_jump = 0;
+
+    if (same_as_top && !via_wend) {
+        // Reached this exact WHILE again some other way (e.g. a bare
+        // GOTO into the loop) while its own loop was still active — never
+        // went through its matching WEND.
+        bmem->bstate.error = BERROR_RUN;
+        return true;
+    }
+
+    if (bmem->bstate.number != 0) {
+        // True: enter (or keep going around) the loop.
+        if (!same_as_top) {
+            if (bmem->bstate.while_sp >= WHILE_STACK_MAX) {
+                bmem->bstate.error = BERROR_RUN;
+                return true;
+            }
+            bmem->whiles[bmem->bstate.while_sp].line = bmem->bstate.prog;
+            bmem->whiles[bmem->bstate.while_sp].offset = while_offset;
+            bmem->bstate.while_sp++;
+        }
+        return true;
+    }
+
+    // False: the loop (if it was active) is done.
+    if (same_as_top)
+        bmem->bstate.while_sp--;
+
+    prog_t *wend_line;
+    uint16_t wend_offset;
+    if (eval_while_find_wend(bmem->bstate.prog, bmem->bstate.read_ptr, &wend_line, &wend_offset)) {
+        bmem->bstate.pc = wend_line;
+        bmem->bstate.pc_offset = wend_offset;
+        bmem->bstate.in_goto = 1;
+    } else {
+        // No matching WEND anywhere in the program: same as GOTO to a
+        // line number that doesn't exist — the program simply stops
+        // running, no error (this can't be told apart from "the matching
+        // WEND is simply never reached on this run" in general, so it
+        // isn't treated as a program error).
+        bmem->bstate.pc = 0;
+        bmem->bstate.running = 0;
+    }
+    return true;
+}
+
+static bool eval_wend() {
+    if (!eval_token(TOKEN_KEYWORD_WEND))
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    if (bmem->bstate.while_sp == 0) {
+        bmem->bstate.error = BERROR_RUN;
+        return true;
+    }
+
+    while_t *w = &bmem->whiles[bmem->bstate.while_sp - 1];
+    bmem->bstate.pc = w->line;
+    bmem->bstate.pc_offset = w->offset;
+    bmem->bstate.in_goto = 1;
+    bmem->bstate.wend_jump = 1;
+    return true;
+}
+
 // EDIT <line_no>: validates the target line exists and remembers it in
 // bmem->io_edit_line. Once bastos_input() has removed this EDIT command
 // itself from io_buffer, it loads that line's own text into io_buffer,
@@ -2827,7 +2963,7 @@ static int8_t eval_prog(prog_t *prog, bool do_eval) {
     while (bmem->bstate.read_ptr && *bmem->bstate.read_ptr != 0 &&
            *bmem->bstate.read_ptr != '\'') {
         eval = eval_instruction() || eval_if() || eval_for() || eval_next() ||
-               eval_else();
+               eval_else() || eval_while() || eval_wend();
         if (!eval || bmem->bstate.error != BERROR_NONE)
             break;
 

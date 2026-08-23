@@ -45,6 +45,7 @@
 #define IO_BUFFER_SIZE  (128U)
 #define TOKEN_LINE_SIZE (128U)
 #define EVAL_RETURNS_SIZE (32U)
+#define WHILE_STACK_MAX (8U)
 #define B_DIM_MAX (16U)
 #define B_DIM_RANGE_FLAG (128U)
 #define B_NAME_SIZE_MAX (16U)
@@ -72,6 +73,16 @@ typedef struct
     uint16_t offset;
 } return_t;
 
+// One active WHILE: the exact position of its condition expression, so
+// WEND can jump back to it for re-evaluation. Identifies a specific WHILE
+// statement (there's no loop variable to key off, unlike FOR), matched by
+// (line, offset) — see eval_while()'s "same_as_top" check.
+typedef struct
+{
+    prog_t *line;
+    uint16_t offset;
+} while_t;
+
 // Bastos evaluation state
 typedef struct eval_state_s eval_state_t;
 struct eval_state_s {
@@ -89,6 +100,7 @@ struct eval_state_s {
     int8_t error;
     int8_t sp;
     uint8_t for_sp;
+    uint8_t while_sp;
 
     uint8_t in_goto: 1;
     uint8_t do_eval: 1;
@@ -110,6 +122,14 @@ struct eval_state_s {
                               // merely being computed into a string (e.g.
                               // "A$ = MODE 2"), which must not affect the
                               // real terminal's tracked state
+    uint8_t wend_jump: 1;    // set by eval_wend() right before it jumps
+                              // back to its WHILE's condition, consumed
+                              // (and always cleared) by the very next
+                              // eval_while() — lets that call tell "I'm
+                              // being re-checked via my own WEND" apart
+                              // from "something else (e.g. a bare GOTO)
+                              // landed back on me while my loop was still
+                              // active", which is an error
 
     prog_buffer_t token_buffer;
 };
@@ -125,6 +145,7 @@ typedef struct {
     uint8_t *db_end;
     loop_t loops['Z' - 'A' + 1];
     uint8_t for_stack['Z' - 'A' + 1]; // loop indices, in nesting order
+    while_t whiles[WHILE_STACK_MAX]; // active WHILEs, in nesting order
     return_t returns[EVAL_RETURNS_SIZE];
     uint8_t io_buffer[IO_BUFFER_SIZE];
     uint8_t io_cursor; // offset from io_buffer of the edit cursor in the current line

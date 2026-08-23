@@ -105,3 +105,5 @@
 #define TOKEN_KEYWORD_INDEX ((uint8_t) (103 | 0b10000000))
 #define TOKEN_KEYWORD_FILE ((uint8_t) (104 | 0b10000000))
 #define TOKEN_KEYWORD_ELSE ((uint8_t) (105 | 0b10000000))
+#define TOKEN_KEYWORD_WHILE ((uint8_t) (106 | 0b10000000))
+#define TOKEN_KEYWORD_WEND ((uint8_t) (107 | 0b10000000))
