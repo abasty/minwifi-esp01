@@ -636,6 +636,8 @@ que pour grouper.
 | Caractère | `CHR$ n` | `CHR$ 65` → `"A"` |
 | Vers nombre | `VAL s$` | `VAL "3.14"` → `3.14` |
 | Vers chaîne | `STR$ n` | `STR$ 42` → `"42"` |
+| Vers chaîne, dans une base | `STR$ n, base` | `STR$(255, 16)` → `"FF"` |
+| Vers chaîne, avec un format | `STR$ n, base, format` | `STR$(5, 10, "000.00")` → `"005.00"` |
 | Recherche | `INDEX s1$, s2$` | `INDEX "bonjour", "on"` → `2` |
 | Recherche depuis pos | `INDEX s1$, s2$, début` | |
 | Répétition | `REP n, s$` | `REP 3, "-"` → `"---"` |
@@ -645,6 +647,47 @@ PRINT LEN a$
 PRINT CODE k$
 z$ = CHR$ 0
 ia$ = CHR$(CODE a$ & 223)   ' parenthèses pour grouper uniquement
+```
+
+Le 2e argument de `STR$` convertit le nombre (tronqué en entier) dans la
+base donnée (2 à 36, chiffres `0`-`9` puis `A`-`Z`) :
+
+```basic
+PRINT STR$(255, 16)   ' "FF"
+PRINT STR$(10, 2)     ' "1010"
+PRINT STR$(-255, 16)  ' "-FF"
+```
+
+Le 3e argument, s'il est donné, est un format à la « BASIC » : `#` affiche
+un chiffre, ou un blanc si c'est un zéro de tête non nécessaire ; `0`
+affiche toujours un chiffre (complété par des zéros) ; `.` marque la
+virgule décimale. Le signe `-` d'un nombre négatif se place juste devant
+les chiffres (éventuellement blanchis) ; une valeur plus large que le
+modèle s'affiche en entier plutôt que d'être tronquée.
+
+La présence ou non d'un `.` dans le format détermine comment la base est
+utilisée :
+
+- **Avec un `.`** : la valeur est affichée en décimal (la base est
+  ignorée) — les chiffres après la virgule sont toujours affichés,
+  arrondis au nombre de `#`/`0` après le `.`, jamais transformés en
+  blancs.
+- **Sans `.`** : la valeur (tronquée en entier) est d'abord convertie
+  dans la base donnée, puis cette chaîne de chiffres est complétée/blanchie
+  contre le format, exactement comme la partie entière du cas décimal
+  ci-dessus. C'est la façon naturelle de compléter par des zéros une
+  conversion hexadécimale ou binaire sur une largeur fixe :
+
+```basic
+PRINT STR$(10, 2, "00000000")   ' "00001010" (binaire, complété à 8 chiffres)
+PRINT STR$(255, 16, "0000")     ' "00FF" (hexadécimal, complété à 4 chiffres)
+```
+
+```basic
+PRINT STR$(5, 10, "###.##")    ' "  5.00" (zéros de tête blanchis)
+PRINT STR$(5, 10, "000.00")    ' "005.00" (zéros de tête conservés)
+PRINT STR$(123.456, 10, "###.#")  ' "123.5" (arrondi)
+PRINT STR$(-5, 10, "###.##")   ' "-  5.00"
 ```
 
 Les indices de sous-chaîne utilisent le mot-clé `TO`. `début` vaut `1` par

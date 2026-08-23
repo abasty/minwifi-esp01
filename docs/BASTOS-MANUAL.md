@@ -623,6 +623,8 @@ Parentheses are optional for all functions; use them only for grouping.
 | Character | `CHR$ n` | `CHR$ 65` → `"A"` |
 | To number | `VAL s$` | `VAL "3.14"` → `3.14` |
 | To string | `STR$ n` | `STR$ 42` → `"42"` |
+| To string, in a base | `STR$ n, base` | `STR$(255, 16)` → `"FF"` |
+| To string, with a picture format | `STR$ n, base, format` | `STR$(5, 10, "000.00")` → `"005.00"` |
 | Find | `INDEX s1$, s2$` | `INDEX "hello", "ll"` → `3` |
 | Find from pos | `INDEX s1$, s2$, start` | |
 | Repeat | `REP n, s$` | `REP 3, "-"` → `"---"` |
@@ -632,6 +634,45 @@ PRINT LEN a$
 PRINT CODE k$
 z$ = CHR$ 0
 ia$ = CHR$(CODE a$ & 223)   ' parentheses for grouping only
+```
+
+`STR$`'s 2nd argument converts the number (truncated to an integer) to that
+base (2-36, digits `0`-`9` then `A`-`Z`):
+
+```basic
+PRINT STR$(255, 16)   ' "FF"
+PRINT STR$(10, 2)     ' "1010"
+PRINT STR$(-255, 16)  ' "-FF"
+```
+
+The 3rd argument, if given, is a BASIC-style picture format: `#` shows a
+digit, or a blank if it's a leading zero that isn't needed; `0` always
+shows a digit (zero-padded); `.` marks the decimal point. A negative
+number's `-` sign goes right in front of the (possibly blanked) digits; a
+value wider than the template still shows in full rather than being
+truncated.
+
+Whether the format includes a `.` decides how the base is used:
+
+- **With a `.`**: the value is shown in decimal (the base is ignored) —
+  fractional digits are always shown rounded to the number of `#`/`0`
+  after the `.`, never blanked.
+- **Without a `.`**: the value (truncated to an integer) is first
+  converted to the given base, then that digit string is padded/blanked
+  against the format, exactly like the integer part of the decimal case
+  above. This is the natural way to zero-pad a hex or binary conversion to
+  a fixed width:
+
+```basic
+PRINT STR$(10, 2, "00000000")   ' "00001010" (binary, zero-padded to 8)
+PRINT STR$(255, 16, "0000")     ' "00FF" (hex, zero-padded to 4)
+```
+
+```basic
+PRINT STR$(5, 10, "###.##")    ' "  5.00" (leading zeros blanked)
+PRINT STR$(5, 10, "000.00")    ' "005.00" (leading zeros kept)
+PRINT STR$(123.456, 10, "###.#")  ' "123.5" (rounded)
+PRINT STR$(-5, 10, "###.##")   ' "-  5.00"
 ```
 
 Substring indices use the `TO` keyword. `start` defaults to `1`, `end` defaults

@@ -662,22 +662,166 @@ static bool eval_string_chr() {
     return true;
 }
 
+// Applies a BASIC-style picture template to a plain (unsigned) digit
+// string: '#' shows a digit, or a blank if it's a leading zero not
+// otherwise needed; '0' always shows a digit (zero-padded); any other
+// template character is only ever reached once blanking has stopped, so
+// it plays no special role — it just isn't '#'. digits[] is first
+// left-padded with '0' up to tmpl_width (or left wider, untouched, if it
+// already exceeds it — a value wider than its template still shows in
+// full rather than being truncated).
+static int eval_str_pad(char *buf, int bufsize, const char *digits, int ndigits,
+                         const char *tmpl, int tmpl_width) {
+    int width = ndigits > tmpl_width ? ndigits : tmpl_width;
+    int overflow = width - tmpl_width; // digits beyond what the template covers, if any
+    int pad = tmpl_width - ndigits;
+    if (pad < 0)
+        pad = 0;
+
+    int len = 0;
+    bool blanking = true;
+    for (int i = 0; i < width && len < bufsize - 1; i++) {
+        char digit = i < pad ? '0' : digits[i - pad];
+        if (i >= overflow && blanking && digit == '0' && tmpl[i - overflow] == '#') {
+            buf[len++] = ' ';
+            continue;
+        }
+        blanking = false;
+        buf[len++] = digit;
+    }
+    buf[len] = 0;
+    return len;
+}
+
+// STR$(x, base, format) where format has no '.': x truncated to an
+// integer, converted to the given base (2-36, digits 0-9 then A-Z), then
+// padded/blanked against the format template the same way as the integer
+// part of a decimal picture format — e.g. STR$(10, 2, "00000000") ->
+// "00001010". An empty format leaves the raw digits untouched (this is
+// also how STR$(x, base) alone, with no format at all, is implemented).
+static int eval_str_base(char *buf, int bufsize, float value, int base, const char *format) {
+    long n = (long)truncf(value);
+    bool negative = n < 0;
+    unsigned long un = negative ? (unsigned long)(-n) : (unsigned long)n;
+
+    char digits[32];
+    int ndigits = 0;
+    do {
+        int d = (int)(un % (unsigned long)base);
+        digits[ndigits++] = (char)(d < 10 ? '0' + d : 'A' + d - 10);
+        un /= (unsigned long)base;
+    } while (un > 0 && ndigits < (int)sizeof(digits));
+    for (int i = 0; i < ndigits / 2; i++) { // reverse into most-significant-digit-first
+        char t = digits[i];
+        digits[i] = digits[ndigits - 1 - i];
+        digits[ndigits - 1 - i] = t;
+    }
+
+    int len = 0;
+    if (negative && len < bufsize - 1)
+        buf[len++] = '-';
+    len += eval_str_pad(buf + len, bufsize - len, digits, ndigits, format, (int)strlen(format));
+    return len;
+}
+
+// STR$(x, base, format) where format has a '.': a BASIC-style picture
+// format for a decimal value instead — '#'/'0' before the '.' as in
+// eval_str_pad(), and the fractional digits (after the '.') always shown
+// rounded to that many places, never blanked. base is unused here.
+static int eval_str_picture(char *buf, int bufsize, float value, const char *format) {
+    const char *dot = strchr(format, '.');
+    int int_width = (int)(dot - format);
+    int frac_width = (int)strlen(dot + 1);
+    if (int_width > 32)
+        int_width = 32;
+    if (frac_width > 16)
+        frac_width = 16;
+
+    bool negative = value < 0;
+    double av = negative ? -(double)value : (double)value;
+
+    char numbuf[64];
+    int total_width = int_width + frac_width + 1;
+    snprintf(numbuf, sizeof(numbuf), "%0*.*f", total_width, frac_width, av);
+
+    int numlen = (int)strlen(numbuf);
+    int int_len = numlen - frac_width - 1;
+
+    int len = 0;
+    if (negative && len < bufsize - 1)
+        buf[len++] = '-';
+
+    len += eval_str_pad(buf + len, bufsize - len, numbuf, int_len, format, int_width);
+
+    for (int i = int_len; i < numlen && len < bufsize - 1; i++)
+        buf[len++] = numbuf[i]; // '.' and fractional digits, shown as computed
+    buf[len] = 0;
+    return len;
+}
+
 static bool eval_string_str() {
     if (!eval_token(TOKEN_KEYWORD_STR))
         return false;
 
+    bool brackets = eval_token('(');
+
     if (!eval_term())
         return false;
 
-    if (bmem->bstate.do_eval) {
-        bmem->bstate.string = bmem_string_alloc(16);
-        if (!bmem->bstate.string)
-            return false;
+    float value = bmem->bstate.number;
+    bool has_base = false;
+    bool has_format = false;
+    int base = 10;
+    char *format = 0;
 
-        int slen = sprintf(string_cstr(bmem->bstate.string), "%g", bmem->bstate.number);
-        ((uint8_t *)bmem->bstate.string)[0] = (uint8_t)(slen & 0xff);
-        ((uint8_t *)bmem->bstate.string)[1] = (uint8_t)(slen >> 8);
+    if (eval_token(',')) {
+        if (!eval_term())
+            return false;
+        has_base = true;
+        base = (int)bmem->bstate.number;
+
+        if (eval_token(',')) {
+            if (!eval_string_expr())
+                return false;
+            has_format = true;
+            format = string_cstr(bmem->bstate.string);
+        }
     }
+
+    if (brackets && !eval_token(')'))
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    char buf[80];
+    int slen;
+
+    // A format with a '.' is a decimal picture (base doesn't apply); one
+    // with no '.' pads/blanks the value converted to the given base (or
+    // base 10 if none was given) — see eval_str_pad()'s callers.
+    bool decimal_picture = has_format && format && strchr(format, '.') != 0;
+
+    if (decimal_picture) {
+        slen = eval_str_picture(buf, sizeof(buf), value, format);
+    } else if (has_base || has_format) {
+        if (has_base && (base < 2 || base > 36)) {
+            bmem->bstate.error = BERROR_RANGE;
+            return true;
+        }
+        slen = eval_str_base(buf, sizeof(buf), value, has_base ? base : 10,
+                              format ? format : "");
+    } else {
+        slen = sprintf(buf, "%g", value);
+    }
+
+    bmem->bstate.string = bmem_string_alloc(slen);
+    if (!bmem->bstate.string)
+        return false;
+
+    memcpy(string_cstr(bmem->bstate.string), buf, slen);
+    ((uint8_t *)bmem->bstate.string)[0] = (uint8_t)(slen & 0xff);
+    ((uint8_t *)bmem->bstate.string)[1] = (uint8_t)(slen >> 8);
 
     return true;
 }

@@ -3206,6 +3206,134 @@ static void test_rand_list_roundtrip(void) {
 }
 
 /* ======================================================================== */
+/* Feature — STR$ extended to 2 and 3 arguments (eval.c-static:              */
+/*           eval_string_str(), eval_str_base(), eval_str_picture()).        */
+/*           STR$(x) unchanged (decimal, "%g"). STR$(x, base) converts x     */
+/*           (truncated to an integer) to the given base, 2-36. STR$(x,      */
+/*           base, format) uses a BASIC-style picture format instead — '#'   */
+/*           for an optionally-blanked digit, '0' for an always-shown        */
+/*           (zero-padded) digit, '.' for the decimal point — and ignores    */
+/*           base. Both the bracketed "STR$(x, y)" and bare "STR$ x, y"      */
+/*           forms are supported, matching INDEX's existing convention.      */
+/* ======================================================================== */
+static void test_strdollar_one_arg_regression(void) {
+    printf("STR$: the original 1-argument decimal form still works\n");
+    const char *lines[] = { "10 PRINT STR$(255)", NULL };
+    const char *out = run_program(lines);
+    check("STR$(255) is \"255\"", strstr(out, "255") != NULL);
+}
+
+static void test_strdollar_base_conversion(void) {
+    printf("STR$: a 2nd argument converts the (truncated) number to that base\n");
+    const char *lines[] = {
+        "10 PRINT STR$(255,16)",
+        "20 PRINT STR$(10,2)",
+        "30 PRINT STR$(-255,16)",
+        "40 PRINT STR$(8,8)",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("STR$(255,16) is \"FF\"", strstr(out, "FF\r\n") != NULL);
+    check("STR$(10,2) is \"1010\"", strstr(out, "1010\r\n") != NULL);
+    check("STR$(-255,16) is \"-FF\"", strstr(out, "-FF\r\n") != NULL);
+    check("STR$(8,8) is \"10\"", strstr(out, "10\r\n") != NULL);
+}
+
+static void test_strdollar_bare_form_without_parens(void) {
+    printf("STR$: the bare \"STR$ x, base\" form (no parens) also works\n");
+    const char *lines[] = { "10 PRINT STR$ 255,16", NULL };
+    const char *out = run_program(lines);
+    check("STR$ 255,16 is \"FF\"", strstr(out, "FF") != NULL);
+    check("no error was reported", strstr(out, "Error") == NULL);
+}
+
+static void test_strdollar_base_out_of_range_errors(void) {
+    printf("STR$: a base outside 2-36 is an error\n");
+    const char *lines[] = { "10 PRINT STR$(255,1)", NULL };
+    const char *out = run_program(lines);
+    check("an error was reported", strstr(out, "Error") != NULL);
+}
+
+static void test_strdollar_picture_format(void) {
+    printf("STR$: a 3rd argument is a BASIC-style picture format (# / 0 / .)\n");
+    const char *lines[] = {
+        "10 PRINT STR$(5,10,\"###.##\")",
+        "20 PRINT STR$(5,10,\"000.00\")",
+        "30 PRINT STR$(123.456,10,\"###.#\")",
+        "40 PRINT STR$(-5,10,\"###.##\")",
+        "50 PRINT STR$(1234,10,\"##\")",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("'#' blanks unneeded leading zeros: \"  5.00\"",
+          strstr(out, "  5.00\r\n") != NULL);
+    check("'0' zero-pads instead of blanking: \"005.00\"",
+          strstr(out, "005.00\r\n") != NULL);
+    check("fractional digits are rounded, never blanked: \"123.5\"",
+          strstr(out, "123.5\r\n") != NULL);
+    check("the sign is kept in front of the (possibly blanked) digits: \"-  5.00\"",
+          strstr(out, "-  5.00\r\n") != NULL);
+    check("a value wider than the template still shows in full: \"1234\"",
+          strstr(out, "1234\r\n") != NULL);
+}
+
+static void test_strdollar_base_with_padding_format(void) {
+    printf("STR$: a format with no '.' pads/blanks the value converted to the given base\n");
+    const char *lines[] = {
+        "10 PRINT STR$(10,2,\"00000000\")",
+        "20 PRINT STR$(10,2,\"########\")",
+        "30 PRINT STR$(255,16,\"0000\")",
+        "40 PRINT STR$(5,10,\"0000\")",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("STR$(10,2,\"00000000\") is \"00001010\" (base 2, zero-padded to 8)",
+          strstr(out, "00001010\r\n") != NULL);
+    check("STR$(10,2,\"########\") is \"    1010\" (base 2, blank-padded to 8)",
+          strstr(out, "    1010\r\n") != NULL);
+    check("STR$(255,16,\"0000\") is \"00FF\" (base 16, zero-padded to 4)",
+          strstr(out, "00FF\r\n") != NULL);
+    check("STR$(5,10,\"0000\") is \"0005\" (base 10 by default, no base given)",
+          strstr(out, "0005\r\n") != NULL);
+}
+
+static void test_strdollar_syntax_check_does_not_beep(void) {
+    printf("STR$: well-formed 1/2/3-argument forms do not beep or error\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    capture_clear();
+    type_raw("10 PRINT STR$(255)");
+    type_raw("\r");
+    type_raw("20 PRINT STR$(255,16)");
+    type_raw("\r");
+    type_raw("30 PRINT STR$(255,16,\"###.##\")");
+    type_raw("\r");
+    check("no BEL and no error for any of the three forms",
+          g_output_len == 0 || strchr(g_output, '\x07') == NULL);
+
+    bastos_done();
+}
+
+static void test_strdollar_list_roundtrip(void) {
+    printf("STR$: LIST shows the 3-argument form back correctly\n");
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    type_raw("10 PRINT STR$(255,16,\"###.##\")");
+    type_raw("\r");
+
+    capture_clear();
+    type_raw("LIST\r");
+    check("LIST reproduces the 3-argument STR$ call verbatim",
+          strstr(g_output, "STR$(255,16,\"###.##\")") != NULL);
+
+    bastos_done();
+}
+
+/* ======================================================================== */
 /* main                                                                       */
 /* ======================================================================== */
 int main(void) {
@@ -3569,6 +3697,30 @@ int main(void) {
     printf("\n");
 
     test_rand_list_roundtrip();
+    printf("\n");
+
+    test_strdollar_one_arg_regression();
+    printf("\n");
+
+    test_strdollar_base_conversion();
+    printf("\n");
+
+    test_strdollar_bare_form_without_parens();
+    printf("\n");
+
+    test_strdollar_base_out_of_range_errors();
+    printf("\n");
+
+    test_strdollar_picture_format();
+    printf("\n");
+
+    test_strdollar_base_with_padding_format();
+    printf("\n");
+
+    test_strdollar_syntax_check_does_not_beep();
+    printf("\n");
+
+    test_strdollar_list_roundtrip();
     printf("\n");
 
     printf("=== Results: %d/%d tests passed ===\n",
