@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="610" viewBox="0 0 600 610" font-family="&#39;IBM Plex Mono&#39;, monospace">
+  <defs>
+    
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="0" cy="0" r="1.1" fill="#e6dfcd"></circle>
+      <circle cx="24" cy="0" r="1.1" fill="#e6dfcd"></circle>
+      <circle cx="0" cy="24" r="1.1" fill="#e6dfcd"></circle>
+      <circle cx="24" cy="24" r="1.1" fill="#e6dfcd"></circle>
+    </pattern>
+  </defs>
+
+  
+  <rect x="0.5" y="0.5" width="599" height="609" rx="12" fill="#fdfcf9" stroke="#e3dcca" stroke-width="1"></rect>
+  <rect x="0.5" y="0.5" width="599" height="609" rx="12" fill="url(#dots)"></rect>
+
+  
+  <text x="32" y="40" font-size="19" font-weight="700" letter-spacing="2.5" fill="#1c1a14">CABLE DE FLASHAGE</text>
+  <text x="32" y="60" font-size="10.5" letter-spacing="1" fill="#6b6552">DIN-5 Femelle · FILS DUPONT</text>
+  <text x="32" y="76" font-size="10.5" letter-spacing="1" fill="#6b6552">Convertisseur USB-Serial</text>
+
+  
+  <rect x="450" y="16" width="122" height="104" rx="6" fill="#faf8f3" stroke="#d6cfbe" stroke-width="1"></rect>
+  <g font-size="9" fill="#4a463b">
+    <rect x="462" y="33" width="16" height="4" rx="2" fill="#ffcc00"></rect><text x="484" y="38">RX · série</text>
+    <rect x="462" y="51" width="16" height="4" rx="2" fill="#5a3410"></rect><text x="484" y="56">TX · série</text>
+    <rect x="462" y="69" width="16" height="4" rx="2" fill="#f57c00"></rect><text x="484" y="74">Vcc · alim</text>
+    <rect x="462" y="87" width="16" height="4" rx="2" fill="#1565c0"></rect><text x="484" y="92">0 V · GND</text>
+    <rect x="462" y="105" width="16" height="4" rx="2" fill="#8a8170"></rect><text x="484" y="110">PT</text>
+  </g>
+
+  
+  <g transform="translate(0,108)">
+
+    
+    <text x="300" y="30" font-size="12.5" font-weight="600" letter-spacing="1.5" fill="#a85f12" text-anchor="middle">ARRIERE PRISE FEMELLE</text>
+    <circle cx="300" cy="120" r="80" fill="#ece6d7" stroke="#b3a98f" stroke-width="2"></circle>
+    <circle cx="300" cy="120" r="66" fill="#f6f2e9" stroke="#cfc6b0" stroke-width="1"></circle>
+    <rect x="293" y="57" width="14" height="12" rx="2" fill="#cabfa6" stroke="#b3a98f" stroke-width="1"></rect>
+
+    
+    <g fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M252,120 H281 V392" stroke="#ffcc00"></path>
+      <path d="M300,164 V392" stroke="#1565c0"></path>
+      <path d="M338,150 V392" stroke="#f57c00"></path>
+      <path d="M348,120 H319 V392" stroke="#5a3410"></path>
+    </g>
+
+    
+    <circle cx="252" cy="120" r="9" fill="#7d7464" stroke="#ffcc00" stroke-width="3.5"></circle>
+    <circle cx="348" cy="120" r="9" fill="#7d7464" stroke="#5a3410" stroke-width="3.5"></circle>
+    <circle cx="262" cy="150" r="9" fill="#7d7464" stroke="#8a8170" stroke-width="3"></circle>
+    <circle cx="300" cy="164" r="9" fill="#7d7464" stroke="#1565c0" stroke-width="3.5"></circle>
+    <circle cx="338" cy="150" r="9" fill="#7d7464" stroke="#f57c00" stroke-width="3.5"></circle>
+    <g font-size="8.5" font-weight="600" fill="#4a463b" text-anchor="middle">
+      <text x="252" y="106">RX</text>
+      <text x="348" y="106">TX</text>
+      <text x="240" y="152">PT</text>
+      <text x="360" y="152">Vcc</text>
+      <text x="300" y="148">0v</text>
+    </g>
+
+    
+    <g>
+      <rect x="274" y="386" width="14" height="7" rx="2" fill="#242427" stroke="#000" stroke-width="0.8"></rect>
+      <rect x="274" y="392" width="14" height="32" rx="3" fill="#18181a" stroke="#000" stroke-width="1"></rect>
+      <rect x="276" y="396" width="2.5" height="24" rx="1.2" fill="#37373c"></rect>
+      <rect x="277" y="420" width="8" height="6" fill="#060606" stroke="#33332f" stroke-width="0.8"></rect>
+      <rect x="293" y="386" width="14" height="7" rx="2" fill="#242427" stroke="#000" stroke-width="0.8"></rect>
+      <rect x="293" y="392" width="14" height="32" rx="3" fill="#18181a" stroke="#000" stroke-width="1"></rect>
+      <rect x="295" y="396" width="2.5" height="24" rx="1.2" fill="#37373c"></rect>
+      <rect x="296" y="420" width="8" height="6" fill="#060606" stroke="#33332f" stroke-width="0.8"></rect>
+      <rect x="312" y="386" width="14" height="7" rx="2" fill="#242427" stroke="#000" stroke-width="0.8"></rect>
+      <rect x="312" y="392" width="14" height="32" rx="3" fill="#18181a" stroke="#000" stroke-width="1"></rect>
+      <rect x="314" y="396" width="2.5" height="24" rx="1.2" fill="#37373c"></rect>
+      <rect x="315" y="420" width="8" height="6" fill="#060606" stroke="#33332f" stroke-width="0.8"></rect>
+      <rect x="331" y="386" width="14" height="7" rx="2" fill="#242427" stroke="#000" stroke-width="0.8"></rect>
+      <rect x="331" y="392" width="14" height="32" rx="3" fill="#18181a" stroke="#000" stroke-width="1"></rect>
+      <rect x="333" y="396" width="2.5" height="24" rx="1.2" fill="#37373c"></rect>
+      <rect x="334" y="420" width="8" height="6" fill="#060606" stroke="#33332f" stroke-width="0.8"></rect>
+    </g>
+
+    
+    <text x="32" y="474" font-size="9.5" fill="#9a9276">▸ TX → TX  ·  RX → RX  —  aucun croisement sur l&#39;USB-Serial</text>
+    <text x="32" y="486" font-size="9.5" fill="#9a9276">les signaux sont déjà croisés au niveau du Sonoff · logique 5 V</text>
+  </g>
+</svg>
