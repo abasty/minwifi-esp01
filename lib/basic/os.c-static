@@ -227,6 +227,32 @@ static void os_autoexec(void) {
     }
 }
 
+// Mode-aware TTY effect codes for the OS's own status/list screens (WiFi
+// scan, DB list, ...). eval_string_tty() (eval.c-static) already picks
+// between the Minitel Videotex codes and their 80-column ANSI equivalents
+// this same way for the BASIC-facing INVERSE/FLASH/CLEOL commands, keyed
+// off the same bmem->bstate.screen_mode; these mirror that choice here.
+// CLEOL is left mode-aware even where BASIC's own LINE0 keyword isn't
+// (eval_string_tty()'s TOKEN_KEYWORD_LINE0 case always sends the Videotex
+// LINE0 code) -- LINE0 positions the cursor on line 0, which in 80-column
+// mode already stays valid enough for these one-line status banners not to
+// need the ANSI CUP form.
+static const char *tty_inv(void) {
+    return bmem->bstate.screen_mode ? MODE80_INV : INV;
+}
+
+static const char *tty_normal(void) {
+    return bmem->bstate.screen_mode ? MODE80_NORMAL : NORMAL;
+}
+
+static const char *tty_cleol(void) {
+    return bmem->bstate.screen_mode ? MODE80_CLEOL : CLEOL;
+}
+
+static const char *tty_blink(void) {
+    return bmem->bstate.screen_mode ? MODE80_BLINK : BLINK;
+}
+
 /**
  * @brief Print network and add it to SSID array
  *
@@ -257,15 +283,32 @@ void os_wifi_print_network(int i, const char *ssid, uint8_t encryption,
 
 static void os_wifi_scan(void) {
     // Display scanning status
-    os_redir_print_string(LINE0 INV BLINK "Scanning..." CLEOL NORMAL "\n");
+    os_redir_print_string(LINE0);
+    os_redir_print_string(tty_inv());
+    os_redir_print_string(tty_blink());
+    os_redir_print_string("Scanning...");
+    os_redir_print_string(tty_cleol());
+    os_redir_print_string(tty_normal());
+    os_redir_print_string("\n");
 
     // Scan and display Wi-Fi networks
     bmem_ssid_array_new();
-    os_redir_print_string("\r\n" INV "ID dBm SSID" CLEOL " " NORMAL "\r\n");
+    os_redir_print_string("\r\n");
+    os_redir_print_string(tty_inv());
+    os_redir_print_string("ID dBm SSID");
+    os_redir_print_string(tty_cleol());
+    os_redir_print_string(" ");
+    os_redir_print_string(tty_normal());
+    os_redir_print_string("\r\n");
     int n = hal_wifi_scan();
 
-    os_redir_print_integer(
-        "\r\n%d network(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
+    os_redir_print_integer("\r\n%d network(s)", n);
+    os_redir_print_string(tty_cleol());
+    os_redir_print_string(tty_normal());
+    os_redir_print_string("\r\n\r\n");
+    os_redir_print_string(LINE0);
+    os_redir_print_string(tty_cleol());
+    os_redir_print_string("\n");
 }
 
 static int os_wifi_connect(const char *ssid) {
@@ -280,15 +323,25 @@ static int os_wifi_connect(const char *ssid) {
     }
 
     if (!use_db) {
-        os_redir_print_string(LINE0 INV "Password: " CLEOL);
+        os_redir_print_string(LINE0);
+        os_redir_print_string(tty_inv());
+        os_redir_print_string("Password: ");
+        os_redir_print_string(tty_cleol());
         if (os_get_string(secret, sizeof(secret), '*') < 0) {
-            os_redir_print_string(LINE0 CLEOL "\r\n");
+            os_redir_print_string(LINE0);
+            os_redir_print_string(tty_cleol());
+            os_redir_print_string("\r\n");
             return -1;
         }
     }
-    os_redir_print_string(LINE0 INV BLINK "Connecting to ");
+    os_redir_print_string(LINE0);
+    os_redir_print_string(tty_inv());
+    os_redir_print_string(tty_blink());
+    os_redir_print_string("Connecting to ");
     os_redir_print_string(ssid);
-    os_redir_print_string(CLEOL NORMAL "\n");
+    os_redir_print_string(tty_cleol());
+    os_redir_print_string(tty_normal());
+    os_redir_print_string("\n");
 
     int ret = hal_wifi_connect(ssid, secret);
     if (ret == 0) {
@@ -301,7 +354,9 @@ static int os_wifi_connect(const char *ssid) {
         }
     }
 
-    os_redir_print_string(LINE0 CLEOL "\r\n");
+    os_redir_print_string(LINE0);
+    os_redir_print_string(tty_cleol());
+    os_redir_print_string("\r\n");
     return ret;
 }
 
@@ -323,8 +378,13 @@ void os_wifi_set_info(const char *ssid, const char *ip) {
 }
 
 static void os_wifi_status(void) {
-    os_redir_print_string("\r\n" INV "IP              SSID" CLEOL " " NORMAL
-                          "\r\n");
+    os_redir_print_string("\r\n");
+    os_redir_print_string(tty_inv());
+    os_redir_print_string("IP              SSID");
+    os_redir_print_string(tty_cleol());
+    os_redir_print_string(" ");
+    os_redir_print_string(tty_normal());
+    os_redir_print_string("\r\n");
     if (!hal_wifi_is_connected()) {
         os_redir_print_string("Not connected");
     } else {
@@ -338,7 +398,13 @@ static void os_wifi_status(void) {
 }
 
 static void os_ftp_status(void) {
-    os_redir_print_string("\r\n" INV "FTP Host" CLEOL " " NORMAL "\r\n");
+    os_redir_print_string("\r\n");
+    os_redir_print_string(tty_inv());
+    os_redir_print_string("FTP Host");
+    os_redir_print_string(tty_cleol());
+    os_redir_print_string(" ");
+    os_redir_print_string(tty_normal());
+    os_redir_print_string("\r\n");
 
     // Check connection status
     if (*g_ftp_connected_host != 0 && g_ftp_fd < 0) {
@@ -355,11 +421,16 @@ static void os_ftp_status(void) {
 }
 
 static void os_db_list(uint8_t set) {
+    os_redir_print_string("\r\n");
+    os_redir_print_string(tty_inv());
     if (set != DB_WIFI_SET)
-        os_redir_print_string("\r\n" INV "Key      Value" CLEOL " " NORMAL
-                              "\r\n");
+        os_redir_print_string("Key      Value");
     else
-        os_redir_print_string("\r\n" INV "SSID" CLEOL " " NORMAL "\r\n");
+        os_redir_print_string("SSID");
+    os_redir_print_string(tty_cleol());
+    os_redir_print_string(" ");
+    os_redir_print_string(tty_normal());
+    os_redir_print_string("\r\n");
 
     int n = 0;
     entry_t *entry = bdb_entry_first();
@@ -378,8 +449,13 @@ static void os_db_list(uint8_t set) {
         }
         entry = bdb_entry_next(entry);
     }
-    os_redir_print_integer(
-        "\r\n%d record(s)" CLEOL NORMAL "\r\n\r\n" LINE0 CLEOL "\n", n);
+    os_redir_print_integer("\r\n%d record(s)", n);
+    os_redir_print_string(tty_cleol());
+    os_redir_print_string(tty_normal());
+    os_redir_print_string("\r\n\r\n");
+    os_redir_print_string(LINE0);
+    os_redir_print_string(tty_cleol());
+    os_redir_print_string("\n");
 }
 
 static void os_db_erase(uint8_t set, const char *name) {

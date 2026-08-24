@@ -3448,6 +3448,39 @@ static void test_for_next_one_line_matches_multi_line_equivalent(void) {
 }
 
 /* ======================================================================== */
+/* Feature — os.c-static's status/list screens (WiFi scan, DB list, ...)     */
+/*           use mode-aware TTY codes (tty_inv(), tty_normal(),              */
+/*           tty_cleol(), tty_blink()), matching eval_string_tty()'s own     */
+/*           40/80-column choice for INVERSE/FLASH/CLEOL, instead of always  */
+/*           sending the 40-column Videotex codes regardless of MODE.       */
+/* ======================================================================== */
+static void test_db_list_uses_videotex_codes_in_40_column_mode(void) {
+    printf("DB LIST: uses the Videotex INV/CLEOL/NORMAL codes in 40-column mode\n");
+    const char *lines[] = { "10 MINITEL LIST", NULL };
+    const char *out = run_program(lines);
+    check("the Videotex inverse code (ESC ]) was sent",
+          memmem(out, strlen(out), "\x1b\x5d", 2) != NULL);
+    check("the Videotex normal code (ESC \\) was sent",
+          memmem(out, strlen(out), "\x1b\x5c", 2) != NULL);
+    check("the ANSI inverse code (CSI 7m) was not sent",
+          memmem(out, strlen(out), "\x1b[7m", 4) == NULL);
+}
+
+static void test_db_list_uses_ansi_codes_in_80_column_mode(void) {
+    printf("DB LIST: uses the ANSI inverse/CLEOL/normal codes in 80-column mode\n");
+    const char *lines[] = { "10 MODE 2:MINITEL LIST", NULL };
+    const char *out = run_program(lines);
+    check("the ANSI inverse code (CSI 7m) was sent",
+          memmem(out, strlen(out), "\x1b[7m", 4) != NULL);
+    check("the ANSI erase-to-EOL code (CSI K) was sent",
+          memmem(out, strlen(out), "\x1b[K", 3) != NULL);
+    check("the ANSI normal code (CSI m) was sent",
+          memmem(out, strlen(out), "\x1b[m", 3) != NULL);
+    check("the Videotex inverse code (ESC ]) was not sent",
+          memmem(out, strlen(out), "\x1b\x5d", 2) == NULL);
+}
+
+/* ======================================================================== */
 /* Feature — WHILE <condition> / WEND (eval.c-static: eval_while(),          */
 /*           eval_wend(), eval_while_find_wend(); bmemory.h: while_t,        */
 /*           WHILE_STACK_MAX). WEND jumps back to its WHILE for re-check;    */
@@ -4089,6 +4122,12 @@ int main(void) {
     printf("\n");
 
     test_for_next_one_line_matches_multi_line_equivalent();
+    printf("\n");
+
+    test_db_list_uses_videotex_codes_in_40_column_mode();
+    printf("\n");
+
+    test_db_list_uses_ansi_codes_in_80_column_mode();
     printf("\n");
 
     test_while_wend_basic_loop();
