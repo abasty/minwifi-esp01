@@ -1,5 +1,5 @@
 ---
-title: "Un Basic sur Minitel : Double effet rétro !"
+title: "Guide d'assemblage du BASTOS-S"
 ---
 
 ![bastos](bastos-title.png)
