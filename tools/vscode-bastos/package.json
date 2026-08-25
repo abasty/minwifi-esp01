@@ -6,6 +6,11 @@
   "publisher": "minwifi-esp01",
   "private": true,
   "license": "SEE LICENSE IN ../../README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abasty/minwifi-esp01.git",
+    "directory": "tools/vscode-bastos"
+  },
   "engines": {
     "vscode": "^1.75.0"
   },

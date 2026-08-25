@@ -74,11 +74,34 @@ Pas encore publiée sur le Marketplace. Deux façons de l'essayer :
    avec l'extension chargée.
 3. Ouvrir un fichier `.bas` (par ex. `disk/bastos.bas`) dans cette fenêtre.
 
-**Installation persistante** (nécessite [`vsce`](https://github.com/microsoft/vscode-vsce)) :
+**Installation persistante**, via un fichier `.vsix` — pas de compte ni
+publication nécessaire, juste un fichier à installer (le tien ou celui
+d'un tiers à qui tu l'as transmis) :
 
 ```sh
-npm install -g @vscode/vsce
 cd tools/vscode-bastos
-vsce package
+npx @vscode/vsce package
 code --install-extension bastos-0.1.0.vsix
 ```
+
+(ou dans VSCode : palette de commandes → « Extensions: Install from
+VSIX... »). Le `.vsix` est un artefact de build, pas versionné (voir
+`.gitignore`) — à régénérer après chaque modification de l'extension.
+
+## Publier
+
+- **Partager un `.vsix`** (voir ci-dessus) : suffit pour un outil de niche
+  comme celui-ci, aucune inscription nécessaire. C'est ce qui est fait sur
+  [le site de doc](https://abasty.github.io/minwifi-esp01/BASTOS-VSCODE-EXTENSION-fr)
+  (page [docs/BASTOS-VSCODE-EXTENSION-fr.md](../../docs/BASTOS-VSCODE-EXTENSION-fr.md),
+  fichier [docs/bastos.vsix](../../docs/bastos.vsix)) : après un `vsce
+  package`, penser à recopier le `.vsix` généré vers `docs/bastos.vsix`
+  et à le committer — ce n'est pas automatisé.
+- **VS Code Marketplace** ou **Open VSX** (installable depuis l'onglet
+  Extensions de VSCode par n'importe qui) : nécessite un compte éditeur
+  (`vsce login` / `ovsx publish`) que seul le mainteneur du dépôt peut
+  créer — voir la
+  [doc officielle de publication](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+  le moment venu. `package.json` a déjà un champ `repository` pointant
+  vers ce dépôt ; il faudrait encore retirer `"private": true` et ajouter
+  une icône PNG dédiée avant un premier `vsce publish`.

@@ -15,6 +15,8 @@ En français :
   d'assemblage du micro-ordinateur BASTOS-S
 - [Guide de démarrage rapide](BASTOS-QUICK-START-fr) — Premiers pas avec BASTOS-S
 - [Manuel du langage BASTOS (FR)](BASTOS-MANUAL-fr) — Référence complète du langage
+- [Extension VSCode](BASTOS-VSCODE-EXTENSION-fr) — Coloration syntaxique,
+  snippets, renumérotation, mise en forme et renommage de variable
 
 En anglais :
 - [Manuel du langage BASTOS (EN)](BASTOS-MANUAL) — Full language reference
