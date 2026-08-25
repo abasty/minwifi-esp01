@@ -12,7 +12,7 @@ BASTOS-S est un interpréteur BASIC qui s’exécute sur le processeur d'un
 interrupteur Wi-Fi Sonoff. Le langage est adapté aux spécificités du Minitel,
 notamment les commandes d'affichage qui produisent des séquences Videotex
 ensuite transmises au Minitel par la prise péri-informatique. BASTOS dispose de
-commandes pour se connecter à Wi-Fi et à aux services Minitel aujourd'hui
+commandes pour se connecter à Wi-Fi et aux services Minitel aujourd'hui
 disponibles sur Internet. En mode connecté, BASTOS agit comme une passerelle
 bi-directionnelle entre le service et le Minitel.
 
