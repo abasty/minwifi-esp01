@@ -1,0 +1,67 @@
+{
+  "FOR / NEXT": {
+    "prefix": "for",
+    "body": [
+      "${1:10} FOR ${2:i} = ${3:1} TO ${4:10}",
+      "${5:20} ${0}",
+      "${6:30} NEXT ${2:i}"
+    ],
+    "description": "Boucle FOR/NEXT"
+  },
+  "WHILE / WEND": {
+    "prefix": "while",
+    "body": [
+      "${1:10} WHILE ${2:condition}",
+      "${3:20} ${0}",
+      "${4:30} WEND"
+    ],
+    "description": "Boucle WHILE/WEND"
+  },
+  "IF THEN": {
+    "prefix": "if",
+    "body": "${1:10} IF ${2:condition} THEN ${0:instruction}",
+    "description": "IF/THEN sur une ligne"
+  },
+  "IF THEN ELSE": {
+    "prefix": "ifelse",
+    "body": "${1:10} IF ${2:condition} THEN ${3:instruction} ELSE ${0:instruction}",
+    "description": "IF/THEN/ELSE sur une ligne"
+  },
+  "LABEL": {
+    "prefix": "label",
+    "body": "${1:10} LABEL \"${2:Nom}\"",
+    "description": "Déclare une étiquette nommée"
+  },
+  "GOSUB label / RETURN": {
+    "prefix": "gosub",
+    "body": [
+      "${1:10} GOSUB \"${2:SousProgramme}\"",
+      "${3:20} END",
+      "",
+      "${4:1000} LABEL \"${2:SousProgramme}\"",
+      "${5:1010} ${0}",
+      "${6:1020} RETURN"
+    ],
+    "description": "Appel de sous-programme par étiquette avec squelette LABEL/RETURN"
+  },
+  "REM": {
+    "prefix": "rem",
+    "body": "${1:10} REM \"${0:commentaire}\"",
+    "description": "Commentaire sur sa propre ligne"
+  },
+  "INPUT": {
+    "prefix": "input",
+    "body": "${1:10} INPUT \"${2:Message : }\", ${0:variable}",
+    "description": "Demande une saisie utilisateur"
+  },
+  "PRINT AT": {
+    "prefix": "at",
+    "body": "${1:10} AT ${2:ligne}, ${3:colonne}; \"${0:texte}\"",
+    "description": "Positionne le curseur puis affiche"
+  },
+  "DIM array": {
+    "prefix": "dim",
+    "body": "${1:10} DIM ${2:tableau}(${0:10})",
+    "description": "Déclare un tableau"
+  }
+}

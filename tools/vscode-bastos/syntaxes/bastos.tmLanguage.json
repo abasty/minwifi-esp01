@@ -1,0 +1,111 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "BASTOS",
+  "scopeName": "source.bastos",
+  "patterns": [
+    { "include": "#line-number" },
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#label-targets" },
+    { "include": "#keywords-control" },
+    { "include": "#keywords-command" },
+    { "include": "#support-functions" },
+    { "include": "#operators-word" },
+    { "include": "#operators" },
+    { "include": "#variables" }
+  ],
+  "repository": {
+    "line-number": {
+      "match": "^\\s*(\\d+)\\b",
+      "captures": {
+        "1": { "name": "constant.numeric.line-number.bastos" }
+      }
+    },
+    "comments": {
+      "patterns": [
+        {
+          "match": "(?i:\\bREM\\b).*$",
+          "name": "comment.line.rem.bastos"
+        },
+        {
+          "match": "'.*$",
+          "name": "comment.line.apostrophe.bastos"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.bastos",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.bastos",
+          "match": "\\\\(?:[abefnrtv\\\\\"]|x[0-9A-Fa-f]{2})"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.bastos",
+          "match": "\\b0[xX][0-9A-Fa-f]+\\b"
+        },
+        {
+          "name": "constant.numeric.decimal.bastos",
+          "match": "\\b\\d+(?:\\.\\d+)?\\b"
+        }
+      ]
+    },
+    "label-targets": {
+      "comment": "Highlight the quoted label name right after GOTO/GOSUB/LABEL/THEN/ELSE as an entity, not a plain string",
+      "match": "(?i:\\b(GOTO|GOSUB|LABEL|THEN|ELSE)\\b)(\\s*)(\")([^\"]*)(\")",
+      "captures": {
+        "1": { "name": "keyword.control.bastos" },
+        "3": { "name": "punctuation.definition.string.begin.bastos" },
+        "4": { "name": "entity.name.function.label.bastos" },
+        "5": { "name": "punctuation.definition.string.end.bastos" }
+      }
+    },
+    "keywords-control": {
+      "match": "(?i:\\b(IF|THEN|ELSE|FOR|TO|STEP|NEXT|WHILE|WEND|GOTO|GOSUB|RETURN|LABEL|END|STOP|CONT|PAUSE)\\b)",
+      "name": "keyword.control.bastos"
+    },
+    "keywords-command": {
+      "match": "(?i:\\b(?:NEW|CLS|CLEAR|CAT|ERASE|RESET|LOAD|SAVE|LIST|RUN|EDIT|DEBUG|BASTOS|LET|DIM|PRINT|INPUT|AT|INK|PAPER|CURSOR|FAST2|FAST|SLOW|SCROLL|PLOT|UNPLOT|MODE|LINE0|LINE|FLASH|INVERSE|UNDERLINE|ECHO|SIZE|TAB|INS|DEL|CHAR|ORIGIN|G0|G1|LL|BEEP|CLEOL|UP|DOWN|TEST|USR|PEEK|POKE|VKEY|RAND|FREE|WIFI|START|STATUS|SCAN|MINITEL|FTP|GET|PUT|DB|FILE|OUTPUT)\\b)|\\?",
+      "name": "keyword.other.command.bastos"
+    },
+    "support-functions": {
+      "match": "(?i:\\b(?:ABS|ACS|ASN|ATN|CODE|COS|EXP|INT|LN|PI|RND|SGN|SIN|SQR|TAN|LEN|INDEX|VAL)\\b|\\b(?:CHR|STR|INKEY|REP)\\$)",
+      "name": "support.function.bastos"
+    },
+    "operators-word": {
+      "match": "(?i:\\b(AND|OR|NOT)\\b)",
+      "name": "keyword.operator.word.bastos"
+    },
+    "operators": {
+      "patterns": [
+        {
+          "match": "<>|<=|>=|=|<|>|\\+|-|\\*|/|%|&|\\|",
+          "name": "keyword.operator.bastos"
+        },
+        {
+          "match": ":|,|;",
+          "name": "punctuation.separator.bastos"
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "name": "variable.other.string.bastos",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\$"
+        },
+        {
+          "name": "variable.other.number.bastos",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+        }
+      ]
+    }
+  }
+}
