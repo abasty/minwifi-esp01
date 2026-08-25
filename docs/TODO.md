@@ -2,15 +2,13 @@
 
 ## Version 2
 
-### Fonctionnalités
+* [ ] Commande `SERVER <nom>,<urn>,<fichier.bas>` : Exécute un serveur TCP ou WS
+  et exécute un programme BASTOS quand on se connecte. Il faut prévoir des
+  instructions de saisie, de partage entre instances, de quotas, etc. Sur un
+  SonOff, pourquoi pas mais monovoie. Sur Linux, ou dans un conteneur : voir
+  comment implémenter des BALs, le rouleau, salon, forum, etc.
 
-* [ ] DD4012SA + SonOff Basic R4 : v1 + OTA + Commande "MINITEL WIFI" => serveur
-  TCP sur BASTOS qui fait du passe plat avec la prise péri-info et téléphone ou
-  PC qui se connecte aux services (telnet, tcp, ws, wss)
-* [ ] `TELNET` : au départ gérer avec un front end `ncat` qui passe en mode
-  téléinformatique, et effectue la connexion telnet. Voir :
-  <https://mewbies.com/acute_terminal_fun_telnet_public_servers_watch_star_wars_play_games_etc.htm>,
-  <https://www.mudconnect.com/>
+### Fonctionnalités
 
 ## Version 1
 
@@ -143,7 +141,6 @@
 * [ ] Ajouter répertoires dans système de fichiers
   (<https://randomnerdtutorials.com/esp32-write-data-littlefs-arduino/>)
 * [ ] TAB : Difficile à implémenter si on ne connait pas la ligne en cours
-* [x] Gérer les codes INSC_ON, INSC_OFF et définir les commandes BASTOS
   associées (`INS CHAR 1`: 1b5b3468, `INS CHAR 0`: 1b5b346c)
 * [ ] Quand on est connecté à un service, voir ce que fait ESC et CX/Fin
 * [ ] Gestion de la touche Cx/Fin
@@ -172,6 +169,7 @@
 
 #### Fait
 
+* [x] Gérer les codes INSC_ON, INSC_OFF et définir les commandes BASTOS
 * [x] Protocole FTP intégré à BASTOS (dispo dans le simu)
 * [x] Websockets (sans SSL) intégrées ?
 * [x] ~~Penser à BASTOS-PI / BASTOS-PC puis BASTOS-P~~
