@@ -1,0 +1,55 @@
+{
+  "name": "bastos",
+  "displayName": "BASTOS",
+  "description": "Coloration syntaxique et confort d'édition pour BASTOS, le dialecte BASIC du Minitel (minwifi-esp01)",
+  "version": "0.1.0",
+  "publisher": "minwifi-esp01",
+  "private": true,
+  "license": "SEE LICENSE IN ../../README.md",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "bastos",
+        "aliases": [
+          "BASTOS",
+          "bastos"
+        ],
+        "extensions": [
+          ".bas"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/bastos.svg",
+          "dark": "./icons/bastos.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "bastos",
+        "scopeName": "source.bastos",
+        "path": "./syntaxes/bastos.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "bastos",
+        "path": "./snippets/bastos.code-snippets"
+      }
+    ],
+    "commands": [
+      {
+        "command": "bastos.renumberLines",
+        "title": "Renumber Selected Lines",
+        "category": "BASTOS"
+      }
+    ]
+  }
+}
