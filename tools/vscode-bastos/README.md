@@ -46,9 +46,22 @@ Contenu :
   (`LABEL "Fin":MODE 1:CLS:END`) est reproduit tel quel. Le contenu des
   commentaires (`REM "..."` et `' ...`) n'est jamais reformaté.
 
-Cette extension ne fait que colorer, faciliter la saisie, renuméroter et
-formater : elle n'analyse pas le programme et ne remplace pas de test sur
-émulateur ou Minitel réel.
+- **Renommer une variable** (natif VSCode — `F2`, ou clic droit → Rename
+  Symbol) : BASTOS n'a pas de portée — toutes les variables sont globales
+  (voir [BASTOS-MANUAL-fr.md](../../docs/BASTOS-MANUAL-fr.md#noms-de-variables))
+  — donc renommer une variable revient à renommer, dans tout le fichier,
+  chaque occurrence de ce nom précis (comparaison insensible à la casse,
+  comme le fait le vrai tokenizer). Le `$` final d'une variable chaîne
+  n'est jamais éditable (il détermine son type, pas son nom) : seule la
+  partie avant le `$` est mise en surbrillance et modifiable. Le
+  renommage est refusé si le nouveau nom est un mot-clé réservé, s'il
+  entrerait en collision avec une variable existante différente (fusion
+  accidentelle), ou si le curseur n'est pas sur une variable — voir
+  [src/rename.js](src/rename.js).
+
+Cette extension ne fait que colorer, faciliter la saisie, renuméroter,
+formater et renommer : elle n'analyse pas le programme et ne remplace pas
+de test sur émulateur ou Minitel réel.
 
 ## Installation locale
 

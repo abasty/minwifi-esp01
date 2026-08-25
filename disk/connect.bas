@@ -1,23 +1,23 @@
 1000 MODE 1
 1010 GOSUB "ChoixWifi"
-1020 LABEL "ChoixService":b=0:nc=0:suiv=0
+1020 LABEL "ChoixService":base=0:nc=0:suiv=0
 1030 LABEL "AfficheChoix":GOSUB "ListeServices"
 1040 LABEL "SaisieChoix":CURSOR 0;AT 23,1;INK 2;"quitter → ";INK 6;INVERSE 1;SIZE 2;"Q"
 1050 AT 24,1;"connect → ";SIZE 2;"#"
-1060 LABEL "LitTouche":k$=INKEY$:IF k$="" THEN PAUSE 50:GOTO "LitTouche"
-1070 IF k$="Q" OR k$="q" THEN "Fin"
-1080 IF k$="\x06" THEN "ChoixService"
-1090 IF k$="\x05" THEN "Retour"
-1100 IF k$<>"\x04" THEN "TraiteChoix"
+1060 LABEL "LitTouche":key$=INKEY$:IF key$="" THEN PAUSE 50:GOTO "LitTouche"
+1070 IF key$="Q" OR key$="q" THEN "Fin"
+1080 IF key$="\x06" THEN "ChoixService"
+1090 IF key$="\x05" THEN "Retour"
+1100 IF key$<>"\x04" THEN "TraiteChoix"
 1110 IF suiv=0 THEN "SaisieChoix"
-1120 b=b+5
+1120 base=base+5
 1130 GOTO "AfficheChoix"
-1140 LABEL "Retour":IF b=0 THEN "SaisieChoix"
-1150 b=b-5
+1140 LABEL "Retour":IF base=0 THEN "SaisieChoix"
+1150 base=base-5
 1160 GOTO "AfficheChoix"
-1170 LABEL "TraiteChoix":c=CODE k$-48
-1180 IF c<=0 OR c>nc THEN "SaisieChoix"
-1190 GOSUB 2000+(b+c-1)*10
+1170 LABEL "TraiteChoix":choix=CODE key$-48
+1180 IF choix<=0 OR choix>nc THEN "SaisieChoix"
+1190 GOSUB 2000+(base+choix-1)*10
 1200 IF urn$="" THEN "SaisieChoix"
 1210 PRINT AT 0,1;"Connecting to ";srv$
 1220 MODE smode:MINITEL srv$,urn$:MODE 1
@@ -27,14 +27,14 @@
 1260 PRINT "\n\n";REP$ 40,"`";
 1270 nc=0
 1280 FOR i=1 TO 5
-1290 GOSUB 2000+(b+i-1)*10
+1290 GOSUB 2000+(base+i-1)*10
 1300 IF srv$="" THEN 1350
 1310 AT i*4-1,3;i;" ";srv$(1 TO 36)
 1320 AT i*4,5;INK 6;desc$(1 TO 36)
 1330 AT i*4+1,5;INK 2;urn$(1 TO 36)
 1340 nc=nc+1
 1350 NEXT
-1360 GOSUB 2000+(b+5)*10
+1360 GOSUB 2000+(base+5)*10
 1370 suiv=0
 1380 IF srv$="" THEN 1410
 1390 suiv=1

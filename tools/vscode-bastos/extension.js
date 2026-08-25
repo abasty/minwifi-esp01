@@ -1,6 +1,15 @@
 const vscode = require("vscode");
 const { renumberSelection } = require("./src/renumber.js");
 const { formatDocument } = require("./src/format.js");
+const { findVariableAt, renameVariable } = require("./src/rename.js");
+
+function readAllLines(document) {
+  const allLines = [];
+  for (let i = 0; i < document.lineCount; i++) {
+    allLines.push(document.lineAt(i).text);
+  }
+  return allLines;
+}
 
 async function renumberLinesCommand() {
   const editor = vscode.window.activeTextEditor;
@@ -16,10 +25,7 @@ async function renumberLinesCommand() {
   const selEnd = selection.isEmpty ? selection.start.line : selection.end.line;
 
   const document = editor.document;
-  const allLines = [];
-  for (let i = 0; i < document.lineCount; i++) {
-    allLines.push(document.lineAt(i).text);
-  }
+  const allLines = readAllLines(document);
 
   const defaultStart = (() => {
     const m = /^(\s*)(\d+)\b/.exec(allLines[selStart]);
@@ -77,16 +83,39 @@ async function renumberLinesCommand() {
 }
 
 function provideDocumentFormattingEdits(document) {
-  const allLines = [];
-  for (let i = 0; i < document.lineCount; i++) {
-    allLines.push(document.lineAt(i).text);
-  }
+  const allLines = readAllLines(document);
   const edits = formatDocument(allLines);
   const textEdits = [];
   for (const [lineIndex, newText] of edits) {
     textEdits.push(vscode.TextEdit.replace(document.lineAt(lineIndex).range, newText));
   }
   return textEdits;
+}
+
+function prepareRename(document, position) {
+  const allLines = readAllLines(document);
+  const found = findVariableAt(allLines, position.line, position.character);
+  if (!found) {
+    throw new Error(
+      "BASTOS : le curseur doit être sur une variable (pas un mot-clé ni un littéral) pour la renommer."
+    );
+  }
+  return new vscode.Range(position.line, found.range.start, position.line, found.range.end);
+}
+
+function provideRenameEdits(document, position, newName) {
+  const allLines = readAllLines(document);
+  const result = renameVariable(allLines, position.line, position.character, newName);
+  if (!result.ok) {
+    throw new Error("BASTOS : " + result.error);
+  }
+
+  const workspaceEdit = new vscode.WorkspaceEdit();
+  for (const edit of result.edits) {
+    const range = new vscode.Range(edit.line, edit.start, edit.line, edit.end);
+    workspaceEdit.replace(document.uri, range, edit.newText);
+  }
+  return workspaceEdit;
 }
 
 function activate(context) {
@@ -96,6 +125,12 @@ function activate(context) {
   context.subscriptions.push(
     vscode.languages.registerDocumentFormattingEditProvider("bastos", {
       provideDocumentFormattingEdits,
+    })
+  );
+  context.subscriptions.push(
+    vscode.languages.registerRenameProvider("bastos", {
+      prepareRename,
+      provideRenameEdits,
     })
   );
 }

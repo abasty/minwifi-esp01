@@ -31,11 +31,14 @@ function isIdChar(ch) {
 }
 
 // Tokenizes the *code* portion of a line (i.e. before any comment) into
-// {text, kind} tokens, mirroring lib/basic/token.c-static's tokenize().
-// kind is one of "string" | "number" | "keyword" | "variable" | "punct".
-// Returns { tokens, commentTail } where commentTail is the raw, untouched
-// remainder of the original line starting at a comment marker, or null if
-// the line has no comment.
+// {text, kind, start, end} tokens, mirroring lib/basic/token.c-static's
+// tokenize(). kind is one of "string" | "number" | "keyword" | "variable" |
+// "punct". start/end are offsets into `line` (the substring passed in, not
+// necessarily the whole document line — see tokenizeFullLine for that).
+// Returns { tokens, commentTail, commentStart } where commentTail is the
+// raw, untouched remainder of the original line starting at a comment
+// marker (or null if the line has no comment), and commentStart is its
+// offset into `line`.
 function tokenizeCode(line) {
   const tokens = [];
   const n = line.length;
@@ -50,7 +53,7 @@ function tokenizeCode(line) {
     }
 
     if (ch === "'") {
-      return { tokens, commentTail: line.slice(i) };
+      return { tokens, commentTail: line.slice(i), commentStart: i };
     }
 
     if (ch === '"') {
@@ -66,7 +69,7 @@ function tokenizeCode(line) {
         }
         j++;
       }
-      tokens.push({ text: line.slice(i, j), kind: "string" });
+      tokens.push({ text: line.slice(i, j), kind: "string", start: i, end: j });
       i = j;
       continue;
     }
@@ -83,7 +86,7 @@ function tokenizeCode(line) {
           while (j < n && /[0-9]/.test(line[j])) j++;
         }
       }
-      tokens.push({ text: line.slice(i, j), kind: "number" });
+      tokens.push({ text: line.slice(i, j), kind: "number", start: i, end: j });
       i = j;
       continue;
     }
@@ -98,13 +101,13 @@ function tokenizeCode(line) {
         // REM's payload is technically tokenized by the real interpreter
         // too, but it is never executed and only ever meant to be read as
         // a comment — leave it exactly as the author wrote it.
-        tokens.push({ text: "REM", kind: "keyword" });
-        return { tokens, commentTail: line.slice(j) || null };
+        tokens.push({ text: "REM", kind: "keyword", start: i, end: j });
+        return { tokens, commentTail: line.slice(j) || null, commentStart: j };
       }
 
       const isKeyword = KEYWORD_SET.has(upper);
       const text = isKeyword ? upper : word.toLowerCase();
-      tokens.push({ text, kind: isKeyword ? "keyword" : "variable" });
+      tokens.push({ text, kind: isKeyword ? "keyword" : "variable", start: i, end: j });
       i = j;
       continue;
     }
@@ -112,28 +115,58 @@ function tokenizeCode(line) {
     if (ch === "<" || ch === ">") {
       const two = line.slice(i, i + 2);
       if (two === "<>" || two === "<=" || two === ">=") {
-        tokens.push({ text: two, kind: "punct" });
+        tokens.push({ text: two, kind: "punct", start: i, end: i + 2 });
         i += 2;
         continue;
       }
-      tokens.push({ text: ch, kind: "punct" });
+      tokens.push({ text: ch, kind: "punct", start: i, end: i + 1 });
       i++;
       continue;
     }
 
     if ("=+-*/%&|(),;:?".includes(ch)) {
-      tokens.push({ text: ch, kind: "punct" });
+      tokens.push({ text: ch, kind: "punct", start: i, end: i + 1 });
       i++;
       continue;
     }
 
     // Unrecognized character (shouldn't happen in valid BASTOS source):
     // pass it through unchanged rather than corrupting the line.
-    tokens.push({ text: ch, kind: "punct" });
+    tokens.push({ text: ch, kind: "punct", start: i, end: i + 1 });
     i++;
   }
 
-  return { tokens, commentTail: null };
+  return { tokens, commentTail: null, commentStart: -1 };
+}
+
+// Tokenizes a *whole* document line (leading line number included) into
+// tokens with start/end offsets absolute within that line, plus a trailing
+// "comment" token if the line has one. Used by features that need to know
+// *where* a token sits in the document (e.g. rename), unlike formatLine
+// which only needs token order.
+function tokenizeFullLine(line) {
+  const m = LEADING_LINE_NUMBER_RE.exec(line);
+  const prefixLen = m ? m[0].length : 0;
+  const rest = line.slice(prefixLen);
+
+  const { tokens, commentTail, commentStart } = tokenizeCode(rest);
+
+  const result = [];
+  if (m) {
+    result.push({ text: m[2], kind: "number", start: prefixLen - m[2].length, end: prefixLen });
+  }
+  for (const t of tokens) {
+    result.push({ text: t.text, kind: t.kind, start: t.start + prefixLen, end: t.end + prefixLen });
+  }
+  if (commentTail !== null) {
+    result.push({
+      text: commentTail,
+      kind: "comment",
+      start: commentStart + prefixLen,
+      end: line.length,
+    });
+  }
+  return result;
 }
 
 function isValueLike(kind) {
@@ -216,4 +249,4 @@ function formatDocument(allLines) {
   return edits;
 }
 
-module.exports = { formatLine, formatDocument };
+module.exports = { formatLine, formatDocument, tokenizeFullLine };
