@@ -1,5 +1,6 @@
 const vscode = require("vscode");
 const { renumberSelection } = require("./src/renumber.js");
+const { formatDocument } = require("./src/format.js");
 
 async function renumberLinesCommand() {
   const editor = vscode.window.activeTextEditor;
@@ -75,9 +76,27 @@ async function renumberLinesCommand() {
   }
 }
 
+function provideDocumentFormattingEdits(document) {
+  const allLines = [];
+  for (let i = 0; i < document.lineCount; i++) {
+    allLines.push(document.lineAt(i).text);
+  }
+  const edits = formatDocument(allLines);
+  const textEdits = [];
+  for (const [lineIndex, newText] of edits) {
+    textEdits.push(vscode.TextEdit.replace(document.lineAt(lineIndex).range, newText));
+  }
+  return textEdits;
+}
+
 function activate(context) {
   context.subscriptions.push(
     vscode.commands.registerCommand("bastos.renumberLines", renumberLinesCommand)
+  );
+  context.subscriptions.push(
+    vscode.languages.registerDocumentFormattingEditProvider("bastos", {
+      provideDocumentFormattingEdits,
+    })
   );
 }
 

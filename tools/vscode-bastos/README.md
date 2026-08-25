@@ -31,9 +31,24 @@ Contenu :
   collision avec une ligne existante hors sélection bloque toute la
   renumérotation (aucune modification n'est appliquée).
 
-Cette extension ne fait que colorer, faciliter la saisie et renuméroter :
-elle n'analyse pas le programme et ne remplace pas de test sur émulateur ou
-Minitel réel.
+- **Format Document** (natif VSCode — `Maj+Alt+F`, clic droit, ou
+  `editor.formatOnSave`) : met les mots-clés BASTOS en MAJUSCULES, les
+  noms de variables en minuscules, et normalise les espaces selon deux
+  règles combinées — voir [src/format.js](src/format.js) :
+  - un espace est toujours conservé/ajouté entre un mot-clé et une valeur
+    (chaîne, nombre, variable) de part et d'autre : `GOTO "x"`, `"Q" OR`,
+    `1 TO`, `THEN "SaisieChoix"` ;
+  - partout ailleurs (ponctuation `: ; ,` `(` `)`, opérateurs), les espaces
+    superflus sont supprimés — un mot-clé reste collé à la ponctuation qui
+    le précède ou le suit : `:GOSUB`, `0;AT`, `CLS:END`, `STR$(255,16,...)`.
+
+  Résultat : le style déjà en place dans `disk/connect.bas`
+  (`LABEL "Fin":MODE 1:CLS:END`) est reproduit tel quel. Le contenu des
+  commentaires (`REM "..."` et `' ...`) n'est jamais reformaté.
+
+Cette extension ne fait que colorer, faciliter la saisie, renuméroter et
+formater : elle n'analyse pas le programme et ne remplace pas de test sur
+émulateur ou Minitel réel.
 
 ## Installation locale
 
