@@ -56,8 +56,17 @@ Contenu :
   partie avant le `$` est mise en surbrillance et modifiable. Le
   renommage est refusé si le nouveau nom est un mot-clé réservé, s'il
   entrerait en collision avec une variable existante différente (fusion
-  accidentelle), ou si le curseur n'est pas sur une variable — voir
-  [src/rename.js](src/rename.js).
+  accidentelle), ou si le curseur n'est pas sur une variable.
+
+  `F2` fonctionne aussi sur une **étiquette** : le nom entre guillemets
+  après `LABEL`, ou après `GOTO`/`GOSUB`/`THEN`/`ELSE` quand il sert de
+  cible de saut. Contrairement aux variables, les étiquettes sont de
+  vraies chaînes — la comparaison est donc **sensible à la casse**
+  (`"Retour"` ≠ `"retour"`), et seule la chaîne qui suit immédiatement un
+  de ces cinq mots-clés compte comme référence : un `PRINT "Retour"`
+  affichant un message n'est jamais touché. Même protection anti-fusion
+  qu'avec les variables si le nouveau nom entre en collision avec une
+  étiquette existante — voir [src/rename.js](src/rename.js).
 
 Cette extension ne fait que colorer, faciliter la saisie, renuméroter,
 formater et renommer : elle n'analyse pas le programme et ne remplace pas
@@ -81,7 +90,7 @@ d'un tiers à qui tu l'as transmis) :
 ```sh
 cd tools/vscode-bastos
 npx @vscode/vsce package
-code --install-extension bastos-0.1.0.vsix
+code --install-extension bastos-0.2.0.vsix
 ```
 
 (ou dans VSCode : palette de commandes → « Extensions: Install from

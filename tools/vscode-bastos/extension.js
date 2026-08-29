@@ -1,7 +1,7 @@
 const vscode = require("vscode");
 const { renumberSelection } = require("./src/renumber.js");
 const { formatDocument } = require("./src/format.js");
-const { findVariableAt, renameVariable } = require("./src/rename.js");
+const { findRenameTargetAt, renameAt } = require("./src/rename.js");
 
 function readAllLines(document) {
   const allLines = [];
@@ -94,10 +94,10 @@ function provideDocumentFormattingEdits(document) {
 
 function prepareRename(document, position) {
   const allLines = readAllLines(document);
-  const found = findVariableAt(allLines, position.line, position.character);
+  const found = findRenameTargetAt(allLines, position.line, position.character);
   if (!found) {
     throw new Error(
-      "BASTOS : le curseur doit être sur une variable (pas un mot-clé ni un littéral) pour la renommer."
+      "BASTOS : le curseur doit être sur une variable ou une étiquette (pas un mot-clé ni un littéral) pour la renommer."
     );
   }
   return new vscode.Range(position.line, found.range.start, position.line, found.range.end);
@@ -105,7 +105,7 @@ function prepareRename(document, position) {
 
 function provideRenameEdits(document, position, newName) {
   const allLines = readAllLines(document);
-  const result = renameVariable(allLines, position.line, position.character, newName);
+  const result = renameAt(allLines, position.line, position.character, newName);
   if (!result.ok) {
     throw new Error("BASTOS : " + result.error);
   }

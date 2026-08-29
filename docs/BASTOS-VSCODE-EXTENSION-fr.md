@@ -21,9 +21,10 @@ code et renommage de variable (`F2`).
   `GOTO`/`GOSUB`/`THEN`/`ELSE` correspondantes dans tout le fichier.
 - **Format Document** (`Maj+Alt+F`) : mots-clés en MAJUSCULES, variables
   en minuscules, espaces normalisés.
-- **Renommer une variable** (`F2`) : renomme toutes les occurrences d'une
-  variable dans le fichier (BASTOS n'a pas de portée, les variables sont
-  globales).
+- **Renommer une variable ou une étiquette** (`F2`) : renomme toutes les
+  occurrences d'une variable dans le fichier (BASTOS n'a pas de portée,
+  les variables sont globales), ou d'une étiquette (le nom entre
+  guillemets après `LABEL`/`GOTO`/`GOSUB`/`THEN`/`ELSE`).
 
 Le détail de chaque fonctionnalité est documenté dans le
 [README du projet](https://github.com/abasty/minwifi-esp01/tree/master/tools/vscode-bastos).
