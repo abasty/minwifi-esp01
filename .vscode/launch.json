@@ -5,7 +5,7 @@
             "name": "Attach to BASTOS",
             "type": "cppdbg",
             "request": "attach",
-            "program": "${workspaceFolder}/lib/basic/test/bin/bastos",
+            "program": "${workspaceFolder}/lib/basic/test/bin/bastos-linux-amd64",
             "MIMode": "gdb",
             "setupCommands": [
                 {

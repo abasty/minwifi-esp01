@@ -250,6 +250,48 @@ build_flash_archive() {
     fi
 }
 
+# Build an archive for a desktop target (linux or windows), bundling the
+# bastos binary together with its websocat launch script, then deploy it.
+build_desktop_archive() {
+    local platform=$1
+    local staging
+    staging="$(mktemp -d)"
+    trap 'rm -rf "$staging"' RETURN
+
+    # -L dereferences symlinks (e.g. disk/meteor.bas -> ../lib/basic/meteor/),
+    # since their targets don't exist once flattened into the archive.
+    cp -rL "disk" "${staging}/disk"
+
+    local archive
+    case "$platform" in
+        linux)
+            archive="bastos-linux-amd64.tar.gz"
+            cp "lib/basic/test/bin/bastos-linux-amd64" "$staging/"
+            cp "bastos-back-linux.sh" "$staging/"
+            chmod +x "${staging}/bastos-linux-amd64" "${staging}/bastos-back-linux.sh"
+            tar -czf "${SCRIPT_DIR}/${archive}" -C "$staging" .
+            ;;
+        windows)
+            archive="bastos-windows-amd64.zip"
+            cp "lib/basic/test/bin/bastos-windows-amd64.exe" "$staging/"
+            cp "bastos-back-windows.bat" "$staging/"
+            (cd "$staging" && zip -qr "${SCRIPT_DIR}/${archive}" .)
+            ;;
+        *)
+            die "build_desktop_archive: unknown platform '$platform'"
+            ;;
+    esac
+    log "✓ Archive created: ${SCRIPT_DIR}/${archive}"
+
+    if [[ -n "$DEPLOY_SCP_FOLDER" ]]; then
+        log "Deploying ${archive}..."
+        if ! scp "$archive" "${DEPLOY_SCP_FOLDER}/firmware/"; then
+            die "Failed to deploy $archive"
+        fi
+        log "✓ Archive deployed: ${DEPLOY_SCP_FOLDER}/firmware/${archive}"
+    fi
+}
+
 # === Main ===
 cd "$SCRIPT_DIR" || die "Failed to change to script directory"
 
@@ -268,6 +310,8 @@ fi
 # Verify dependencies
 check_pio
 command -v make &> /dev/null || die "make not found in PATH"
+command -v x86_64-w64-mingw32-gcc &> /dev/null || die "x86_64-w64-mingw32-gcc not found in PATH (install mingw-w64)"
+command -v zip &> /dev/null || die "zip not found in PATH"
 
 # Check scp only if deployment is needed
 if [[ -n "$DEPLOY_SCP_FOLDER" ]]; then
@@ -279,7 +323,7 @@ pio_build sonoff
 pio_build sonoff-r4
 build_flash_archive
 
-# Build Linux version
+# Build Linux and Windows desktop versions
 log "Building Linux version..."
 pushd ./lib/basic/test > /dev/null
 make clean
@@ -290,15 +334,20 @@ fi
 popd > /dev/null
 log "✓ Linux version built"
 
-# Deploy Linux version (only if DEPLOY_SCP_FOLDER is set)
-if [[ -n "$DEPLOY_SCP_FOLDER" ]]; then
-    log "Deploying Linux version..."
-    if ! scp "lib/basic/test/bin/bastos" "${DEPLOY_SCP_FOLDER}/firmware/"; then
-        die "Failed to deploy Linux version"
-    fi
-    log "✓ Linux version deployed"
+log "Building Windows version..."
+pushd ./lib/basic/test > /dev/null
+if ! make windows; then
+    popd > /dev/null
+    die "Windows version build failed"
+fi
+popd > /dev/null
+log "✓ Windows version built"
 
-    # Deploy BASTOS files
+build_desktop_archive linux
+build_desktop_archive windows
+
+# Deploy BASTOS files (only if DEPLOY_SCP_FOLDER is set)
+if [[ -n "$DEPLOY_SCP_FOLDER" ]]; then
     log "Deploying BASTOS files..."
     if [[ ! -d "disk" ]] || [[ -z "$(ls -A disk 2>/dev/null)" ]]; then
         die "No BASTOS files found in disk/ directory"

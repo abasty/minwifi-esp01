@@ -5,10 +5,9 @@
 La documentation utilisateur est disponible en ligne sur [Documentation en
 ligne](https://abasty.github.io/minwifi-esp01/)
 
-Projet annexe : [BASTOS-EDI](https://github.com/abasty/bastos-edi) est un
-environnement de développement intégré pour BASTOS, qui s'exécute sur un
-ordinateur de bureau. Il permet de développer des programmes BASTOS sur PC
-exécutables indifféremment dans l'émulateur intégré ou sur un Sonoff.
+Pour développer et tester des programmes BASTOS sur PC (Windows/Linux), sans
+matériel Minitel, voir le [Guide de
+développement](https://abasty.github.io/minwifi-esp01/BASTOS-DEV-GUIDE-fr).
 
 # 2. Compiler et déployer
 
@@ -41,7 +40,7 @@ cd lib/basic/test
 make clean && make TERM=MINITEL
 ```
 
-Le binaire se trouve dans `lib/basic/test/bin/bastos`
+Le binaire se trouve dans `lib/basic/test/bin/bastos-linux-amd64`
 
 ## Déploiement automatisé
 

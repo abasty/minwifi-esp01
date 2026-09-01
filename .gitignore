@@ -5,5 +5,11 @@
 Minitel.*
 lib/basic/test/bin/**
 lib/basic/test/obj/**
+lib/basic/test/obj-windows/**
 lib/basic/test/taille.txt
 tools/vscode-bastos/*.vsix
+bastos-linux-amd64.tar.gz
+bastos-windows-amd64.zip
+sonoff-flash.tgz
+websocat.exe
+websocat

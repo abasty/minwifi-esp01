@@ -1,3 +1,29 @@
+#ifdef _WIN32
+#include <conio.h>
+#include <direct.h>
+#include <fcntl.h>
+#include <io.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
+
+#define sleep(s) Sleep((s) * 1000)
+#define chdir _chdir
+#define mkdir(path, mode) _mkdir(path)
+#define open _open
+#define creat _creat
+#define close _close
+#define write _write
+#define read _read
+#define lseek _lseek
+#define unlink _unlink
+#else
 #define _GNU_SOURCE
 #include <arpa/inet.h>
 #include <dirent.h>
@@ -17,6 +43,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <sys/time.h>
+#endif
 
 #include "tty-minitel.h"
 
@@ -24,6 +51,7 @@
 #include "os.h"
 
 /* Low level management */
+#ifndef _WIN32
 struct sigaction old_action;
 struct termios old, new;
 
@@ -47,12 +75,98 @@ void sigint_handler(int sig_no)
     sigaction(SIGINT, &old_action, NULL);
     kill(0, SIGINT);
 }
+#endif
 
 void hal_print_oem_string(void)
 {
+#ifdef _WIN32
+    hal_print_string("Windows");
+#else
     hal_print_string("Linux");
+#endif
 }
 
+#ifdef _WIN32
+// Piped stdin (normal deployment via websocat exec:) needs a non-blocking
+// read. PeekNamedPipe is the textbook way to do that on Windows, but it
+// fails with ERROR_NOT_SUPPORTED on the handle types some spawners (e.g.
+// Wine, when it hands us a wrapped Unix pipe fd) give us for redirected
+// stdin. A background thread doing plain blocking reads has no such
+// dependency and works uniformly everywhere.
+static CRITICAL_SECTION g_stdin_cs;
+static uint8_t g_stdin_buf[256];
+static volatile int g_stdin_head = 0, g_stdin_tail = 0;
+static volatile bool g_stdin_closed = false;
+static bool g_stdin_thread_started = false;
+
+static DWORD WINAPI stdin_reader_thread(LPVOID unused)
+{
+    (void)unused;
+    HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+    for (;;) {
+        uint8_t ch;
+        DWORD n = 0;
+        if (!ReadFile(h, &ch, 1, &n, NULL) || n == 0)
+            break;
+
+        EnterCriticalSection(&g_stdin_cs);
+        int next = (g_stdin_head + 1) % (int)sizeof(g_stdin_buf);
+        if (next != g_stdin_tail) {
+            g_stdin_buf[g_stdin_head] = ch;
+            g_stdin_head = next;
+        }
+        LeaveCriticalSection(&g_stdin_cs);
+    }
+    g_stdin_closed = true;
+    return 0;
+}
+
+uint8_t hal_get_key()
+{
+    // Interactive console (local testing): use conio, never blocks.
+    if (_isatty(_fileno(stdin))) {
+        if (!_kbhit())
+            return 0;
+        int ch = _getch();
+        if (ch == 0 || ch == 0xE0) {
+            // extended key (arrows, function keys): swallow the second byte
+            _getch();
+            return 0;
+        }
+        if (ch == 0x08)
+            ch = 0x7f;
+        return (uint8_t)ch;
+    }
+
+    if (!g_stdin_thread_started) {
+        g_stdin_thread_started = true;
+        InitializeCriticalSection(&g_stdin_cs);
+        CreateThread(NULL, 0, stdin_reader_thread, NULL, 0, NULL);
+    }
+
+    EnterCriticalSection(&g_stdin_cs);
+    uint8_t ch = 0;
+    bool got = false;
+    if (g_stdin_tail != g_stdin_head) {
+        ch = g_stdin_buf[g_stdin_tail];
+        g_stdin_tail = (g_stdin_tail + 1) % (int)sizeof(g_stdin_buf);
+        got = true;
+    }
+    LeaveCriticalSection(&g_stdin_cs);
+
+    if (got) {
+        if (ch == 0x08)
+            ch = 0x7f;
+        return ch;
+    }
+
+    if (g_stdin_closed) {
+        fprintf(stderr, "Error reading key\n");
+        exit(0);
+    }
+    return 0;
+}
+#else
 uint8_t hal_get_key()
 {
     struct pollfd input[1] = {{fd : 0, events : POLLIN}};
@@ -81,6 +195,7 @@ err:
     term_done();
     exit(0);
 }
+#endif
 
 int hal_print_float(float f)
 {
@@ -128,6 +243,13 @@ int hal_write(int fd, const void *buf, int count)
     return write(fd, buf, count);
 }
 
+#ifdef _WIN32
+int hal_read(int fd, void *buf, int count)
+{
+    // Regular files never block on Windows: no poll() equivalent needed.
+    return read(fd, buf, count);
+}
+#else
 int hal_read(int fd, void *buf, int count)
 {
     struct pollfd input[1] = {{.fd = fd, .events = POLLIN}};
@@ -138,6 +260,7 @@ int hal_read(int fd, void *buf, int count)
 
     return 0;
 }
+#endif
 
 int hal_get_file_size(const char* pathname)
 {
@@ -165,6 +288,33 @@ int hal_file(const char* pathname, char *buffer, uint16_t offset, uint16_t size)
     return r;
 }
 
+#ifdef _WIN32
+size_t hal_cat()
+{
+    off_t total = 0;
+    WIN32_FIND_DATA fd;
+    HANDLE h = FindFirstFile("*", &fd);
+    if (h == INVALID_HANDLE_VALUE)
+        return 524288;
+
+    do {
+        if (strcmp(".", fd.cFileName) == 0 || strcmp("..", fd.cFileName) == 0)
+            continue;
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            continue;
+
+        LARGE_INTEGER size;
+        size.HighPart = fd.nFileSizeHigh;
+        size.LowPart = fd.nFileSizeLow;
+        total += size.QuadPart;
+
+        os_cat_file(fd.cFileName, (int)size.QuadPart);
+    } while (FindNextFile(h, &fd));
+
+    FindClose(h);
+    return 524288 - total;
+}
+#else
 size_t hal_cat()
 {
     off_t total = 0;
@@ -187,6 +337,7 @@ size_t hal_cat()
     free(entry);
     return 524288 - total;
 }
+#endif
 
 int hal_erase(const char *pathname)
 {
@@ -261,6 +412,65 @@ bool hal_wifi_is_connected()
 
 bool g_ftp_connected = false;
 
+#ifdef _WIN32
+// Winsock SOCKET is UINT_PTR (64-bit on x64), but every hal_net_* signature
+// carries the handle as a plain int (shared with the POSIX build, where fds
+// and sockets share the same int space). Windows hands out small sequential
+// handle values in practice, so the narrowing cast is safe here, but it is
+// not guaranteed by the Winsock API contract.
+int hal_net_connect(split_t *urn)
+{
+    struct addrinfo hints = {0};
+    struct addrinfo *res = NULL;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if (getaddrinfo(urn->parts[URN_PART_HOST], NULL, &hints, &res) != 0 || res == NULL)
+        return -1;
+
+    struct sockaddr_in addr = *(struct sockaddr_in *)res->ai_addr;
+    addr.sin_port = htons(urn->port);
+    freeaddrinfo(res);
+
+    SOCKET s = socket(AF_INET, SOCK_STREAM, 0);
+    if (s == INVALID_SOCKET)
+        return -1;
+
+    if (connect(s, (struct sockaddr *)&addr, sizeof(addr)) != 0)
+    {
+        closesocket(s);
+        return -1;
+    }
+
+    struct sockaddr_in addr_local;
+    int addr_len = sizeof(addr_local);
+    getsockname(s, (struct sockaddr *)&addr_local, &addr_len);
+    inet_ntop(AF_INET, &addr_local.sin_addr, wifi_ip, sizeof(wifi_ip));
+
+    return (int)s;
+}
+
+void hal_net_disconnect(uint8_t set, int n)
+{
+    closesocket((SOCKET)n);
+}
+
+int hal_net_send(int fd, const uint8_t *buffer, int n)
+{
+    return send((SOCKET)fd, (const char *)buffer, n, 0);
+}
+
+int hal_net_recv(int fd, uint8_t *buffer, int n)
+{
+    WSAPOLLFD input[1] = {{.fd = (SOCKET)fd, .events = POLLIN}};
+    int ret = WSAPoll(input, 1, 1);
+
+    if (ret > 0)
+        return recv((SOCKET)fd, (char *)buffer, n, 0);
+
+    return 0;
+}
+#else
 int hal_net_connect(split_t *urn)
 {
     struct sockaddr_in addr;
@@ -309,14 +519,41 @@ int hal_net_recv(int fd, uint8_t *buffer, int n)
 
     return 0;
 }
+#endif
 
+#ifdef _WIN32
+uint64_t hal_get_ms(void)
+{
+    return GetTickCount64();
+}
+#else
 uint64_t hal_get_ms(void)
 {
     struct timeval t;
     gettimeofday(&t, 0);
     return t.tv_usec / 1000 + t.tv_sec * 1000;
 }
+#endif
 
+#ifdef _WIN32
+int hal_get_function_key(void)
+{
+    uint8_t fn = 0;
+    char path[MAX_PATH];
+    const char *tmp = getenv("TEMP");
+    if (tmp == NULL)
+        tmp = ".";
+    snprintf(path, sizeof(path), "%s\\fkey", tmp);
+
+    int fkey = open(path, O_RDONLY);
+    if (fkey >= 0) {
+        read(fkey, &fn, 1);
+        close(fkey);
+        unlink(path);
+    }
+    return fn;
+}
+#else
 int hal_get_function_key(void)
 {
     uint8_t fn = 0;
@@ -328,6 +565,7 @@ int hal_get_function_key(void)
     }
     return fn;
 }
+#endif
 
 void setup()
 {
@@ -341,13 +579,22 @@ void loop(void)
 
 int main()
 {
+#ifdef _WIN32
+    WSADATA wsa;
+    WSAStartup(MAKEWORD(2, 2), &wsa);
+#else
     struct sigaction action = {0};
     action.sa_handler = &sigint_handler;
     sigaction(SIGINT, &action, &old_action);
 
     term_init();
+#endif
 
-    chdir("disk");
+    mkdir("disk", 0755);
+    if (chdir("disk") != 0) {
+        fprintf(stderr, "Impossible d'accéder au répertoire 'disk'\n");
+        return 1;
+    }
 
     while (true)
     {

@@ -14,6 +14,8 @@ En français :
 - [Guide d'assemblage du BASTOS-S](BASTOS-ASSEMBLY-MANUAL-fr.md) — Manuel
   d'assemblage du micro-ordinateur BASTOS-S
 - [Guide de démarrage rapide](BASTOS-QUICK-START-fr) — Premiers pas avec BASTOS-S
+- [Guide de développement](BASTOS-DEV-GUIDE-fr) — Écrire et tester des
+  programmes BASTOS sur PC (Windows/Linux) avec l'émulateur minterm
 - [Manuel du langage BASTOS (FR)](BASTOS-MANUAL-fr) — Référence complète du langage
 - [Extension VSCode](BASTOS-VSCODE-EXTENSION-fr) — Coloration syntaxique,
   snippets, renumérotation, mise en forme et renommage de variable

@@ -4,7 +4,7 @@
 # A generic build template for C/C++ programs
 
 # executable name
-EXE = bastos
+EXE = bastos-linux-amd64
 
 # C compiler
 CC = gcc
@@ -81,6 +81,31 @@ run: $(BIN)/$(EXE)
 memcheck: $(BIN)/$(EXE)
 	valgrind --leak-check=full --show-leak-kinds=all $(BIN)/$(EXE)
 
+# Windows cross-compile (amd64), via mingw-w64 (x86_64-w64-mingw32-gcc)
+WIN_CC = x86_64-w64-mingw32-gcc
+WIN_EXE = bastos-windows-amd64.exe
+WIN_OBJ = obj-windows
+WIN_LDLIBS = -lm -lws2_32
+
+WIN_OBJECTS := \
+	$(patsubst $(SRC)/%.c, $(WIN_OBJ)/%.o, $(wildcard $(SRC)/*.c)) \
+	$(patsubst ./%.c, $(WIN_OBJ)/%.o, $(filter-out ./test_bugs.c, $(wildcard ./*.c)))
+
+.PHONY: windows
+windows: $(BIN)/$(WIN_EXE)
+
+$(BIN)/$(WIN_EXE): $(SRC) $(WIN_OBJ) $(BIN) $(WIN_OBJECTS)
+	$(WIN_CC) $(LDFLAGS) $(WIN_OBJECTS) $(WIN_LDLIBS) -o $@
+
+$(WIN_OBJ):
+	mkdir -p $(WIN_OBJ)
+
+$(WIN_OBJ)/%.o:	$(SRC)/%.c
+	$(WIN_CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+
+$(WIN_OBJ)/%.o:	./%.c
+	$(WIN_CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+
 # test_bugs: separate binary (bio.c + test_bugs.c, no bastos.c)
 TEST_BUGS_EXE = $(BIN)/test_bugs
 TEST_BUGS_OBJECTS = $(OBJ)/bio.o $(OBJ)/test_bugs.o
@@ -97,11 +122,13 @@ test_bugs: $(TEST_BUGS_EXE)
 clean:
 	$(RM) -rf $(BIN)
 	$(RM) -rf $(OBJ)
+	$(RM) -rf $(WIN_OBJ)
 
 # remove everything except source
 .PHONY: reset
 reset:
 	$(RM) -r $(OBJ)
+	$(RM) -r $(WIN_OBJ)
 	$(RM) -r $(BIN)
 
 -include $(DEPENDS)
