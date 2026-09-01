@@ -4,6 +4,7 @@ setlocal enabledelayedexpansion
 set "SCRIPT_DIR=%~dp0"
 set "WEBSOCAT_URL=https://github.com/vi/websocat/releases/latest/download/websocat.x86_64-pc-windows-gnu.exe"
 set "WEBSOCAT_LOCAL=%SCRIPT_DIR%websocat.exe"
+set "WS_ADDR=127.0.0.1:1967"
 
 where websocat.exe >nul 2>nul
 if %errorlevel%==0 (
@@ -41,7 +42,7 @@ if exist "%SCRIPT_DIR%bastos-windows-amd64.exe" (
     set "BASTOS_EXE=%SCRIPT_DIR%lib\basic\test\bin\bastos-windows-amd64.exe"
 )
 
-echo BASTOS lance sur ws://127.0.0.1:1967
-echo Connecte-toi avec minterm : https://abasty.github.io/minterm/
+echo BASTOS lance sur ws://%WS_ADDR%
+echo Connecte-toi avec minterm : https://abasty.github.io/minterm/?ws=ws%%3A%%2F%%2F127.0.0.1%%3A1967
 
-"%WEBSOCAT%" -v -t -E --no-line ws-l:127.0.0.1:1967 exec:"%BASTOS_EXE%"
+"%WEBSOCAT%" -v -t -E --no-line ws-l:%WS_ADDR% exec:"%BASTOS_EXE%"

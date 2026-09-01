@@ -4,6 +4,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WEBSOCAT_URL="https://github.com/vi/websocat/releases/latest/download/websocat.x86_64-unknown-linux-musl"
 WEBSOCAT_LOCAL="${SCRIPT_DIR}/websocat"
+WS_ADDR="127.0.0.1:1967"
 
 if command -v websocat &> /dev/null; then
     WEBSOCAT="$(command -v websocat)"
@@ -41,7 +42,9 @@ else
     BASTOS_EXE="${SCRIPT_DIR}/lib/basic/test/bin/bastos-linux-amd64"
 fi
 
-echo "BASTOS lancé sur ws://127.0.0.1:1967"
-echo "Connecte-toi avec minterm : https://abasty.github.io/minterm/"
+WS_URL_ENCODED="ws%3A%2F%2F${WS_ADDR/:/%3A}"
 
-exec "$WEBSOCAT" -v -t -E --no-line ws-l:127.0.0.1:1967 exec:"$BASTOS_EXE"
+echo "BASTOS lancé sur ws://${WS_ADDR}"
+echo "Connecte-toi avec minterm : https://abasty.github.io/minterm/?ws=${WS_URL_ENCODED}"
+
+exec "$WEBSOCAT" -v -t -E --no-line ws-l:"${WS_ADDR}" exec:"$BASTOS_EXE"
