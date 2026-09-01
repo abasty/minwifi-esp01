@@ -41,7 +41,7 @@ cd lib/basic/test
 make clean && make TERM=MINITEL
 ```
 
-Le binaire se trouve dans `lib/basic/test/bin/bastos`
+Le binaire se trouve dans `lib/basic/test/bin/bastos-linux-amd64`
 
 ## Déploiement automatisé
 
