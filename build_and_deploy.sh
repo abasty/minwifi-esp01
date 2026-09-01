@@ -258,6 +258,10 @@ build_desktop_archive() {
     staging="$(mktemp -d)"
     trap 'rm -rf "$staging"' RETURN
 
+    # -L dereferences symlinks (e.g. disk/meteor.bas -> ../lib/basic/meteor/),
+    # since their targets don't exist once flattened into the archive.
+    cp -rL "disk" "${staging}/disk"
+
     local archive
     case "$platform" in
         linux)
@@ -271,7 +275,7 @@ build_desktop_archive() {
             archive="bastos-windows-amd64.zip"
             cp "lib/basic/test/bin/bastos-windows-amd64.exe" "$staging/"
             cp "bastos-back-windows.bat" "$staging/"
-            (cd "$staging" && zip -q "${SCRIPT_DIR}/${archive}" ./*)
+            (cd "$staging" && zip -qr "${SCRIPT_DIR}/${archive}" .)
             ;;
         *)
             die "build_desktop_archive: unknown platform '$platform'"
