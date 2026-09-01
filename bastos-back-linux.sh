@@ -21,7 +21,10 @@ else
             elif command -v wget &> /dev/null; then
                 wget -O "$WEBSOCAT_LOCAL" "$WEBSOCAT_URL"
             else
-                echo "Ni curl ni wget disponible. Installe l'un des deux et relance ce script." >&2
+                echo "curl n'est pas installé (ni wget). Installe curl puis relance ce script :" >&2
+                echo "  Debian/Ubuntu : sudo apt-get install curl" >&2
+                echo "  Fedora/RHEL   : sudo dnf install curl" >&2
+                echo "  Arch          : sudo pacman -S curl" >&2
                 exit 1
             fi
             chmod +x "$WEBSOCAT_LOCAL"

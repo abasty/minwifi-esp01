@@ -20,6 +20,13 @@ if %errorlevel%==0 (
         if /i "!FIRSTCHAR!"=="o" set "DOWNLOAD=1"
         if /i "!FIRSTCHAR!"=="y" set "DOWNLOAD=1"
         if "!DOWNLOAD!"=="1" (
+            where curl.exe >nul 2>nul
+            if errorlevel 1 (
+                echo curl.exe est introuvable.
+                echo Il est fourni en standard depuis Windows 10 ^(avril 2018^) et Windows 11.
+                echo Mets a jour Windows, ou installe-le manuellement : https://curl.se/windows/
+                exit /b 1
+            )
             echo Telechargement de websocat...
             curl.exe -fL -o "%WEBSOCAT_LOCAL%" "%WEBSOCAT_URL%"
             if errorlevel 1 (
