@@ -50,6 +50,6 @@ if exist "%SCRIPT_DIR%bastos-windows-amd64.exe" (
 )
 
 echo BASTOS lance sur ws://%WS_ADDR%
-echo Connecte-toi avec minterm : https://abasty.github.io/minterm/?ws=ws%%3A%%2F%%2F127.0.0.1%%3A1967
+echo Lien Minterm : https://abasty.github.io/minterm/?ws=ws%%3A%%2F%%2F127.0.0.1%%3A1967
 
 "%WEBSOCAT%" -v -t -E --no-line ws-l:%WS_ADDR% exec:"%BASTOS_EXE%"

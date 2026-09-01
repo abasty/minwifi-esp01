@@ -22,7 +22,7 @@ BASTOS-S is a computer system composed of two elements connected by a DIN-5 seri
   - WiFi 802.11 b/g/n for Internet connection
   - Serial port: 1200 and 4800 bps (Minitel 1B), up to 9600 bps (Minitel 2 and Magis Club)
 
-**BASTOS-EDI** is an integrated development environment running in a Docker container. It includes the BASTOS interpreter accessible via WebSocket, a Minitel emulator that connects to it, and an editor with syntax highlighting. BASTOS-EDI allows developing and testing programs on PC via web browser. Programs developed this way can be transferred to BASTOS-S via FTP.
+It's possible to develop and test BASTOS programs on a PC (Windows/Linux) without any Minitel hardware, using a web emulator (minterm) connected to a local BASTOS interpreter exposed over WebSocket. See the [development guide](https://abasty.github.io/minwifi-esp01/BASTOS-DEV-GUIDE-fr) (French only). Programs developed this way can be transferred to BASTOS-S via FTP.
 
 ### The BASTOS Language
 

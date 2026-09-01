@@ -48,6 +48,6 @@ fi
 WS_URL_ENCODED="ws%3A%2F%2F${WS_ADDR/:/%3A}"
 
 echo "BASTOS lancé sur ws://${WS_ADDR}"
-echo "Connecte-toi avec minterm : https://abasty.github.io/minterm/?ws=${WS_URL_ENCODED}"
+echo "Lien Minterm : https://abasty.github.io/minterm/?ws=${WS_URL_ENCODED}"
 
 exec "$WEBSOCAT" -v -t -E --no-line ws-l:"${WS_ADDR}" exec:"$BASTOS_EXE"
