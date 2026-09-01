@@ -15,6 +15,7 @@
 
 #define sleep(s) Sleep((s) * 1000)
 #define chdir _chdir
+#define mkdir(path, mode) _mkdir(path)
 #define open _open
 #define creat _creat
 #define close _close
@@ -589,7 +590,11 @@ int main()
     term_init();
 #endif
 
-    chdir("disk");
+    mkdir("disk", 0755);
+    if (chdir("disk") != 0) {
+        fprintf(stderr, "Impossible d'accéder au répertoire 'disk'\n");
+        return 1;
+    }
 
     while (true)
     {
