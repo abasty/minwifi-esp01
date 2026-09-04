@@ -1439,16 +1439,19 @@ bool os_cat_dir(const char *name) {
 
 // MOVE "pattern", "dest".
 //
-// If dest already exists as a directory, every file matching pattern is
-// moved into it (streamed: renamed as each match is found, no need to know
-// the total count up front).
+// If dest already exists as a directory — ".." (the parent directory)
+// counts, refused only when already at the sandbox root, same boundary CD
+// enforces — every file matching pattern is moved into it (streamed:
+// renamed as each match is found, no need to know the total count up
+// front).
 //
 // Otherwise dest is a plain target name, which only makes sense if pattern
 // matches exactly one file — same as Unix `mv`, refuse (and move nothing)
 // rather than guess when there is more than one match and nowhere
 // unambiguous to put the rest.
 static bool os_move(const char *pattern, const char *dest) {
-    if (!os_valid_name(dest, false)) {
+    bool dest_is_parent = strcmp(dest, "..") == 0;
+    if (!os_valid_name(dest, true) || (dest_is_parent && hal_at_root())) {
         bmem->bstate.error = BERROR_IO;
         return false;
     }
@@ -1457,7 +1460,7 @@ static bool os_move(const char *pattern, const char *dest) {
     g_cat_filter[sizeof(g_cat_filter) - 1] = 0;
 
     bool ok;
-    if (hal_is_dir(dest)) {
+    if (dest_is_parent || hal_is_dir(dest)) {
         g_walk_mode = WALK_MODE_MOVE_INTO_DIR;
         g_walk_dest_dir = dest;
         g_walk_match_count = 0;

@@ -180,14 +180,16 @@ you explicitly target a program line:
 | `CD ".."` | Move up to the parent directory |
 | `RD "name"` | Remove an empty directory |
 | `MOVE "pattern", "dest"` | Move/rename files matching pattern to `dest` |
+| `MOVE "pattern", ".."` | Move matching files up to the parent directory |
 | `FREE` | Display memory usage |
 | `RESET` | Reset system |
 | `BASTOS` | Display version info and init default screen attributes |
 
 Names passed to `MD`, `CD`, `RD`, `MOVE`, `SAVE`, `LOAD` and `ERASE` must be
 plain names relative to the current directory: an absolute path or a name
-containing `/` is rejected (error). `..` is only accepted by `CD`, to move
-up one level.
+containing `/` is rejected (error). `..` is only accepted by `CD` (to move
+up one level) and by `MOVE`'s `dest` (to move files up into the parent
+directory) — in both cases refused if already at the top of the disk.
 
 `ERASE` deletes both files and directories matched by its pattern, but for a
 directory it only ever does what `RD` does: remove it if empty. A matched

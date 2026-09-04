@@ -180,14 +180,24 @@ permet de cibler explicitement une ligne du programme :
 | `CD ".."` | Remonter au répertoire parent |
 | `RD "nom"` | Supprimer un répertoire vide |
 | `MOVE "motif", "dest"` | Déplacer/renommer les fichiers correspondant au motif vers `dest` |
+| `MOVE "motif", ".."` | Remonter les fichiers correspondants dans le répertoire parent |
 | `FREE` | Afficher l'utilisation mémoire |
 | `RESET` | Réinitialiser le système |
 | `BASTOS` | Afficher la version et réinitialiser les attributs écran par défaut |
 
 Les noms passés à `MD`, `CD`, `RD`, `MOVE`, `SAVE`, `LOAD` et `ERASE` doivent
 être de simples noms relatifs au répertoire courant : un chemin absolu ou
-contenant `/` est refusé (erreur). `..` n'est accepté que par `CD`, pour
-remonter d'un niveau.
+contenant `/` est refusé (erreur). `..` n'est accepté que par `CD` (pour
+remonter d'un niveau) et par `dest` dans `MOVE` (pour remonter des fichiers
+dans le répertoire parent) — dans les deux cas refusé si on est déjà à la
+racine du disque.
+
+`ERASE` supprime aussi bien des fichiers que des répertoires correspondant
+à son motif, mais pour un répertoire elle ne fait jamais que ce que fait
+`RD` : le supprimer s'il est vide. Un répertoire correspondant au motif
+mais non vide est simplement laissé de côté plutôt que de provoquer une
+erreur, tant qu'au moins une autre correspondance a réellement été
+supprimée.
 
 ---
 

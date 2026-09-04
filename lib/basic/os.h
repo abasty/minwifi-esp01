@@ -127,6 +127,7 @@ int hal_chdir(const char *pathname);
 int hal_rmdir(const char *pathname);
 int hal_is_dir(const char *pathname);
 int hal_rename(const char *oldpath, const char *newpath);
+int hal_at_root(void);
 
 int hal_wifi_scan(void);
 int hal_wifi_connect(const char* ssid, const char* secret);

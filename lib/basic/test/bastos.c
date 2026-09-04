@@ -401,6 +401,11 @@ int hal_rename(const char *oldpath, const char *newpath)
     return rename(oldpath, newpath);
 }
 
+int hal_at_root(void)
+{
+    return g_cd_depth == 0;
+}
+
 void hal_reset()
 {
 }

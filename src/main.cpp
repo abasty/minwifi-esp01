@@ -65,8 +65,38 @@ static bool g_used_sockets[MAX_CONNECTIONS] = {0};
 #define FULL_PATH_SIZE (CWD_SIZE + FILE_NAME_SIZE + 2)
 static char g_cwd[CWD_SIZE] = "/";
 
+// Removes the last "/segment" from an absolute path in place, e.g.
+// "/a/b" -> "/a", "/a" -> "/". path must start with '/' and already be "/"
+// if there's nothing left to remove (never called on an empty root).
+static void pop_last_segment(char *path)
+{
+    if (path[1] == 0) // already "/"
+        return;
+    char *slash = strrchr(path, '/');
+    slash[slash == path ? 1 : 0] = 0;
+}
+
+// name is "../rest" only for MOVE's dest == ".." (its one caller that's
+// allowed a literal ".."; every other name reaching here has already been
+// rejected by os_valid_name() if it contained one). Resolved against a
+// copy of g_cwd here, rather than left in the string for LittleFS/
+// esp_littlefs to canonicalize on its own — not something to rely on
+// without hardware to verify it against.
 static void build_path(const char *name, char *out, size_t out_size)
 {
+    if (strncmp(name, "../", 3) == 0) {
+        char parent[CWD_SIZE];
+        strncpy(parent, g_cwd, sizeof(parent) - 1);
+        parent[sizeof(parent) - 1] = 0;
+        pop_last_segment(parent);
+        name += 3;
+        if (parent[1] == 0) // parent == "/"
+            snprintf(out, out_size, "/%s", name);
+        else
+            snprintf(out, out_size, "%s/%s", parent, name);
+        return;
+    }
+
     if (g_cwd[1] == 0) // g_cwd == "/"
         snprintf(out, out_size, "/%s", name);
     else
@@ -194,12 +224,19 @@ size_t hal_cat()
 
     File file = dir.openNextFile();
     while(file){
-        if(file.isDirectory()){
-            os_cat_dir(file.name());
-        } else {
-            os_cat_file(file.name(), file.size());
-        }
+        // Capture what's needed and close the handle before calling out:
+        // os_cat_file()/os_cat_dir() may rename or delete this very entry
+        // (MOVE, ERASE), which esp_littlefs refuses while it's still open.
+        bool is_dir = file.isDirectory();
+        String name = file.name();
+        size_t size = file.size();
         file.close();
+
+        if (is_dir) {
+            os_cat_dir(name.c_str());
+        } else {
+            os_cat_file(name.c_str(), size);
+        }
         file = dir.openNextFile();
     }
     return LittleFS.totalBytes() - LittleFS.usedBytes();
@@ -283,8 +320,7 @@ int hal_chdir(const char *pathname)
     if (strcmp(pathname, "..") == 0) {
         if (g_cwd[1] == 0) // already at root: same no-op as a real chdir("..")
             return 0;
-        char *slash = strrchr(g_cwd, '/');
-        slash[slash == g_cwd ? 1 : 0] = 0;
+        pop_last_segment(g_cwd);
         return 0;
     }
 
@@ -297,6 +333,11 @@ int hal_chdir(const char *pathname)
     strncpy(g_cwd, rname, sizeof(g_cwd) - 1);
     g_cwd[sizeof(g_cwd) - 1] = 0;
     return 0;
+}
+
+int hal_at_root(void)
+{
+    return g_cwd[1] == 0;
 }
 
 void hal_reset()

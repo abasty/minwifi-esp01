@@ -183,6 +183,8 @@ int hal_is_dir(const char *pathname) {
 
 int hal_rename(const char *oldpath, const char *newpath) { return rename(oldpath, newpath); }
 
+int hal_at_root(void) { return g_cd_depth == 0; }
+
 int hal_wifi_scan(void) { return 0; }
 
 int hal_wifi_connect(const char *ssid, const char *secret) {
