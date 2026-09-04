@@ -152,6 +152,37 @@ size_t hal_cat(void) { return 0; }
 
 int hal_erase(const char *pathname) { return unlink(pathname); }
 
+int hal_mkdir(const char *pathname) { return mkdir(pathname, 0755); }
+
+static int g_cd_depth = 0;
+
+int hal_chdir(const char *pathname) {
+    if (strcmp(pathname, "..") == 0) {
+        if (g_cd_depth == 0)
+            return -1;
+        if (chdir("..") != 0)
+            return -1;
+        g_cd_depth--;
+        return 0;
+    }
+
+    if (chdir(pathname) != 0)
+        return -1;
+    g_cd_depth++;
+    return 0;
+}
+
+int hal_rmdir(const char *pathname) { return rmdir(pathname); }
+
+int hal_is_dir(const char *pathname) {
+    struct stat st;
+    if (stat(pathname, &st) != 0)
+        return 0;
+    return S_ISDIR(st.st_mode) ? 1 : 0;
+}
+
+int hal_rename(const char *oldpath, const char *newpath) { return rename(oldpath, newpath); }
+
 int hal_wifi_scan(void) { return 0; }
 
 int hal_wifi_connect(const char *ssid, const char *secret) {

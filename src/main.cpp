@@ -58,6 +58,21 @@ static File g_file0;
 static WiFiClient g_tcp_socket[MAX_CONNECTIONS];
 static bool g_used_sockets[MAX_CONNECTIONS] = {0};
 
+// LittleFS has no notion of a process-wide current directory: unlike the PC
+// simulator (which can just chdir()), CD/MD/RD here track a virtual current
+// directory ourselves and resolve every relative filename against it.
+#define CWD_SIZE (128)
+#define FULL_PATH_SIZE (CWD_SIZE + FILE_NAME_SIZE + 2)
+static char g_cwd[CWD_SIZE] = "/";
+
+static void build_path(const char *name, char *out, size_t out_size)
+{
+    if (g_cwd[1] == 0) // g_cwd == "/"
+        snprintf(out, out_size, "/%s", name);
+    else
+        snprintf(out, out_size, "%s/%s", g_cwd, name);
+}
+
 void hal_print_oem_string(void)
 {
     #ifdef ESP32
@@ -104,11 +119,9 @@ int hal_print_buffer(uint8_t *buffer, int n)
 int hal_open(const char *pathname, int flags)
 {
     const char *access = "r";
-    #ifdef ESP32
-    char rname[FILE_NAME_SIZE + 4] = "/";
-    strncat(rname, pathname, FILE_NAME_SIZE + 3);
+    char rname[FULL_PATH_SIZE];
+    build_path(pathname, rname, sizeof(rname));
     pathname = rname;
-    #endif
 
     if (flags & B_CREAT)
     {
@@ -139,11 +152,9 @@ int hal_read(int fd, void *buf, int count)
 
 int hal_get_file_size(const char* pathname)
 {
-    #ifdef ESP32
-    char rname[FILE_NAME_SIZE + 4] = "/";
-    strncat(rname, pathname, FILE_NAME_SIZE + 3);
+    char rname[FULL_PATH_SIZE];
+    build_path(pathname, rname, sizeof(rname));
     pathname = rname;
-    #endif
 
     int size = 0;
     File f = LittleFS.open(pathname, "r");
@@ -157,11 +168,9 @@ int hal_get_file_size(const char* pathname)
 
 int hal_file(const char* pathname, char *buffer, uint16_t offset, uint16_t size)
 {
-    #ifdef ESP32
-    char rname[FILE_NAME_SIZE + 4] = "/";
-    strncat(rname, pathname, FILE_NAME_SIZE + 3);
+    char rname[FULL_PATH_SIZE];
+    build_path(pathname, rname, sizeof(rname));
     pathname = rname;
-    #endif
 
     int r = 0;
     File f = LittleFS.open(pathname, "r");
@@ -179,14 +188,14 @@ int hal_file(const char* pathname, char *buffer, uint16_t offset, uint16_t size)
 #ifdef ESP32
 size_t hal_cat()
 {
-    File dir = LittleFS.open("/");
+    File dir = LittleFS.open(g_cwd);
     if(!dir || !dir.isDirectory())
         return 0;
 
     File file = dir.openNextFile();
     while(file){
         if(file.isDirectory()){
-            // TODO: entry is a dir
+            os_cat_dir(file.name());
         } else {
             os_cat_file(file.name(), file.size());
         }
@@ -198,10 +207,13 @@ size_t hal_cat()
 #else
 size_t hal_cat()
 {
-    Dir dir = LittleFS.openDir("/");
+    Dir dir = LittleFS.openDir(g_cwd);
     while (dir.next())
     {
-        os_cat_file(dir.fileName().c_str(), dir.fileSize());
+        if (dir.isDirectory())
+            os_cat_dir(dir.fileName().c_str());
+        else
+            os_cat_file(dir.fileName().c_str(), dir.fileSize());
     }
     FSInfo info;
     LittleFS.info(info);
@@ -211,16 +223,80 @@ size_t hal_cat()
 
 int hal_erase(const char *pathname)
 {
-    #ifdef ESP32
-    char rname[FILE_NAME_SIZE + 4] = "/";
-    strncat(rname, pathname, FILE_NAME_SIZE + 3);
+    char rname[FULL_PATH_SIZE];
+    build_path(pathname, rname, sizeof(rname));
     pathname = rname;
-    #endif
 
     bool ret = LittleFS.remove(pathname);
     if (ret)
         return 0;
     return -1;
+}
+
+int hal_mkdir(const char *pathname)
+{
+    char rname[FULL_PATH_SIZE];
+    build_path(pathname, rname, sizeof(rname));
+    return LittleFS.mkdir(rname) ? 0 : -1;
+}
+
+int hal_rmdir(const char *pathname)
+{
+    char rname[FULL_PATH_SIZE];
+    build_path(pathname, rname, sizeof(rname));
+    return LittleFS.rmdir(rname) ? 0 : -1;
+}
+
+// pathname is a full LittleFS path (already resolved against g_cwd).
+static bool is_directory(const char *pathname)
+{
+    #ifdef ESP32
+    File f = LittleFS.open(pathname);
+    #else
+    File f = LittleFS.open(pathname, "r");
+    #endif
+    if (!f)
+        return false;
+    bool result = f.isDirectory();
+    f.close();
+    return result;
+}
+
+int hal_is_dir(const char *pathname)
+{
+    char rname[FULL_PATH_SIZE];
+    build_path(pathname, rname, sizeof(rname));
+    return is_directory(rname) ? 1 : 0;
+}
+
+int hal_rename(const char *oldpath, const char *newpath)
+{
+    char roldname[FULL_PATH_SIZE];
+    char rnewname[FULL_PATH_SIZE];
+    build_path(oldpath, roldname, sizeof(roldname));
+    build_path(newpath, rnewname, sizeof(rnewname));
+    return LittleFS.rename(roldname, rnewname) ? 0 : -1;
+}
+
+int hal_chdir(const char *pathname)
+{
+    if (strcmp(pathname, "..") == 0) {
+        if (g_cwd[1] == 0) // already at root: same no-op as a real chdir("..")
+            return 0;
+        char *slash = strrchr(g_cwd, '/');
+        slash[slash == g_cwd ? 1 : 0] = 0;
+        return 0;
+    }
+
+    char rname[FULL_PATH_SIZE];
+    build_path(pathname, rname, sizeof(rname));
+
+    if (!is_directory(rname))
+        return -1;
+
+    strncpy(g_cwd, rname, sizeof(g_cwd) - 1);
+    g_cwd[sizeof(g_cwd) - 1] = 0;
+    return 0;
 }
 
 void hal_reset()

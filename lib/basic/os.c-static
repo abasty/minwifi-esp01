@@ -71,6 +71,31 @@ static int g_ftp_fd = -1;
 // filtering: every file matches.
 static char g_cat_filter[FILE_NAME_SIZE] = "";
 
+// MOVE and ERASE both reuse hal_cat()'s directory walk (the same one CAT
+// uses, via os_cat_file()/os_cat_dir()'s g_cat_filter check) to enumerate
+// matches instead of duplicating a walk of the current directory in every
+// HAL. When WALK_MODE_COUNT is active, matches are only tallied (and the
+// last match's name kept, used by MOVE when there turns out to be exactly
+// one); when WALK_MODE_MOVE_INTO_DIR is active, every matching file is
+// renamed into g_walk_dest_dir right away; when WALK_MODE_ERASE is active,
+// every match is deleted right away — a file is always removed, a
+// directory only if it turns out to be empty (rmdir's own rule: a failed
+// rmdir on a non-empty match is not an error, it's just left alone).
+// os_cat_dir() only looks at WALK_MODE_ERASE: MOVE never touches
+// directories, so it skips for every other mode.
+typedef enum {
+    WALK_MODE_NONE,
+    WALK_MODE_COUNT,
+    WALK_MODE_MOVE_INTO_DIR,
+    WALK_MODE_ERASE,
+} walk_mode_t;
+static walk_mode_t g_walk_mode = WALK_MODE_NONE;
+static char g_walk_match_name[FILE_NAME_SIZE];
+static uint16_t g_walk_match_count;
+static uint16_t g_walk_done_count; // ERASE only: matches actually deleted
+static const char *g_walk_dest_dir;
+static bool g_walk_error;
+
 // Minimal glob matcher: '*' matches any run of characters (including none),
 // '?' matches exactly one character, everything else matches literally and
 // case-insensitively (filenames on this platform are not case-sensitive).
@@ -94,6 +119,26 @@ static bool os_glob_match(const char *pattern, const char *name) {
             return true;
     } while (*name++ != 0);
     return false;
+}
+
+// Every file/directory command (MD, CD, RD, MOVE's dest, SAVE, LOAD, ERASE)
+// only ever operates relative to the current directory: a name must be a
+// single plain path component, never an absolute path or a traversal out
+// of it. Without this check, on the PC simulator a name is just handed to
+// the real OS's open()/chdir()/mkdir()/rename() — "CD \"/\"" or a filename
+// starting with "/" would walk right out of the sandboxed disk/ directory
+// onto the host filesystem. allow_dotdot exists only for CD, the one
+// command where ".." (go up one level) is meaningful.
+static bool os_valid_name(const char *name, bool allow_dotdot) {
+    if (!name || !*name)
+        return false;
+    if (strchr(name, '/') || strchr(name, '\\'))
+        return false;
+    if (strcmp(name, "..") == 0)
+        return allow_dotdot;
+    if (strcmp(name, ".") == 0)
+        return false;
+    return true;
 }
 
 static void os_set_redirect(int fd) { bmem->output_fd = fd; }
@@ -1336,6 +1381,29 @@ bool os_cat_file(const char *filename, size_t size) {
     if (*g_cat_filter && !os_glob_match(g_cat_filter, filename))
         return false;
 
+    if (g_walk_mode == WALK_MODE_COUNT) {
+        g_walk_match_count++;
+        strncpy(g_walk_match_name, filename, sizeof(g_walk_match_name) - 1);
+        g_walk_match_name[sizeof(g_walk_match_name) - 1] = 0;
+        return true;
+    }
+    if (g_walk_mode == WALK_MODE_MOVE_INTO_DIR) {
+        g_walk_match_count++;
+        char dest[FILE_NAME_SIZE * 2];
+        snprintf(dest, sizeof(dest), "%s/%s", g_walk_dest_dir, filename);
+        if (hal_rename(filename, dest) != 0)
+            g_walk_error = true;
+        return true;
+    }
+    if (g_walk_mode == WALK_MODE_ERASE) {
+        g_walk_match_count++;
+        if (hal_erase(filename) == 0)
+            g_walk_done_count++;
+        else
+            g_walk_error = true;
+        return true;
+    }
+
     char buffer[40];
     char *ext = strrchr(filename, '.');
     int n = ext ? (ext - filename) : strlen(filename);
@@ -1343,6 +1411,73 @@ bool os_cat_file(const char *filename, size_t size) {
     snprintf(buffer, sizeof(buffer), "%-16.*s.%-4s %zu\r\n", n, filename, ext,
              size);
     os_redir_print_string(buffer);
+    return true;
+}
+
+bool os_cat_dir(const char *name) {
+    // MOVE never touches directories, only ERASE does (and only removes
+    // one if it turns out to be empty — see the walk_mode_t comment).
+    if (g_walk_mode == WALK_MODE_COUNT || g_walk_mode == WALK_MODE_MOVE_INTO_DIR)
+        return false;
+
+    if (*g_cat_filter && !os_glob_match(g_cat_filter, name))
+        return false;
+
+    if (g_walk_mode == WALK_MODE_ERASE) {
+        g_walk_match_count++;
+        if (hal_rmdir(name) == 0)
+            g_walk_done_count++;
+        // else: not empty, left alone — not an error
+        return true;
+    }
+
+    char buffer[40];
+    snprintf(buffer, sizeof(buffer), "%-16.16s <DIR>\r\n", name);
+    os_redir_print_string(buffer);
+    return true;
+}
+
+// MOVE "pattern", "dest".
+//
+// If dest already exists as a directory, every file matching pattern is
+// moved into it (streamed: renamed as each match is found, no need to know
+// the total count up front).
+//
+// Otherwise dest is a plain target name, which only makes sense if pattern
+// matches exactly one file — same as Unix `mv`, refuse (and move nothing)
+// rather than guess when there is more than one match and nowhere
+// unambiguous to put the rest.
+static bool os_move(const char *pattern, const char *dest) {
+    if (!os_valid_name(dest, false)) {
+        bmem->bstate.error = BERROR_IO;
+        return false;
+    }
+
+    strncpy(g_cat_filter, pattern ? pattern : "", sizeof(g_cat_filter) - 1);
+    g_cat_filter[sizeof(g_cat_filter) - 1] = 0;
+
+    bool ok;
+    if (hal_is_dir(dest)) {
+        g_walk_mode = WALK_MODE_MOVE_INTO_DIR;
+        g_walk_dest_dir = dest;
+        g_walk_match_count = 0;
+        g_walk_error = false;
+        hal_cat();
+        ok = g_walk_match_count > 0 && !g_walk_error;
+    } else {
+        g_walk_mode = WALK_MODE_COUNT;
+        g_walk_match_count = 0;
+        hal_cat();
+        ok = g_walk_match_count == 1 && hal_rename(g_walk_match_name, dest) == 0;
+    }
+
+    g_walk_mode = WALK_MODE_NONE;
+    *g_cat_filter = 0;
+
+    if (!ok) {
+        bmem->bstate.error = BERROR_IO;
+        return false;
+    }
     return true;
 }
 
@@ -1409,6 +1544,13 @@ static char *os_filename(const char *name, int16_t *type) {
 
     const char *dst_ext = FILE_EXT_BAS;
     *type = 0;
+
+    // SAVE/LOAD only ever operate relative to the current directory.
+    if (!os_valid_name(name, false)) {
+        *type = -1;
+        return 0;
+    }
+
     char *src_ext = strrchr(name, '.');
     uint16_t len = src_ext ? src_ext - name : strlen(name);
     len = len > FILE_BASE_MAX ? FILE_BASE_MAX : len;
@@ -1434,6 +1576,63 @@ static char *os_filename(const char *name, int16_t *type) {
     strcat(filename, dst_ext);
 
     return filename;
+}
+
+// MD "name": create a subdirectory of the current directory.
+static bool os_mkdir(const char *name) {
+    if (!os_valid_name(name, false) || hal_mkdir(name) != 0) {
+        bmem->bstate.error = BERROR_IO;
+        return false;
+    }
+    return true;
+}
+
+// CD "name" / CD "..": change the current directory.
+static bool os_chdir(const char *name) {
+    if (!os_valid_name(name, true) || hal_chdir(name) != 0) {
+        bmem->bstate.error = BERROR_IO;
+        return false;
+    }
+    return true;
+}
+
+// RD "name": remove an empty subdirectory of the current directory.
+static bool os_rmdir(const char *name) {
+    // hal_is_dir() is checked explicitly rather than trusting hal_rmdir()
+    // alone to refuse a non-directory: on ESP8266, LittleFS's rmdir() is
+    // literally an alias for remove(), so without this RD "file.bas" would
+    // silently delete the file instead of erroring.
+    if (!os_valid_name(name, false) || !hal_is_dir(name) || hal_rmdir(name) != 0) {
+        bmem->bstate.error = BERROR_IO;
+        return false;
+    }
+    return true;
+}
+
+// ERASE "pattern": delete every file or empty directory in the current
+// directory whose name matches pattern (a plain literal name works too,
+// matching only itself — same as before glob support). A file is always
+// removed; a directory is only removed if it turns out to be empty — a
+// matched non-empty directory is simply left alone, not an error, unless
+// it's the only thing that matched: erasing nothing at all is still an
+// error, the same as pattern matching nothing in the first place.
+static bool os_erase(const char *pattern) {
+    strncpy(g_cat_filter, pattern ? pattern : "", sizeof(g_cat_filter) - 1);
+    g_cat_filter[sizeof(g_cat_filter) - 1] = 0;
+
+    g_walk_mode = WALK_MODE_ERASE;
+    g_walk_match_count = 0;
+    g_walk_done_count = 0;
+    g_walk_error = false;
+    hal_cat();
+    g_walk_mode = WALK_MODE_NONE;
+    *g_cat_filter = 0;
+
+    if (g_walk_match_count == 0 || g_walk_done_count == 0 || g_walk_error) {
+        bmem->bstate.error = BERROR_IO;
+        return false;
+    }
+    return true;
 }
 
 static int os_net_send(int fd, const uint8_t *buffer, size_t size) {

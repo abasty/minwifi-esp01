@@ -172,12 +172,22 @@ permet de cibler explicitement une ligne du programme :
 | `LOAD "fichier.bas"` | Charger un programme ASCII |
 | `LOAD "fichier.bst"` | Charger le programme et les variables depuis un fichier binaire |
 | `LOAD "fichier.var"` | Charger les variables uniquement |
-| `ERASE "fichier"` | Supprimer un fichier |
+| `ERASE "motif"` | Supprimer tous les fichiers et répertoires vides correspondant à un motif (`*`, `?`) ou à un nom simple |
 | `CAT` | Lister les fichiers locaux |
 | `CAT "motif"` | Lister les fichiers locaux dont le nom correspond à un motif (`*`, `?`), ex. `CAT "*.bas"` |
+| `MD "nom"` | Créer un répertoire dans le répertoire courant |
+| `CD "nom"` | Se déplacer dans un répertoire |
+| `CD ".."` | Remonter au répertoire parent |
+| `RD "nom"` | Supprimer un répertoire vide |
+| `MOVE "motif", "dest"` | Déplacer/renommer les fichiers correspondant au motif vers `dest` |
 | `FREE` | Afficher l'utilisation mémoire |
 | `RESET` | Réinitialiser le système |
 | `BASTOS` | Afficher la version et réinitialiser les attributs écran par défaut |
+
+Les noms passés à `MD`, `CD`, `RD`, `MOVE`, `SAVE`, `LOAD` et `ERASE` doivent
+être de simples noms relatifs au répertoire courant : un chemin absolu ou
+contenant `/` est refusé (erreur). `..` n'est accepté que par `CD`, pour
+remonter d'un niveau.
 
 ---
 

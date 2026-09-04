@@ -108,6 +108,9 @@ uint8_t instr1s[] = {
     TOKEN_KEYWORD_ERASE,
     TOKEN_KEYWORD_SAVE,
     TOKEN_KEYWORD_LOAD,
+    TOKEN_KEYWORD_MD,
+    TOKEN_KEYWORD_CD,
+    TOKEN_KEYWORD_RD,
     0,
 };
 
@@ -1799,9 +1802,35 @@ static bool eval_goto_target(uint16_t *line_no) {
 }
 
 static void eval_erase() {
-    if (hal_erase(string_cstr(bmem->bstate.string)) != 0) {
-        bmem->bstate.error = BERROR_IO;
+    os_erase(string_cstr(bmem->bstate.string));
+}
+
+// MOVE "pattern", "dest": dest can be an existing directory (every file
+// matching pattern is moved into it) or a plain name (only valid when
+// pattern matches exactly one file, which is then renamed to dest).
+static bool eval_move() {
+    if (!eval_token(TOKEN_KEYWORD_MOVE))
+        return false;
+
+    if (!eval_string_expr())
+        return false;
+
+    char *pattern = 0;
+    if (bmem->bstate.do_eval) {
+        pattern = string_dup(bmem->bstate.string);
     }
+
+    if (!eval_token(','))
+        return false;
+
+    if (!eval_string_expr())
+        return false;
+
+    if (!bmem->bstate.do_eval)
+        return true;
+
+    os_move(string_cstr(pattern), string_cstr(bmem->bstate.string));
+    return true;
 }
 
 static void eval_clear() {
@@ -2153,6 +2182,18 @@ EVAL:
         eval_erase();
         return true;
     }
+    if (instr == TOKEN_KEYWORD_MD) {
+        os_mkdir(string_cstr(bmem->bstate.string));
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_CD) {
+        os_chdir(string_cstr(bmem->bstate.string));
+        return true;
+    }
+    if (instr == TOKEN_KEYWORD_RD) {
+        os_rmdir(string_cstr(bmem->bstate.string));
+        return true;
+    }
     if (instr == TOKEN_KEYWORD_SAVE) {
         return eval_save();
     }
@@ -2491,7 +2532,7 @@ static bool eval_instruction() {
     return eval_print(false) || eval_input() || eval_simple_instruction() ||
            eval_run() || eval_rem() || eval_dim() || eval_list() ||
            eval_edit() || eval_label() || eval_put() || eval_db() || eval_wifi() ||
-           eval_minitel() || eval_ftp() || eval_output() || eval_let();
+           eval_minitel() || eval_ftp() || eval_move() || eval_output() || eval_let();
 }
 
 // Advances *ptr past exactly one token's marker + payload, without

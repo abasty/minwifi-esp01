@@ -172,12 +172,27 @@ you explicitly target a program line:
 | `LOAD "file.bas"` | Load ASCII program |
 | `LOAD "file.bst"` | Load program and variables from binary |
 | `LOAD "file.var"` | Load variables only |
-| `ERASE "file"` | Delete file |
+| `ERASE "pattern"` | Delete every file or empty directory matching a glob pattern (`*`, `?`) or plain name |
 | `CAT` | List files |
 | `CAT "pattern"` | List files matching a glob pattern (`*`, `?`), e.g. `CAT "*.bas"` |
+| `MD "name"` | Create a directory inside the current directory |
+| `CD "name"` | Move into a directory |
+| `CD ".."` | Move up to the parent directory |
+| `RD "name"` | Remove an empty directory |
+| `MOVE "pattern", "dest"` | Move/rename files matching pattern to `dest` |
 | `FREE` | Display memory usage |
 | `RESET` | Reset system |
 | `BASTOS` | Display version info and init default screen attributes |
+
+Names passed to `MD`, `CD`, `RD`, `MOVE`, `SAVE`, `LOAD` and `ERASE` must be
+plain names relative to the current directory: an absolute path or a name
+containing `/` is rejected (error). `..` is only accepted by `CD`, to move
+up one level.
+
+`ERASE` deletes both files and directories matched by its pattern, but for a
+directory it only ever does what `RD` does: remove it if empty. A matched
+directory that still has files in it is left alone rather than causing an
+error, as long as at least one other match was actually deleted.
 
 ---
 

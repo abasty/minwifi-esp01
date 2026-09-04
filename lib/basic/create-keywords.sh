@@ -126,6 +126,10 @@ file
 else
 while
 wend
+md
+cd
+rd
+move
 EOF
 
 # Do not sort to preserve save/load compatibility

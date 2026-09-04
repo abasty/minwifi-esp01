@@ -23,6 +23,7 @@
 #define read _read
 #define lseek _lseek
 #define unlink _unlink
+#define rmdir _rmdir
 #else
 #define _GNU_SOURCE
 #include <arpa/inet.h>
@@ -305,8 +306,10 @@ size_t hal_cat()
     do {
         if (strcmp(".", fd.cFileName) == 0 || strcmp("..", fd.cFileName) == 0)
             continue;
-        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            os_cat_dir(fd.cFileName);
             continue;
+        }
 
         LARGE_INTEGER size;
         size.HighPart = fd.nFileSizeHigh;
@@ -335,7 +338,10 @@ size_t hal_cat()
                 continue;
             total += st.st_blocks * 512; // st_blocks is in 512-byte blocks
 
-            os_cat_file(path, st.st_size);
+            if (S_ISDIR(st.st_mode))
+                os_cat_dir(path);
+            else
+                os_cat_file(path, st.st_size);
         }
         free(entry[n]);
     }
@@ -347,6 +353,52 @@ size_t hal_cat()
 int hal_erase(const char *pathname)
 {
     return unlink(pathname);
+}
+
+int hal_mkdir(const char *pathname)
+{
+    return mkdir(pathname, 0755);
+}
+
+// Depth below the initial disk/ directory chdir()'d into at startup (see
+// main()). Real chdir() has no notion of "top of the sandbox" — without
+// this, "CD .." at the root would walk straight out of disk/ onto the real
+// host filesystem, same escape as an unvalidated absolute path.
+static int g_cd_depth = 0;
+
+int hal_chdir(const char *pathname)
+{
+    if (strcmp(pathname, "..") == 0) {
+        if (g_cd_depth == 0)
+            return -1; // already at the initial disk root
+        if (chdir("..") != 0)
+            return -1;
+        g_cd_depth--;
+        return 0;
+    }
+
+    if (chdir(pathname) != 0)
+        return -1;
+    g_cd_depth++;
+    return 0;
+}
+
+int hal_rmdir(const char *pathname)
+{
+    return rmdir(pathname);
+}
+
+int hal_is_dir(const char *pathname)
+{
+    struct stat st;
+    if (stat(pathname, &st) != 0)
+        return 0;
+    return S_ISDIR(st.st_mode) ? 1 : 0;
+}
+
+int hal_rename(const char *oldpath, const char *newpath)
+{
+    return rename(oldpath, newpath);
 }
 
 void hal_reset()

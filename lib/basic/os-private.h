@@ -60,6 +60,11 @@ static int os_get_string(char *buf, int size, char secret_char);
 // OS file functions
 static char *os_filename(const char *name, int16_t *type);
 static void os_cat(const char *pattern);
+static bool os_erase(const char *pattern);
+static bool os_mkdir(const char *name);
+static bool os_chdir(const char *name);
+static bool os_rmdir(const char *name);
+static bool os_move(const char *pattern, const char *dest);
 
 // OS printing and redirect functions
 static void os_set_redirect(int fd);
