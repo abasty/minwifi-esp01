@@ -112,7 +112,11 @@ int hal_print_buffer(uint8_t *buffer, int n) {
  * matching how bastos.c's own HAL implements these.
  */
 int hal_open(const char *pathname, int flags) {
-    if ((flags & O_CREAT) != 0)
+    // flags is BASTOS's own B_* bitmask (bio.h), not O_*; see the matching
+    // fix in bastos.c's hal_open() for why checking O_CREAT is wrong (only
+    // coincidentally harmless here since this file's flags are 0 or B_CREAT
+    // and Linux's O_CREAT happens to share bits with B_CREAT).
+    if ((flags & B_CREAT) != 0)
         return creat(pathname, 0644);
     return open(pathname, flags);
 }

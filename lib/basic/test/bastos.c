@@ -24,6 +24,7 @@
 #define lseek _lseek
 #define unlink _unlink
 #define rmdir _rmdir
+#define getcwd _getcwd
 #else
 #define _GNU_SOURCE
 #include <arpa/inet.h>
@@ -228,7 +229,12 @@ int hal_print_buffer(uint8_t *buffer, int n)
 
 int hal_open(const char *pathname, int flags)
 {
-    if ((flags & O_CREAT) != 0)
+    // flags is BASTOS's own B_* bitmask (bio.h), not a real O_* flag set —
+    // checking it against O_CREAT only ever worked on Linux by coincidence
+    // (glibc's O_CREAT is also 0100). On Windows, MinGW's O_CREAT is 0400
+    // (256), a disjoint bit, so this always took the open() branch instead
+    // of creat() and SAVE silently never created a file.
+    if ((flags & B_CREAT) != 0)
         return creat(pathname, 0644);
 
     return open(pathname, flags);
@@ -294,10 +300,50 @@ int hal_file(const char* pathname, char *buffer, uint16_t offset, uint16_t size)
 // pretend the "disk" directory sits on a disk of this size.
 #define HAL_CAT_DISK_SIZE (2 * 1024 * 1024)
 
+// Absolute path of the disk/ directory chdir()'d into at startup (see
+// main()), captured once via getcwd() so free space can always be computed
+// from the true root regardless of where CD has taken us since.
+static char g_disk_root[512] = "";
+
 #ifdef _WIN32
-size_t hal_cat()
+// Recursively sums the size of every file under path (directories
+// contribute nothing themselves, only what's inside them, matching the
+// non-Windows st_blocks-based version closely enough for a 2 MB toy quota).
+static off_t disk_usage(const char *path)
 {
     off_t total = 0;
+    char pattern[MAX_PATH];
+    snprintf(pattern, sizeof(pattern), "%s\\*", path);
+
+    WIN32_FIND_DATA fd;
+    HANDLE h = FindFirstFile(pattern, &fd);
+    if (h == INVALID_HANDLE_VALUE)
+        return 0;
+
+    do {
+        if (strcmp(".", fd.cFileName) == 0 || strcmp("..", fd.cFileName) == 0)
+            continue;
+
+        char child[MAX_PATH];
+        snprintf(child, sizeof(child), "%s\\%s", path, fd.cFileName);
+
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            total += disk_usage(child);
+            continue;
+        }
+
+        LARGE_INTEGER size;
+        size.HighPart = fd.nFileSizeHigh;
+        size.LowPart = fd.nFileSizeLow;
+        total += size.QuadPart;
+    } while (FindNextFile(h, &fd));
+
+    FindClose(h);
+    return total;
+}
+
+size_t hal_cat()
+{
     WIN32_FIND_DATA fd;
     HANDLE h = FindFirstFile("*", &fd);
     if (h == INVALID_HANDLE_VALUE)
@@ -314,18 +360,46 @@ size_t hal_cat()
         LARGE_INTEGER size;
         size.HighPart = fd.nFileSizeHigh;
         size.LowPart = fd.nFileSizeLow;
-        total += size.QuadPart;
-
         os_cat_file(fd.cFileName, (int)size.QuadPart);
     } while (FindNextFile(h, &fd));
 
     FindClose(h);
+
+    off_t total = disk_usage(g_disk_root);
     return total < HAL_CAT_DISK_SIZE ? HAL_CAT_DISK_SIZE - total : 0;
 }
 #else
-size_t hal_cat()
+// Recursively sums st_blocks (allocated space, including for directories
+// themselves) under path.
+static off_t disk_usage(const char *path)
 {
     off_t total = 0;
+    DIR *dir = opendir(path);
+    if (!dir)
+        return 0;
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(".", entry->d_name) == 0 || strcmp("..", entry->d_name) == 0)
+            continue;
+
+        char child[1024];
+        snprintf(child, sizeof(child), "%s/%s", path, entry->d_name);
+
+        struct stat st;
+        if (stat(child, &st) == -1)
+            continue;
+        total += st.st_blocks * 512; // st_blocks is in 512-byte blocks
+
+        if (S_ISDIR(st.st_mode))
+            total += disk_usage(child);
+    }
+    closedir(dir);
+    return total;
+}
+
+size_t hal_cat()
+{
     struct dirent **entry;
     int n = scandir(".", &entry, NULL, NULL);
     while (n--)
@@ -334,18 +408,18 @@ size_t hal_cat()
         {
             char *path = entry[n]->d_name;
             struct stat st;
-            if (stat(path, &st) == -1)
-                continue;
-            total += st.st_blocks * 512; // st_blocks is in 512-byte blocks
-
-            if (S_ISDIR(st.st_mode))
-                os_cat_dir(path);
-            else
-                os_cat_file(path, st.st_size);
+            if (stat(path, &st) == 0) {
+                if (S_ISDIR(st.st_mode))
+                    os_cat_dir(path);
+                else
+                    os_cat_file(path, st.st_size);
+            }
         }
         free(entry[n]);
     }
     free(entry);
+
+    off_t total = disk_usage(g_disk_root);
     return total < HAL_CAT_DISK_SIZE ? HAL_CAT_DISK_SIZE - total : 0;
 }
 #endif
@@ -655,6 +729,10 @@ int main()
     mkdir("disk", 0755);
     if (chdir("disk") != 0) {
         fprintf(stderr, "Impossible d'accéder au répertoire 'disk'\n");
+        return 1;
+    }
+    if (!getcwd(g_disk_root, sizeof(g_disk_root))) {
+        fprintf(stderr, "Impossible de résoudre le chemin de 'disk'\n");
         return 1;
     }
 
