@@ -97,10 +97,10 @@ void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t 
 void os_wifi_set_info(const char *ssid, const char *ip);
 
 // OS network functions
-void os_ftp_cat_file(const char* line);
+bool os_ftp_cat_file(const char* line);
 
 // OS file functions
-void os_cat_file(const char *filename, size_t size);
+bool os_cat_file(const char *filename, size_t size);
 
 // HAL functions
 void hal_print_oem_string(void);

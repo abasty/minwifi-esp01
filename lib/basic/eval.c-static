@@ -2092,10 +2092,15 @@ EVAL:
 
 static bool eval_simple_instruction() {
     uint8_t instr;
+    bool cat_has_pattern = false;
 
     // 0 arg instructions
-    if ((instr = eval_token_one_of((char *)instr0)))
+    if ((instr = eval_token_one_of((char *)instr0))) {
+        // CAT takes an optional glob pattern, e.g. CAT "*.bas"
+        if (instr == TOKEN_KEYWORD_CAT)
+            cat_has_pattern = eval_string_expr();
         goto EVAL;
+    }
 
     // 1 string instructions
     if ((instr = eval_token_one_of((char *)instr1s)) && eval_string_expr())
@@ -2172,7 +2177,7 @@ EVAL:
         return true;
     }
     if (instr == TOKEN_KEYWORD_CAT) {
-        os_cat();
+        os_cat(cat_has_pattern ? string_cstr(bmem->bstate.string) : "");
         return true;
     }
     if (instr == TOKEN_KEYWORD_FAST2 || instr == TOKEN_KEYWORD_FAST || instr == TOKEN_KEYWORD_SLOW) {
@@ -2462,14 +2467,22 @@ static bool eval_ftp() {
     if (func == TOKEN_KEYWORD_STOP)
         return eval_disconnect(DB_FTP_SET);
 
+    // CAT takes an optional glob pattern, e.g. FTP CAT "*.bas" — parsed
+    // ahead of the do_eval gate below so the argument is consumed during
+    // dry-run passes too.
+    if (func == TOKEN_KEYWORD_CAT) {
+        bool has_pattern = eval_string_expr();
+        if (!bmem->bstate.do_eval)
+            return true;
+        os_ftp_cat(has_pattern ? string_cstr(bmem->bstate.string) : "");
+        return true;
+    }
+
     if (!bmem->bstate.do_eval)
         return true;
 
     if (func == TOKEN_KEYWORD_STATUS)
         os_ftp_status();
-
-    if (func == TOKEN_KEYWORD_CAT)
-        os_ftp_cat();
 
     return true;
 }

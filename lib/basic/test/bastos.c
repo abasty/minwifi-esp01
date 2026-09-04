@@ -288,6 +288,11 @@ int hal_file(const char* pathname, char *buffer, uint16_t offset, uint16_t size)
     return r;
 }
 
+// Simulated disk size for the PC test binary: the real BASTOS-S hardware
+// has its own flash-based quota (see os_cat()'s callers), but on PC we just
+// pretend the "disk" directory sits on a disk of this size.
+#define HAL_CAT_DISK_SIZE (2 * 1024 * 1024)
+
 #ifdef _WIN32
 size_t hal_cat()
 {
@@ -295,7 +300,7 @@ size_t hal_cat()
     WIN32_FIND_DATA fd;
     HANDLE h = FindFirstFile("*", &fd);
     if (h == INVALID_HANDLE_VALUE)
-        return 524288;
+        return HAL_CAT_DISK_SIZE;
 
     do {
         if (strcmp(".", fd.cFileName) == 0 || strcmp("..", fd.cFileName) == 0)
@@ -312,7 +317,7 @@ size_t hal_cat()
     } while (FindNextFile(h, &fd));
 
     FindClose(h);
-    return 524288 - total;
+    return total < HAL_CAT_DISK_SIZE ? HAL_CAT_DISK_SIZE - total : 0;
 }
 #else
 size_t hal_cat()
@@ -335,7 +340,7 @@ size_t hal_cat()
         free(entry[n]);
     }
     free(entry);
-    return 524288 - total;
+    return total < HAL_CAT_DISK_SIZE ? HAL_CAT_DISK_SIZE - total : 0;
 }
 #endif
 

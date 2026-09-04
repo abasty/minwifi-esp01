@@ -50,7 +50,7 @@ static void os_disconnect(uint8_t set);
 
 // FTP functions
 static void os_ftp_status(void);
-static bool os_ftp_cat(void);
+static bool os_ftp_cat(const char *pattern);
 static bool os_ftp_files(uint8_t func, const char *filename);
 
 // OS keyboard functions
@@ -59,7 +59,7 @@ static int os_get_string(char *buf, int size, char secret_char);
 
 // OS file functions
 static char *os_filename(const char *name, int16_t *type);
-static void os_cat(void);
+static void os_cat(const char *pattern);
 
 // OS printing and redirect functions
 static void os_set_redirect(int fd);

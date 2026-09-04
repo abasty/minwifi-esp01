@@ -174,6 +174,7 @@ you explicitly target a program line:
 | `LOAD "file.var"` | Load variables only |
 | `ERASE "file"` | Delete file |
 | `CAT` | List files |
+| `CAT "pattern"` | List files matching a glob pattern (`*`, `?`), e.g. `CAT "*.bas"` |
 | `FREE` | Display memory usage |
 | `RESET` | Reset system |
 | `BASTOS` | Display version info and init default screen attributes |
@@ -1225,6 +1226,7 @@ FTP STATUS                   ' Show current FTP status
 FTP PUT "file"               ' Upload a file (same name locally and remotely)
 FTP GET "file"               ' Download a file (same name locally and remotely)
 FTP CAT                      ' List remote files
+FTP CAT "pattern"            ' List remote files matching a glob pattern
 FTP ERASE "name"             ' Remove a saved connection
 FTP STOP                     ' Disconnect
 ```

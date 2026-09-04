@@ -174,6 +174,7 @@ permet de cibler explicitement une ligne du programme :
 | `LOAD "fichier.var"` | Charger les variables uniquement |
 | `ERASE "fichier"` | Supprimer un fichier |
 | `CAT` | Lister les fichiers locaux |
+| `CAT "motif"` | Lister les fichiers locaux dont le nom correspond à un motif (`*`, `?`), ex. `CAT "*.bas"` |
 | `FREE` | Afficher l'utilisation mémoire |
 | `RESET` | Réinitialiser le système |
 | `BASTOS` | Afficher la version et réinitialiser les attributs écran par défaut |
@@ -1263,6 +1264,7 @@ FTP STATUS                   ' Afficher l'état de la connexion FTP
 FTP PUT "fichier"            ' Envoyer un fichier (même nom local et distant)
 FTP GET "fichier"            ' Recevoir un fichier (même nom local et distant)
 FTP CAT                      ' Lister les fichiers distants
+FTP CAT "motif"              ' Lister les fichiers distants correspondant à un motif
 FTP ERASE "nom"              ' Supprimer une connexion sauvegardée
 FTP STOP                     ' Se déconnecter
 ```

@@ -31,6 +31,8 @@
 
 #include "tty-minitel.h"
 
+#include <ctype.h>
+
 #define AUTOEXEC_FILE "autoexec.bas"
 #define AUTOLOAD_DB_FILE "autoload.db"
 
@@ -63,6 +65,36 @@ struct ws_state_s {
 static struct ws_state_s g_ws_state = {0};
 
 static int g_ftp_fd = -1;
+
+// Glob pattern for the file listing currently in progress (CAT / FTP CAT),
+// checked by os_cat_file() against each candidate filename. Empty means no
+// filtering: every file matches.
+static char g_cat_filter[FILE_NAME_SIZE] = "";
+
+// Minimal glob matcher: '*' matches any run of characters (including none),
+// '?' matches exactly one character, everything else matches literally and
+// case-insensitively (filenames on this platform are not case-sensitive).
+static bool os_glob_match(const char *pattern, const char *name) {
+    while (*pattern != '*') {
+        if (*pattern == 0)
+            return *name == 0;
+        if (*name == 0)
+            return false;
+        if (*pattern != '?' && tolower((unsigned char)*pattern) != tolower((unsigned char)*name))
+            return false;
+        pattern++;
+        name++;
+    }
+    // *pattern == '*': try matching the rest of the pattern at every
+    // possible position in the remaining name.
+    while (*(++pattern) == '*')
+        ;
+    do {
+        if (os_glob_match(pattern, name))
+            return true;
+    } while (*name++ != 0);
+    return false;
+}
 
 static void os_set_redirect(int fd) { bmem->output_fd = fd; }
 
@@ -955,13 +987,18 @@ static void os_disconnect(uint8_t set) {
     }
 }
 
-static void os_cat(void) {
+static void os_cat(const char *pattern) {
+    strncpy(g_cat_filter, pattern ? pattern : "", sizeof(g_cat_filter) - 1);
+    g_cat_filter[sizeof(g_cat_filter) - 1] = 0;
     os_redir_print_string("\r\nDrive: A\r\n\r\n");
     size_t total = hal_cat();
     os_redir_print_integer("\r\n%3uK free\r\n\r\n", total / 1024);
 }
 
-static bool os_ftp_cat(void) {
+static bool os_ftp_cat(const char *pattern) {
+    strncpy(g_cat_filter, pattern ? pattern : "", sizeof(g_cat_filter) - 1);
+    g_cat_filter[sizeof(g_cat_filter) - 1] = 0;
+
     if (g_ftp_fd < 0) {
         bmem->bstate.error = BERROR_SOCK;
         return false;
@@ -1032,8 +1069,8 @@ static bool os_ftp_cat(void) {
 
             if (line_idx > 0) {
                 // This is a file listing line
-                os_ftp_cat_file(line);
-                total++;
+                if (os_ftp_cat_file(line))
+                    total++;
             }
 
             line_idx = 0;
@@ -1295,7 +1332,10 @@ static bool os_ftp_files(uint8_t func, const char *filename)
     return false;
 }
 
-void os_cat_file(const char *filename, size_t size) {
+bool os_cat_file(const char *filename, size_t size) {
+    if (*g_cat_filter && !os_glob_match(g_cat_filter, filename))
+        return false;
+
     char buffer[40];
     char *ext = strrchr(filename, '.');
     int n = ext ? (ext - filename) : strlen(filename);
@@ -1303,6 +1343,7 @@ void os_cat_file(const char *filename, size_t size) {
     snprintf(buffer, sizeof(buffer), "%-16.*s.%-4s %zu\r\n", n, filename, ext,
              size);
     os_redir_print_string(buffer);
+    return true;
 }
 
 /**
@@ -1338,7 +1379,7 @@ static char *parse_printable(char *dst, size_t dst_size, const char *src) {
     return (char *)src;
 }
 
-void os_ftp_cat_file(const char *line) {
+bool os_ftp_cat_file(const char *line) {
     char part[32];
     const char *src = line;
     int32_t n = 0;
@@ -1349,7 +1390,7 @@ void os_ftp_cat_file(const char *line) {
         if (n == 5)
             size = strtoul(part, 0, 10);
     }
-    os_cat_file(part, size);
+    return os_cat_file(part, size);
 }
 
 #define FILE_EXT_BAS ".bas"
