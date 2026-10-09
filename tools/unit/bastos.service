@@ -1,0 +1,33 @@
+[Unit]
+Description=Serveur Bastos
+After=network-online.target
+
+[Service]
+Type=forking
+Restart=always
+RestartSec=20
+User=bastos
+Group=bastos
+SupplementaryGroups=sec-server
+UMask=002
+WorkingDirectory=/home/bastos
+ExecStart=/usr/bin/screen -d -m /home/bastos/bastos-backend.sh
+
+ProtectSystem=strict
+ProtectHome=false
+ReadWritePaths=/home/bastos/disk
+ReadOnlyPaths=/home/bastos
+
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+PrivateTmp=true
+
+LimitFSIZE=10M
+
+MemoryMax=256M
+MemoryHigh=192M
+
+[Install]
+WantedBy=multi-user.target
