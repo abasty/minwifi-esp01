@@ -227,6 +227,12 @@ int hal_print_buffer(uint8_t *buffer, int n)
     return n;
 }
 
+// Absolute path of the disk/ directory chdir()'d into at startup (see
+// main()), captured once via getcwd() so free space and root-anchored files
+// (B_ROOT, e.g. autoload.db) always resolve from the true root regardless
+// of where CD has taken us since.
+static char g_disk_root[512] = "";
+
 int hal_open(const char *pathname, int flags)
 {
     // flags is BASTOS's own B_* bitmask (bio.h), not a real O_* flag set —
@@ -234,6 +240,13 @@ int hal_open(const char *pathname, int flags)
     // (glibc's O_CREAT is also 0100). On Windows, MinGW's O_CREAT is 0400
     // (256), a disjoint bit, so this always took the open() branch instead
     // of creat() and SAVE silently never created a file.
+    char rname[sizeof(g_disk_root) + FILE_NAME_SIZE + 2];
+    if ((flags & B_ROOT) != 0) {
+        snprintf(rname, sizeof(rname), "%s/%s", g_disk_root, pathname);
+        pathname = rname;
+        flags &= ~B_ROOT;
+    }
+
     if ((flags & B_CREAT) != 0)
         return creat(pathname, 0644);
 
@@ -300,10 +313,6 @@ int hal_file(const char* pathname, char *buffer, uint16_t offset, uint16_t size)
 // pretend the "disk" directory sits on a disk of this size.
 #define HAL_CAT_DISK_SIZE (2 * 1024 * 1024)
 
-// Absolute path of the disk/ directory chdir()'d into at startup (see
-// main()), captured once via getcwd() so free space can always be computed
-// from the true root regardless of where CD has taken us since.
-static char g_disk_root[512] = "";
 
 #ifdef _WIN32
 // Recursively sums the size of every file under path (directories

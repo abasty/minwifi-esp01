@@ -150,7 +150,10 @@ int hal_open(const char *pathname, int flags)
 {
     const char *access = "r";
     char rname[FULL_PATH_SIZE];
-    build_path(pathname, rname, sizeof(rname));
+    if (flags & B_ROOT)
+        snprintf(rname, sizeof(rname), "/%s", pathname);
+    else
+        build_path(pathname, rname, sizeof(rname));
     pathname = rname;
 
     if (flags & B_CREAT)

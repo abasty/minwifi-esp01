@@ -235,7 +235,7 @@ static int os_redir_print_float(float f) {
 }
 
 static void os_db_save(void) {
-    int fd = hal_open(AUTOLOAD_DB_FILE, B_CREAT | B_WRONLY);
+    int fd = hal_open(AUTOLOAD_DB_FILE, B_ROOT | B_CREAT | B_WRONLY);
     if (fd < 0)
         return;
 
@@ -260,7 +260,7 @@ static void os_db_load(void) {
     // Remove memory records
     bmem_db_clear();
 
-    int fd = hal_open(AUTOLOAD_DB_FILE, B_RDONLY);
+    int fd = hal_open(AUTOLOAD_DB_FILE, B_ROOT | B_RDONLY);
     if (fd < 0)
         return;
 

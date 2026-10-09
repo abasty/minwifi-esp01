@@ -44,6 +44,11 @@ extern "C"
 #define B_CREAT   0100
 #define B_TRUNC   01000
 #define B_APPEND  02000
+// Not a real open() flag: tells hal_open() to resolve pathname against the
+// disk root instead of the current directory (CD), for system files such as
+// autoload.db that must stay unique whatever directory the user is in.
+// Each HAL strips it before handing flags to the underlying open().
+#define B_ROOT    04000000
 
 typedef struct {
     uint16_t line_no;
