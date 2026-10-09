@@ -172,11 +172,39 @@ permet de cibler explicitement une ligne du programme :
 | `LOAD "fichier.bas"` | Charger un programme ASCII |
 | `LOAD "fichier.bst"` | Charger le programme et les variables depuis un fichier binaire |
 | `LOAD "fichier.var"` | Charger les variables uniquement |
-| `ERASE "fichier"` | Supprimer un fichier |
+| `ERASE "motif"` | Supprimer tous les fichiers et répertoires vides correspondant à un motif (`*`, `?`) ou à un nom simple |
 | `CAT` | Lister les fichiers locaux |
+| `CAT "motif"` | Lister les fichiers locaux dont le nom correspond à un motif (`*`, `?`), ex. `CAT "*.bas"` |
+| `MD "nom"` | Créer un répertoire dans le répertoire courant |
+| `CD "nom"` | Se déplacer dans un répertoire |
+| `CD ".."` | Remonter au répertoire parent |
+| `RD "nom"` | Supprimer un répertoire vide |
+| `MOVE "motif", "dest"` | Déplacer/renommer les fichiers correspondant au motif vers `dest` |
+| `MOVE "motif", ".."` | Remonter les fichiers correspondants dans le répertoire parent |
+| `MOVE "rep", "dest"` | Déplacer le répertoire `rep` dans `dest` (un répertoire existant ou `..`), ou le renommer en `dest` si `dest` n'existe pas |
 | `FREE` | Afficher l'utilisation mémoire |
 | `RESET` | Réinitialiser le système |
 | `BASTOS` | Afficher la version et réinitialiser les attributs écran par défaut |
+
+Les noms passés à `MD`, `CD`, `RD`, `MOVE`, `SAVE`, `LOAD` et `ERASE` doivent
+être de simples noms relatifs au répertoire courant : un chemin absolu ou
+contenant `/` est refusé (erreur). `..` n'est accepté que par `CD` (pour
+remonter d'un niveau) et par `dest` dans `MOVE` (pour remonter des fichiers
+dans le répertoire parent) — dans les deux cas refusé si on est déjà à la
+racine du disque.
+
+`ERASE` supprime aussi bien des fichiers que des répertoires correspondant
+à son motif, mais pour un répertoire elle ne fait jamais que ce que fait
+`RD` : le supprimer s'il est vide. Un répertoire correspondant au motif
+mais non vide est simplement laissé de côté plutôt que de provoquer une
+erreur, tant qu'au moins une autre correspondance a réellement été
+supprimée.
+
+Quand le premier paramètre de `MOVE` est le nom d'un répertoire existant (et
+non un motif), c'est le répertoire lui-même qui est déplacé : dans `dest` si
+`dest` est un répertoire existant (ou `..`), ou renommé en `dest` si rien ne
+porte encore ce nom. C'est une erreur si `dest` est un fichier existant, ou
+si `dest` contient déjà une entrée du même nom que le répertoire déplacé.
 
 ---
 
@@ -1263,6 +1291,7 @@ FTP STATUS                   ' Afficher l'état de la connexion FTP
 FTP PUT "fichier"            ' Envoyer un fichier (même nom local et distant)
 FTP GET "fichier"            ' Recevoir un fichier (même nom local et distant)
 FTP CAT                      ' Lister les fichiers distants
+FTP CAT "motif"              ' Lister les fichiers distants correspondant à un motif
 FTP ERASE "nom"              ' Supprimer une connexion sauvegardée
 FTP STOP                     ' Se déconnecter
 ```

@@ -97,10 +97,11 @@ void os_wifi_print_network(int i, const char *ssid, uint8_t encryption, int32_t 
 void os_wifi_set_info(const char *ssid, const char *ip);
 
 // OS network functions
-void os_ftp_cat_file(const char* line);
+bool os_ftp_cat_file(const char* line);
 
 // OS file functions
-void os_cat_file(const char *filename, size_t size);
+bool os_cat_file(const char *filename, size_t size);
+bool os_cat_dir(const char *name);
 
 // HAL functions
 void hal_print_oem_string(void);
@@ -121,6 +122,12 @@ int hal_file(const char* pathname, char *buffer, uint16_t offset, uint16_t size)
 
 size_t hal_cat(void);
 int hal_erase(const char *pathname);
+int hal_mkdir(const char *pathname);
+int hal_chdir(const char *pathname);
+int hal_rmdir(const char *pathname);
+int hal_is_dir(const char *pathname);
+int hal_rename(const char *oldpath, const char *newpath);
+int hal_at_root(void);
 
 int hal_wifi_scan(void);
 int hal_wifi_connect(const char* ssid, const char* secret);

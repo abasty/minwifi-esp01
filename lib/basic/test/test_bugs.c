@@ -111,8 +111,25 @@ int hal_print_buffer(uint8_t *buffer, int n) {
  * test_bug_load_immediate_null_read_ptr) can exercise the actual code path,
  * matching how bastos.c's own HAL implements these.
  */
+// Depth below the directory the test started in, and that directory itself
+// (captured on the first descent) so B_ROOT files resolve from it.
+static int g_cd_depth = 0;
+static char g_root[512] = "";
+
 int hal_open(const char *pathname, int flags) {
-    if ((flags & O_CREAT) != 0)
+    // flags is BASTOS's own B_* bitmask (bio.h), not O_*; see the matching
+    // fix in bastos.c's hal_open() for why checking O_CREAT is wrong (only
+    // coincidentally harmless here since this file's flags are 0 or B_CREAT
+    // and Linux's O_CREAT happens to share bits with B_CREAT).
+    char rname[sizeof(g_root) + FILE_NAME_SIZE + 2];
+    if ((flags & B_ROOT) != 0) {
+        if (g_cd_depth > 0) {
+            snprintf(rname, sizeof(rname), "%s/%s", g_root, pathname);
+            pathname = rname;
+        }
+        flags &= ~B_ROOT;
+    }
+    if ((flags & B_CREAT) != 0)
         return creat(pathname, 0644);
     return open(pathname, flags);
 }
@@ -151,6 +168,39 @@ int hal_file(const char *pathname, char *buffer, uint16_t offset, uint16_t size)
 size_t hal_cat(void) { return 0; }
 
 int hal_erase(const char *pathname) { return unlink(pathname); }
+
+int hal_mkdir(const char *pathname) { return mkdir(pathname, 0755); }
+
+int hal_chdir(const char *pathname) {
+    if (strcmp(pathname, "..") == 0) {
+        if (g_cd_depth == 0)
+            return -1;
+        if (chdir("..") != 0)
+            return -1;
+        g_cd_depth--;
+        return 0;
+    }
+
+    if (g_cd_depth == 0 && !getcwd(g_root, sizeof(g_root)))
+        return -1;
+    if (chdir(pathname) != 0)
+        return -1;
+    g_cd_depth++;
+    return 0;
+}
+
+int hal_rmdir(const char *pathname) { return rmdir(pathname); }
+
+int hal_is_dir(const char *pathname) {
+    struct stat st;
+    if (stat(pathname, &st) != 0)
+        return 0;
+    return S_ISDIR(st.st_mode) ? 1 : 0;
+}
+
+int hal_rename(const char *oldpath, const char *newpath) { return rename(oldpath, newpath); }
+
+int hal_at_root(void) { return g_cd_depth == 0; }
 
 int hal_wifi_scan(void) { return 0; }
 
@@ -434,6 +484,38 @@ static void test_bug7_load_immediate_null_read_ptr(void) {
 
     bastos_done();
     remove(path);
+}
+
+/* ======================================================================== */
+/* Bug — os.c-static os_db_save()/os_db_load()  autoload.db was opened      */
+/*       relative to the current directory, so PUT (or WIFI, F1...) after a */
+/*       CD wrote a separate autoload.db inside the subdirectory instead of */
+/*       updating the single one at the disk root. Now opened with B_ROOT.  */
+/* ======================================================================== */
+static void test_bug_autoload_db_always_at_root(void) {
+    printf("Bug: autoload.db is always read/written at the disk root\n");
+
+    const char *dir = "regress_dbroot";
+    remove("autoload.db");
+
+    bastos_init();
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    const char *cmd = "MD \"regress_dbroot\":CD \"regress_dbroot\":PUT 1,\"K\",\"V\":CD \"..\"\r";
+    bastos_send_keys(cmd, strlen(cmd), false);
+    for (int i = 0; i < 64; i++)
+        bastos_loop();
+
+    check("PUT in a subdirectory does not create autoload.db there",
+          access("regress_dbroot/autoload.db", F_OK) != 0);
+    check("PUT in a subdirectory writes autoload.db at the root",
+          access("autoload.db", F_OK) == 0);
+
+    bastos_done();
+    remove("autoload.db");
+    remove("regress_dbroot/autoload.db");
+    rmdir(dir);
 }
 
 /* ======================================================================== */
@@ -3732,6 +3814,7 @@ int main(void) {
     printf("\n");
 
     test_bug7_load_immediate_null_read_ptr();
+    test_bug_autoload_db_always_at_root();
     printf("\n");
 
     test_line_edit_insert_at_cursor();

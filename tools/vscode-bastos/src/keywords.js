@@ -14,7 +14,8 @@ const KEYWORDS = [
   "MINITEL", "GET", "PUT", "DB", "DOWN", "UP", "DEBUG", "OUTPUT", "BEEP",
   "CLEOL", "LINE0", "FLASH", "INVERSE", "UNDERLINE", "REP$", "ECHO",
   "SIZE", "END", "EDIT", "DEL", "INS", "LINE", "CHAR", "FAST2", "LL", "G0",
-  "G1", "ORIGIN", "VKEY", "INDEX", "FILE", "ELSE", "WHILE", "WEND",
+  "G1", "ORIGIN", "VKEY", "INDEX", "FILE", "ELSE", "WHILE", "WEND", "MD",
+  "CD", "RD", "MOVE",
 ];
 
 const KEYWORD_SET = new Set(KEYWORDS);

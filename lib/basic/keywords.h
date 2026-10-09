@@ -107,3 +107,7 @@
 #define TOKEN_KEYWORD_ELSE ((uint8_t) (105 | 0b10000000))
 #define TOKEN_KEYWORD_WHILE ((uint8_t) (106 | 0b10000000))
 #define TOKEN_KEYWORD_WEND ((uint8_t) (107 | 0b10000000))
+#define TOKEN_KEYWORD_MD ((uint8_t) (108 | 0b10000000))
+#define TOKEN_KEYWORD_CD ((uint8_t) (109 | 0b10000000))
+#define TOKEN_KEYWORD_RD ((uint8_t) (110 | 0b10000000))
+#define TOKEN_KEYWORD_MOVE ((uint8_t) (111 | 0b10000000))

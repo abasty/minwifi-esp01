@@ -172,11 +172,36 @@ you explicitly target a program line:
 | `LOAD "file.bas"` | Load ASCII program |
 | `LOAD "file.bst"` | Load program and variables from binary |
 | `LOAD "file.var"` | Load variables only |
-| `ERASE "file"` | Delete file |
+| `ERASE "pattern"` | Delete every file or empty directory matching a glob pattern (`*`, `?`) or plain name |
 | `CAT` | List files |
+| `CAT "pattern"` | List files matching a glob pattern (`*`, `?`), e.g. `CAT "*.bas"` |
+| `MD "name"` | Create a directory inside the current directory |
+| `CD "name"` | Move into a directory |
+| `CD ".."` | Move up to the parent directory |
+| `RD "name"` | Remove an empty directory |
+| `MOVE "pattern", "dest"` | Move/rename files matching pattern to `dest` |
+| `MOVE "pattern", ".."` | Move matching files up to the parent directory |
+| `MOVE "dir", "dest"` | Move directory `dir` into `dest` (an existing directory or `..`), or rename it to `dest` if `dest` does not exist |
 | `FREE` | Display memory usage |
 | `RESET` | Reset system |
 | `BASTOS` | Display version info and init default screen attributes |
+
+Names passed to `MD`, `CD`, `RD`, `MOVE`, `SAVE`, `LOAD` and `ERASE` must be
+plain names relative to the current directory: an absolute path or a name
+containing `/` is rejected (error). `..` is only accepted by `CD` (to move
+up one level) and by `MOVE`'s `dest` (to move files up into the parent
+directory) — in both cases refused if already at the top of the disk.
+
+`ERASE` deletes both files and directories matched by its pattern, but for a
+directory it only ever does what `RD` does: remove it if empty. A matched
+directory that still has files in it is left alone rather than causing an
+error, as long as at least one other match was actually deleted.
+
+When `MOVE`'s first parameter is the name of an existing directory (not a
+pattern), the directory itself is moved: into `dest` if `dest` is an existing
+directory (or `..`), or renamed to `dest` if nothing has that name yet. It is
+an error if `dest` is an existing file, or if `dest` already contains an
+entry with the same name as the moved directory.
 
 ---
 
@@ -1225,6 +1250,7 @@ FTP STATUS                   ' Show current FTP status
 FTP PUT "file"               ' Upload a file (same name locally and remotely)
 FTP GET "file"               ' Download a file (same name locally and remotely)
 FTP CAT                      ' List remote files
+FTP CAT "pattern"            ' List remote files matching a glob pattern
 FTP ERASE "name"             ' Remove a saved connection
 FTP STOP                     ' Disconnect
 ```

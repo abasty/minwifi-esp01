@@ -107,4 +107,8 @@ static const char *keywords =
     "ELS""\xc5"
     "WHIL""\xc5"
     "WEN""\xc4"
+    "M""\xc4"
+    "C""\xc4"
+    "R""\xc4"
+    "MOV""\xc5"
 ;
