@@ -181,6 +181,7 @@ you explicitly target a program line:
 | `RD "name"` | Remove an empty directory |
 | `MOVE "pattern", "dest"` | Move/rename files matching pattern to `dest` |
 | `MOVE "pattern", ".."` | Move matching files up to the parent directory |
+| `MOVE "dir", "dest"` | Move directory `dir` into `dest` (an existing directory or `..`), or rename it to `dest` if `dest` does not exist |
 | `FREE` | Display memory usage |
 | `RESET` | Reset system |
 | `BASTOS` | Display version info and init default screen attributes |
@@ -195,6 +196,12 @@ directory) — in both cases refused if already at the top of the disk.
 directory it only ever does what `RD` does: remove it if empty. A matched
 directory that still has files in it is left alone rather than causing an
 error, as long as at least one other match was actually deleted.
+
+When `MOVE`'s first parameter is the name of an existing directory (not a
+pattern), the directory itself is moved: into `dest` if `dest` is an existing
+directory (or `..`), or renamed to `dest` if nothing has that name yet. It is
+an error if `dest` is an existing file, or if `dest` already contains an
+entry with the same name as the moved directory.
 
 ---
 

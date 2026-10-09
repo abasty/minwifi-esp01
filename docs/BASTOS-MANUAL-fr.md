@@ -181,6 +181,7 @@ permet de cibler explicitement une ligne du programme :
 | `RD "nom"` | Supprimer un répertoire vide |
 | `MOVE "motif", "dest"` | Déplacer/renommer les fichiers correspondant au motif vers `dest` |
 | `MOVE "motif", ".."` | Remonter les fichiers correspondants dans le répertoire parent |
+| `MOVE "rep", "dest"` | Déplacer le répertoire `rep` dans `dest` (un répertoire existant ou `..`), ou le renommer en `dest` si `dest` n'existe pas |
 | `FREE` | Afficher l'utilisation mémoire |
 | `RESET` | Réinitialiser le système |
 | `BASTOS` | Afficher la version et réinitialiser les attributs écran par défaut |
@@ -198,6 +199,12 @@ racine du disque.
 mais non vide est simplement laissé de côté plutôt que de provoquer une
 erreur, tant qu'au moins une autre correspondance a réellement été
 supprimée.
+
+Quand le premier paramètre de `MOVE` est le nom d'un répertoire existant (et
+non un motif), c'est le répertoire lui-même qui est déplacé : dans `dest` si
+`dest` est un répertoire existant (ou `..`), ou renommé en `dest` si rien ne
+porte encore ce nom. C'est une erreur si `dest` est un fichier existant, ou
+si `dest` contient déjà une entrée du même nom que le répertoire déplacé.
 
 ---
 

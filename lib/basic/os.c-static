@@ -1437,6 +1437,42 @@ bool os_cat_dir(const char *name) {
     return true;
 }
 
+// True if name exists in the current directory, as a file or a directory.
+static bool os_exists(const char *name) {
+    if (hal_is_dir(name))
+        return true;
+    int fd = hal_open(name, B_RDONLY);
+    if (fd < 0)
+        return false;
+    hal_close(fd);
+    return true;
+}
+
+// MOVE "dir", "dest" where dir is an existing directory:
+// - dest is an existing directory (or ".."): dir is moved into it, keeping
+//   its name;
+// - dest does not exist: dir is renamed to dest;
+// - dest is an existing file: error.
+// Moving into dest also fails if dest already holds something named dir —
+// a plain rename() would silently replace an empty directory there — or
+// if dest is dir itself.
+static bool os_move_dir(const char *dir, const char *dest, bool dest_is_parent) {
+    bool ok;
+    if (dest_is_parent || hal_is_dir(dest)) {
+        char target[FILE_NAME_SIZE * 2];
+        snprintf(target, sizeof(target), "%s/%s", dest, dir);
+        ok = strcmp(dir, dest) != 0 && !os_exists(target) && hal_rename(dir, target) == 0;
+    } else {
+        ok = !os_exists(dest) && hal_rename(dir, dest) == 0;
+    }
+
+    if (!ok) {
+        bmem->bstate.error = BERROR_IO;
+        return false;
+    }
+    return true;
+}
+
 // MOVE "pattern", "dest".
 //
 // If dest already exists as a directory — ".." (the parent directory)
@@ -1449,12 +1485,18 @@ bool os_cat_dir(const char *name) {
 // matches exactly one file — same as Unix `mv`, refuse (and move nothing)
 // rather than guess when there is more than one match and nowhere
 // unambiguous to put the rest.
+//
+// If pattern is not a glob but the name of an existing directory, that
+// directory itself is moved instead (see os_move_dir()).
 static bool os_move(const char *pattern, const char *dest) {
     bool dest_is_parent = strcmp(dest, "..") == 0;
     if (!os_valid_name(dest, true) || (dest_is_parent && hal_at_root())) {
         bmem->bstate.error = BERROR_IO;
         return false;
     }
+
+    if (pattern && os_valid_name(pattern, false) && hal_is_dir(pattern))
+        return os_move_dir(pattern, dest, dest_is_parent);
 
     strncpy(g_cat_filter, pattern ? pattern : "", sizeof(g_cat_filter) - 1);
     g_cat_filter[sizeof(g_cat_filter) - 1] = 0;

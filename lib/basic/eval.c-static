@@ -1807,7 +1807,9 @@ static void eval_erase() {
 
 // MOVE "pattern", "dest": dest can be an existing directory (every file
 // matching pattern is moved into it) or a plain name (only valid when
-// pattern matches exactly one file, which is then renamed to dest).
+// pattern matches exactly one file, which is then renamed to dest). If
+// pattern names an existing directory, that directory is moved into dest
+// (an existing directory or "..") or renamed to dest (if it does not exist).
 static bool eval_move() {
     if (!eval_token(TOKEN_KEYWORD_MOVE))
         return false;
