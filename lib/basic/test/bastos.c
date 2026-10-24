@@ -530,6 +530,9 @@ void hal_speed(uint8_t fn)
 
 int hal_wifi_scan()
 {
+#ifdef BASTOS_MINSERVE
+    return 0; // no network in the Minserve build
+#endif
     // Simulate scanning networks
     sleep(2);
     int n = 0;
@@ -546,6 +549,11 @@ char wifi_ip[16] = "";
 
 int hal_wifi_connect(const char* ssid, const char* secret)
 {
+#ifdef BASTOS_MINSERVE
+    (void)ssid;
+    (void)secret;
+    return -1; // no network in the Minserve build
+#endif
     sleep(1);
     if (strcmp(secret, "changeme") == 0)
     {
@@ -645,6 +653,10 @@ int hal_net_recv(int fd, uint8_t *buffer, int n)
 #else
 int hal_net_connect(split_t *urn)
 {
+#ifdef BASTOS_MINSERVE
+    (void)urn;
+    return -1; // no network in the Minserve build
+#endif
     struct sockaddr_in addr;
     struct sockaddr_in addr_local;
 

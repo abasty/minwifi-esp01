@@ -2540,11 +2540,26 @@ static bool eval_ftp() {
     return true;
 }
 
+#ifdef BASTOS_MINSERVE
+// Minserve: WIFI, MINITEL and FTP are parsed but never executed (the
+// do_eval gate is what makes every eval_* skip its action).
+static bool eval_network() {
+    uint8_t do_eval = bmem->bstate.do_eval;
+    bmem->bstate.do_eval = 0;
+    bool done = eval_wifi() || eval_minitel() || eval_ftp();
+    bmem->bstate.do_eval = do_eval;
+    return done;
+}
+#define EVAL_NETWORK() eval_network()
+#else
+#define EVAL_NETWORK() (eval_wifi() || eval_minitel() || eval_ftp())
+#endif
+
 static bool eval_instruction() {
     return eval_print(false) || eval_input() || eval_simple_instruction() ||
            eval_run() || eval_rem() || eval_dim() || eval_list() ||
-           eval_edit() || eval_label() || eval_put() || eval_db() || eval_wifi() ||
-           eval_minitel() || eval_ftp() || eval_move() || eval_output() || eval_let();
+           eval_edit() || eval_label() || eval_put() || eval_db() ||
+           EVAL_NETWORK() || eval_move() || eval_output() || eval_let();
 }
 
 // Advances *ptr past exactly one token's marker + payload, without
