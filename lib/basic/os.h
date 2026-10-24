@@ -103,6 +103,14 @@ bool os_ftp_cat_file(const char* line);
 bool os_cat_file(const char *filename, size_t size);
 bool os_cat_dir(const char *name);
 
+#ifdef BASTOS_MINSERVE
+// Minserve build only: BASTOS runs one program given on the command line.
+// hal_program_name() is its file name, relative to the current directory;
+// hal_fatal() reports the error to the host and ends the process.
+const char *hal_program_name(void);
+void hal_fatal(const char *msg);
+#endif
+
 // HAL functions
 void hal_print_oem_string(void);
 

@@ -722,7 +722,23 @@ void loop(void)
     os_loop();
 }
 
-int main()
+#ifdef BASTOS_MINSERVE
+static const char *g_program = "";
+
+const char *hal_program_name(void)
+{
+    return g_program;
+}
+
+void hal_fatal(const char *msg)
+{
+    term_done();
+    fprintf(stderr, "bastos: %s: %s\n", g_program, msg);
+    exit(1);
+}
+#endif
+
+int main(int argc, char **argv)
 {
 #ifdef _WIN32
     WSADATA wsa;
@@ -735,11 +751,30 @@ int main()
     term_init();
 #endif
 
+#ifdef BASTOS_MINSERVE
+    // The program's directory is the disk root: nothing outside is reachable.
+    if (argc != 2) {
+        fprintf(stderr, "usage: %s program.bas\n", argv[0]);
+        return 1;
+    }
+    char *slash = strrchr(argv[1], '/');
+    if (slash) {
+        *slash = 0;
+        if (chdir(slash == argv[1] ? "/" : argv[1]) != 0) {
+            fprintf(stderr, "bastos: cannot enter the directory '%s'\n", argv[1]);
+            return 1;
+        }
+        g_program = slash + 1;
+    } else {
+        g_program = argv[1];
+    }
+#else
     mkdir("disk", 0755);
     if (chdir("disk") != 0) {
         fprintf(stderr, "Impossible d'accéder au répertoire 'disk'\n");
         return 1;
     }
+#endif
     if (!getcwd(g_disk_root, sizeof(g_disk_root))) {
         fprintf(stderr, "Impossible de résoudre le chemin de 'disk'\n");
         return 1;

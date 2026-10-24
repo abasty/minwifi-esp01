@@ -284,6 +284,17 @@ finalize:
 static void os_autoexec(void) {
     hal_print_string(MODE_INIT_STRING);
 
+#ifdef BASTOS_MINSERVE
+    // Minserve: no autoexec, no prompt. Load and run the program given on the
+    // command line.
+    if (bastos_load(hal_program_name()) != BERROR_NONE)
+        hal_fatal("cannot load the program");
+    running_state_clear();
+    bmem->bstate.pc = bmem_prog_first_line();
+    bmem->bstate.running = bmem->bstate.pc != 0;
+    if (!bmem->bstate.running)
+        hal_fatal("empty program");
+#else
     char autochar[2] = {'1', 0};
     entry_t *entry = bdb_entry_get(DB_CONFIG_SET, "autoexec");
     if (entry) {
@@ -302,6 +313,7 @@ static void os_autoexec(void) {
         bmem->io_no_recall = 1;
         bastos_send_keys("bastos\r", 7, false);
     }
+#endif
 }
 
 // Mode-aware TTY effect codes for the OS's own status/list screens (WiFi
