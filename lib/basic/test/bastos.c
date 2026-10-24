@@ -240,6 +240,16 @@ int hal_open(const char *pathname, int flags)
     // (glibc's O_CREAT is also 0100). On Windows, MinGW's O_CREAT is 0400
     // (256), a disjoint bit, so this always took the open() branch instead
     // of creat() and SAVE silently never created a file.
+#ifdef BASTOS_MINSERVE
+    // Minserve: the disk is read-only. Whatever is opened for writing goes to
+    // /dev/null, so SAVE and the like succeed without storing anything. System
+    // files under the disk root (autoload.db) are neither read nor written.
+    if ((flags & (B_WRONLY | B_RDWR | B_CREAT | B_TRUNC | B_APPEND)) != 0)
+        return open("/dev/null", O_RDWR);
+    if ((flags & B_ROOT) != 0)
+        return -1;
+#endif
+
     char rname[sizeof(g_disk_root) + FILE_NAME_SIZE + 2];
     if ((flags & B_ROOT) != 0) {
         snprintf(rname, sizeof(rname), "%s/%s", g_disk_root, pathname);
@@ -435,11 +445,19 @@ size_t hal_cat()
 
 int hal_erase(const char *pathname)
 {
+#ifdef BASTOS_MINSERVE
+    (void)pathname;
+    return 0; // read-only disk: nothing is erased
+#endif
     return unlink(pathname);
 }
 
 int hal_mkdir(const char *pathname)
 {
+#ifdef BASTOS_MINSERVE
+    (void)pathname;
+    return 0; // read-only disk: nothing is created
+#endif
     return mkdir(pathname, 0755);
 }
 
@@ -468,6 +486,10 @@ int hal_chdir(const char *pathname)
 
 int hal_rmdir(const char *pathname)
 {
+#ifdef BASTOS_MINSERVE
+    (void)pathname;
+    return 0; // read-only disk: nothing is removed
+#endif
     return rmdir(pathname);
 }
 
@@ -481,6 +503,11 @@ int hal_is_dir(const char *pathname)
 
 int hal_rename(const char *oldpath, const char *newpath)
 {
+#ifdef BASTOS_MINSERVE
+    (void)oldpath;
+    (void)newpath;
+    return 0; // read-only disk: nothing is renamed
+#endif
     return rename(oldpath, newpath);
 }
 
