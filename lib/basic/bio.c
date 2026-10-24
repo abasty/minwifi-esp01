@@ -1200,18 +1200,40 @@ int8_t bastos_load(const char *i_name) {
 
 void bastos_stop() { eval_stop(); }
 
+#ifdef BASTOS_MINSERVE
+static int g_exit_code = 0;
+
+int bastos_exit_code(void) { return g_exit_code; }
+#endif
+
 void bastos_loop() {
     if (bmem->bstate.reset)
         return;
 
+#ifdef BASTOS_MINSERVE
+    // Run mode only: no immediate mode and no prompt. As soon as the program
+    // is no longer running (END, STOP, error), BASTOS is done.
+    if (!eval_running()) {
+        bmem->bstate.reset = 1;
+        return;
+    }
+#endif
+
     if (eval_running() && !eval_inputting() && !eval_paused()) {
+#ifdef BASTOS_MINSERVE
+        if (eval_prog_next() != BERROR_NONE)
+            g_exit_code = 1;
+#else
         eval_prog_next();
+#endif
         if (bmem->bstate.reset)
             return;
 
+#ifndef BASTOS_MINSERVE
         if (!eval_running()) {
             hal_print_string("Ready\r\n");
         }
+#endif
         return;
     }
     bastos_input();

@@ -95,6 +95,12 @@ var_t *bastos_var_get(const char *name);
 bool bastos_is_connected(void);
 uint8_t bastos_screen_mode(void);
 
+#ifdef BASTOS_MINSERVE
+// Minserve build: exit code of the process once the program has ended
+// (0: normal end, 1: ended on an error). Valid after bastos_done().
+int bastos_exit_code(void);
+#endif
+
 // void bmem_test();
 
 #ifdef __cplusplus

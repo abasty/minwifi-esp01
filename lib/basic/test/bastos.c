@@ -780,6 +780,18 @@ int main(int argc, char **argv)
         return 1;
     }
 
+#ifdef BASTOS_MINSERVE
+    // One run of the program, then leave: going back to the prompt means going
+    // back to Minserve.
+    setup();
+    while (!bastos_is_reset())
+    {
+        loop();
+    }
+    term_done();
+    return bastos_exit_code();
+#endif
+
     while (true)
     {
         setup();

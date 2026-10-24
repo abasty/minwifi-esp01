@@ -1541,6 +1541,10 @@ static bool eval_list() {
         start = bmem->list_start;
     }
 
+#ifdef BASTOS_MINSERVE
+    // LIST is a prompt-only command: no effect in a program run by Minserve.
+    return true;
+#endif
     if (bmem->bstate.do_eval) {
         prog_t *prog = bmem_prog_first_line();
         while (prog && n >= 1) {
@@ -2154,6 +2158,12 @@ EVAL:
     if (!bmem->bstate.do_eval)
         return true;
 
+#ifdef BASTOS_MINSERVE
+    // Prompt-only commands: no effect in a program run by Minserve.
+    if (instr == TOKEN_KEYWORD_NEW || instr == TOKEN_KEYWORD_CONT ||
+        instr == TOKEN_KEYWORD_BASTOS)
+        return true;
+#endif
     if (instr == TOKEN_KEYWORD_DEBUG) {
         bmem->bstate.debug = bmem->bstate.number != 0.0;
         return true;
@@ -2951,6 +2961,10 @@ static bool eval_edit() {
     // first line of the program, the same way GOTO 0 would.
     bool has_arg = eval_expr(TOKEN_NUMBER);
 
+#ifdef BASTOS_MINSERVE
+    // EDIT is a prompt-only command: no effect in a program run by Minserve.
+    return true;
+#endif
     if (!bmem->bstate.do_eval)
         return true;
 
