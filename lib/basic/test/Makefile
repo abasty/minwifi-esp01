@@ -131,6 +131,11 @@ $(MS_OBJ)/%.o:	$(SRC)/%.c
 $(MS_OBJ)/%.o:	./%.c
 	$(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -DBASTOS_MINSERVE -c -o $@ $<
 
+# Tests of the Minserve build (needs the binary built by 'make minserve')
+.PHONY: test_minserve
+test_minserve: $(BIN)/$(MS_EXE)
+	./test_minserve.sh $(BIN)/$(MS_EXE)
+
 # test_bugs: separate binary (bio.c + test_bugs.c, no bastos.c)
 TEST_BUGS_EXE = $(BIN)/test_bugs
 TEST_BUGS_OBJECTS = $(OBJ)/bio.o $(OBJ)/test_bugs.o
