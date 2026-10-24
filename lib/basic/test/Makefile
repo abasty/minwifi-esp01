@@ -106,6 +106,31 @@ $(WIN_OBJ)/%.o:	$(SRC)/%.c
 $(WIN_OBJ)/%.o:	./%.c
 	$(WIN_CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
+# Minserve build: BASTOS run as a program by the Minserve server (exec).
+# Compile-time option only (-DBASTOS_MINSERVE): the standard and ESP builds
+# never define it, so none of the Minserve code ends up in them.
+MS_EXE = bastos-minserve-linux-amd64
+MS_OBJ = obj-minserve
+
+MS_OBJECTS := \
+	$(patsubst $(SRC)/%.c, $(MS_OBJ)/%.o, $(wildcard $(SRC)/*.c)) \
+	$(patsubst ./%.c, $(MS_OBJ)/%.o, $(filter-out ./test_bugs.c, $(wildcard ./*.c)))
+
+.PHONY: minserve
+minserve: $(BIN)/$(MS_EXE)
+
+$(BIN)/$(MS_EXE): $(SRC) $(MS_OBJ) $(BIN) $(MS_OBJECTS)
+	$(LD) $(LDFLAGS) $(MS_OBJECTS) $(LDLIBS) -o $@
+
+$(MS_OBJ):
+	mkdir -p $(MS_OBJ)
+
+$(MS_OBJ)/%.o:	$(SRC)/%.c
+	$(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -DBASTOS_MINSERVE -c -o $@ $<
+
+$(MS_OBJ)/%.o:	./%.c
+	$(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -DBASTOS_MINSERVE -c -o $@ $<
+
 # test_bugs: separate binary (bio.c + test_bugs.c, no bastos.c)
 TEST_BUGS_EXE = $(BIN)/test_bugs
 TEST_BUGS_OBJECTS = $(OBJ)/bio.o $(OBJ)/test_bugs.o
@@ -123,12 +148,15 @@ clean:
 	$(RM) -rf $(BIN)
 	$(RM) -rf $(OBJ)
 	$(RM) -rf $(WIN_OBJ)
+	$(RM) -rf $(MS_OBJ)
 
 # remove everything except source
 .PHONY: reset
 reset:
 	$(RM) -r $(OBJ)
 	$(RM) -r $(WIN_OBJ)
+	$(RM) -r $(MS_OBJ)
 	$(RM) -r $(BIN)
 
 -include $(DEPENDS)
+-include $(MS_OBJECTS:.o=.d)

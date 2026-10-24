@@ -6,6 +6,7 @@ Minitel.*
 lib/basic/test/bin/**
 lib/basic/test/obj/**
 lib/basic/test/obj-windows/**
+lib/basic/test/obj-minserve/**
 lib/basic/test/taille.txt
 tools/vscode-bastos/*.vsix
 bastos-linux-amd64.tar.gz
