@@ -1001,6 +1001,32 @@ static bool eval_string_inkey() {
     return true;
 }
 
+#ifdef BASTOS_MINSERVE
+// USER$: login of the Minserve user running the program ("" if none).
+static bool eval_string_user() {
+    if (!eval_token(TOKEN_KEYWORD_USER))
+        return false;
+
+    if (bmem->bstate.do_eval) {
+        const char *user = hal_user();
+        size_t len = strlen(user);
+        if (len > USER_NAME_MAX)
+            len = USER_NAME_MAX;
+
+        bmem->bstate.string = bmem_string_alloc(len);
+        if (!bmem->bstate.string)
+            return false;
+
+        memcpy(string_cstr(bmem->bstate.string), user, len);
+    }
+
+    return true;
+}
+#define EVAL_STRING_USER() eval_string_user() ||
+#else
+#define EVAL_STRING_USER()
+#endif
+
 static bool eval_string_const() {
     if (!eval_token(TOKEN_STRING))
         return false;
@@ -1063,6 +1089,7 @@ static bool eval_string_term() {
     bool result = eval_string_const() || eval_string_var() || eval_string_chr() ||
                   eval_string_tty() || eval_string_str() || eval_string_rep() ||
                   eval_string_get() || eval_string_file() || eval_string_inkey() ||
+                  EVAL_STRING_USER()
                   (eval_token('(') && eval_string_expr() && eval_token(')'));
 
     if (!result)

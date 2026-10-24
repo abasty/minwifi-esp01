@@ -803,6 +803,12 @@ const char *hal_program_name(void)
     return g_program;
 }
 
+const char *hal_user(void)
+{
+    const char *user = getenv("MINSERVE_USER");
+    return user ? user : "";
+}
+
 void hal_fatal(const char *msg)
 {
     term_done();

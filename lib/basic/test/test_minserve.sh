@@ -126,6 +126,18 @@ check "WIFI, MINITEL, FTP do nothing and say nothing" \
     $([[ $CODE == 0 && "$OUT" == *debut*fin* && "$OUT" != *"Host network"* && "$OUT" != *rror* ]] && echo 0 || echo 1) "code=$CODE out=$OUT"
 check "... and do not wait (no simulated scan)" $((MS < 1500 ? 0 : 1)) "ms=$MS"
 
+echo "=== USER\$"
+prog user.bas '10 PRINT "[" USER$ "]"\n20 u$=USER$\n30 PRINT LEN(u$)\n40 IF USER$="alice" THEN PRINT "bienvenue"\n'
+MINSERVE_USER=alice run_prog "$GAME" user.bas
+check "USER\$ is the logged in user" \
+    $([[ "$OUT" == *"[alice]"* && "$OUT" == *5* && "$OUT" == *bienvenue* && $CODE == 0 ]] && echo 0 || echo 1) "out=$OUT"
+unset MINSERVE_USER
+run_prog "$GAME" user.bas
+check "USER\$ is empty when nobody is logged in" \
+    $([[ "$OUT" == *"[]"* && "$OUT" != *bienvenue* && $CODE == 0 ]] && echo 0 || echo 1) "out=$OUT"
+MINSERVE_USER=$(printf 'x%.0s' $(seq 1 100)) run_prog "$GAME" user.bas
+check "USER\$ is cut at 64 characters" $([[ "$OUT" == *"64"* ]] && echo 0 || echo 1) "out=$OUT"
+
 echo "=== Paths stay in the program directory"
 mkdir -p "$WORK/outside"
 echo "SECRET" >"$WORK/secret.txt"

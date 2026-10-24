@@ -111,4 +111,7 @@ static const char *keywords =
     "C""\xc4"
     "R""\xc4"
     "MOV""\xc5"
+#ifdef BASTOS_MINSERVE
+    "USER""\xa4"
+#endif
 ;

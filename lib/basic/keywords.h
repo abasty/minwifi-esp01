@@ -111,3 +111,6 @@
 #define TOKEN_KEYWORD_CD ((uint8_t) (109 | 0b10000000))
 #define TOKEN_KEYWORD_RD ((uint8_t) (110 | 0b10000000))
 #define TOKEN_KEYWORD_MOVE ((uint8_t) (111 | 0b10000000))
+#ifdef BASTOS_MINSERVE
+#define TOKEN_KEYWORD_USER ((uint8_t) (112 | 0b10000000))
+#endif

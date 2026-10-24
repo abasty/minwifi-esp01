@@ -104,10 +104,14 @@ bool os_cat_file(const char *filename, size_t size);
 bool os_cat_dir(const char *name);
 
 #ifdef BASTOS_MINSERVE
+#define USER_NAME_MAX (64)
+
 // Minserve build only: BASTOS runs one program given on the command line.
 // hal_program_name() is its file name, relative to the current directory;
 // hal_fatal() reports the error to the host and ends the process.
 const char *hal_program_name(void);
+// Login of the Minserve user running the program, "" when nobody is logged in.
+const char *hal_user(void);
 void hal_fatal(const char *msg);
 #endif
 

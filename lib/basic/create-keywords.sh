@@ -135,6 +135,15 @@ EOF
 # Do not sort to preserve save/load compatibility
 # sort -o ${KEYWORDS_FILE}{,}
 
+# Keywords that exist only in the Minserve build (-DBASTOS_MINSERVE). They come
+# last, so every other keyword keeps its index, and are wrapped in #ifdef so
+# the standard and microcontroller builds neither know nor carry them.
+MINSERVE_KEYWORDS_FILE=${TMPDIR}/keywords-minserve
+
+cat >${MINSERVE_KEYWORDS_FILE} <<EOF
+user$
+EOF
+
 function ord {
   printf %d "'$1"
 }
@@ -150,6 +159,14 @@ while IFS= read -r keyword; do
     ((index++))
 done < ${KEYWORDS_FILE}
 
+echo "#ifdef BASTOS_MINSERVE" >>${KEYWORDS_H}
+while IFS= read -r keyword; do
+    u_key=${keyword^^}
+    u_key=${u_key%$}
+    echo "#define TOKEN_KEYWORD_${u_key} ((uint8_t) (${index} | 0b10000000))" >>${KEYWORDS_H}
+    ((index++))
+done < ${MINSERVE_KEYWORDS_FILE}
+echo "#endif" >>${KEYWORDS_H}
 echo "static const char *keywords =" >${KEYWORDS_C}
 index=0
 while IFS= read -r keyword; do
@@ -163,4 +180,16 @@ while IFS= read -r keyword; do
     echo >>${KEYWORDS_C}
     ((index++))
 done < ${KEYWORDS_FILE}
+echo "#ifdef BASTOS_MINSERVE" >>${KEYWORDS_C}
+while IFS= read -r keyword; do
+    u_key=${keyword^^}
+    u_key_last="${u_key: -1}"
+    u_key_but_last="${u_key%${u_key_last}}"
+    u_key_last_code=$(ord ${u_key_last})
+    ((e_key_last_code=${u_key_last_code}+128))
+    echo -n "    \"${u_key_but_last}" >>${KEYWORDS_C}
+    printf '""\\x%x"' ${e_key_last_code} >>${KEYWORDS_C}
+    echo >>${KEYWORDS_C}
+done < ${MINSERVE_KEYWORDS_FILE}
+echo "#endif" >>${KEYWORDS_C}
 echo ";" >>${KEYWORDS_C}
