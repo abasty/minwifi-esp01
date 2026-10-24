@@ -31,6 +31,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <netdb.h>
 #include <poll.h>
 #include <signal.h>
@@ -74,8 +75,14 @@ void term_done()
 void sigint_handler(int sig_no)
 {
     term_done();
+#ifdef BASTOS_MINSERVE
+    // Die of SIGINT, alone: never signal the whole process group.
+    signal(SIGINT, SIG_DFL);
+    raise(SIGINT);
+#else
     sigaction(SIGINT, &old_action, NULL);
     kill(0, SIGINT);
+#endif
 }
 #endif
 
@@ -233,6 +240,20 @@ int hal_print_buffer(uint8_t *buffer, int n)
 // of where CD has taken us since.
 static char g_disk_root[512] = "";
 
+#ifdef BASTOS_MINSERVE
+// True unless pathname resolves (symbolic links included) outside the disk
+// root. A name that does not exist is let through: opening it fails anyway.
+static bool path_in_root(const char *pathname)
+{
+    char real[PATH_MAX];
+    if (realpath(pathname, real) == NULL)
+        return true;
+
+    size_t n = strlen(g_disk_root);
+    return strncmp(real, g_disk_root, n) == 0 && (real[n] == 0 || real[n] == '/');
+}
+#endif
+
 int hal_open(const char *pathname, int flags)
 {
     // flags is BASTOS's own B_* bitmask (bio.h), not a real O_* flag set —
@@ -259,6 +280,11 @@ int hal_open(const char *pathname, int flags)
 
     if ((flags & B_CREAT) != 0)
         return creat(pathname, 0644);
+
+#ifdef BASTOS_MINSERVE
+    if (!path_in_root(pathname))
+        return -1;
+#endif
 
     return open(pathname, flags);
 }
@@ -477,6 +503,11 @@ int hal_chdir(const char *pathname)
         g_cd_depth--;
         return 0;
     }
+
+#ifdef BASTOS_MINSERVE
+    if (!path_in_root(pathname))
+        return -1;
+#endif
 
     if (chdir(pathname) != 0)
         return -1;
@@ -740,6 +771,9 @@ int hal_get_function_key(void)
 #else
 int hal_get_function_key(void)
 {
+#ifdef BASTOS_MINSERVE
+    return 0; // no button emulation (/tmp/fkey) in the Minserve build
+#endif
     uint8_t fn = 0;
     int fkey = open("/tmp/fkey", O_RDONLY);
     if (fkey >= 0) {
