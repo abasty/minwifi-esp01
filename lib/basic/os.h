@@ -113,14 +113,17 @@ const char *hal_program_name(void);
 // Login of the Minserve user running the program, "" when nobody is logged in.
 const char *hal_user(void);
 
-// Application data (sets 0 to DB_CONFIG_SET - 1), kept by Minserve for the
-// user logged in on the session. All return -1 when the data is unreachable
-// (no socket, nobody logged in, server gone...).
-bool hal_kv_active(void);
-int hal_kv_get(const char *key, uint8_t *buf, int size);
-int hal_kv_set(const char *key, const uint8_t *value, int len);
-int hal_kv_delete(const char *key);
-int hal_kv_keys(const char *prefix, char *buf, int size);
+// Shared data (sets 0 to DB_CONFIG_SET - 1): a set of BASTOS is a dataset of the
+// Minserve database, common to all users. Minserve only lets the program use
+// the datasets declared by the "datasets" key of its exec page. All functions
+// return -1 when the data is unreachable or refused (no socket, dataset not
+// declared, nobody logged in to write...).
+bool hal_data_active(void);
+int hal_data_get(uint8_t dataset, const char *key, uint8_t *buf, int size);
+int hal_data_set(uint8_t dataset, const char *key, const uint8_t *value, int len);
+int hal_data_delete(uint8_t dataset, const char *key);
+// Keys of the dataset, one per line ("key\n").
+int hal_data_keys(uint8_t dataset, char *buf, int size);
 void hal_fatal(const char *msg);
 #endif
 

@@ -510,39 +510,29 @@ static void os_ftp_status(void) {
 }
 
 #ifdef BASTOS_MINSERVE
-// Minserve: the application data of sets 0 to DB_CONFIG_SET - 1 is kept by the
-// server, per user, under the key "bastos/<program>/<set>/<name>"; the other
-// sets (WiFi, Minitel, FTP, config) are never sent. GET, PUT, DB LIST and DB
-// ERASE keep their meaning; when the data is unreachable it is simply empty.
-#define KV_KEY_SIZE (200)
-#define KV_VALUE_MAX (4096)
+// Minserve: the data of sets 0 to DB_CONFIG_SET - 1 is kept by the server, in
+// the dataset of the same number, common to all users; the other sets (WiFi,
+// Minitel, FTP, config) are never sent. GET, PUT, DB LIST and DB ERASE keep their
+// meaning; when the data is unreachable or refused, it is simply empty.
+#define DATA_VALUE_MAX (4096)
 
-static bool os_kv_active(uint8_t set) {
-    return set < DB_CONFIG_SET && hal_kv_active();
+static bool os_data_active(uint8_t set) {
+    return set < DB_CONFIG_SET && hal_data_active();
 }
 
-static void os_kv_prefix(uint8_t set, char *out, size_t size) {
-    const char *program = hal_program_name();
-    const char *dot = strrchr(program, '.');
-    int len = dot ? (int)(dot - program) : (int)strlen(program);
-    snprintf(out, size, "bastos/%.*s/%u/", len, program, (unsigned)set);
-}
-
-// Builds the key of an entry; false when the name is empty.
-static bool os_kv_key(uint8_t set, const char *name, char *out, size_t size) {
+// Entry name as stored: not empty, 15 characters at most like in the BASTOS DB.
+static bool os_data_key(const char *name, char *out, size_t size) {
     if (!name || !*name)
         return false;
-    os_kv_prefix(set, out, size);
-    size_t n = strlen(out);
-    snprintf(out + n, size - n, "%.*s", B_NAME_SIZE_MAX - 1, name);
+    snprintf(out, size, "%.*s", B_NAME_SIZE_MAX - 1, name);
     return true;
 }
 
-static char *os_kv_get(uint8_t set, const char *name) {
-    char key[KV_KEY_SIZE];
-    uint8_t value[KV_VALUE_MAX];
-    int n = os_kv_key(set, name, key, sizeof(key))
-                ? hal_kv_get(key, value, sizeof(value))
+static char *os_data_get(uint8_t set, const char *name) {
+    char key[B_NAME_SIZE_MAX];
+    uint8_t value[DATA_VALUE_MAX];
+    int n = os_data_key(name, key, sizeof(key))
+                ? hal_data_get(set, key, value, sizeof(value))
                 : -1;
     if (n < 0)
         n = 0;
@@ -553,18 +543,16 @@ static char *os_kv_get(uint8_t set, const char *name) {
     return string;
 }
 
-static void os_kv_put(uint8_t set, const char *name, const char *value) {
-    char key[KV_KEY_SIZE];
-    if (os_kv_key(set, name, key, sizeof(key)))
-        hal_kv_set(key, (const uint8_t *)string_cstr(value), string_len(value));
+static void os_data_put(uint8_t set, const char *name, const char *value) {
+    char key[B_NAME_SIZE_MAX];
+    if (os_data_key(name, key, sizeof(key)))
+        hal_data_set(set, key, (const uint8_t *)string_cstr(value), string_len(value));
 }
 
 // Keys of a set, one per line like bdb_get_keys() does ("key\r\n").
-static char *os_kv_keys(uint8_t set) {
-    char prefix[KV_KEY_SIZE];
-    char keys[KV_VALUE_MAX];
-    os_kv_prefix(set, prefix, sizeof(prefix));
-    int n = hal_kv_keys(prefix, keys, sizeof(keys) - 1);
+static char *os_data_keys(uint8_t set) {
+    char keys[DATA_VALUE_MAX];
+    int n = hal_data_keys(set, keys, sizeof(keys) - 1);
     if (n < 0)
         n = 0;
 
@@ -584,27 +572,26 @@ static char *os_kv_keys(uint8_t set) {
     return string;
 }
 
-static void os_kv_delete(uint8_t set, const char *name) {
-    char key[KV_KEY_SIZE];
-    if (os_kv_key(set, name, key, sizeof(key)))
-        hal_kv_delete(key);
+static void os_data_delete(uint8_t set, const char *name) {
+    char key[B_NAME_SIZE_MAX];
+    if (os_data_key(name, key, sizeof(key)))
+        hal_data_delete(set, key);
 }
 
 // Prints the entries of a set like DB LIST does; returns their number.
-static int os_kv_list(uint8_t set) {
-    char prefix[KV_KEY_SIZE], key[KV_KEY_SIZE];
-    char keys[KV_VALUE_MAX];
-    uint8_t value[KV_VALUE_MAX];
-    os_kv_prefix(set, prefix, sizeof(prefix));
-    int n = hal_kv_keys(prefix, keys, sizeof(keys) - 1);
+static int os_data_list(uint8_t set) {
+    char keys[DATA_VALUE_MAX];
+    uint8_t value[DATA_VALUE_MAX];
+    int n = hal_data_keys(set, keys, sizeof(keys) - 1);
     if (n < 0)
         return 0;
     keys[n] = 0;
 
     int count = 0;
     for (char *name = strtok(keys, "\n"); name; name = strtok(NULL, "\n")) {
-        int len = os_kv_key(set, name, key, sizeof(key))
-                      ? hal_kv_get(key, value, sizeof(value) - 1)
+        char key[B_NAME_SIZE_MAX];
+        int len = os_data_key(name, key, sizeof(key))
+                      ? hal_data_get(set, key, value, sizeof(value) - 1)
                       : -1;
         if (len < 0)
             len = 0;
@@ -633,7 +620,7 @@ static void os_db_list(uint8_t set) {
     os_redir_print_string("\r\n");
 
 #ifdef BASTOS_MINSERVE
-    int n = os_kv_active(set) ? os_kv_list(set) : -1;
+    int n = os_data_active(set) ? os_data_list(set) : -1;
     entry_t *entry = n < 0 ? bdb_entry_first() : 0;
     if (n < 0)
         n = 0;
@@ -667,8 +654,8 @@ static void os_db_list(uint8_t set) {
 
 static void os_db_erase(uint8_t set, const char *name) {
 #ifdef BASTOS_MINSERVE
-    if (os_kv_active(set)) {
-        os_kv_delete(set, name);
+    if (os_data_active(set)) {
+        os_data_delete(set, name);
         return;
     }
 #endif
