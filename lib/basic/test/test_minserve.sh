@@ -98,6 +98,16 @@ run_prog "$GAME" cmds.bas
 check "NEW, LIST, EDIT, BASTOS, CONT have no effect" \
     $([[ "$OUT" == *ok* && "$OUT" != *"PRINT"* && $CODE == 0 ]] && echo 0 || echo 1) "out=$OUT"
 
+echo "=== Terminal speed"
+prog speed.bas '10 PRINT "A"\n20 END\n'
+run_prog "$GAME" speed.bas
+check "the end of the program does not change the speed (no 1200 bps code)" \
+    $(grep -aq $'\x1b:kd' "$WORK/out" && echo 1 || echo 0) "found ESC : k d at exit"
+prog speed2.bas '10 FAST\n20 SLOW\n30 END\n'
+run_prog "$GAME" speed2.bas
+check "FAST and SLOW written in a program still change it" \
+    $(grep -aq $'\x1b:kv' "$WORK/out" && grep -aq $'\x1b:kd' "$WORK/out" && echo 0 || echo 1)
+
 echo "=== Read-only disk"
 rm -rf "$GAME/sub"; mkdir -p "$GAME/sub"
 echo donnees >"$GAME/data.txt"

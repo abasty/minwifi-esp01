@@ -62,7 +62,12 @@ void bastos_done() {
     hal_net_disconnect(DB_MIN_SET, bmem->sock);
     hal_net_disconnect(DB_FTP_SET, -1);
     hal_wifi_disconnect();
+#ifndef BASTOS_MINSERVE
+    // The serial link of the BASTOS module is brought back to 1200 bps. With
+    // Minserve the terminal's speed is not BASTOS's to change on its way out:
+    // it does not know what it was, and the server's init screen decides.
     hal_speed(TOKEN_KEYWORD_SLOW);
+#endif
     free(bmem);
     bmem = 0;
 }
