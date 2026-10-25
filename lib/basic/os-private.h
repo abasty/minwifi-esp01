@@ -37,6 +37,12 @@ static void os_db_load(void);
 static void os_db_save(void);
 static void os_db_list(uint8_t set);
 static void os_db_erase(uint8_t set, const char *name);
+#ifdef BASTOS_MINSERVE
+static bool os_kv_active(uint8_t set);
+static char *os_kv_get(uint8_t set, const char *name);
+static char *os_kv_keys(uint8_t set);
+static void os_kv_put(uint8_t set, const char *name, const char *value);
+#endif
 
 // OS Wi-Fi functions
 static void os_wifi_scan(void);

@@ -911,6 +911,13 @@ static bool eval_string_get() {
         return false;
 
     if (bmem->bstate.do_eval) {
+#ifdef BASTOS_MINSERVE
+        if (os_kv_active(set)) {
+            bmem->bstate.string = entry ? os_kv_get(set, string_cstr(bmem->bstate.string))
+                                        : os_kv_keys(set);
+            return true;
+        }
+#endif
         if (entry) {
             // Wifi password are write only
             entry_t *entry = set == DB_WIFI_SET ? 0 : bdb_entry_get(set, string_cstr(bmem->bstate.string));
@@ -1298,6 +1305,12 @@ static bool eval_put() {
         return false;
 
     if (bmem->bstate.do_eval) {
+#ifdef BASTOS_MINSERVE
+        if (os_kv_active(set)) {
+            os_kv_put(set, string_cstr(key), bmem->bstate.string);
+            return true;
+        }
+#endif
         bdb_entry_set(set, string_cstr(key), bmem->bstate.string, false);
         os_db_save();
     }

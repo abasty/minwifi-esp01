@@ -112,6 +112,15 @@ bool os_cat_dir(const char *name);
 const char *hal_program_name(void);
 // Login of the Minserve user running the program, "" when nobody is logged in.
 const char *hal_user(void);
+
+// Application data (sets 0 to DB_CONFIG_SET - 1), kept by Minserve for the
+// user logged in on the session. All return -1 when the data is unreachable
+// (no socket, nobody logged in, server gone...).
+bool hal_kv_active(void);
+int hal_kv_get(const char *key, uint8_t *buf, int size);
+int hal_kv_set(const char *key, const uint8_t *value, int len);
+int hal_kv_delete(const char *key);
+int hal_kv_keys(const char *prefix, char *buf, int size);
 void hal_fatal(const char *msg);
 #endif
 
