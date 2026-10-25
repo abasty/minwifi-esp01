@@ -609,6 +609,9 @@ Any other UTF-8 characters are not converted and are kept unchanged.
 - Numeric: one or more characters, e.g. `x`, `count`, `total`
 - String: name ending with `$`, e.g. `name$`, `buf$`
 - Keywords are case-insensitive; string content is case-sensitive.
+- A variable that was never assigned reads as `0` (numeric) or `""` (string).
+  (Only a whole string variable: an index or slice on an unassigned string is an
+  error.)
 
 ```basic
 count = 3.14

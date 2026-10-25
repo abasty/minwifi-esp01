@@ -1059,9 +1059,18 @@ static bool eval_string_var() {
 
     if (bmem->bstate.do_eval) {
         uint16_t len;
+        uint8_t dim_asked = dim_count;
         char *cstr = bmem_var_get_cstr_and_slice(name, &dim_count, dims, &len);
         if (!cstr) {
-            bmem->bstate.error = BERROR_RANGE;
+            if (dim_asked != 0) {
+                bmem->bstate.error = BERROR_RANGE;
+                return true;
+            }
+            // A string variable that was never assigned is the empty string,
+            // like a numeric one is 0.
+            bmem->bstate.string = bmem_string_alloc(0);
+            if (!bmem->bstate.string)
+                bmem->bstate.error = BERROR_MEMORY;
             return true;
         }
         if (dim_count == 0) {

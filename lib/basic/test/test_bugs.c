@@ -441,6 +441,41 @@ static void test_bug6_str_length(void) {
 }
 
 /* ======================================================================== */
+/* A string variable that was never assigned reads as the empty string,    */
+/* like a numeric one reads as 0 (it used to stop the program with error 5) */
+/* ======================================================================== */
+static void test_unassigned_string_var(void) {
+    printf("Unassigned string variable reads as the empty string\n");
+
+    const char *lines[] = {
+        "10 n$=nom$",
+        "20 IF n$=\"\" THEN PRINT \"EMPTY\"",
+        "30 IF LEN(nom$)=0 THEN PRINT \"LEN0\"",
+        "40 IF nom$=\"\" AND z=0 THEN PRINT \"BOTH\"",
+        "50 PRINT \"END\"",
+        NULL
+    };
+    const char *out = run_program(lines);
+    check("n$=nom$ gives an empty string", strstr(out, "EMPTY") != NULL);
+    check("LEN(nom$) is 0", strstr(out, "LEN0") != NULL);
+    check("same as numbers: unassigned string and number together",
+          strstr(out, "BOTH") != NULL);
+    check("the program goes on to the end", strstr(out, "END") != NULL);
+    check("no error is reported", strstr(out, "Error") == NULL);
+
+    /* An index on a variable that is not an array stays an error */
+    const char *lines2[] = {
+        "10 PRINT \"A\"",
+        "20 a$=missing$(1,3)",
+        "30 PRINT \"NOT REACHED\"",
+        NULL
+    };
+    out = run_program(lines2);
+    check("a slice of an unassigned string is still an error",
+          strstr(out, "Error") != NULL && strstr(out, "NOT REACHED") == NULL);
+}
+
+/* ======================================================================== */
 /* Bug 7 — eval.c-static eval_prog()  LOAD as an immediate command crashes  */
 /*         the interpreter. bastos_load() (bio.c) resets bstate.read_ptr to */
 /*         NULL after a successful load, since the temporary immediate-mode */
@@ -3808,6 +3843,9 @@ int main(void) {
     printf("\n");
 
     test_bug4_var_get();
+    printf("\n");
+
+    test_unassigned_string_var();
     printf("\n");
 
     test_bug6_str_length();

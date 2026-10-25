@@ -624,6 +624,9 @@ Les autres caractères UTF-8 ne sont pas convertis et restent inchangés.
 - Chaîne : nom terminé par `$`, ex. `nom$`, `buf$`
 - Les mots-clés sont insensibles à la casse ; le contenu des chaînes est
   sensible à la casse.
+- Une variable jamais affectée vaut `0` (numérique) ou `""` (chaîne). (Seulement
+  pour la variable entière : un indice ou une tranche sur une chaîne non affectée
+  reste une erreur.)
 
 ```basic
 compteur = 3.14

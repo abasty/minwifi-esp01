@@ -195,6 +195,8 @@ REM "Game over"
 4540 j$=INKEY$
 4550 PAUSE 50
 4560 IF j$<>"x" THEN 4540
+REM "Recharge le HOF : un autre joueur a pu y inscrire un score"
+4595 GOSUB 6200
 4600 GOSUB 6600
 4605 IF pos=0 THEN 400
 4610 GOSUB 6800
@@ -268,7 +270,9 @@ REM "Insère score courant (sc$+'0') dans hof$ si > à un des 9 premiers"
 6710 RETURN
 
 REM "Demande nom pour HOF"
-6800 AT 16,12;"Nom (max 9 car.): ";CURSOR 1
+REM "Sous Minserve, USER$ est le nom de l'utilisateur connecté (vide sinon)"
+6800 nm$=USER$ : IF nm$<>"" THEN 6820
+6805 AT 16,12;"Nom (max 9 car.): ";CURSOR 1
 6810 INPUT "",nm$
 6820 IF LEN nm$>9 THEN LET nm$=nm$(1 TO 9)
 6830 hof$(pos)=hof$(pos,1 TO 7)+nm$
