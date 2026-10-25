@@ -1267,4 +1267,88 @@ Example session:
 40 FTP STOP
 ```
 
+## BASTOS under Minserve
+
+[Minserve](https://github.com/abasty/minserve) is a Minitel server that can run programs
+for its users. A page of a Minserve service can start BASTOS with a program (a game, a
+quiz...): the Minitel keyboard goes to the program, and what the program prints goes to
+the Minitel. For this, BASTOS is built as a second executable, `bastos-minserve-linux-amd64`
+(`make minserve` in `lib/basic/test`), from the same sources as the other builds: a
+compile-time option, `BASTOS_MINSERVE`, that the microcontroller and standard builds never
+define. The program is given on the command line, and the executable is run by Minserve,
+not by hand:
+
+```
+bastos-minserve-linux-amd64 meteor.bas
+```
+
+The directory of `meteor.bas` becomes the *disk* of the program (the name of the file is
+at most 16 characters before its extension, no `/`).
+
+### What changes
+
+| | |
+|---|---|
+| **Mode** | Run mode only: no prompt, no line editing. The program starts, runs, and BASTOS **leaves** when it is over (`END`, `STOP`, `RESET`, an error, the end of the keyboard input). The exit code is `0`, or `1` if the program stopped on an error, which is shown on the screen as usual (`On line 20: Error 4`). Minserve then goes on to the next page. |
+| **Keyboard** | `INPUT`, `INKEY$`, `VKEY`, `PAUSE` and the others work as usual. `NEW`, `LIST`, `EDIT`, `CONT` and `BASTOS` have no effect in a program. |
+| **Files** | The program can read the files of its directory (`FILE`, `LOAD`, `RUN "name"`, `CAT`, `CD` into a sub-directory). It cannot get out of it: `..`, absolute paths and symbolic links that lead outside are refused. |
+| **Writing** | Nothing is ever written: `SAVE`, `ERASE`, `MD`, `RD`, `MOVE` and the saving of the database succeed and do nothing. A file "saved" by the program cannot be loaded back. |
+| **Network** | `WIFI`, `MINITEL` and `FTP` are accepted and do nothing, without a message. |
+| **Speed** | `FAST` and `SLOW` still change the speed, but BASTOS does not bring it back to 1200 bps when it leaves: that is left to Minserve. |
+
+### USER$
+
+`USER$` is the login of the user who started the program on Minserve, or `""` when nobody
+is logged in. It is read-only. In the other builds `USER$` is an ordinary string variable,
+which is `""` as long as it has not been assigned: a program can use it without
+distinction (see METEOR, below).
+
+```basic
+10 nm$ = USER$
+20 IF nm$ = "" THEN INPUT "Name: ", nm$
+```
+
+### Database
+
+With Minserve, the sets `0` to `251` of `GET`, `PUT`, `DB LIST` and `DB ERASE` are the
+*datasets* of the Minserve database: key/value tables **shared by all the users**. Set `n`
+is dataset `n`.
+
+```basic
+PUT 100, USER$, "1200"       ' the score of the logged in user
+PRINT GET(100, "ALAIN")      ' read by everyone
+```
+
+- Only the datasets that the Minserve page of the program declares (`datasets: [100, 101]`)
+  can be used. Any other set is ignored: a read gives `""`, a write does nothing, and the
+  server writes the refusal in its log.
+- Everybody can read. Only a logged in user can write or erase.
+- A key is at most 15 characters long. A value is read up to 4096 bytes, and `DB LIST`
+  shows the first 30 characters of each. Minserve limits a dataset to 100 KB and 1000 keys.
+- The sets `252` to `255` (WiFi, Minitel, FTP, configuration) stay in the memory of BASTOS
+  and are never sent.
+- If Minserve cannot be reached (or when the executable is run by hand, without Minserve),
+  there is no error: reads give `""` and writes are lost. The sets then work in memory only,
+  for the duration of the program.
+
+Two things to know when many players write at the same time:
+
+- Read the table again just before changing it (METEOR reloads its hall of fame
+  before it inserts a score): another player may have written since the start of the game.
+- `VAL ""` is an error (a missing key reads as `""`): test it first, as in
+  `IF b$ <> "" THEN s = VAL b$`.
+
+### Example: METEOR
+
+`disk/meteor.bas` is a game that runs on all the builds. Its hall of fame is the set `199`
+(keys `h1` to `h9`); the name of the player comes from `USER$` when there is one, and from
+a prompt otherwise. The service of the Minserve example launches it with
+`datasets: 199`.
+
+### Testing
+
+`make test_minserve` (in `lib/basic/test`) runs about thirty checks on the executable: the
+mode, the disk, the network, the paths, `USER$`, the signals. The checks with a real Minserve
+are in the Minserve repository (`dart test`, with `BASTOS_MINSERVE` set to the executable).
+
 ---

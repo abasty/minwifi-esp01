@@ -42,6 +42,19 @@ make clean && make TERM=MINITEL
 
 Le binaire se trouve dans `lib/basic/test/bin/bastos-linux-amd64`
 
+### Compiler la version Minserve
+
+```bash
+cd lib/basic/test
+make minserve          # lib/basic/test/bin/bastos-minserve-linux-amd64
+make test_minserve     # ses tests
+```
+
+C'est BASTOS lancé par un serveur [Minserve](https://github.com/abasty/minserve) pour un
+programme : sans invite, sans écriture sur le disque ni accès réseau, avec `USER$` et la
+base de données partagée du serveur. Voir « BASTOS sous Minserve » dans le manuel. Le
+firmware et la version Linux ordinaires ne contiennent rien de ce code.
+
 ## Déploiement automatisé
 
 Un script `build_and_deploy.sh` automatise la compilation et le déploiement
